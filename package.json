@@ -1,0 +1,16 @@
+{
+  "name": "spaceducks-mmo",
+  "private": true,
+  "version": "0.0.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  },
+  "scripts": {
+    "build": "npm --workspaces run build",
+    "build:core": "npm --workspace @spaceducks/core run build",
+    "clean": "node -e \"console.log('No-op clean')\""
+  }
+}
