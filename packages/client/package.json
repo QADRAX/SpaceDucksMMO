@@ -1,0 +1,37 @@
+{
+  "name": "@spaceducks/client",
+  "version": "0.1.0",
+  "private": false,
+  "main": "dist/main.js",
+  "license": "MIT",
+  "scripts": {
+    "build:main": "tsc -p tsconfig.main.json",
+    "build:renderer": "vite build",
+    "build": "npm run build:main && npm run build:renderer",
+    "start": "npm run build && electron .",
+    "dev": "electron .",
+    "dev:main": "tsc -p tsconfig.main.json -w",
+    "dev:renderer": "vite",
+    "dev:start": "wait-on http://localhost:5173 && electron .",
+    "dev:all": "concurrently \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:start\"",
+  "dev:all:debug": "concurrently \"npm run dev:renderer\" \"npm run dev:main\" \"cross-env NODE_OPTIONS=--inspect=9229 electron .\"",
+  "ev:dev": "electron-vite dev",
+  "ev:build": "electron-vite build",
+  "ev:dev:debug": "cross-env NODE_OPTIONS=--inspect=9229 electron-vite dev",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "three": "^0.158.0"
+  },
+  "devDependencies": {
+    "electron": "^26.2.0",
+  "vite": "^5.2.0",
+  "concurrently": "^8.2.0",
+  "wait-on": "^7.0.0",
+  "cross-env": "^7.0.3",
+    "typescript": "^5.5.0",
+    "rimraf": "^5.0.0",
+    "@types/node": "^20.0.0",
+    "@types/three": "^0.158.0"
+  }
+}

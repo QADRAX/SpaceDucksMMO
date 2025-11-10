@@ -11,6 +11,9 @@
   "scripts": {
     "build": "npm --workspaces run build",
     "build:core": "npm --workspace @spaceducks/core run build",
+    "build:client": "npm --workspace @spaceducks/client run build",
+    "dev:client": "npm --workspace @spaceducks/client run dev:all",
+    "start:client": "npm --workspace @spaceducks/client run start",
     "clean": "node -e \"console.log('No-op clean')\""
   }
 }
