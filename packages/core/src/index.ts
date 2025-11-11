@@ -8,4 +8,5 @@ export * from './map/planet';
 export * from './map/atmosphere';
 export * from './map/solarSystem';
 export * from './map/galaxy';
+export * from './map/spaceUtils';
 

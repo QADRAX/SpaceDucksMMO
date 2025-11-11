@@ -1,5 +1,6 @@
 import { Atmosphere } from './atmosphere';
 import { PlanetId } from './ids';
+import { Orbit } from './orbit';
 
 /**
  * Clase de planeta según su composición principal.
@@ -31,7 +32,7 @@ export interface Planet {
   /** Detalles de la atmósfera si existe */
   atmosphere?: Atmosphere;
   /** Parámetros orbitales respecto a su centro (estrella, planeta, etc) */
-  orbit?: import('./orbit').Orbit;
+  orbit?: Orbit;
   /** Lunas del planeta */
   moons?: Planet[];
 }

@@ -1,57 +1,73 @@
 import express from 'express';
 import http from 'http';
 import { Server as IOServer } from 'socket.io';
-import { GameState, GameTick } from '@spaceducks/core';
+import { GameTick } from '@spaceducks/core';
+import Container from './di/Container';
 
-const app = express();
-const port = process.env.PORT ? Number(process.env.PORT) : 3000;
+/**
+ * Punto de entrada del servidor SpaceDucks.
+ * - Inicializa el contenedor de dependencias.
+ * - Configura Express + Socket.IO.
+ * - Inicia el loop de simulación.
+ */
+async function main() {
+  try {
+    // Inicializar contenedor de dependencias (async)
+    const container = new Container();
+    await container.initialize();
 
-app.get('/health', (_req, res) => {
-  res.json({ status: 'ok', time: Date.now() });
-});
+    // Obtener dependencias inyectadas
+    const config = container.getServerConfig();
+    const galaxyManager = container.getGalaxyManager();
 
-const server = http.createServer(app);
-const io = new IOServer(server, {
-  cors: {
-    origin: '*'
+    const app = express();
+
+    app.get('/health', (_req, res) => {
+      res.json({ status: 'ok', time: Date.now() });
+    });
+
+    const server = http.createServer(app);
+    const io = new IOServer(server, {
+      cors: {
+        origin: '*'
+      }
+    });
+
+    io.on('connection', (socket) => {
+      console.log(`[Server] Client connected: ${socket.id}`);
+
+      socket.on('disconnect', (reason) => {
+        console.log(`[Server] Client disconnected ${socket.id} (${reason})`);
+      });
+    });
+
+    // Iniciar loop de simulación
+    let tick = 0;
+    const DT_MS = 1000 / config.tickRate;
+
+    setInterval(() => {
+      tick += 1;
+      const gameTick: GameTick = {
+        tick,
+        dt: DT_MS,
+        time: Date.now()
+      };
+      // Avanzar simulación de la galaxia
+      galaxyManager.tick(DT_MS);
+      // Emitir tick y estado de la galaxia
+      io.emit('tick', gameTick);
+      io.emit('galaxy', galaxyManager.galaxy);
+    }, DT_MS);
+
+    // Iniciar servidor HTTP
+    server.listen(config.port, () => {
+      console.log(`[Server] 🚀 SpaceDucks listening on http://localhost:${config.port}`);
+    });
+  } catch (error) {
+    console.error('[Server] ❌ Error al inicializar:', error);
+    process.exit(1);
   }
-});
+}
 
-io.on('connection', (socket) => {
-  console.log(`Client connected: ${socket.id}`);
-
-  socket.on('disconnect', (reason) => {
-    console.log(`Client disconnected ${socket.id} (${reason})`);
-  });
-});
-
-
-// --- Redis persistence example ---
-import { RedisGameStateRepository } from './persistence/RedisGameStateRepository';
-const gameStateRepo = new RedisGameStateRepository();
-
-let tick = 0;
-const TICK_RATE = 20; // ticks per second
-const DT_MS = 1000 / TICK_RATE;
-
-let gameState: GameState = {
-  tick,
-  players: {},
-  npcs: {}
-};
-
-setInterval(async () => {
-  tick += 1;
-  const gameTick: GameTick = {
-    tick,
-    dt: DT_MS,
-    time: Date.now()
-  };
-  io.emit('tick', gameTick);
-  gameState.tick = tick;
-  await gameStateRepo.save(gameState);
-}, DT_MS);
-
-server.listen(port, () => {
-  console.log(`SpaceDucks server listening on http://localhost:${port}`);
-});
+// Ejecutar main
+main();
