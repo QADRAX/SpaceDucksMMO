@@ -13,5 +13,6 @@ export * from './domain/map/galaxy';
 export * from './domain/map/spaceUtils';
 
 // Physics domain services
+export * from './domain/physics/constants';
 export * from './domain/physics/orbits';
 
