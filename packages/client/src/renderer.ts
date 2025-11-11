@@ -1,39 +1,19 @@
-import * as THREE from 'three';
+import { ThreeRenderer } from '@client/infrastructure/rendering/ThreeRenderer';
+import { SceneService } from '@client/application/SceneService';
 
 function init() {
-  const scene = new THREE.Scene();
-
-  const camera = new THREE.PerspectiveCamera(
-    75,
-    window.innerWidth / window.innerHeight,
-    0.1,
-    1000
-  );
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
+  // Prepare container
   document.body.style.margin = '0';
-  document.body.appendChild(renderer.domElement);
+  const container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.inset = '0';
+  document.body.appendChild(container);
 
-  const geometry = new THREE.BoxGeometry(1, 1, 1);
-  const material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
-  const cube = new THREE.Mesh(geometry, material);
-  scene.add(cube);
-
-  const light = new THREE.DirectionalLight(0xffffff, 1);
-  light.position.set(5, 5, 5);
-  scene.add(light);
-
-  camera.position.z = 5;
-
-  function animate() {
-    requestAnimationFrame(animate);
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
-    renderer.render(scene, camera);
-  }
-
-  animate();
+  // Composition root for renderer
+  const engine = new ThreeRenderer();
+  const sceneService = new SceneService(engine);
+  sceneService.init(container);
+  sceneService.start();
 }
 
 window.addEventListener('DOMContentLoaded', init);

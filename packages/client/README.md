@@ -1,9 +1,36 @@
 # @spaceducks/client
 
-Electron client app for SpaceDucks MMO. Renderer uses Three.js and is written in TypeScript; the renderer bundle is created with `esbuild`.
+Electron client app for SpaceDucks MMO. Renderer uses Three.js and TypeScript. The renderer is bundled with Vite.
 
-Quick start
+## Clean Architecture (client)
 
+The client codebase follows a layered design to keep domain and application logic decoupled from infrastructure (Three.js, IPC, network, etc.):
+
+```
+src/
+	domain/              # Entities, value objects, ports (interfaces)
+		ports/
+			IRenderingEngine.ts
+		scene/
+			ISceneObject.ts
+		types/
+			Tick.ts
+	application/         # Orchestrators/use-cases
+		SceneService.ts
+	infrastructure/      # Adapters for ports (Three.js, IPC, etc.)
+		rendering/
+			ThreeRenderer.ts
+	renderer.ts          # Composition root for the renderer (creates adapters + services)
+	main.ts              # Electron main process entry
+	preload.ts           # Secure preload bridge
+```
+
+Key ideas:
+- UI/renderer composes adapters and services; domain/application layers have no direct Three.js imports.
+- `IRenderingEngine` is the port. `ThreeRenderer` is the adapter.
+- `SceneService` is the application service that manages the scene and the frame loop.
+
+## Quick start
 
 1. From repository root run `npm install` (installs dependencies for all workspaces).
 2. From the `packages/client` folder you can run development scripts. Recommended workflow (three terminals):
@@ -31,7 +58,7 @@ npm run dev:start
 
 Alternatively run everything from the package using `npm run dev:all` (this uses `concurrently` and `wait-on`).
 
-Scripts
+## Scripts
 
 - `npm run build` - builds both the main process (tsc) and the renderer (vite build)
 - `npm run start` - builds and launches Electron
@@ -40,20 +67,12 @@ Scripts
 - `npm run dev:start` - waits for Vite and launches Electron
 - `npm run dev:all` - runs renderer, main and electron in parallel (concurrently)
 
-Notes
+## Notes
 
-- The renderer now uses Vite for true HMR in development. The Electron main process loads `http://localhost:5173` when running in dev and the built `dist/index.html` for production.
-- This scaffold provides fast HMR for the renderer. For more advanced setups (packaging, native modules, secure preload bridge), we can extend this further.
+- The renderer uses Vite for HMR in development. The Electron main process loads `http://localhost:5173` when running in dev and the built `dist/index.html` for production.
+- For more advanced setups (packaging, native modules, secure preload bridge), we can extend this further.
 
-Electron-vite
+## Aliases
 
-You can also use `electron-vite` to orchestrate the dev/build workflow. The package includes convenience scripts:
-
-```powershell
-cd packages\client
-npm run ev:dev         # run electron-vite dev (dev server + electron)
-npm run ev:build       # bundle for production with electron-vite build
-```
-
-For debugging with the inspector, use `ev:dev:debug` which launches electron with the Node inspector enabled on port 9229 and matches the VS Code `Attach to Electron Main` configuration in `.vscode/launch.json`.
+Renderer and main/preload share the `@client` alias pointing to `src`. Vite (`vite.config.ts`) and TypeScript (`tsconfig.json`, `tsconfig.main.json`) are configured accordingly.
 
