@@ -1,25 +1,37 @@
-import type { PlanetId } from './ids';
-import type { Atmosphere } from './atmosphere';
+import { Atmosphere } from './atmosphere';
+import { PlanetId } from './ids';
 
+/**
+ * Clase de planeta según su composición principal.
+ */
 export enum PlanetClass {
   Rocky = 'rocky',
   Gaseous = 'gaseous'
 }
 
+/**
+ * Representa un planeta dentro de un sistema solar o como luna de otro planeta.
+ * Permite definir su órbita y lunas.
+ */
 export interface Planet {
+  /** Identificador único del planeta */
   id: PlanetId;
+  /** Nombre del planeta */
   name: string;
+  /** Clase del planeta (rocoso, gaseoso, etc) */
   class: PlanetClass;
-  // mass in kilograms
+  /** Masa en kilogramos */
   massKg: number;
-  // mean radius in meters
+  /** Radio medio en metros */
   radiusM: number;
-  // surface gravity in m/s^2 (can be derived but stored for convenience)
+  /** Gravedad superficial en m/s^2 */
   gravity: number;
-  // whether the planet has an atmosphere
+  /** Indica si el planeta tiene atmósfera */
   hasAtmosphere: boolean;
+  /** Detalles de la atmósfera si existe */
   atmosphere?: Atmosphere;
-  // orbital parameters relative to parent star/system (simple placeholder)
-  semiMajorAxisKm?: number;
-  orbitalPeriodDays?: number;
+  /** Parámetros orbitales respecto a su centro (estrella, planeta, etc) */
+  orbit?: import('./orbit').Orbit;
+  /** Lunas del planeta */
+  moons?: Planet[];
 }

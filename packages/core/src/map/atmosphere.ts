@@ -10,10 +10,14 @@ export enum AtmosphereType {
   Exotic = 'exotic'
 }
 
+/**
+ * Representa la atmósfera de un planeta, incluyendo composición, presión, etc.
+ */
 export interface Atmosphere {
+  /** Tipo de atmósfera (oxígeno, nitrógeno, etc) */
   type: AtmosphereType;
-  // surface pressure in kPa (kilopascals)
+  /** Presión superficial en kPa (kilopascales) */
   pressureKPa: number;
-  // approximate fractional composition by gas symbol (e.g. { O2: 0.21, N2: 0.78 })
+  /** Composición aproximada por símbolo de gas (ejemplo: { O2: 0.21, N2: 0.78 }) */
   composition: Record<string, number>;
 }

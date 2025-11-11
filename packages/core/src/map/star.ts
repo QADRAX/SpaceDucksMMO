@@ -1,14 +1,19 @@
 import type { StarId } from './ids';
 
+/**
+ * Representa una estrella dentro de un sistema solar.
+ */
 export interface Star {
+  /** Identificador único de la estrella */
   id: StarId;
+  /** Nombre de la estrella */
   name?: string;
-  // mass in kilograms
+  /** Masa en kilogramos */
   massKg: number;
-  // radius in meters
+  /** Radio en metros */
   radiusM: number;
-  // effective temperature in Kelvin
+  /** Temperatura efectiva en Kelvin */
   temperatureK?: number;
-  // spectral class / type (e.g., G2V)
+  /** Tipo espectral (ejemplo: G2V) */
   spectralType?: string;
 }
