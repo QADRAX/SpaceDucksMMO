@@ -20,6 +20,8 @@ export interface AudioSettings {
 }
 
 export interface GameSettings {
+  // Optional schema version for migrations; filled by validator when present
+  version?: number;
   graphics: GraphicsSettings;
   gameplay: GameplaySettings;
   audio: AudioSettings;

@@ -1,73 +1,50 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
-// Use relative import instead of path alias so compiled JS resolves correctly at runtime
 import { FileStorage } from './infrastructure/storage/FileStorage';
+import { WindowManager } from './infrastructure/electron/WindowManager';
+import StorageIpcBridge from './infrastructure/ipc/StorageIpcBridge';
 
-let mainWindow: BrowserWindow | null = null;
+const windowManager = new WindowManager();
 
-function createWindow() {
-  const win = new BrowserWindow({
+function createMainWindow() {
+  const preload = path.join(__dirname, 'preload.js');
+  const devUrl = !app.isPackaged ? (process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173') : undefined;
+  const prodIndex = path.join(__dirname, '..', 'dist', 'index.html');
+  const win = windowManager.createMainWindow({
+    preloadPath: preload,
+    devUrl,
+    prodIndexPath: prodIndex,
     width: 1280,
-    height: 800,
-    webPreferences: {
-      contextIsolation: true,
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false
-    }
+    height: 800
   });
 
-  if (!app.isPackaged) {
-    // In development we load the Vite dev server
-    const devUrl = process.env.VITE_DEV_SERVER_URL || 'http://localhost:5173';
-    win.loadURL(devUrl).catch(() => {
-      // fallback to file if dev server not available
-      const indexPath = path.join(__dirname, '..', 'index.html');
-      win.loadFile(indexPath);
-    });
-  } else {
-    // In production load the built index.html from dist
-    const indexPath = path.join(__dirname, '..', 'dist', 'index.html');
-    win.loadFile(indexPath);
-  }
-  mainWindow = win;
-
-  // In development (when app is not packaged) watch the renderer bundle and reload on changes
-  if (!app.isPackaged) {
+  // Dev auto-reload of renderer after Vite rebuild (optional)
+  if (devUrl) {
     try {
       const bundlePath = path.join(__dirname, 'renderer.js');
       fs.watch(bundlePath, { persistent: false }, () => {
-        try {
-          if (mainWindow && !mainWindow.isDestroyed()) {
-            mainWindow.webContents.reloadIgnoringCache();
-          }
-        } catch (e) {
-          // ignore
+        const mainWin = windowManager.getMainWindow();
+        if (mainWin && !mainWin.isDestroyed()) {
+          mainWin.webContents.reloadIgnoringCache();
         }
       });
-    } catch (e) {
-      // watcher failed (file may not exist yet) — ignore in dev flow
-    }
+    } catch {/* ignore */}
   }
+
+  return win;
 }
 
 app.whenReady().then(() => {
-  // Set up storage handlers (JSON on disk in userData)
+  // Infrastructure wiring
   const storage = new FileStorage();
-  ipcMain.handle('spaceducks:storage:readJson', async (_e, key: string) => {
-    return storage.readJson(key);
-  });
-  ipcMain.handle('spaceducks:storage:writeJson', async (_e, key: string, data: unknown) => {
-    await storage.writeJson(key, data as any);
-  });
-  ipcMain.handle('spaceducks:storage:delete', async (_e, key: string) => {
-    await storage.delete(key);
-  });
+  const storageBridge = new StorageIpcBridge();
+  storageBridge.register(storage);
 
-  createWindow();
+  createMainWindow();
 
   app.on('activate', function () {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (windowManager.getMainWindow() === null) createMainWindow();
   });
 });
 
