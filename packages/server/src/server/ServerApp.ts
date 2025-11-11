@@ -1,19 +1,21 @@
-import express from 'express';
-import http from 'http';
-import { Server as IOServer } from 'socket.io';
-import type { GameTick } from '@spaceducks/core';
 import type Container from '../di/Container';
+import { HttpServer } from '@infra/http/HttpServer';
+import { SocketIOAdapter } from '@infra/websocket/SocketIOAdapter';
+import { GameSimulation } from '@app/simulation/GameSimulation';
 
 /**
- * ServerApp encapsula el setup y ciclo de vida del servidor HTTP + Socket.IO
- * - Se construye con un `Container` ya inicializado (dependencias listas).
- * - start() arranca el servidor y la simulación.
+ * ServerApp coordina los componentes principales del servidor.
+ * - HttpServer: maneja HTTP/Express
+ * - SocketIOAdapter: maneja WebSockets
+ * - GameSimulation: maneja el loop de simulación
+ * 
+ * Patrón: Composition Root - ensambla y coordina adaptadores y servicios.
  */
 export class ServerApp {
   private container: Container;
-  private io?: IOServer;
-  private server?: http.Server;
-  private intervalId?: NodeJS.Timeout;
+  private httpServer?: HttpServer;
+  private socketAdapter?: SocketIOAdapter;
+  private gameSimulation?: GameSimulation;
 
   constructor(container: Container) {
     this.container = container;
@@ -23,70 +25,47 @@ export class ServerApp {
     const config = this.container.getServerConfig();
     const galaxyManager = this.container.getGalaxyManager();
 
-    const app = express();
+    // 1. Inicializar HTTP Server
+    this.httpServer = new HttpServer(config.port);
+    await this.httpServer.start();
 
-    app.get('/health', (_req, res) => {
-      res.json({ status: 'ok', time: Date.now() });
+    // 2. Inicializar Socket.IO sobre el HTTP Server
+    this.socketAdapter = new SocketIOAdapter();
+    this.socketAdapter.initialize(this.httpServer.getHttpServer());
+
+    // 3. Inicializar simulación
+    this.gameSimulation = new GameSimulation(galaxyManager, config.tickRate);
+
+    // 4. Conectar simulación con WebSocket para emitir eventos
+    this.gameSimulation.onTick((gameTick, galaxy) => {
+      this.socketAdapter!.emit('tick', gameTick);
+      this.socketAdapter!.emit('galaxy', galaxy);
     });
 
-    this.server = http.createServer(app);
-    this.io = new IOServer(this.server, {
-      cors: { origin: '*' }
-    });
+    // 5. Arrancar simulación
+    this.gameSimulation.start();
 
-    this.io.on('connection', (socket) => {
-      console.log(`[ServerApp] Client connected: ${socket.id}`);
-
-      socket.on('disconnect', (reason) => {
-        console.log(`[ServerApp] Client disconnected ${socket.id} (${reason})`);
-      });
-    });
-
-    // Start simulation loop
-    let tick = 0;
-    const DT_MS = 1000 / config.tickRate;
-
-    this.intervalId = setInterval(() => {
-      tick += 1;
-      const gameTick: GameTick = {
-        tick,
-        dt: DT_MS,
-        time: Date.now()
-      };
-
-      galaxyManager.tick(DT_MS);
-      this.io!.emit('tick', gameTick);
-      this.io!.emit('galaxy', galaxyManager.galaxy);
-    }, DT_MS);
-
-    // Start server
-    await new Promise<void>((resolve, reject) => {
-      this.server!.listen(config.port, () => {
-        console.log(`[ServerApp] 🚀 SpaceDucks listening on http://localhost:${config.port}`);
-        resolve();
-      });
-      this.server!.on('error', (err) => reject(err));
-    });
+    console.log('[ServerApp] 🚀 SpaceDucks completamente iniciado');
   }
 
   public async stop(): Promise<void> {
-    // Stop interval
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = undefined;
+    // Detener en orden inverso
+    if (this.gameSimulation) {
+      this.gameSimulation.stop();
+      this.gameSimulation = undefined;
     }
 
-    // Close io and server
-    if (this.io) {
-      await this.io.close();
-      this.io = undefined;
-    }
-    if (this.server) {
-      await new Promise<void>((resolve) => this.server!.close(() => resolve()));
-      this.server = undefined;
+    if (this.socketAdapter) {
+      await this.socketAdapter.close();
+      this.socketAdapter = undefined;
     }
 
-    console.log('[ServerApp] Stopped');
+    if (this.httpServer) {
+      await this.httpServer.stop();
+      this.httpServer = undefined;
+    }
+
+    console.log('[ServerApp] ✓ Detenido completamente');
   }
 }
 
