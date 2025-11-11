@@ -3,6 +3,11 @@ import { contextBridge, ipcRenderer } from 'electron';
 // Minimal, safe API for the renderer to query basic info and receive reloads if needed.
 contextBridge.exposeInMainWorld('spaceducks', {
   ping: () => 'pong',
+  storage: {
+    readJson: (key: string) => ipcRenderer.invoke('spaceducks:storage:readJson', key),
+    writeJson: (key: string, data: unknown) => ipcRenderer.invoke('spaceducks:storage:writeJson', key, data),
+    delete: (key: string) => ipcRenderer.invoke('spaceducks:storage:delete', key)
+  },
   // send generic IPC messages
   send: (channel: string, payload: unknown) => {
     ipcRenderer.send(channel, payload);

@@ -1,6 +1,8 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import * as path from 'path';
 import * as fs from 'fs';
+// Use relative import instead of path alias so compiled JS resolves correctly at runtime
+import { FileStorage } from './infrastructure/storage/FileStorage';
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -50,6 +52,18 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  // Set up storage handlers (JSON on disk in userData)
+  const storage = new FileStorage();
+  ipcMain.handle('spaceducks:storage:readJson', async (_e, key: string) => {
+    return storage.readJson(key);
+  });
+  ipcMain.handle('spaceducks:storage:writeJson', async (_e, key: string, data: unknown) => {
+    await storage.writeJson(key, data as any);
+  });
+  ipcMain.handle('spaceducks:storage:delete', async (_e, key: string) => {
+    await storage.delete(key);
+  });
+
   createWindow();
 
   app.on('activate', function () {
