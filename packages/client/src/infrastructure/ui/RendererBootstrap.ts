@@ -4,10 +4,15 @@ import { IpcStorage } from '@client/infrastructure/storage/IpcStorage';
 import { BrowserStorage } from '@client/infrastructure/storage/BrowserStorage';
 import JsonSettingsRepository from '@client/infrastructure/settings/JsonSettingsRepository';
 import SettingsService from '@client/application/SettingsService';
-import { MenuController, MenuState } from '@client/application/MenuController';
 import ServerBrowserService from '@client/application/ServerBrowserService';
 import StaticServerDirectory from '@client/infrastructure/server/StaticServerDirectory';
-import { defaultGameSettings } from '@client/domain/settings/GameSettings';
+import UiLayer from './UiLayer';
+import ScreenRouter from '@client/application/ui/ScreenRouter';
+import ScreenId from '@client/domain/ui/ScreenId';
+import MainScreen from './screens/MainScreen';
+import ServerListScreen from './screens/ServerListScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import GraphicsController from './GraphicsController';
 
 export class RendererBootstrap {
   start(root: HTMLElement) {
@@ -26,82 +31,25 @@ export class RendererBootstrap {
     const settingsService = new SettingsService(settingsRepo);
     const serverDirectory = new StaticServerDirectory();
     const serverBrowser = new ServerBrowserService(serverDirectory);
-    const menu = new MenuController();
+    // UI layer + screen router
+    const uiLayer = new UiLayer(root); uiLayer.mount();
+    const router = new ScreenRouter(uiLayer.getRoot());
+    const gfxController = new GraphicsController(engine);
 
-    // Basic UI scaffolding (no framework yet)
-    const uiRoot = document.createElement('div');
-    uiRoot.style.position = 'absolute';
-    uiRoot.style.top = '0';
-    uiRoot.style.left = '0';
-    uiRoot.style.padding = '8px';
-    uiRoot.style.fontFamily = 'sans-serif';
-    uiRoot.style.color = '#eee';
-    uiRoot.style.zIndex = '10';
-    root.appendChild(uiRoot);
-
-    const renderMenu = (state: MenuState) => {
-      uiRoot.innerHTML = '';
-      if (state === MenuState.MAIN) {
-        const title = document.createElement('h3');
-        title.textContent = 'SpaceDucks - Main Menu';
-        const playBtn = document.createElement('button');
-        playBtn.textContent = 'Servers';
-        playBtn.onclick = () => menu.go(MenuState.SERVER_LIST);
-        const settingsBtn = document.createElement('button');
-        settingsBtn.textContent = 'Settings';
-        settingsBtn.onclick = () => menu.go(MenuState.SETTINGS);
-        uiRoot.append(title, playBtn, settingsBtn);
-      } else if (state === MenuState.SERVER_LIST) {
-        const back = document.createElement('button');
-        back.textContent = '< Back';
-        back.onclick = () => menu.go(MenuState.MAIN);
-        const listTitle = document.createElement('h4');
-        listTitle.textContent = 'Servers';
-        uiRoot.append(back, listTitle);
-        serverBrowser.withLatency().then(servers => {
-          servers.forEach(s => {
-            const item = document.createElement('div');
-            item.textContent = `${s.name} (${s.region}) - ${s.pingMs ?? '?'}ms`;
-            uiRoot.appendChild(item);
-          });
-        });
-      } else if (state === MenuState.SETTINGS) {
-        const back = document.createElement('button');
-        back.textContent = '< Back';
-        back.onclick = () => menu.go(MenuState.MAIN);
-        const stTitle = document.createElement('h4');
-        stTitle.textContent = 'Settings';
-        uiRoot.append(back, stTitle);
-        settingsService.load().then(s => {
-          const resScale = document.createElement('input');
-          resScale.type = 'range';
-          resScale.min = '0.5';
-          resScale.max = '2';
-          resScale.step = '0.1';
-          resScale.value = String((s as any).graphics.resolutionScale);
-          const label = document.createElement('label');
-          label.textContent = `Resolution Scale: ${resScale.value}`;
-          resScale.oninput = () => {
-            label.textContent = `Resolution Scale: ${resScale.value}`;
-          };
-          const saveBtn = document.createElement('button');
-          saveBtn.textContent = 'Save';
-          saveBtn.onclick = () => {
-            s.graphics.resolutionScale = parseFloat(resScale.value);
-            settingsService.save(s);
-          };
-          uiRoot.append(label, resScale, saveBtn);
-        }).catch(() => {
-          settingsService.save(defaultGameSettings);
-        });
-      }
-    };
-
-    menu.onChange(renderMenu);
-    renderMenu(menu.getState());
+    // Register screens
+    router.register(new MainScreen(id => router.show(id)));
+    router.register(new ServerListScreen(id => router.show(id), serverBrowser));
+    router.register(new SettingsScreen(id => router.show(id), settingsService, gfxController));
+    router.show(ScreenId.Main);
 
     // Start rendering only after initial menu (scene in background)
     sceneService.init(container);
+    // Apply initial graphics preset
+    settingsService.load().then(s => {
+      gfxController.setResolutionAuto();
+      gfxController.setAntialias(s.graphics.antialias);
+      gfxController.setShadows(s.graphics.shadows);
+    }).catch(() => {/* ignore */});
     sceneService.start();
   }
 }

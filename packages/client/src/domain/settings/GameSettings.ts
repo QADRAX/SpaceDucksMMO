@@ -1,5 +1,10 @@
 export interface GraphicsSettings {
-  resolutionScale: number; // 0.5 - 2.0
+  // How to compute render resolution
+  // 'auto' = match window size and devicePixelRatio
+  // 'scale' = multiply devicePixelRatio by resolutionScale
+  resolutionPolicy: 'auto' | 'scale';
+  resolutionScale: number; // used when resolutionPolicy === 'scale', 0.5 - 2.0
+  qualityPreset: 'low' | 'medium' | 'high' | 'ultra' | 'custom';
   fullscreen: boolean;
   vSync: boolean;
   antialias: boolean;
@@ -30,7 +35,9 @@ export interface GameSettings {
 
 export const defaultGameSettings: GameSettings = {
   graphics: {
+    resolutionPolicy: 'auto',
     resolutionScale: 1.0,
+    qualityPreset: 'high',
     fullscreen: false,
     vSync: true,
     antialias: true,

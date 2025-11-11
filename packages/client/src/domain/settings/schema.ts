@@ -2,7 +2,9 @@ import { z } from 'zod';
 import { defaultGameSettings, type GameSettings } from './GameSettings';
 
 export const GraphicsSettingsSchema = z.object({
+  resolutionPolicy: z.enum(['auto', 'scale']).default('auto'),
   resolutionScale: z.number().min(0.5).max(2.0).default(1.0),
+  qualityPreset: z.enum(['low', 'medium', 'high', 'ultra', 'custom']).default('high'),
   fullscreen: z.boolean().default(false),
   vSync: z.boolean().default(true),
   antialias: z.boolean().default(true),
