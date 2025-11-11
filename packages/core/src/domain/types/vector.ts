@@ -2,17 +2,17 @@
  * Vector en 2D para posiciones galácticas o viajes intergalácticos.
  */
 export interface Vector2 {
-  x: number;
-  y: number;
+	x: number;
+	y: number;
 }
 
 /**
  * Vector en 3D para posiciones locales (sistemas, órbitas, etc).
  */
 export interface Vector3 {
-  x: number;
-  y: number;
-  z: number;
+	x: number;
+	y: number;
+	z: number;
 }
 
 /**

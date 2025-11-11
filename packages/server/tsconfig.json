@@ -8,7 +8,15 @@
     "esModuleInterop": true,
     "moduleResolution": "Node",
     "skipLibCheck": true,
-    "types": ["node"]
+    "types": ["node"],
+    "baseUrl": "src",
+    "paths": {
+      "@app/*": ["application/*"],
+      "@infra/*": ["infrastructure/*"],
+      "@config/*": ["config/*"],
+      "@di/*": ["di/*"],
+      "@server/*": ["server/*"]
+    }
   },
   "include": ["src"]
 }

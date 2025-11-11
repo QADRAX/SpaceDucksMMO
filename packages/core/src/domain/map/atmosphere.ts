@@ -18,6 +18,6 @@ export interface Atmosphere {
   type: AtmosphereType;
   /** Presión superficial en kPa (kilopascales) */
   pressureKPa: number;
-  /** Composición aproximada por símbolo de gas (ejemplo: { O2: 0.21, N2: 0.78 }) */
+  /** Composición aproximada por símbolo de gas */
   composition: Record<string, number>;
 }

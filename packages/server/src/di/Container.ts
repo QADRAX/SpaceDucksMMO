@@ -1,5 +1,7 @@
-import { ServerConfig } from '../config/ServerConfig';
-import { GalaxyManager } from '../galaxy/galaxyManager';
+import { ServerConfig } from "@config/ServerConfig";
+import { GalaxyManager } from "@app/galaxy/GalaxyManager";
+import type IGalaxyLoader from "@app/ports/IGalaxyLoader";
+import { YamlGalaxyLoader } from "@infra/galaxy/YamlGalaxyLoader";
 
 /**
  * Contenedor simple de inyección de dependencias (IoC).
@@ -20,21 +22,24 @@ export class Container {
    * Debe llamarse una sola vez al startup de la app.
    */
   public async initialize(): Promise<void> {
-    console.log('[Container] Inicializando dependencias...');
+    console.log("[Container] Inicializando dependencias...");
 
     // 1. Crear ServerConfig (síncrono)
     this.serverConfig = new ServerConfig();
     console.log(`[Container] ✓ ServerConfig creado: ${this.serverConfig}`);
 
-    // 2. Crear GalaxyManager (inyectar ServerConfig)
-    this.galaxyManager = new GalaxyManager(this.serverConfig);
-    console.log('[Container] ✓ GalaxyManager instanciado (sin cargar galaxia aún)');
+    // 2. Crear loader de galaxia (infra) e inyectarlo en GalaxyManager
+    const loader: IGalaxyLoader = new YamlGalaxyLoader();
+    this.galaxyManager = new GalaxyManager(this.serverConfig, loader);
+    console.log(
+      "[Container] ✓ GalaxyManager instanciado (loader inyectado, sin cargar galaxia aún)"
+    );
 
-    // 3. Inicializar GalaxyManager (async: cargar galaxia)
+    // 3. Inicializar GalaxyManager (async: cargar galaxia). Si falla, se propagará.
     await this.galaxyManager.initialize();
-    console.log('[Container] ✓ GalaxyManager inicializado (galaxia cargada)');
+    console.log("[Container] ✓ GalaxyManager inicializado (galaxia cargada)");
 
-    console.log('[Container] ✓ Todas las dependencias listas');
+    console.log("[Container] ✓ Todas las dependencias listas");
   }
 
   /**
@@ -43,7 +48,9 @@ export class Container {
    */
   public getServerConfig(): ServerConfig {
     if (!this.serverConfig) {
-      throw new Error('[Container] ServerConfig no inicializado. Llama a initialize() primero.');
+      throw new Error(
+        "[Container] ServerConfig no inicializado. Llama a initialize() primero."
+      );
     }
     return this.serverConfig;
   }
@@ -54,7 +61,9 @@ export class Container {
    */
   public getGalaxyManager(): GalaxyManager {
     if (!this.galaxyManager) {
-      throw new Error('[Container] GalaxyManager no inicializado. Llama a initialize() primero.');
+      throw new Error(
+        "[Container] GalaxyManager no inicializado. Llama a initialize() primero."
+      );
     }
     return this.galaxyManager;
   }

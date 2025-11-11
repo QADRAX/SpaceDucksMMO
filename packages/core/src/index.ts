@@ -1,12 +1,14 @@
-export * from './types/vector';
-export * from './types/entity';
-export * from './types/game';
+// Barrel central del dominio
+export * from './domain/types/vector';
+export * from './domain/types/entity';
+export * from './domain/types/game';
 
-export * from './map/ids';
-export * from './map/star';
-export * from './map/planet';
-export * from './map/atmosphere';
-export * from './map/solarSystem';
-export * from './map/galaxy';
-export * from './map/spaceUtils';
+// Map related domain models
+export * from './domain/map/ids';
+export * from './domain/map/star';
+export * from './domain/map/planet';
+export * from './domain/map/atmosphere';
+export * from './domain/map/solarSystem';
+export * from './domain/map/galaxy';
+export * from './domain/map/spaceUtils';
 
