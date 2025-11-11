@@ -1,4 +1,5 @@
-import type { Galaxy, Planet, Position3D } from '@spaceducks/core';
+import type { Galaxy, Planet } from '@spaceducks/core';
+import { advanceOrbit, computePositionFromOrbit } from '@spaceducks/core';
 import type { ServerConfig } from '../../config/ServerConfig';
 import type IGalaxyLoader from '../ports/IGalaxyLoader';
 
@@ -6,7 +7,7 @@ import type IGalaxyLoader from '../ports/IGalaxyLoader';
  * GalaxyManager mantiene una galaxia en memoria y avanza su estado en tiempo real.
  * - Constructor limpio: solo almacena dependencias (config, loader).
  * - initialize() async: carga la galaxia desde el loader inyectado.
- * - tick(): avanza las fases orbitales de planetas y lunas según dt (ms).
+ * - tick(): avanza las fases orbitales usando funciones puras del dominio.
  */
 export class GalaxyManager {
   public galaxy!: Galaxy;
@@ -37,37 +38,16 @@ export class GalaxyManager {
       const sys = this.galaxy.systems[sysId];
       for (const pId of Object.keys(sys.planets)) {
         const planet = sys.planets[pId];
-        this.advancePlanetOrbit(planet, dtSec);
+        advanceOrbit(planet, dtSec);
       }
     }
   }
 
-  private advancePlanetOrbit(planet: Planet, dtSec: number) {
-    if (planet.orbit && (planet.orbit as any).period > 0) {
-      const orbit = planet.orbit as any;
-      const delta = (2 * Math.PI * dtSec) / orbit.period;
-      orbit.phaseAtEpoch = (orbit.phaseAtEpoch + delta) % (2 * Math.PI);
-    }
-    if (planet.moons) {
-      for (const moon of planet.moons) {
-        if (moon.orbit && (moon.orbit as any).period > 0) {
-          const delta = (2 * Math.PI * dtSec) / (moon.orbit as any).period;
-          (moon.orbit as any).phaseAtEpoch = ((moon.orbit as any).phaseAtEpoch + delta) % (2 * Math.PI);
-        }
-      }
-    }
-  }
-
-  /** Calcula posición local 3D aproximada de un planeta basada en su órbita (plano XY). */
-  public static computeLocalPositionFromOrbit(orbit?: any): Position3D {
-    if (!orbit) return { x: 0, y: 0, z: 0 };
-    const r = orbit.semiMajorAxis;
-    const angle = orbit.phaseAtEpoch;
-    const x = r * Math.cos(angle);
-    const y = r * Math.sin(angle);
-    const z = 0;
-    return { x, y, z };
-  }
+  /**
+   * Helper estático para calcular posición desde órbita.
+   * Delega a la función pura del dominio.
+   */
+  public static computeLocalPositionFromOrbit = computePositionFromOrbit;
 }
 
 export default GalaxyManager;
