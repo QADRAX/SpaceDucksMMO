@@ -1,3 +1,5 @@
+import './styles/base.css';
+
 export class UiLayer {
   private root!: HTMLElement;
 
@@ -5,13 +7,9 @@ export class UiLayer {
 
   mount() {
     const uiRoot = document.createElement('div');
-    uiRoot.style.position = 'absolute';
-    uiRoot.style.top = '0';
-    uiRoot.style.left = '0';
-    uiRoot.style.padding = '8px';
-    uiRoot.style.fontFamily = 'sans-serif';
-    uiRoot.style.color = '#eee';
-    uiRoot.style.zIndex = '10';
+    uiRoot.className = 'ui-root';
+    // Ensure overlay above the WebGL canvas if parent styles change.
+    uiRoot.style.zIndex = '100';
     this.host.appendChild(uiRoot);
     this.root = uiRoot;
   }

@@ -11,24 +11,46 @@ src/
 	domain/              # Entities, value objects, ports (interfaces)
 		ports/
 			IRenderingEngine.ts
+			IScene.ts        # 3D scene contract
+			IScreen.ts       # UI screen contract
 		scene/
 			ISceneObject.ts
+			SceneId.ts       # Scene identifiers (MainMenu, GameWorld, etc.)
+		ui/
+			ScreenId.ts      # Screen identifiers (Main, ServerList, Settings)
 		types/
 			Tick.ts
 	application/         # Orchestrators/use-cases
-		SceneService.ts
+		SceneService.ts      # Render loop orchestration
+		SceneManager.ts      # 3D scene lifecycle & transitions
+		ui/ScreenRouter.ts   # UI screen navigation
+		SettingsService.ts
 	infrastructure/      # Adapters for ports (Three.js, IPC, etc.)
 		rendering/
 			ThreeRenderer.ts
-	renderer.ts          # Composition root for the renderer (creates adapters + services)
+		scenes/              # 3D scene implementations
+			MainMenuScene.ts
+			GameWorldScene.ts
+		ui/
+			RendererBootstrap.ts  # Composition root
+			UiLayer.ts
+			screens/              # UI screen implementations
+				MainScreen.ts
+				ServerListScreen.ts
+				SettingsScreen.ts
+	renderer.ts          # Entry point (calls RendererBootstrap)
 	main.ts              # Electron main process entry
 	preload.ts           # Secure preload bridge
 ```
 
 Key ideas:
 - UI/renderer composes adapters and services; domain/application layers have no direct Three.js imports.
-- `IRenderingEngine` is the port. `ThreeRenderer` is the adapter.
-- `SceneService` is the application service that manages the scene and the frame loop.
+- `IRenderingEngine` is the rendering port. `ThreeRenderer` is the adapter.
+- `IScene` defines 3D scene contract. `SceneManager` handles scene transitions.
+- `IScreen` defines UI screen contract. `ScreenRouter` handles UI navigation.
+- `SceneService` runs the render loop and delegates updates to SceneManager.
+
+For a comprehensive guide on architecture, scene/screen lifecycle, and how to extend the client, see [CLIENT_ARCHITECTURE.md](./CLIENT_ARCHITECTURE.md).
 
 ## Quick start
 

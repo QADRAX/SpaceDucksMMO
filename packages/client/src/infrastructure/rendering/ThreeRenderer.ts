@@ -17,6 +17,7 @@ export class ThreeRenderer implements IRenderingEngine {
   init(container: HTMLElement): void {
     this.container = container;
     this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0x0a0e14); // Dark space background
     this.camera = new THREE.PerspectiveCamera(
       75,
       container.clientWidth / container.clientHeight,
@@ -117,8 +118,7 @@ export class ThreeRenderer implements IRenderingEngine {
   }
 
   renderFrame(): void {
-    // update domain objects
-    this.objects.forEach(o => o.update(16)); // TODO: inject real dt if needed
+    // Objects are updated by SceneService loop, not here
     this.renderer.render(this.scene, this.camera);
   }
 }
