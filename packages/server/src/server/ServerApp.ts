@@ -1,13 +1,14 @@
 import type Container from '../di/Container';
 import { HttpServer } from '@infra/http/HttpServer';
 import { SocketIOAdapter } from '@infra/websocket/SocketIOAdapter';
-import { GameSimulation } from '@app/simulation/GameSimulation';
+import { SimulationService } from '@app/simulation/SimulationService';
+import { WorkerPoolAdapter } from '@infra/workers/WorkerPoolAdapter';
 
 /**
  * ServerApp coordina los componentes principales del servidor.
  * - HttpServer: maneja HTTP/Express
  * - SocketIOAdapter: maneja WebSockets
- * - GameSimulation: maneja el loop de simulación
+ * - SimulationService: maneja el loop de simulación (usando workers internamente)
  * 
  * Patrón: Composition Root - ensambla y coordina adaptadores y servicios.
  */
@@ -15,7 +16,7 @@ export class ServerApp {
   private container: Container;
   private httpServer?: HttpServer;
   private socketAdapter?: SocketIOAdapter;
-  private gameSimulation?: GameSimulation;
+  private simulationService?: SimulationService;
 
   constructor(container: Container) {
     this.container = container;
@@ -23,7 +24,6 @@ export class ServerApp {
 
   public async start(): Promise<void> {
     const config = this.container.getServerConfig();
-    const galaxyManager = this.container.getGalaxyManager();
 
     // 1. Inicializar HTTP Server
     this.httpServer = new HttpServer(config.port);
@@ -33,26 +33,27 @@ export class ServerApp {
     this.socketAdapter = new SocketIOAdapter();
     this.socketAdapter.initialize(this.httpServer.getHttpServer());
 
-    // 3. Inicializar simulación
-    this.gameSimulation = new GameSimulation(galaxyManager, config.tickRate);
+    // 3. Crear e inicializar servicio de simulación (con worker pool inyectado)
+    const workerPool = new WorkerPoolAdapter();
+    this.simulationService = new SimulationService(config, workerPool);
 
     // 4. Conectar simulación con WebSocket para emitir eventos
-    this.gameSimulation.onTick((gameTick, galaxy) => {
+    this.simulationService.onTick((gameTick, galaxy) => {
       this.socketAdapter!.emit('tick', gameTick);
       this.socketAdapter!.emit('galaxy', galaxy);
     });
 
     // 5. Arrancar simulación
-    this.gameSimulation.start();
+    await this.simulationService.start();
 
     console.log('[ServerApp] 🚀 SpaceDucks completamente iniciado');
   }
 
   public async stop(): Promise<void> {
     // Detener en orden inverso
-    if (this.gameSimulation) {
-      this.gameSimulation.stop();
-      this.gameSimulation = undefined;
+    if (this.simulationService) {
+      await this.simulationService.stop();
+      this.simulationService = undefined;
     }
 
     if (this.socketAdapter) {

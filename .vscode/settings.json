@@ -1,0 +1,6 @@
+{
+  "jest.jestCommandLine": "npm test --",
+  "jest.runMode": "on-demand",
+  "jest.rootPath": "packages/core",
+  "jest.coverageFormatter": "DefaultFormatter"
+}

@@ -1,0 +1,91 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "🚀 Debug Server (Dev)",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "-r",
+        "ts-node/register",
+        "-r",
+        "tsconfig-paths/register"
+      ],
+      "args": ["${workspaceFolder}/packages/server/src/index.ts"],
+      "cwd": "${workspaceFolder}/packages/server",
+      "env": {
+        "NODE_ENV": "development",
+        "TS_NODE_DEV": "true"
+      },
+      "sourceMaps": true,
+      "console": "integratedTerminal",
+      "outputCapture": "std",
+      "skipFiles": ["<node_internals>/**"],
+      "envFile": "${workspaceFolder}/packages/server/.env"
+    },
+    {
+      "name": "🏗️ Debug Server (Build)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/packages/server/dist/index.js",
+      "cwd": "${workspaceFolder}/packages/server",
+      "preLaunchTask": "Build Server",
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"],
+      "envFile": "${workspaceFolder}/packages/server/.env"
+    },
+    {
+      "name": "🧪 Debug Core Tests",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/packages/core/node_modules/jest/bin/jest.js",
+      "args": [
+        "--runInBand",
+        "--no-cache",
+        "--watchAll=false"
+      ],
+      "cwd": "${workspaceFolder}/packages/core",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "🔍 Debug Current Test File",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/packages/core/node_modules/jest/bin/jest.js",
+      "args": [
+        "${fileBasename}",
+        "--runInBand",
+        "--no-cache",
+        "--watchAll=false"
+      ],
+      "cwd": "${workspaceFolder}/packages/core",
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen"
+    },
+    {
+      "name": "Electron: Launch (dev)",
+      "type": "node",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "--workspace=@spaceducks/client", "dev:all:debug"],
+      "console": "integratedTerminal",
+      "internalConsoleOptions": "neverOpen",
+      "windows": {
+        "runtimeExecutable": "npm.cmd"
+      }
+    },
+    {
+      "name": "Attach to Electron Main",
+      "type": "node",
+      "request": "attach",
+      "port": 9229,
+      "restart": true,
+      "localRoot": "${workspaceFolder}",
+      "remoteRoot": "${workspaceFolder}",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}
