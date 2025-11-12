@@ -3,39 +3,7 @@ import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import SceneId from '@client/domain/scene/SceneId';
 import * as THREE from 'three';
-
-/**
- * Rotating duck placeholder (will be replaced with actual model later)
- */
-class RotatingDuck implements ISceneObject {
-  id = 'menu-duck';
-  private mesh!: THREE.Mesh;
-  
-  addTo(scene: THREE.Scene): void {
-    // Placeholder: simple capsule geometry representing a duck silhouette
-    const bodyGeometry = new THREE.CapsuleGeometry(0.4, 0.8, 8, 16);
-    const material = new THREE.MeshStandardMaterial({ 
-      color: 0xffdd44, 
-      roughness: 0.6,
-      metalness: 0.2
-    });
-    this.mesh = new THREE.Mesh(bodyGeometry, material);
-    this.mesh.position.set(0, 0, 0);
-    this.mesh.castShadow = true;
-    scene.add(this.mesh);
-  }
-
-  update(dt: number): void {
-    if (!this.mesh) return;
-    const delta = dt / 1000;
-    this.mesh.rotation.y += 0.5 * delta; // slow rotation
-  }
-
-  dispose(): void {
-    this.mesh?.geometry.dispose();
-    (this.mesh?.material as THREE.Material).dispose();
-  }
-}
+import { SunStar } from '@client/infrastructure/scene-objects';
 
 /**
  * Floating particles for ambient atmosphere
@@ -124,10 +92,18 @@ export class MainMenuScene implements IScene {
     scene.add(rimLight);
 
     // Add scene objects
-    const duck = new RotatingDuck();
+    const star = new SunStar('menu-sun', {
+      radius: 1.2,
+      color: 0xffaa00,
+      glowColor: 0xffdd44,
+      rotationSpeed: 0.1,
+      pulseIntensity: 0.015,
+      lightIntensity: 6.0,
+      brightness: 1.9
+    });
     const particles = new AmbientParticles();
     
-    this.objects.push(duck, particles);
+    this.objects.push(star, particles);
     this.objects.forEach(obj => engine.add(obj));
   }
 

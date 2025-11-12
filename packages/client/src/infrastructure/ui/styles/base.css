@@ -127,3 +127,57 @@ body {
 .server-item strong {
     color: #fff
 }
+
+/* Main Screen Styles */
+.main-screen-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    pointer-events: none;
+}
+
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    pointer-events: none;
+}
+
+.main-logo {
+    max-width: 400px;
+    width: 80vw;
+    height: auto;
+    filter: drop-shadow(0 10px 40px rgba(93, 211, 255, 0.3));
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.main-menu-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 200px;
+    pointer-events: auto;
+}
+
+.main-menu-buttons .btn {
+    width: 100%;
+    font-size: 16px;
+    padding: 12px 24px;
+}
