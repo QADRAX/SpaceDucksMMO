@@ -8,6 +8,7 @@
   <body>
     <!-- In development Vite serves the source module. In production the built index.html
          will reference the bundled assets in `dist`. -->
-    <script type="module" src="/src/renderer.ts"></script>
+  <!-- Use relative path so Electron file:// load works -->
+  <script type="module" src="./src/renderer.ts"></script>
   </body>
   </html>

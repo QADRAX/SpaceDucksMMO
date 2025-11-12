@@ -10,11 +10,12 @@
     "build": "npm run build:main && npm run build:renderer",
     "start": "npm run build && electron .",
     "dev": "electron .",
-    "dev:main": "tsc -p tsconfig.main.json -w",
+    "dev:main": "tsc -p tsconfig.main.json --outDir dist -w",
     "dev:renderer": "vite",
-    "dev:start": "wait-on http://localhost:5173 && electron .",
-    "dev:all": "concurrently \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:start\"",
-    "dev:all:debug": "concurrently \"npm run dev:renderer\" \"npm run dev:main\" \"cross-env NODE_OPTIONS=--inspect=9229 electron .\"",
+    "dev:start": "wait-on http://localhost:5173 dist/main.js dist/preload.js && electron .",
+    "dev:all": "concurrently -k -n renderer,main,start -c yellow,cyan,magenta \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:start\"",
+  "dev:start:debug": "wait-on http://localhost:5173 dist/main.js dist/preload.js && cross-env NODE_OPTIONS=--inspect=9229 electron .",
+  "dev:all:debug": "concurrently -k -n renderer,main,start -c yellow,cyan,magenta \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:start:debug\"",
     "ev:dev": "electron-vite dev",
     "ev:build": "electron-vite build",
     "ev:dev:debug": "cross-env NODE_OPTIONS=--inspect=9229 electron-vite dev",
@@ -22,7 +23,8 @@
   },
   "dependencies": {
     "three": "^0.181.1",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "preact": "^10.19.3"
   },
   "devDependencies": {
     "electron": "^35.7.5",
@@ -33,6 +35,11 @@
     "typescript": "^5.5.0",
     "rimraf": "^5.0.0",
     "@types/node": "^20.0.0",
-    "@types/three": "^0.158.0"
+    "@types/three": "^0.158.0",
+    "@preact/preset-vite": "^2.9.1"
+  },
+  "overrides": {
+    "react": "npm:preact-compat",
+    "react-dom": "npm:preact-compat"
   }
 }
