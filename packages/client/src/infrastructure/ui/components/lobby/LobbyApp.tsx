@@ -6,12 +6,14 @@ import ServerSelectorPopup from "./ServerSelectorPopup";
 import SettingsPopup from "./SettingsPopup";
 import IconButton from "../common/utility/IconButton";
 import Button from "../common/utility/Button";
+import useI18n from "../../hooks/useI18n";
 
 type Props = {
   serverBrowser?: ServerBrowserService;
 };
 
 export default function LobbyApp({ serverBrowser }: Props) {
+  const { t } = useI18n();
   const [showServerPopup, setShowServerPopup] = useState(false);
   const [showSettingsPopup, setShowSettingsPopup] = useState(false);
 
@@ -21,7 +23,7 @@ export default function LobbyApp({ serverBrowser }: Props) {
       <div className="settings-btn-wrapper">
         <IconButton
           icon="⚙️"
-          title="Settings"
+          title={t('lobby.settings')}
           variant="secondary"
           onClick={() => setShowSettingsPopup(true)}
         />
@@ -35,7 +37,7 @@ export default function LobbyApp({ serverBrowser }: Props) {
           size="large"
           onClick={() => setShowServerPopup(true)}
         >
-          Play
+          {t('lobby.play')}
         </Button>
       </div>
 

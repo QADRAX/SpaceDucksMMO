@@ -1,0 +1,55 @@
+{
+  "common": {
+    "ok": "OK",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "loading": "Loading...",
+    "error": "Error"
+  },
+  "lobby": {
+    "play": "Play",
+    "settings": "Settings",
+    "quit": "Quit"
+  },
+  "settings": {
+    "title": "Settings",
+    "saveChanges": "Save Changes",
+    "graphics": {
+      "title": "Graphics",
+      "quality": "Quality",
+      "antialiasing": "Antialiasing",
+      "shadows": "Shadows",
+      "qualityLow": "Low",
+      "qualityMedium": "Medium",
+      "qualityHigh": "High"
+    },
+    "audio": {
+      "title": "Audio",
+      "masterVolume": "Master Volume",
+      "music": "Music",
+      "soundEffects": "Sound Effects"
+    },
+    "gameplay": {
+      "title": "Gameplay",
+      "mouseSensitivity": "Mouse Sensitivity",
+      "language": "Language"
+    }
+  },
+  "servers": {
+    "title": "Select Server",
+    "noServers": "No servers available",
+    "addServerHint": "Add your first server to get started",
+    "connect": "Connect",
+    "remove": "Remove",
+    "addNewServer": "+ Add New Server",
+    "serverName": "Server Name",
+    "serverUrl": "Server URL",
+    "region": "Region",
+    "regionOptional": "Region (optional)"
+  }
+}

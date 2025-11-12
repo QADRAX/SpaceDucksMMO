@@ -1,0 +1,55 @@
+{
+  "common": {
+    "ok": "Aceptar",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "loading": "Cargando...",
+    "error": "Error"
+  },
+  "lobby": {
+    "play": "Jugar",
+    "settings": "Ajustes",
+    "quit": "Salir"
+  },
+  "settings": {
+    "title": "Ajustes",
+    "saveChanges": "Guardar Cambios",
+    "graphics": {
+      "title": "Gráficos",
+      "quality": "Calidad",
+      "antialiasing": "Suavizado",
+      "shadows": "Sombras",
+      "qualityLow": "Baja",
+      "qualityMedium": "Media",
+      "qualityHigh": "Alta"
+    },
+    "audio": {
+      "title": "Audio",
+      "masterVolume": "Volumen General",
+      "music": "Música",
+      "soundEffects": "Efectos de Sonido"
+    },
+    "gameplay": {
+      "title": "Juego",
+      "mouseSensitivity": "Sensibilidad del Ratón",
+      "language": "Idioma"
+    }
+  },
+  "servers": {
+    "title": "Seleccionar Servidor",
+    "noServers": "No hay servidores disponibles",
+    "addServerHint": "Añade tu primer servidor para empezar",
+    "connect": "Conectar",
+    "remove": "Eliminar",
+    "addNewServer": "+ Añadir Nuevo Servidor",
+    "serverName": "Nombre del Servidor",
+    "serverUrl": "URL del Servidor",
+    "region": "Región",
+    "regionOptional": "Región (opcional)"
+  }
+}

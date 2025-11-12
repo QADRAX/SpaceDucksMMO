@@ -5,6 +5,8 @@ import SceneManager from "@client/application/SceneManager";
 import { BrowserStorage } from "@client/infrastructure/storage/BrowserStorage";
 import JsonSettingsRepository from "@client/infrastructure/settings/JsonSettingsRepository";
 import SettingsService from "@client/application/SettingsService";
+import I18nService from "@client/application/I18nService";
+import JsonTranslationProvider from "@client/infrastructure/i18n/JsonTranslationProvider";
 import ServerBrowserService from "@client/application/ServerBrowserService";
 import PersistentServerDirectory from "@client/infrastructure/server/PersistentServerDirectory";
 import IpcStorage from "@client/infrastructure/storage/IpcStorage";
@@ -36,6 +38,11 @@ export class RendererBootstrap {
       : new BrowserStorage();
     const settingsRepo = new JsonSettingsRepository(storage);
     const settingsService = new SettingsService(settingsRepo);
+    
+    // i18n service
+    const translationProvider = new JsonTranslationProvider();
+    const i18nService = new I18nService(translationProvider, settingsRepo);
+    
     // Persistent server directory (stored in user data via IPC/FileStorage)
     const serverStorage = new IpcStorage();
     const serverDirectory = new PersistentServerDirectory(serverStorage);
@@ -57,8 +64,9 @@ export class RendererBootstrap {
       router.show(id);
       if (id === ScreenId.Main) sceneManager.switchTo(SceneId.MainMenu);
     });
-    // inject service (cast to any to set private field)
+    // inject services (cast to any to set private fields)
     (mainScreen as any).serverBrowser = serverBrowser;
+    (mainScreen as any).i18nService = i18nService;
     router.register(mainScreen);
 
     // Initialize rendering engine FIRST (creates Three.js scene, camera, renderer)
@@ -70,17 +78,17 @@ export class RendererBootstrap {
     // Show main menu UI
     router.show(ScreenId.Main);
 
-    // Apply initial graphics preset
-    settingsService
-      .load()
-      .then((s) => {
-        gfxController.setResolutionAuto();
-        gfxController.setAntialias(s.graphics.antialias);
-        gfxController.setShadows(s.graphics.shadows);
-      })
-      .catch(() => {
-        /* ignore */
-      });
+    // Initialize i18n and apply initial settings
+    Promise.all([
+      i18nService.initialize(),
+      settingsService.load()
+    ]).then(([_, settings]) => {
+      gfxController.setResolutionAuto();
+      gfxController.setAntialias(settings.graphics.antialias);
+      gfxController.setShadows(settings.graphics.shadows);
+    }).catch((error) => {
+      console.error('Failed to initialize services:', error);
+    });
 
     // Start render loop
     sceneService.start();

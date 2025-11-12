@@ -5,6 +5,7 @@ import Button from "../common/utility/Button";
 import InputRow from "../common/form/InputRow";
 import List from "../common/list/List";
 import ListItem from "../common/list/ListItem";
+import useI18n from "../../hooks/useI18n";
 import type ServerBrowserService from "@client/application/ServerBrowserService";
 
 type ServerInfo = {
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export default function ServerSelectorPopup({ serverBrowser, isOpen, onClose }: Props) {
+  const { t } = useI18n();
   const [servers, setServers] = useState<ServerInfo[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [name, setName] = useState("");
@@ -84,9 +86,9 @@ export default function ServerSelectorPopup({ serverBrowser, isOpen, onClose }: 
   }
 
   return (
-    <Popup isOpen={isOpen} onClose={onClose} title="Select Server">
+    <Popup isOpen={isOpen} onClose={onClose} title={t('servers.title')}>
       {/* Server list */}
-      <List emptyMessage="No servers available">
+      <List emptyMessage={t('servers.noServers')}>
         {servers.map((server) => (
           <ListItem key={server.id}>
             <div className="server-content">
@@ -99,7 +101,7 @@ export default function ServerSelectorPopup({ serverBrowser, isOpen, onClose }: 
               </div>
               <div className="server-actions">
                 <Button variant="primary" size="small" onClick={() => handleConnect(server)}>
-                  Connect
+                  {t('servers.connect')}
                 </Button>
                 <Button
                   variant="danger"
@@ -117,36 +119,36 @@ export default function ServerSelectorPopup({ serverBrowser, isOpen, onClose }: 
       {/* Add server form */}
       {showAddForm && (
         <div className="add-form">
-          <h3>Add New Server</h3>
+          <h3>{t('servers.addNewServer')}</h3>
           <InputRow
-            label="Server Name"
+            label={t('servers.serverName')}
             placeholder="My Server"
             value={name}
             onInput={setName}
           />
           <InputRow
-            label="Server URL"
+            label={t('servers.serverUrl')}
             placeholder="ws://..."
             type="url"
             value={url}
             onInput={setUrl}
           />
           <InputRow
-            label="Region (optional)"
+            label={t('servers.regionOptional')}
             placeholder="EU West"
             value={region}
             onInput={setRegion}
           />
           <div className="form-actions">
             <Button variant="ghost" onClick={() => setShowAddForm(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button
               variant="success"
               onClick={handleAddServer}
               disabled={!name.trim() || !url.trim()}
             >
-              Add Server
+              {t('servers.addNewServer')}
             </Button>
           </div>
         </div>
@@ -155,7 +157,7 @@ export default function ServerSelectorPopup({ serverBrowser, isOpen, onClose }: 
       {/* Add button */}
       {!showAddForm && (
         <Button variant="ghost" fullWidth onClick={() => setShowAddForm(true)}>
-          + Add New Server
+          {t('servers.addNewServer')}
         </Button>
       )}
     </Popup>
