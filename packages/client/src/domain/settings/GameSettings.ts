@@ -1,12 +1,5 @@
 export interface GraphicsSettings {
-  // How to compute render resolution
-  // 'auto' = match window size and devicePixelRatio
-  // 'scale' = multiply devicePixelRatio by resolutionScale
-  resolutionPolicy: 'auto' | 'scale';
-  resolutionScale: number; // used when resolutionPolicy === 'scale', 0.5 - 2.0
-  qualityPreset: 'low' | 'medium' | 'high' | 'ultra' | 'custom';
-  fullscreen: boolean;
-  vSync: boolean;
+  qualityPreset: 'low' | 'medium' | 'high' | 'ultra';
   antialias: boolean;
   shadows: boolean;
 }
@@ -14,7 +7,6 @@ export interface GraphicsSettings {
 export interface GameplaySettings {
   invertMouseY: boolean;
   mouseSensitivity: number; // 0.1 - 10
-  language: string; // i18n code
 }
 
 export interface AudioSettings {
@@ -30,23 +22,19 @@ export interface GameSettings {
   graphics: GraphicsSettings;
   gameplay: GameplaySettings;
   audio: AudioSettings;
+  language: string; // i18n code - moved to root level for better organization
   lastServerId?: string;
 }
 
 export const defaultGameSettings: GameSettings = {
   graphics: {
-    resolutionPolicy: 'auto',
-    resolutionScale: 1.0,
     qualityPreset: 'high',
-    fullscreen: false,
-    vSync: true,
     antialias: true,
     shadows: true,
   },
   gameplay: {
     invertMouseY: false,
     mouseSensitivity: 1.0,
-    language: 'en',
   },
   audio: {
     masterVolume: 0.8,
@@ -54,5 +42,6 @@ export const defaultGameSettings: GameSettings = {
     sfxVolume: 0.8,
     muteAll: false,
   },
+  language: 'en',
   lastServerId: undefined,
 };

@@ -23,7 +23,7 @@ export class I18nService {
   async initialize(): Promise<void> {
     try {
       const settings = await this.settingsRepo.load();
-      const savedLang = settings.gameplay.language as LanguageCode;
+      const savedLang = settings.language as LanguageCode;
       
       if (this.provider.isAvailable(savedLang)) {
         await this.changeLanguage(savedLang);
@@ -64,7 +64,7 @@ export class I18nService {
     // Persist to settings
     try {
       const settings = await this.settingsRepo.load();
-      settings.gameplay.language = language;
+      settings.language = language;
       await this.settingsRepo.save(settings);
     } catch (error) {
       console.error('Failed to save language preference:', error);

@@ -2,11 +2,7 @@ import { z } from 'zod';
 import { defaultGameSettings, type GameSettings } from './GameSettings';
 
 export const GraphicsSettingsSchema = z.object({
-  resolutionPolicy: z.enum(['auto', 'scale']).default('auto'),
-  resolutionScale: z.number().min(0.5).max(2.0).default(1.0),
-  qualityPreset: z.enum(['low', 'medium', 'high', 'ultra', 'custom']).default('high'),
-  fullscreen: z.boolean().default(false),
-  vSync: z.boolean().default(true),
+  qualityPreset: z.enum(['low', 'medium', 'high', 'ultra']).default('high'),
   antialias: z.boolean().default(true),
   shadows: z.boolean().default(true),
 });
@@ -14,7 +10,6 @@ export const GraphicsSettingsSchema = z.object({
 export const GameplaySettingsSchema = z.object({
   invertMouseY: z.boolean().default(false),
   mouseSensitivity: z.number().min(0.1).max(10).default(1.0),
-  language: z.string().default('en'),
 });
 
 export const AudioSettingsSchema = z.object({
@@ -24,13 +19,14 @@ export const AudioSettingsSchema = z.object({
   muteAll: z.boolean().default(false),
 });
 
-export const CURRENT_SETTINGS_VERSION = 1;
+export const CURRENT_SETTINGS_VERSION = 2; // Bumped for language field migration
 
 export const GameSettingsSchema = z.object({
   version: z.number().int().nonnegative().default(CURRENT_SETTINGS_VERSION),
   graphics: GraphicsSettingsSchema,
   gameplay: GameplaySettingsSchema,
   audio: AudioSettingsSchema,
+  language: z.string().default('en'),
   lastServerId: z.string().optional(),
 });
 
@@ -41,11 +37,13 @@ export function validateAndMigrate(input: unknown): GameSettings {
 
   let data = parsed.data as GameSettings & { version?: number };
 
-  // Future migrations can be chained here by version
+  // Migrate from version 1 to version 2: move gameplay.language to root level
   const version = (data as any).version ?? 0;
-  if (version < CURRENT_SETTINGS_VERSION) {
-    // Example migration placeholders
-    // if (version < 1) { /* initialize new fields */ }
+  if (version < 2) {
+    const oldSettings = data as any;
+    if (oldSettings.gameplay?.language && !data.language) {
+      data.language = oldSettings.gameplay.language;
+    }
   }
 
   // Ensure version is set to current

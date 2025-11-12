@@ -26,7 +26,8 @@
       "shadows": "Sombras",
       "qualityLow": "Baja",
       "qualityMedium": "Media",
-      "qualityHigh": "Alta"
+      "qualityHigh": "Alta",
+      "qualityUltra": "Ultra"
     },
     "audio": {
       "title": "Audio",
@@ -36,8 +37,11 @@
     },
     "gameplay": {
       "title": "Juego",
-      "mouseSensitivity": "Sensibilidad del Ratón",
-      "language": "Idioma"
+      "mouseSensitivity": "Sensibilidad del Ratón"
+    },
+    "language": {
+      "title": "Idioma",
+      "select": "Seleccionar Idioma"
     }
   },
   "servers": {

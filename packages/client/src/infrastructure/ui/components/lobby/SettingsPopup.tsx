@@ -1,12 +1,11 @@
-import { useState } from "preact/hooks";
 import Popup from "../common/utility/Popup";
-import Button from "../common/utility/Button";
 import FormSection from "../common/form/FormSection";
 import FormField from "../common/form/FormField";
 import Select from "../common/form/Select";
 import Checkbox from "../common/form/Checkbox";
 import Slider from "../common/form/Slider";
 import useI18n from "../../hooks/useI18n";
+import useSettings from "../../hooks/useSettings";
 import { SUPPORTED_LANGUAGES } from "@client/domain/i18n/Language";
 import type { LanguageCode } from "@client/domain/i18n/Language";
 
@@ -17,73 +16,91 @@ type Props = {
 
 export default function SettingsPopup({ isOpen, onClose }: Props) {
   const { t, language, changeLanguage } = useI18n();
-  
-  // Graphics settings
-  const [quality, setQuality] = useState("high");
-  const [antialiasing, setAntialiasing] = useState(true);
-  const [shadows, setShadows] = useState(true);
+  const { settings, updateSetting } = useSettings();
 
-  // Audio settings
-  const [masterVolume, setMasterVolume] = useState(80);
-  const [music, setMusic] = useState(true);
-  const [soundEffects, setSoundEffects] = useState(true);
-
-  // Gameplay settings
-  const [mouseSensitivity, setMouseSensitivity] = useState(50);
-
+  // Quality preset options
   const qualityOptions = [
     { value: "low", label: t('settings.graphics.qualityLow') },
     { value: "medium", label: t('settings.graphics.qualityMedium') },
     { value: "high", label: t('settings.graphics.qualityHigh') },
+    { value: "ultra", label: t('settings.graphics.qualityUltra') },
   ];
 
+  // Language options with flags
   const languageOptions = SUPPORTED_LANGUAGES.map(lang => ({
     value: lang.code,
     label: `${lang.flag} ${lang.name}`
   }));
 
-  const handleLanguageChange = async (langCode: string) => {
-    await changeLanguage(langCode as LanguageCode);
-  };
-
-  const footer = (
-    <Button variant="primary" onClick={onClose}>
-      {t('settings.saveChanges')}
-    </Button>
-  );
-
   return (
-    <Popup isOpen={isOpen} onClose={onClose} title={t('settings.title')} footer={footer}>
+    <Popup isOpen={isOpen} onClose={onClose} title={t('settings.title')}>
+      {/* Graphics Section */}
       <FormSection title={t('settings.graphics.title')}>
         <FormField label={t('settings.graphics.quality')}>
-          <Select value={quality} onChange={setQuality} options={qualityOptions} />
+          <Select 
+            value={settings.graphics.qualityPreset} 
+            onChange={(value) => updateSetting('graphics.qualityPreset', value)} 
+            options={qualityOptions} 
+          />
         </FormField>
         <FormField label={t('settings.graphics.antialiasing')}>
-          <Checkbox checked={antialiasing} onChange={setAntialiasing} />
+          <Checkbox 
+            checked={settings.graphics.antialias} 
+            onChange={(checked) => updateSetting('graphics.antialias', checked)} 
+          />
         </FormField>
         <FormField label={t('settings.graphics.shadows')}>
-          <Checkbox checked={shadows} onChange={setShadows} />
+          <Checkbox 
+            checked={settings.graphics.shadows} 
+            onChange={(checked) => updateSetting('graphics.shadows', checked)} 
+          />
         </FormField>
       </FormSection>
 
+      {/* Audio Section */}
       <FormSection title={t('settings.audio.title')}>
         <FormField label={t('settings.audio.masterVolume')}>
-          <Slider value={masterVolume} onChange={setMasterVolume} min={0} max={100} />
+          <Slider 
+            value={Math.round(settings.audio.masterVolume * 100)} 
+            onChange={(value) => updateSetting('audio.masterVolume', value / 100)} 
+            min={0} 
+            max={100} 
+          />
         </FormField>
         <FormField label={t('settings.audio.music')}>
-          <Checkbox checked={music} onChange={setMusic} />
+          <Checkbox 
+            checked={settings.audio.musicVolume > 0} 
+            onChange={(checked) => updateSetting('audio.musicVolume', checked ? 0.6 : 0)} 
+          />
         </FormField>
         <FormField label={t('settings.audio.soundEffects')}>
-          <Checkbox checked={soundEffects} onChange={setSoundEffects} />
+          <Checkbox 
+            checked={settings.audio.sfxVolume > 0} 
+            onChange={(checked) => updateSetting('audio.sfxVolume', checked ? 0.8 : 0)} 
+          />
         </FormField>
       </FormSection>
 
+      {/* Gameplay Section */}
       <FormSection title={t('settings.gameplay.title')}>
         <FormField label={t('settings.gameplay.mouseSensitivity')}>
-          <Slider value={mouseSensitivity} onChange={setMouseSensitivity} min={1} max={100} />
+          <Slider 
+            value={Math.round(settings.gameplay.mouseSensitivity * 10)} 
+            onChange={(value) => updateSetting('gameplay.mouseSensitivity', value / 10)} 
+            min={1} 
+            max={100} 
+          />
         </FormField>
-        <FormField label={t('settings.gameplay.language')}>
-          <Select value={language} onChange={handleLanguageChange} options={languageOptions} />
+      </FormSection>
+
+      {/* Language Section - Separate from Gameplay */}
+      <FormSection title={t('settings.language.title')}>
+        <FormField label={t('settings.language.select')}>
+          <Select 
+            value={language} 
+            onChange={(lang) => changeLanguage(lang as LanguageCode)} 
+            options={languageOptions} 
+          />
         </FormField>
       </FormSection>
     </Popup>

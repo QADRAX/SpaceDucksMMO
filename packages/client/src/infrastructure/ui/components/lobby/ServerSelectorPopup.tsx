@@ -6,8 +6,8 @@ import InputRow from "../common/form/InputRow";
 import List from "../common/list/List";
 import ListItem from "../common/list/ListItem";
 import useI18n from "../../hooks/useI18n";
+import useServices from "../../hooks/useServices";
 import { TrashIcon, PlusIcon } from "../common/icons";
-import type ServerBrowserService from "@client/application/ServerBrowserService";
 
 type ServerInfo = {
   id: string;
@@ -19,13 +19,13 @@ type ServerInfo = {
 };
 
 type Props = {
-  serverBrowser?: ServerBrowserService;
   isOpen: boolean;
   onClose: () => void;
 };
 
-export default function ServerSelectorPopup({ serverBrowser, isOpen, onClose }: Props) {
+export default function ServerSelectorPopup({ isOpen, onClose }: Props) {
   const { t } = useI18n();
+  const { serverBrowser } = useServices();
   const [servers, setServers] = useState<ServerInfo[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [name, setName] = useState("");
