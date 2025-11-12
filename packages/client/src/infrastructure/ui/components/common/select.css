@@ -1,0 +1,32 @@
+.sd-select {
+    background: #0f1218;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    font-size: 14px;
+    min-width: 120px;
+}
+
+.sd-select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px rgba(93, 211, 255, 0.15);
+}
+
+.sd-select:hover:not(:disabled) {
+    border-color: var(--accent);
+}
+
+.sd-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sd-select option {
+    background: #0f1218;
+    color: var(--text);
+}

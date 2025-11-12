@@ -1,0 +1,57 @@
+.sd-input-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.sd-input-label {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.sd-input {
+    background: #0f1218;
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.sd-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(93, 211, 255, 0.1);
+}
+
+.sd-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background: rgba(15, 18, 24, 0.5);
+}
+
+.sd-input::placeholder {
+    color: var(--muted);
+    opacity: 0.6;
+}
+
+.sd-input--error {
+    border-color: #ef4444;
+}
+
+.sd-input--error:focus {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.sd-input-error {
+    color: #ef4444;
+    font-size: 12px;
+    margin-top: -2px;
+}
