@@ -5,6 +5,7 @@ import * as net from 'net';
 import { FileStorage } from './infrastructure/storage/FileStorage';
 import { WindowManager } from './infrastructure/electron/WindowManager';
 import StorageIpcBridge from './infrastructure/ipc/StorageIpcBridge';
+import registerWindowIpcHandlers from './infrastructure/ipc/WindowIpcBridge';
 
 const windowManager = new WindowManager();
 
@@ -56,6 +57,9 @@ app.whenReady().then(async () => {
   const storage = new FileStorage();
   const storageBridge = new StorageIpcBridge();
   storageBridge.register(storage);
+
+  // Register window IPC handlers
+  registerWindowIpcHandlers(windowManager);
 
   const url = await detectDevUrl();
   createMainWindow(url);

@@ -24,6 +24,7 @@
       "quality": "Quality",
       "antialiasing": "Antialiasing",
       "shadows": "Shadows",
+      "fullscreen": "Fullscreen",
       "qualityLow": "Low",
       "qualityMedium": "Medium",
       "qualityHigh": "High",

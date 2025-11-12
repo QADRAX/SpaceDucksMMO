@@ -36,6 +36,16 @@ export class WindowManager implements IWindowManager {
   getMainWindow(): BrowserWindow | null {
     return this.mainWindow;
   }
+
+  setFullscreen(fullscreen: boolean): void {
+    if (this.mainWindow) {
+      this.mainWindow.setFullScreen(fullscreen);
+    }
+  }
+
+  isFullscreen(): boolean {
+    return this.mainWindow?.isFullScreen() ?? false;
+  }
 }
 
 export default WindowManager;

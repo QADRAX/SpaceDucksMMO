@@ -1,6 +1,7 @@
 import SettingsService from "@client/application/SettingsService";
 import I18nService from "@client/application/I18nService";
 import ServerBrowserService from "@client/application/ServerBrowserService";
+import WindowService from "@client/application/WindowService";
 import JsonSettingsRepository from "@client/infrastructure/settings/JsonSettingsRepository";
 import JsonTranslationProvider from "@client/infrastructure/i18n/JsonTranslationProvider";
 import PersistentServerDirectory from "@client/infrastructure/server/PersistentServerDirectory";
@@ -35,11 +36,13 @@ export class ServiceContainer {
     const settingsService = new SettingsService(settingsRepo);
     const i18nService = new I18nService(translationProvider, settingsRepo);
     const serverBrowser = new ServerBrowserService(serverDirectory);
+    const windowService = new WindowService();
 
     this.services = {
       settings: settingsService,
       i18n: i18nService,
       serverBrowser: serverBrowser,
+      window: windowService,
     };
 
     return this.services;

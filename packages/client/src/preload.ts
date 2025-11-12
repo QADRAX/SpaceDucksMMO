@@ -8,6 +8,10 @@ contextBridge.exposeInMainWorld('spaceducks', {
     writeJson: (key: string, data: unknown) => ipcRenderer.invoke('spaceducks:storage:writeJson', key, data),
     delete: (key: string) => ipcRenderer.invoke('spaceducks:storage:delete', key)
   },
+  window: {
+    setFullscreen: (fullscreen: boolean) => ipcRenderer.invoke('spaceducks:window:setFullscreen', fullscreen),
+    isFullscreen: () => ipcRenderer.invoke('spaceducks:window:isFullscreen'),
+  },
   // send generic IPC messages
   send: (channel: string, payload: unknown) => {
     ipcRenderer.send(channel, payload);

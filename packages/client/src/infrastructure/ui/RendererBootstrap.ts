@@ -37,11 +37,17 @@ export class RendererBootstrap {
       const settings = services.settings.getSettings();
       renderingBootstrap.applySettings(settings);
 
+      // Apply initial fullscreen state
+      await services.window.setFullscreen(settings.graphics.fullscreen);
+
       // Subscribe to settings changes for real-time updates
       const gfxController = renderingBootstrap.getGraphicsController();
       services.settings.subscribe((newSettings) => {
         gfxController.setAntialias(newSettings.graphics.antialias);
         gfxController.setShadows(newSettings.graphics.shadows);
+        
+        // Apply fullscreen changes immediately
+        services.window.setFullscreen(newSettings.graphics.fullscreen);
       });
     } catch (error) {
       console.error('Failed to initialize services:', error);

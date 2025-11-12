@@ -3,6 +3,7 @@ import { useContext } from "preact/hooks";
 import type I18nService from "@client/application/I18nService";
 import type SettingsService from "@client/application/SettingsService";
 import type ServerBrowserService from "@client/application/ServerBrowserService";
+import type WindowService from "@client/application/WindowService";
 
 /**
  * Services available through dependency injection context
@@ -11,6 +12,7 @@ export interface Services {
   i18n: I18nService;
   settings: SettingsService;
   serverBrowser: ServerBrowserService;
+  window: WindowService;
 }
 
 // Context for services

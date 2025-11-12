@@ -43,6 +43,12 @@ export default function SettingsPopup({ isOpen, onClose }: Props) {
             options={qualityOptions} 
           />
         </FormField>
+        <FormField label={t('settings.graphics.fullscreen')}>
+          <Checkbox 
+            checked={settings.graphics.fullscreen} 
+            onChange={(checked) => updateSetting('graphics.fullscreen', checked)} 
+          />
+        </FormField>
         <FormField label={t('settings.graphics.antialiasing')}>
           <Checkbox 
             checked={settings.graphics.antialias} 

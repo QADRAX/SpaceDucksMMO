@@ -2,6 +2,7 @@ export interface GraphicsSettings {
   qualityPreset: 'low' | 'medium' | 'high' | 'ultra';
   antialias: boolean;
   shadows: boolean;
+  fullscreen: boolean;
 }
 
 export interface GameplaySettings {
@@ -31,6 +32,7 @@ export const defaultGameSettings: GameSettings = {
     qualityPreset: 'high',
     antialias: true,
     shadows: true,
+    fullscreen: false,
   },
   gameplay: {
     invertMouseY: false,

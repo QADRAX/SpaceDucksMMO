@@ -9,6 +9,8 @@ export interface IWindowManager {
     prodIndexPath: string;
   }): BrowserWindow;
   getMainWindow(): BrowserWindow | null;
+  setFullscreen(fullscreen: boolean): void;
+  isFullscreen(): boolean;
 }
 
 export default IWindowManager;

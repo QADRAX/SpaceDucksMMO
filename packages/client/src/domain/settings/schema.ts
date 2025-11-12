@@ -5,6 +5,7 @@ export const GraphicsSettingsSchema = z.object({
   qualityPreset: z.enum(['low', 'medium', 'high', 'ultra']).default('high'),
   antialias: z.boolean().default(true),
   shadows: z.boolean().default(true),
+  fullscreen: z.boolean().default(false),
 });
 
 export const GameplaySettingsSchema = z.object({
