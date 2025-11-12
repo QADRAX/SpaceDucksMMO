@@ -1,4 +1,5 @@
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
+import type { ITextureReloadable } from '@client/domain/scene/ITextureReloadable';
 import type { TextureResolverService } from '@client/application/TextureResolverService';
 import * as THREE from 'three';
 
@@ -55,7 +56,7 @@ export interface TexturedSunStarConfig {
  * );
  * ```
  */
-export class TexturedSunStar implements ISceneObject {
+export class TexturedSunStar implements ISceneObject, ITextureReloadable {
   readonly id: string;
   private sunMesh!: THREE.Mesh;
   private glowMesh!: THREE.Mesh;
@@ -300,6 +301,31 @@ export class TexturedSunStar implements ISceneObject {
     }
     
     console.error('[TexturedSunStar] Failed to load texture in any quality, keeping placeholder color');
+  }
+
+  /**
+   * Reload texture with current quality settings.
+   * Useful when user changes texture quality in settings.
+   */
+  async reloadTexture(): Promise<void> {
+    if (!this.sunMesh) {
+      console.warn('[TexturedSunStar] Cannot reload texture: mesh not initialized');
+      return;
+    }
+
+    const material = this.sunMesh.material as THREE.MeshStandardMaterial;
+    
+    // Dispose old texture if it exists
+    if (material.emissiveMap) {
+      material.emissiveMap.dispose();
+      material.emissiveMap = null;
+      material.needsUpdate = true;
+    }
+
+    // Load new texture with current quality settings
+    await this.loadTexture(material);
+    
+    console.log('[TexturedSunStar] Texture reloaded with new quality settings');
   }
   
   /**

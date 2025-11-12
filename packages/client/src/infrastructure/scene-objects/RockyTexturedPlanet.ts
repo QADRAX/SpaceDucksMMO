@@ -1,4 +1,5 @@
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
+import type { ITextureReloadable } from '@client/domain/scene/ITextureReloadable';
 import type { TextureResolverService } from '@client/application/TextureResolverService';
 import * as THREE from 'three';
 
@@ -56,7 +57,7 @@ export interface RockyTexturedPlanetConfig {
  * );
  * ```
  */
-export class RockyTexturedPlanet implements ISceneObject {
+export class RockyTexturedPlanet implements ISceneObject, ITextureReloadable {
   readonly id: string;
   private planetMesh!: THREE.Mesh;
   private atmosphereMesh?: THREE.Mesh;
@@ -221,6 +222,31 @@ export class RockyTexturedPlanet implements ISceneObject {
     }
     
     console.error('[RockyTexturedPlanet] Failed to load texture in any quality, keeping placeholder color');
+  }
+
+  /**
+   * Reload texture with current quality settings.
+   * Useful when user changes texture quality in settings.
+   */
+  async reloadTexture(): Promise<void> {
+    if (!this.planetMesh) {
+      console.warn('[RockyTexturedPlanet] Cannot reload texture: mesh not initialized');
+      return;
+    }
+
+    const material = this.planetMesh.material as THREE.MeshStandardMaterial;
+    
+    // Dispose old texture if it exists
+    if (material.map) {
+      material.map.dispose();
+      material.map = null;
+      material.needsUpdate = true;
+    }
+
+    // Load new texture with current quality settings
+    await this.loadTexture(material);
+    
+    console.log('[RockyTexturedPlanet] Texture reloaded with new quality settings');
   }
   
   /**

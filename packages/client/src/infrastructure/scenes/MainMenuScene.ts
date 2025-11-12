@@ -1,7 +1,8 @@
-import type IScene from '@client/domain/ports/IScene';
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type { TextureResolverService } from '@client/application/TextureResolverService';
+import type { SettingsService } from '@client/application/SettingsService';
+import { BaseScene } from '@client/infrastructure/scenes/BaseScene';
 import SceneId from '@client/domain/scene/SceneId';
 import * as THREE from 'three';
 import { TexturedSunStar, RockyPlanet, RockyTexturedPlanet } from '@client/infrastructure/scene-objects';
@@ -58,17 +59,24 @@ class AmbientParticles implements ISceneObject {
  * Main menu background scene: ambient, non-interactive visual backdrop.
  * Features a rotating duck placeholder and floating particles.
  */
-export class MainMenuScene implements IScene {
+export class MainMenuScene extends BaseScene {
   readonly id = SceneId.MainMenu;
-  private objects: ISceneObject[] = [];
   private camera: THREE.Camera | null = null;
   private cameraAngle: number = 0;
   private cameraDistance: number = 5;
   private cameraHeight: number = 1;
   
-  constructor(private textureResolver: TextureResolverService) {}
+  constructor(
+    private textureResolver: TextureResolverService,
+    settingsService: SettingsService
+  ) {
+    super(settingsService);
+  }
 
   setup(engine: IRenderingEngine): void {
+    // Call parent setup to initialize texture reload system
+    super.setup(engine);
+    
     // Configure camera position for menu view
     const camera = engine.getCamera();
     this.camera = camera;
@@ -173,8 +181,15 @@ export class MainMenuScene implements IScene {
     
     const particles = new AmbientParticles();
     
-    this.objects.push(star, rockyTextured, earthPlanet, marsPlanet, venusPlanet, icePlanet, mercuryPlanet, particles);
-    this.objects.forEach(obj => engine.add(obj));
+    // Add all objects using addObject to enable automatic texture reloading
+    this.addObject(engine, star);
+    this.addObject(engine, rockyTextured);
+    this.addObject(engine, earthPlanet);
+    this.addObject(engine, marsPlanet);
+    this.addObject(engine, venusPlanet);
+    this.addObject(engine, icePlanet);
+    this.addObject(engine, mercuryPlanet);
+    this.addObject(engine, particles);
     
     // Position textured planet prominently
     const rockyObj = rockyTextured.getObject3D();
@@ -218,9 +233,9 @@ export class MainMenuScene implements IScene {
   }
 
   teardown(engine: IRenderingEngine): void {
-    // Remove all objects
-    this.objects.forEach(obj => engine.remove(obj.id));
-    this.objects = [];
+    // Call parent teardown to cleanup subscriptions and objects
+    super.teardown(engine);
+    
     this.camera = null;
     
     // Clear lights (Three.js will keep references otherwise)

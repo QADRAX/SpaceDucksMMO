@@ -7,6 +7,7 @@ import SceneId from "@client/domain/scene/SceneId";
 import GraphicsController from "../ui/GraphicsController";
 import type { GameSettings } from "@client/domain/settings/GameSettings";
 import type { TextureResolverService } from "@client/application/TextureResolverService";
+import type { SettingsService } from "@client/application/SettingsService";
 
 /**
  * Rendering Bootstrap
@@ -19,7 +20,10 @@ export class RenderingBootstrap {
   private sceneService: SceneService;
   private graphicsController: GraphicsController;
 
-  constructor(private textureResolver: TextureResolverService) {
+  constructor(
+    private textureResolver: TextureResolverService,
+    private settingsService: SettingsService
+  ) {
     this.engine = new ThreeRenderer();
     this.sceneManager = new SceneManager(this.engine);
     this.sceneService = new SceneService(this.engine, this.sceneManager);
@@ -31,7 +35,7 @@ export class RenderingBootstrap {
    */
   initialize(container: HTMLElement): void {
     // Register available 3D scenes
-    this.sceneManager.register(new MainMenuScene(this.textureResolver));
+    this.sceneManager.register(new MainMenuScene(this.textureResolver, this.settingsService));
     this.sceneManager.register(new GameWorldScene());
 
     // Initialize Three.js renderer, camera, scene
