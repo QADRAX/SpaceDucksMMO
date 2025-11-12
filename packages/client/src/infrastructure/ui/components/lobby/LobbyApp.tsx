@@ -7,6 +7,7 @@ import SettingsPopup from "./SettingsPopup";
 import IconButton from "../common/utility/IconButton";
 import Button from "../common/utility/Button";
 import useI18n from "../../hooks/useI18n";
+import { SettingsIcon } from "../common/icons";
 
 type Props = {
   serverBrowser?: ServerBrowserService;
@@ -22,7 +23,7 @@ export default function LobbyApp({ serverBrowser }: Props) {
       {/* Settings button - top right */}
       <div className="settings-btn-wrapper">
         <IconButton
-          icon="⚙️"
+          icon={<SettingsIcon size={20} />}
           title={t('lobby.settings')}
           variant="secondary"
           onClick={() => setShowSettingsPopup(true)}

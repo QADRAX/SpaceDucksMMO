@@ -46,7 +46,7 @@
     "addServerHint": "Añade tu primer servidor para empezar",
     "connect": "Conectar",
     "remove": "Eliminar",
-    "addNewServer": "+ Añadir Nuevo Servidor",
+    "addNewServer": "Añadir Nuevo Servidor",
     "serverName": "Nombre del Servidor",
     "serverUrl": "URL del Servidor",
     "region": "Región",

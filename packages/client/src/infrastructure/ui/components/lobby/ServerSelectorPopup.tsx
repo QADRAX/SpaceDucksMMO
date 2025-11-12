@@ -6,6 +6,7 @@ import InputRow from "../common/form/InputRow";
 import List from "../common/list/List";
 import ListItem from "../common/list/ListItem";
 import useI18n from "../../hooks/useI18n";
+import { TrashIcon, PlusIcon } from "../common/icons";
 import type ServerBrowserService from "@client/application/ServerBrowserService";
 
 type ServerInfo = {
@@ -108,7 +109,7 @@ export default function ServerSelectorPopup({ serverBrowser, isOpen, onClose }: 
                   size="small"
                   onClick={() => handleRemoveServer(server.id)}
                 >
-                  🗑️
+                  <TrashIcon size={16} />
                 </Button>
               </div>
             </div>
@@ -157,7 +158,7 @@ export default function ServerSelectorPopup({ serverBrowser, isOpen, onClose }: 
       {/* Add button */}
       {!showAddForm && (
         <Button variant="ghost" fullWidth onClick={() => setShowAddForm(true)}>
-          {t('servers.addNewServer')}
+          <PlusIcon size={16} /> {t('servers.addNewServer')}
         </Button>
       )}
     </Popup>

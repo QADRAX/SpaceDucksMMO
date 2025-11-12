@@ -1,7 +1,8 @@
 import "./icon-button.css";
+import type { ComponentChildren } from "preact";
 
 type IconButtonProps = {
-  icon: string;
+  icon: ComponentChildren;
   onClick?: (e: MouseEvent) => void;
   title?: string;
   variant?: "primary" | "secondary" | "danger" | "ghost";
