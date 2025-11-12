@@ -12,9 +12,24 @@ export class ServerBrowserService {
     return this.directory.getServer(id);
   }
 
-  async withLatency(): Promise<ServerInfo[]> {
-    const servers = await this.list();
-    return Promise.all(servers.map(s => this.directory.refreshLatency ? this.directory.refreshLatency(s) : Promise.resolve(s)));
+  // Latency not used for now per requirements
+  async withLatency(): Promise<ServerInfo[]> { return this.list(); }
+
+  async add(server: Omit<ServerInfo, 'id' | 'pingMs' | 'playersOnline' | 'maxPlayers' | 'status'> & { id?: string; status?: ServerInfo['status'] }): Promise<void> {
+    // Generate id if missing and provide minimal defaults
+    const id = server.id ?? `srv_${Date.now().toString(36)}`;
+    const info: ServerInfo = {
+      id,
+      name: server.name,
+      region: server.region || 'unknown',
+      url: server.url,
+      status: server.status ?? 'online'
+    };
+    return this.directory.addServer(info);
+  }
+
+  async remove(id: string): Promise<void> {
+    return this.directory.removeServer(id);
   }
 }
 

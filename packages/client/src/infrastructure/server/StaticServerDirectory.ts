@@ -5,9 +5,8 @@ export class StaticServerDirectory implements IServerDirectory {
   private servers: ServerInfo[];
 
   constructor(servers?: ServerInfo[]) {
-    this.servers = servers ?? [
-      { id: 'local', name: 'Local Dev', region: 'local', status: 'online', url: 'http://localhost:3000' },
-    ];
+    // Initialize with empty list unless explicitly provided. User will add servers manually.
+    this.servers = servers ?? [];
   }
 
   async listServers(): Promise<ServerInfo[]> {
@@ -21,6 +20,18 @@ export class StaticServerDirectory implements IServerDirectory {
   async refreshLatency(server: ServerInfo): Promise<ServerInfo> {
     // Stubbed latency measurement
     return { ...server, pingMs: 12 };
+  }
+
+  async addServer(info: ServerInfo): Promise<void> {
+    // Prevent duplicate ids
+    if (this.servers.some(s => s.id === info.id)) {
+      throw new Error(`Server with id '${info.id}' already exists.`);
+    }
+    this.servers.push(info);
+  }
+
+  async removeServer(id: string): Promise<void> {
+    this.servers = this.servers.filter(s => s.id !== id);
   }
 }
 

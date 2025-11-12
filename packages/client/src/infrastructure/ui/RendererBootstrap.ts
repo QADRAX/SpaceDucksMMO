@@ -1,12 +1,13 @@
 import { ThreeRenderer } from '@client/infrastructure/rendering/ThreeRenderer';
 import { SceneService } from '@client/application/SceneService';
 import SceneManager from '@client/application/SceneManager';
-import { IpcStorage } from '@client/infrastructure/storage/IpcStorage';
+// IPC-backed storage bridge for renderer
 import { BrowserStorage } from '@client/infrastructure/storage/BrowserStorage';
 import JsonSettingsRepository from '@client/infrastructure/settings/JsonSettingsRepository';
 import SettingsService from '@client/application/SettingsService';
 import ServerBrowserService from '@client/application/ServerBrowserService';
-import StaticServerDirectory from '@client/infrastructure/server/StaticServerDirectory';
+import PersistentServerDirectory from '@client/infrastructure/server/PersistentServerDirectory';
+import IpcStorage from '@client/infrastructure/storage/IpcStorage';
 import UiLayer from './UiLayer';
 import ScreenRouter from '@client/application/ui/ScreenRouter';
 import ScreenId from '@client/domain/ui/ScreenId';
@@ -35,8 +36,10 @@ export class RendererBootstrap {
     const storage = (window as any).spaceducks?.storage ? new IpcStorage() : new BrowserStorage();
     const settingsRepo = new JsonSettingsRepository(storage);
     const settingsService = new SettingsService(settingsRepo);
-    const serverDirectory = new StaticServerDirectory();
-    const serverBrowser = new ServerBrowserService(serverDirectory);
+  // Persistent server directory (stored in user data via IPC/FileStorage)
+  const serverStorage = new IpcStorage();
+  const serverDirectory = new PersistentServerDirectory(serverStorage);
+  const serverBrowser = new ServerBrowserService(serverDirectory);
     
     // UI layer + screen router
     const uiLayer = new UiLayer(root); 
