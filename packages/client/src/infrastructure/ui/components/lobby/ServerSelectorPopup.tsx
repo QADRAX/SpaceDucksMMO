@@ -1,10 +1,10 @@
 import { useEffect, useState } from "preact/hooks";
 import "./server-selector-popup.css";
-import Popup from "../common/Popup";
-import Button from "../common/Button";
-import InputRow from "../common/InputRow";
-import List from "../common/List";
-import ListItem from "../common/ListItem";
+import Popup from "../common/utility/Popup";
+import Button from "../common/utility/Button";
+import InputRow from "../common/form/InputRow";
+import List from "../common/list/List";
+import ListItem from "../common/list/ListItem";
 import type ServerBrowserService from "@client/application/ServerBrowserService";
 
 type ServerInfo = {

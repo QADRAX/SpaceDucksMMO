@@ -1,11 +1,11 @@
 import { useState } from "preact/hooks";
-import Popup from "../common/Popup";
-import Button from "../common/Button";
-import FormSection from "../common/FormSection";
-import FormField from "../common/FormField";
-import Select from "../common/Select";
-import Checkbox from "../common/Checkbox";
-import Slider from "../common/Slider";
+import Popup from "../common/utility/Popup";
+import Button from "../common/utility/Button";
+import FormSection from "../common/form/FormSection";
+import FormField from "../common/form/FormField";
+import Select from "../common/form/Select";
+import Checkbox from "../common/form/Checkbox";
+import Slider from "../common/form/Slider";
 
 type Props = {
   isOpen: boolean;

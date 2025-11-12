@@ -4,8 +4,8 @@ import logo from "../../../../assets/images/logo.png";
 import type ServerBrowserService from "@client/application/ServerBrowserService";
 import ServerSelectorPopup from "./ServerSelectorPopup";
 import SettingsPopup from "./SettingsPopup";
-import IconButton from "../common/IconButton";
-import Button from "../common/Button";
+import IconButton from "../common/utility/IconButton";
+import Button from "../common/utility/Button";
 
 type Props = {
   serverBrowser?: ServerBrowserService;

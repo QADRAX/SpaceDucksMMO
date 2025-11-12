@@ -1,6 +1,6 @@
 import { useState, useRef } from "preact/hooks";
-import Tooltip from "./Tooltip";
 import "./slider.css";
+import { Tooltip } from "../utility";
 
 type SliderProps = {
   value: number;
