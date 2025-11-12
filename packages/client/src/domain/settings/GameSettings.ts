@@ -3,6 +3,7 @@ export interface GraphicsSettings {
   antialias: boolean;
   shadows: boolean;
   fullscreen: boolean;
+  textureQuality: 'low' | 'medium' | 'high' | 'ultra'; // 2k, 4k, 8k textures
 }
 
 export interface GameplaySettings {
@@ -33,6 +34,7 @@ export const defaultGameSettings: GameSettings = {
     antialias: true,
     shadows: true,
     fullscreen: false,
+    textureQuality: 'high',
   },
   gameplay: {
     invertMouseY: false,

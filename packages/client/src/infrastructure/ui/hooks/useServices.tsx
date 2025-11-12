@@ -4,6 +4,7 @@ import type I18nService from "@client/application/I18nService";
 import type SettingsService from "@client/application/SettingsService";
 import type ServerBrowserService from "@client/application/ServerBrowserService";
 import type WindowService from "@client/application/WindowService";
+import type TextureResolverService from "@client/application/TextureResolverService";
 
 /**
  * Services available through dependency injection context
@@ -13,6 +14,7 @@ export interface Services {
   settings: SettingsService;
   serverBrowser: ServerBrowserService;
   window: WindowService;
+  textureResolver: TextureResolverService;
 }
 
 // Context for services

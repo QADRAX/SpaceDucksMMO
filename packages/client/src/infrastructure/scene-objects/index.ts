@@ -6,8 +6,16 @@
 export { SunStar } from './SunStar';
 export type { SunStarConfig } from './SunStar';
 
+export { TexturedSunStar } from './TexturedSunStar';
+export type { TexturedSunStarConfig } from './TexturedSunStar';
+
+export { RockyPlanet } from './RockyPlanet';
+export type { RockyPlanetConfig } from './RockyPlanet';
+
+export { RockyTexturedPlanet } from './RockyTexturedPlanet';
+export type { RockyTexturedPlanetConfig } from './RockyTexturedPlanet';
+
 // Future exports:
-// export { Planet } from './Planet';
 // export { Asteroid } from './Asteroid';
 // export { SpaceStation } from './SpaceStation';
 // export { Nebula } from './Nebula';

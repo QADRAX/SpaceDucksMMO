@@ -1,6 +1,5 @@
 import { useState } from "preact/hooks";
 import "./lobby.css";
-import logo from "../../../../assets/images/logo.png";
 import ServerSelectorPopup from "./ServerSelectorPopup";
 import SettingsPopup from "./SettingsPopup";
 import IconButton from "../common/utility/IconButton";
@@ -27,7 +26,7 @@ export default function LobbyApp() {
 
       {/* Center content - logo + play button */}
       <div className="lobby-center">
-        <img src={logo} alt="SpaceDucks Logo" className="lobby-logo" />
+        <img src="/assets/images/logo.png" alt="SpaceDucks Logo" className="lobby-logo" />
         <Button
           variant="primary"
           size="large"

@@ -6,6 +6,7 @@ export const GraphicsSettingsSchema = z.object({
   antialias: z.boolean().default(true),
   shadows: z.boolean().default(true),
   fullscreen: z.boolean().default(false),
+  textureQuality: z.enum(['low', 'medium', 'high', 'ultra']).default('high'),
 });
 
 export const GameplaySettingsSchema = z.object({
@@ -20,7 +21,7 @@ export const AudioSettingsSchema = z.object({
   muteAll: z.boolean().default(false),
 });
 
-export const CURRENT_SETTINGS_VERSION = 2; // Bumped for language field migration
+export const CURRENT_SETTINGS_VERSION = 3; // Bumped for textureQuality field
 
 export const GameSettingsSchema = z.object({
   version: z.number().int().nonnegative().default(CURRENT_SETTINGS_VERSION),

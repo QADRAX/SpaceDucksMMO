@@ -35,10 +35,7 @@ export class ThreeRenderer implements IRenderingEngine {
   // listen for window resize to keep internal buffer in sync with window size
   window.addEventListener('resize', this.onResizeBound);
 
-    // basic light
-    const light = new THREE.DirectionalLight(0xffffff, 1);
-    light.position.set(5, 5, 5);
-    this.scene.add(light);
+    // No default lights - scenes handle their own lighting
   }
 
   add(object: ISceneObject): void {

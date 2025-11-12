@@ -43,6 +43,13 @@ export default function SettingsPopup({ isOpen, onClose }: Props) {
             options={qualityOptions} 
           />
         </FormField>
+        <FormField label={t('settings.graphics.textureQuality')}>
+          <Select 
+            value={settings.graphics.textureQuality} 
+            onChange={(value) => updateSetting('graphics.textureQuality', value)} 
+            options={qualityOptions} 
+          />
+        </FormField>
         <FormField label={t('settings.graphics.fullscreen')}>
           <Checkbox 
             checked={settings.graphics.fullscreen} 

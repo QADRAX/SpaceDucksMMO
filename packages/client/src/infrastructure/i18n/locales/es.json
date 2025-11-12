@@ -22,6 +22,7 @@
     "graphics": {
       "title": "Gráficos",
       "quality": "Calidad",
+      "textureQuality": "Calidad de Texturas",
       "antialiasing": "Suavizado",
       "shadows": "Sombras",
       "fullscreen": "Pantalla Completa",

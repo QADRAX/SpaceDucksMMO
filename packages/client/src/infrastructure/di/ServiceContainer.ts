@@ -2,11 +2,13 @@ import SettingsService from "@client/application/SettingsService";
 import I18nService from "@client/application/I18nService";
 import ServerBrowserService from "@client/application/ServerBrowserService";
 import WindowService from "@client/application/WindowService";
+import TextureResolverService from "@client/application/TextureResolverService";
 import JsonSettingsRepository from "@client/infrastructure/settings/JsonSettingsRepository";
 import JsonTranslationProvider from "@client/infrastructure/i18n/JsonTranslationProvider";
 import PersistentServerDirectory from "@client/infrastructure/server/PersistentServerDirectory";
 import IpcStorage from "@client/infrastructure/storage/IpcStorage";
 import { BrowserStorage } from "@client/infrastructure/storage/BrowserStorage";
+import BrowserFileExistenceChecker from "@client/infrastructure/assets/BrowserFileExistenceChecker";
 import type { Services } from "../ui/hooks/useServices";
 
 /**
@@ -37,12 +39,19 @@ export class ServiceContainer {
     const i18nService = new I18nService(translationProvider, settingsRepo);
     const serverBrowser = new ServerBrowserService(serverDirectory);
     const windowService = new WindowService();
+    
+    // File system utilities
+    const fileChecker = new BrowserFileExistenceChecker();
+    
+    // Asset services
+    const textureResolver = new TextureResolverService(settingsService, fileChecker);
 
     this.services = {
       settings: settingsService,
       i18n: i18nService,
       serverBrowser: serverBrowser,
       window: windowService,
+      textureResolver: textureResolver,
     };
 
     return this.services;
