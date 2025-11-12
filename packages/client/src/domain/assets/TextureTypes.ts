@@ -11,6 +11,7 @@ export type TextureQuality = 'low' | 'medium' | 'high' | 'ultra';
  * Types of textures used for celestial bodies
  */
 export type TextureType = 
+  | 'surface'      // Generic surface texture (used for most objects)
   | 'diffuse'      // Base color map
   | 'normal'       // Normal/bump map for surface detail
   | 'specular'     // Specular/roughness map
@@ -29,7 +30,9 @@ export type CelestialBodyId =
   | 'mercury'
   | 'moon'
   | 'sun'
-  | 'rocky-planet';
+  | 'rocky-planet'
+  | 'stars'
+  | 'stars_milky_way';
 
 /**
  * Request for a specific texture

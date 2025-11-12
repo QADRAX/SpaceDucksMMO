@@ -15,6 +15,9 @@ export type { RockyPlanetConfig } from './RockyPlanet';
 export { RockyTexturedPlanet } from './RockyTexturedPlanet';
 export type { RockyTexturedPlanetConfig } from './RockyTexturedPlanet';
 
+export { Skybox } from './Skybox';
+export type { SkyboxConfig, SkyboxTexture } from './Skybox';
+
 // Future exports:
 // export { Asteroid } from './Asteroid';
 // export { SpaceStation } from './SpaceStation';

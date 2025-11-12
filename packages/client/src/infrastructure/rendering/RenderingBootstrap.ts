@@ -43,6 +43,22 @@ export class RenderingBootstrap {
 
     // Switch to initial scene
     this.sceneManager.switchTo(SceneId.MainMenu);
+    
+    // Setup keyboard shortcuts
+    this.setupKeyboardShortcuts();
+  }
+
+  /**
+   * Setup keyboard shortcuts for debugging
+   */
+  private setupKeyboardShortcuts(): void {
+    window.addEventListener('keydown', (event) => {
+      // F3 - Toggle FPS counter
+      if (event.key === 'F3') {
+        event.preventDefault();
+        this.engine.toggleFpsCounter();
+      }
+    });
   }
 
   /**

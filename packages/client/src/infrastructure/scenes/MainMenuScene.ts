@@ -1,63 +1,14 @@
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
-import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type { TextureResolverService } from '@client/application/TextureResolverService';
 import type { SettingsService } from '@client/application/SettingsService';
 import { BaseScene } from '@client/infrastructure/scenes/BaseScene';
 import SceneId from '@client/domain/scene/SceneId';
 import * as THREE from 'three';
-import { TexturedSunStar, RockyPlanet, RockyTexturedPlanet } from '@client/infrastructure/scene-objects';
-
-/**
- * Floating particles for ambient atmosphere
- */
-class AmbientParticles implements ISceneObject {
-  id = 'menu-particles';
-  private points!: THREE.Points;
-  private positions!: Float32Array;
-  
-  addTo(scene: THREE.Scene): void {
-    const count = 200;
-    const geometry = new THREE.BufferGeometry();
-    this.positions = new Float32Array(count * 3);
-    
-    // Spread particles in a sphere around camera
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(Math.random() * 2 - 1);
-      const r = 8 + Math.random() * 12;
-      this.positions[i3] = r * Math.sin(phi) * Math.cos(theta);
-      this.positions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta) - 2;
-      this.positions[i3 + 2] = r * Math.cos(phi);
-    }
-    
-    geometry.setAttribute('position', new THREE.BufferAttribute(this.positions, 3));
-    const material = new THREE.PointsMaterial({
-      color: 0x5dd3ff,
-      size: 0.08,
-      transparent: true,
-      opacity: 0.6,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false
-    });
-    this.points = new THREE.Points(geometry, material);
-    scene.add(this.points);
-  }
-
-  update(dt: number): void {
-    if (!this.points) return;
-    this.points.rotation.y += 0.0001 * dt;
-  }
-
-  dispose(): void {
-    this.points?.geometry.dispose();
-    (this.points?.material as THREE.Material).dispose();
-  }
-}
+import { TexturedSunStar, RockyPlanet, RockyTexturedPlanet, Skybox } from '@client/infrastructure/scene-objects';
 
 /**
  * Main menu background scene: ambient, non-interactive visual backdrop.
- * Features a rotating duck placeholder and floating particles.
+ * Features planets, sun, and starfield skybox.
  */
 export class MainMenuScene extends BaseScene {
   readonly id = SceneId.MainMenu;
@@ -179,9 +130,19 @@ export class MainMenuScene extends BaseScene {
       rotationSpeed: 0.02
     });
     
-    const particles = new AmbientParticles();
+    // Starfield skybox background
+    const skybox = new Skybox('menu-skybox', this.textureResolver, {
+      texture: 'stars_milky_way',
+      radius: 1000,
+      rotationSpeed: 0.00002,
+      brightness: 1.5, // Más brillante que el default
+      tint: 0xffffff, // Sin tinte (blanco puro)
+      segments: 64, // Suave y detallado
+      depthWrite: false // No escribe en depth buffer
+    });
     
     // Add all objects using addObject to enable automatic texture reloading
+    this.addObject(engine, skybox);
     this.addObject(engine, star);
     this.addObject(engine, rockyTextured);
     this.addObject(engine, earthPlanet);
@@ -189,7 +150,6 @@ export class MainMenuScene extends BaseScene {
     this.addObject(engine, venusPlanet);
     this.addObject(engine, icePlanet);
     this.addObject(engine, mercuryPlanet);
-    this.addObject(engine, particles);
     
     // Position textured planet prominently
     const rockyObj = rockyTextured.getObject3D();

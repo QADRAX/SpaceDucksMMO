@@ -166,11 +166,20 @@ export class TextureResolverService implements ITextureResolver {
    * Build filename from body ID and texture type
    * Examples:
    * - venus + diffuse = venus_surface.jpg
+   * - venus + surface = venus_surface.jpg
    * - venus + atmosphere = venus_atmosphere.jpg
    * - earth + normal = earth_normal.jpg
+   * - stars + surface = stars.jpg
+   * - stars_milky_way + surface = stars_milky_way.jpg
    */
   private buildFilename(bodyId: CelestialBodyId, type: TextureType): string {
+    // Special case for skybox textures (stars)
+    if (bodyId === 'stars' || bodyId === 'stars_milky_way') {
+      return `${bodyId}.jpg`;
+    }
+    
     const typeMap: Record<TextureType, string> = {
+      'surface': 'surface',
       'diffuse': 'surface',
       'normal': 'normal',
       'specular': 'specular',

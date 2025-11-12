@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { IRenderingEngine } from '@client/domain/ports/IRenderingEngine';
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
+import { FpsCounter } from '@client/infrastructure/ui/FpsCounter';
 
 export class ThreeRenderer implements IRenderingEngine {
   private scene!: THREE.Scene;
@@ -13,6 +14,11 @@ export class ThreeRenderer implements IRenderingEngine {
   private onResizeBound = () => this.handleResize();
   private antialias = true;
   private shadows = true;
+  private fpsCounter: FpsCounter;
+
+  constructor() {
+    this.fpsCounter = new FpsCounter();
+  }
 
   init(container: HTMLElement): void {
     this.container = container;
@@ -36,6 +42,11 @@ export class ThreeRenderer implements IRenderingEngine {
   window.addEventListener('resize', this.onResizeBound);
 
     // No default lights - scenes handle their own lighting
+    
+    // Show FPS counter in development
+    if (process.env.NODE_ENV === 'development') {
+      this.fpsCounter.show();
+    }
   }
 
   add(object: ISceneObject): void {
@@ -117,6 +128,37 @@ export class ThreeRenderer implements IRenderingEngine {
   renderFrame(): void {
     // Objects are updated by SceneService loop, not here
     this.renderer.render(this.scene, this.camera);
+    
+    // Update FPS counter
+    this.fpsCounter.update();
+  }
+
+  /**
+   * Toggle FPS counter visibility
+   */
+  toggleFpsCounter(): void {
+    this.fpsCounter.toggle();
+  }
+
+  /**
+   * Show FPS counter
+   */
+  showFpsCounter(): void {
+    this.fpsCounter.show();
+  }
+
+  /**
+   * Hide FPS counter
+   */
+  hideFpsCounter(): void {
+    this.fpsCounter.hide();
+  }
+
+  /**
+   * Get current FPS value
+   */
+  getFps(): number {
+    return this.fpsCounter.getFps();
   }
 }
 
