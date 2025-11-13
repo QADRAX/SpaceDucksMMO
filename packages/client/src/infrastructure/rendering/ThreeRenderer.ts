@@ -56,8 +56,12 @@ export class ThreeRenderer implements IRenderingEngine {
 
   remove(id: string): void {
     const obj = this.objects.get(id);
-    if (obj && obj.dispose) obj.dispose();
-    this.objects.delete(id);
+    if (obj) {
+      // First remove from Three.js scene (calls removeFrom which handles dispose)
+      obj.removeFrom(this.scene);
+      // Then remove from tracking map
+      this.objects.delete(id);
+    }
   }
 
   getScene(): THREE.Scene { return this.scene; }

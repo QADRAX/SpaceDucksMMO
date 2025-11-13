@@ -130,8 +130,13 @@ export abstract class BaseScene implements IScene {
       this.settingsUnsubscribe = undefined;
     }
     
-    // Remove all objects
-    this.objects.forEach(obj => engine.remove(obj.id));
+    // Dispose and remove all objects
+    this.objects.forEach(obj => {
+      if (obj.dispose) {
+        obj.dispose(); // Clean up Three.js resources (textures, geometries, materials)
+      }
+      engine.remove(obj.id);
+    });
     this.objects = [];
   }
 }

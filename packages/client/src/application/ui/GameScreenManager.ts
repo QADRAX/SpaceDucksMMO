@@ -16,6 +16,7 @@ import type SceneManager from '../SceneManager';
  * - Coordinate UI and Scene transitions
  * - Track current game screen state
  * - Provide navigation API for the application layer
+ * - Manage smooth transitions with fade effects
  * 
  * Clean Architecture:
  * - Depends on domain ports (IGameScreenNavigator)
@@ -24,6 +25,9 @@ import type SceneManager from '../SceneManager';
  */
 export class GameScreenManager implements IGameScreenNavigator {
   private currentScreen: GameScreenConfig | null = null;
+  private transitionCallbacks: Array<(isTransitioning: boolean) => void> = [];
+  private readonly TRANSITION_DURATION = 300; // ms
+  private isInitialLoad = true; // Skip transition on first navigation
 
   constructor(
     private screenRouter: ScreenRouter,
@@ -31,20 +35,60 @@ export class GameScreenManager implements IGameScreenNavigator {
   ) {}
 
   /**
-   * Navigate to a complete game screen (UI + Scene).
-   * Transitions both the UI and 3D scene atomically.
+   * Navigate to a complete game screen (UI + Scene) with smooth transition.
+   * Fades out, switches scenes, waits for load, then fades in.
    */
-  navigateTo(config: GameScreenConfig): void {
+  async navigateTo(config: GameScreenConfig): Promise<void> {
     console.log(`[GameScreenManager] Navigating to: ${config.name} (Screen: ${config.screenId}, Scene: ${config.sceneId})`);
     
-    // 1. Transition UI screen
+    // Skip transition on initial load
+    if (this.isInitialLoad) {
+      this.isInitialLoad = false;
+      
+      // Direct navigation without fade
+      this.screenRouter.show(config.screenId);
+      this.sceneManager.switchTo(config.sceneId);
+      this.currentScreen = config;
+      return;
+    }
+    
+    // 1. Start fade-out
+    this.notifyTransition(true);
+    await this.wait(this.TRANSITION_DURATION);
+    
+    // 2. Transition UI screen (hidden behind fade)
     this.screenRouter.show(config.screenId);
     
-    // 2. Transition 3D scene
+    // 3. Transition 3D scene (hidden behind fade)
     this.sceneManager.switchTo(config.sceneId);
     
-    // 3. Update current state
+    // 4. Wait a bit for textures to start loading
+    await this.wait(100);
+    
+    // 5. Update current state
     this.currentScreen = config;
+    
+    // 6. Start fade-in
+    this.notifyTransition(false);
+  }
+
+  /**
+   * Subscribe to transition state changes
+   */
+  onTransition(callback: (isTransitioning: boolean) => void): () => void {
+    this.transitionCallbacks.push(callback);
+    return () => {
+      const index = this.transitionCallbacks.indexOf(callback);
+      if (index > -1) this.transitionCallbacks.splice(index, 1);
+    };
+  }
+
+  private notifyTransition(isTransitioning: boolean): void {
+    this.transitionCallbacks.forEach(cb => cb(isTransitioning));
+  }
+
+  private wait(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   /**

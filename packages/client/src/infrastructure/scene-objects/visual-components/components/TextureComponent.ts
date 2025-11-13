@@ -21,6 +21,7 @@ export class TextureComponent implements ICelestialComponent {
   private textureLoader: THREE.TextureLoader;
   private config: Required<TextureComponentConfig>;
   private material?: THREE.MeshStandardMaterial;
+  private isDisposed = false; // Track if component was disposed
 
   constructor(
     textureResolver: TextureResolverService,
@@ -37,6 +38,7 @@ export class TextureComponent implements ICelestialComponent {
 
   initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
     this.material = parentMesh.material as THREE.MeshStandardMaterial;
+    this.isDisposed = false; // Reset disposed flag
     this.loadTexture();
   }
 
@@ -45,11 +47,15 @@ export class TextureComponent implements ICelestialComponent {
   }
 
   dispose(scene: THREE.Scene): void {
+    this.isDisposed = true; // Mark as disposed to cancel pending texture loads
+    
     if (this.material?.map) {
       this.material.map.dispose();
+      this.material.map = null;
     }
     if (this.material?.emissiveMap) {
       this.material.emissiveMap.dispose();
+      this.material.emissiveMap = null;
     }
   }
 
@@ -57,7 +63,7 @@ export class TextureComponent implements ICelestialComponent {
    * Reload texture with current quality settings
    */
   async reloadTexture(): Promise<void> {
-    if (!this.material) return;
+    if (!this.material || this.isDisposed) return;
 
     // Dispose old textures
     if (this.material.map) {
@@ -73,12 +79,17 @@ export class TextureComponent implements ICelestialComponent {
   }
 
   private async loadTexture(): Promise<void> {
-    if (!this.material) return;
+    if (!this.material || this.isDisposed) return;
 
     const quality = this.textureResolver.getCurrentQuality() as any;
     const fallbackChain = this.getFallbackChain(quality);
 
     for (const q of fallbackChain) {
+      // Check if disposed during async operation
+      if (this.isDisposed) {
+        return; // Abort texture loading
+      }
+      
       try {
         const resource = this.textureResolver.resolve({
           bodyId: this.config.textureId,
@@ -89,6 +100,12 @@ export class TextureComponent implements ICelestialComponent {
         const texture = await new Promise<THREE.Texture>((resolve, reject) => {
           this.textureLoader.load(resource.path, resolve, undefined, reject);
         });
+
+        // Check again after async load completes
+        if (this.isDisposed) {
+          texture.dispose(); // Clean up loaded texture
+          return;
+        }
 
         this.material.map = texture;
         if (this.config.applyAsEmissive) {
@@ -101,7 +118,9 @@ export class TextureComponent implements ICelestialComponent {
       }
     }
 
-    console.error(`[TextureComponent] Failed to load texture: ${this.config.textureId}`);
+    if (!this.isDisposed) {
+      console.error(`[TextureComponent] Failed to load texture: ${this.config.textureId}`);
+    }
   }
 
   private getFallbackChain(quality: string): string[] {

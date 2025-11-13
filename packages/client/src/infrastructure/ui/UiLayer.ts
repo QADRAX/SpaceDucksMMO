@@ -1,7 +1,14 @@
 import './styles/base.css';
+import { render, h } from 'preact';
+import ScreenTransition from './components/common/utility/ScreenTransition';
+import type { GameScreenManager } from '@client/application/ui/GameScreenManager';
+import { useState, useEffect } from 'preact/hooks';
 
 export class UiLayer {
   private root!: HTMLElement;
+  private screenContainer!: HTMLElement;
+  private transitionContainer!: HTMLElement;
+  private gameScreenManager?: GameScreenManager;
 
   constructor(private host: HTMLElement) {}
 
@@ -12,9 +19,44 @@ export class UiLayer {
     uiRoot.style.zIndex = '100';
     this.host.appendChild(uiRoot);
     this.root = uiRoot;
+
+    // Create container for screen router (DOM-based rendering)
+    this.screenContainer = document.createElement('div');
+    this.screenContainer.className = 'screen-container';
+    this.root.appendChild(this.screenContainer);
+
+    // Create container for transition overlay (Preact-based)
+    this.transitionContainer = document.createElement('div');
+    this.transitionContainer.className = 'transition-container';
+    this.root.appendChild(this.transitionContainer);
   }
 
-  getRoot(): HTMLElement { return this.root; }
+  /**
+   * Initialize transition overlay
+   */
+  initializeRootApp(gameScreenManager: GameScreenManager): void {
+    this.gameScreenManager = gameScreenManager;
+    
+    // Render only the transition component
+    const TransitionWrapper = () => {
+      const [isTransitioning, setIsTransitioning] = useState(false);
+
+      useEffect(() => {
+        const unsubscribe = gameScreenManager.onTransition((transitioning) => {
+          setIsTransitioning(transitioning);
+        });
+        return () => unsubscribe();
+      }, []);
+
+      return h(ScreenTransition, { isTransitioning, duration: 300 });
+    };
+
+    render(h(TransitionWrapper, null), this.transitionContainer);
+  }
+
+  getRoot(): HTMLElement { 
+    return this.screenContainer; // Return screen container for router
+  }
 }
 
 export default UiLayer;

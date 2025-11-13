@@ -27,7 +27,11 @@ export class RendererBootstrap {
     // 4. Initialize UI layer
     const uiBootstrap = new UIBootstrap(root);
     uiBootstrap.registerScreens(services, renderingBootstrap.getSceneManager());
-    uiBootstrap.showInitialScreen();
+    
+    // Show initial screen with transition (async but don't block)
+    uiBootstrap.showInitialScreen().catch(err => {
+      console.error('Failed to show initial screen:', err);
+    });
 
     // 5. Initialize services asynchronously
     try {

@@ -15,8 +15,8 @@ export default function LobbyApp() {
   const [showServerPopup, setShowServerPopup] = useState(false);
   const [showSettingsPopup, setShowSettingsPopup] = useState(false);
 
-  const handleSandboxClick = () => {
-    navigateTo(GameScreens.Sandbox);
+  const handleSandboxClick = async () => {
+    await navigateTo(GameScreens.Sandbox);
   };
 
   return (

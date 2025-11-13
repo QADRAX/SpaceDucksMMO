@@ -17,8 +17,8 @@ export function SandboxComponent() {
   const { t } = useI18n();
   const [showSettings, setShowSettings] = useState(false);
 
-  const handleBackToMenu = () => {
-    navigateTo(GameScreens.MainMenu);
+  const handleBackToMenu = async () => {
+    await navigateTo(GameScreens.MainMenu);
   };
 
   return (

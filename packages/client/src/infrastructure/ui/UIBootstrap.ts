@@ -35,6 +35,9 @@ export class UIBootstrap {
     // Inject navigation service into services bundle
     (services as any).navigation = this.gameScreenManager;
 
+    // Initialize root app with transition overlay
+    this.uiLayer.initializeRootApp(this.gameScreenManager);
+
     // Create screens (no need to pass navigate callback anymore)
     const mainScreen = new MainScreen();
     (mainScreen as any).services = services;
@@ -48,11 +51,11 @@ export class UIBootstrap {
   }
 
   /**
-   * Show initial screen
+   * Show initial screen with transition
    */
-  showInitialScreen(): void {
-    // Navigate to main menu (UI + Scene together)
-    this.gameScreenManager.navigateTo(GameScreens.MainMenu);
+  async showInitialScreen(): Promise<void> {
+    // Navigate to main menu (UI + Scene together with fade transition)
+    await this.gameScreenManager.navigateTo(GameScreens.MainMenu);
   }
 
   /**

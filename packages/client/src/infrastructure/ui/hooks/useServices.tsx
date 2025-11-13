@@ -48,7 +48,7 @@ export function useNavigation() {
   }
   
   return {
-    navigateTo: (config: GameScreenConfig) => services.navigation!.navigateTo(config),
+    navigateTo: async (config: GameScreenConfig) => await services.navigation!.navigateTo(config),
     getCurrentScreen: () => services.navigation!.getCurrentScreen(),
   };
 }

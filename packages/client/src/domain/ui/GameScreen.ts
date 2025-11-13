@@ -39,10 +39,11 @@ export interface GameScreenConfig {
  */
 export interface IGameScreenNavigator {
   /**
-   * Navigate to a game screen (UI + Scene together)
+   * Navigate to a game screen (UI + Scene together) with smooth transition
    * @param config - The game screen configuration
+   * @returns Promise that resolves when transition completes
    */
-  navigateTo(config: GameScreenConfig): void;
+  navigateTo(config: GameScreenConfig): Promise<void>;
   
   /**
    * Get the currently active game screen configuration

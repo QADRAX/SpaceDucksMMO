@@ -1,13 +1,15 @@
 .sd-button {
     appearance: none;
-    border: 1px solid var(--border);
-    background: #0f1218;
+    border: 2px solid var(--border);
+    background: var(--panel);
+    backdrop-filter: blur(10px);
     color: var(--text);
     font-family: inherit;
     font-weight: 500;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+    box-shadow: var(--shadow);
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -16,7 +18,7 @@
 
 .sd-button:hover:not(:disabled) {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(93, 211, 255, 0.15);
+    box-shadow: 0 0 0 4px rgba(93, 211, 255, 0.15), var(--shadow);
     transform: translateY(-1px);
 }
 
@@ -31,18 +33,16 @@
 
 /* Variants */
 .sd-button--primary {
-    background: linear-gradient(180deg, #1a2230, #111826);
     border-color: var(--accent);
-    color: var(--text);
+    background: rgba(93, 211, 255, 0.1);
 }
 
 .sd-button--primary:hover:not(:disabled) {
-    box-shadow: 0 0 0 3px rgba(93, 211, 255, 0.2), 0 4px 12px rgba(93, 211, 255, 0.3);
+    box-shadow: 0 0 0 4px rgba(93, 211, 255, 0.2), 0 4px 12px rgba(93, 211, 255, 0.3);
 }
 
 .sd-button--secondary {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--border);
+    /* Uses base styles from .sd-button */
 }
 
 .sd-button--danger {
