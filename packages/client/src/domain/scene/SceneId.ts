@@ -8,6 +8,8 @@ enum SceneId {
   GameWorld = 'game-world',
   /** Server browser background scene (optional animated backdrop) */
   ServerBrowser = 'server-browser',
+  /** Sandbox scene (testing and prototyping visual components) */
+  Sandbox = 'sandbox',
 }
 
 export default SceneId;

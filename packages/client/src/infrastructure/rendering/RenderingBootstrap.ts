@@ -3,6 +3,7 @@ import { SceneService } from "@client/application/SceneService";
 import SceneManager from "@client/application/SceneManager";
 import MainMenuScene from "@client/infrastructure/scenes/MainMenuScene";
 import GameWorldScene from "@client/infrastructure/scenes/GameWorldScene";
+import SandboxScene from "@client/infrastructure/scenes/SandboxScene";
 import SceneId from "@client/domain/scene/SceneId";
 import GraphicsController from "../ui/GraphicsController";
 import type { GameSettings } from "@client/domain/settings/GameSettings";
@@ -37,6 +38,7 @@ export class RenderingBootstrap {
     // Register available 3D scenes
     this.sceneManager.register(new MainMenuScene(this.textureResolver, this.settingsService));
     this.sceneManager.register(new GameWorldScene());
+    this.sceneManager.register(new SandboxScene(this.textureResolver, this.settingsService));
 
     // Initialize Three.js renderer, camera, scene
     this.sceneService.init(container);

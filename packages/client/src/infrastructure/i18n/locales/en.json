@@ -14,7 +14,11 @@
   "lobby": {
     "play": "Play",
     "settings": "Settings",
-    "quit": "Quit"
+    "quit": "Quit",
+    "sandbox": "Sandbox"
+  },
+  "sandbox": {
+    "backToMenu": "Back to Menu"
   },
   "settings": {
     "title": "Settings",

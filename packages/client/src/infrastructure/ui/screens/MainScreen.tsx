@@ -1,34 +1,26 @@
 /** @jsxImportSource preact */
-import { render } from "preact";
-import type IScreen from "../../../domain/ports/IScreen";
-import ScreenId from "../../../domain/ui/ScreenId";
-import LobbyApp from "../../ui/components/lobby/LobbyApp";
-import { ServicesContext, type Services } from "../hooks/useServices";
-import "../styles/base.css";
+import type { ComponentChild } from 'preact';
+import ScreenId from '../../../domain/ui/ScreenId';
+import BaseScreen from './BaseScreen';
+import LobbyApp from '../components/lobby/LobbyApp';
+import '../styles/base.css';
 
-export class MainScreen implements IScreen {
-  id = ScreenId.Main;
-  private el!: HTMLElement;
-  services?: Services; // Public for dependency injection
-  
-  constructor(
-    private _go?: (id: ScreenId) => void
-  ) {}
-  
-  mount(container: HTMLElement): void {
-    this.el = document.createElement("div");
-    render(
-      <ServicesContext.Provider value={this.services || null}>
-        <LobbyApp />
-      </ServicesContext.Provider>,
-      this.el
-    );
-    container.appendChild(this.el);
+/**
+ * Main Screen - Lobby/Main Menu
+ * 
+ * Shows the main menu with:
+ * - Logo
+ * - Play button (opens server selector)
+ * - Sandbox button (navigate to testing environment)
+ * - Settings button
+ */
+export class MainScreen extends BaseScreen {
+  constructor() {
+    super(ScreenId.Main);
   }
-  
-  unmount(): void {
-    render(null as any, this.el);
-    this.el.remove();
+
+  protected renderContent(): ComponentChild {
+    return <LobbyApp />;
   }
 }
 

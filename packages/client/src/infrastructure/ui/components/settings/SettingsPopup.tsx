@@ -1,3 +1,4 @@
+/** @jsxImportSource preact */
 import Popup from "../common/utility/Popup";
 import FormSection from "../common/form/FormSection";
 import FormField from "../common/form/FormField";

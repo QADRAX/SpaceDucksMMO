@@ -1,16 +1,23 @@
 import { useState } from "preact/hooks";
 import "./lobby.css";
 import ServerSelectorPopup from "./ServerSelectorPopup";
-import SettingsPopup from "./SettingsPopup";
+import SettingsPopup from "../settings/SettingsPopup";
 import IconButton from "../common/utility/IconButton";
 import Button from "../common/utility/Button";
 import useI18n from "../../hooks/useI18n";
+import { useNavigation } from "../../hooks/useServices";
 import { SettingsIcon } from "../common/icons";
+import { GameScreens } from "@client/domain/ui/GameScreenRegistry";
 
 export default function LobbyApp() {
   const { t } = useI18n();
+  const { navigateTo } = useNavigation();
   const [showServerPopup, setShowServerPopup] = useState(false);
   const [showSettingsPopup, setShowSettingsPopup] = useState(false);
+
+  const handleSandboxClick = () => {
+    navigateTo(GameScreens.Sandbox);
+  };
 
   return (
     <div className="lobby-container">
@@ -27,13 +34,23 @@ export default function LobbyApp() {
       {/* Center content - logo + play button */}
       <div className="lobby-center">
         <img src="/assets/images/logo.png" alt="SpaceDucks Logo" className="lobby-logo" />
-        <Button
-          variant="primary"
-          size="large"
-          onClick={() => setShowServerPopup(true)}
-        >
-          {t('lobby.play')}
-        </Button>
+        <div className="lobby-buttons">
+          <Button
+            variant="primary"
+            size="large"
+            onClick={() => setShowServerPopup(true)}
+          >
+            {t('lobby.play')}
+          </Button>
+          
+          <Button
+            variant="secondary"
+            size="medium"
+            onClick={handleSandboxClick}
+          >
+            🧪 Sandbox
+          </Button>
+        </div>
       </div>
 
       {/* Popups */}

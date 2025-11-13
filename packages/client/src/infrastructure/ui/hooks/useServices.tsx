@@ -5,6 +5,8 @@ import type SettingsService from "@client/application/SettingsService";
 import type ServerBrowserService from "@client/application/ServerBrowserService";
 import type WindowService from "@client/application/WindowService";
 import type TextureResolverService from "@client/application/TextureResolverService";
+import type GameScreenManager from "@client/application/ui/GameScreenManager";
+import type { GameScreenConfig } from "@client/domain/ui/GameScreen";
 
 /**
  * Services available through dependency injection context
@@ -15,6 +17,7 @@ export interface Services {
   serverBrowser: ServerBrowserService;
   window: WindowService;
   textureResolver: TextureResolverService;
+  navigation?: GameScreenManager; // Injected later in UIBootstrap
 }
 
 // Context for services
@@ -31,6 +34,23 @@ export function useServices(): Services {
   }
 
   return services;
+}
+
+/**
+ * Hook to access navigation service
+ * Convenience hook for navigating between game screens
+ */
+export function useNavigation() {
+  const services = useServices();
+  
+  if (!services.navigation) {
+    throw new Error("Navigation service not initialized yet");
+  }
+  
+  return {
+    navigateTo: (config: GameScreenConfig) => services.navigation!.navigateTo(config),
+    getCurrentScreen: () => services.navigation!.getCurrentScreen(),
+  };
 }
 
 export default useServices;
