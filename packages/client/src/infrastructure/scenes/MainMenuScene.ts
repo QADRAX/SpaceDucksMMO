@@ -37,9 +37,6 @@ export class MainMenuScene extends BaseScene {
       camera.lookAt(0, 0, 0);
     }
 
-    // Setup lighting - solo el sol ilumina la escena
-    const scene = engine.getScene();
-
     // Create sun using StarBuilder
     const star = StarBuilder.create('menu-sun', this.textureResolver, {
       radius: 1.0,
@@ -140,29 +137,22 @@ export class MainMenuScene extends BaseScene {
     });
     
     // Starfield skybox background using SkyboxBuilder
-    const skybox = SkyboxBuilder.createMilkyWay('menu-skybox', this.textureResolver, {
+    const skybox = SkyboxBuilder.createStarfield('menu-skybox', this.textureResolver, {
       brightness: 1.5,
       rotationSpeed: 0.00002
     });
     
-    // Add all objects using addObject to enable automatic texture reloading
-    this.addObject(engine, skybox);
-    this.addObject(engine, star);
-    this.addObject(engine, rockyTextured);
-    this.addObject(engine, earthPlanet);
-    this.addObject(engine, marsPlanet);
-    this.addObject(engine, venusPlanet);
-    this.addObject(engine, icePlanet);
-    this.addObject(engine, mercuryPlanet);
-    
-    // Position celestial bodies using setPosition (new API)
-    star.setPosition(0, 0, 0);
-    rockyTextured.setPosition(-3.5, 0, 0);
-    earthPlanet.setPosition(3, 0, 0);
-    marsPlanet.setPosition(-2.5, 0.5, 1);
-    venusPlanet.setPosition(1, -0.5, -3);
-    icePlanet.setPosition(-1.5, 1, -2);
-    mercuryPlanet.setPosition(2, -1, 2);
+    // Setup all scene objects with fluent builder API
+    this.setupScene(engine)
+      .add(skybox)
+      .add(star, { position: [0, 0, 0] })
+      .add(rockyTextured, { position: [-3.5, 0, 0] })
+      .add(earthPlanet, { position: [3, 0, 0] })
+      .add(marsPlanet, { position: [-2.5, 0.5, 1] })
+      .add(venusPlanet, { position: [1, -0.5, -3] })
+      .add(icePlanet, { position: [-1.5, 1, -2] })
+      .add(mercuryPlanet, { position: [2, -1, 2] })
+      .build();
   }
 
   update(dt: number): void {

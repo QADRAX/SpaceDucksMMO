@@ -4,14 +4,16 @@ import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type { SettingsService } from '@client/application/SettingsService';
 import { isTextureReloadable } from '@client/domain/scene/ITextureReloadable';
 import type SceneId from '@client/domain/scene/SceneId';
+import { SceneBuilder } from './SceneBuilder';
 
 /**
- * Base class for scenes that provides automatic texture reload functionality.
+ * Base class for scenes that provides automatic texture reload functionality and fluent scene setup.
  * 
  * Features:
  * - Automatically detects ITextureReloadable objects when added
  * - Subscribes to settings changes and reloads textures when quality changes
  * - Handles cleanup of subscriptions to prevent memory leaks
+ * - Provides fluent SceneBuilder API for clean scene setup
  * 
  * Usage:
  * ```ts
@@ -25,9 +27,16 @@ import type SceneId from '@client/domain/scene/SceneId';
  *   setup(engine: IRenderingEngine): void {
  *     super.setup(engine); // Important: call parent setup
  *     
- *     // Add your objects
+ *     // Option 1: Fluent builder API (recommended)
+ *     this.setupScene(engine)
+ *       .add(skybox)
+ *       .add(star, { position: [0, 0, 0] })
+ *       .add(planet, { position: [3, 0, 0] })
+ *       .build();
+ *     
+ *     // Option 2: Manual (still available)
  *     const planet = new RockyTexturedPlanet(...);
- *     this.addObject(engine, planet); // Use addObject instead of engine.add
+ *     this.addObject(engine, planet);
  *   }
  * }
  * ```
@@ -58,6 +67,22 @@ export abstract class BaseScene implements IScene {
         this.reloadAllTextures();
       }
     });
+  }
+
+  /**
+   * Create a fluent scene builder for adding multiple objects.
+   * 
+   * @example
+   * ```ts
+   * this.setupScene(engine)
+   *   .add(skybox)
+   *   .add(star, { position: [0, 0, 0] })
+   *   .add(planet, { position: [3, 0, 0] })
+   *   .build();
+   * ```
+   */
+  protected setupScene(engine: IRenderingEngine): SceneBuilder {
+    return new SceneBuilder(engine, this);
   }
 
   /**

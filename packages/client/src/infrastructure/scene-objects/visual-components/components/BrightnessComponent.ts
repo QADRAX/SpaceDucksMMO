@@ -44,11 +44,27 @@ export class BrightnessComponent implements ICelestialComponent {
   private applyBrightness(): void {
     if (!this.material) return;
 
-    // Scale color by brightness
-    const baseColor = new THREE.Color(0xffffff);
-    baseColor.multiplyScalar(this.config.brightness);
-    
-    this.material.color.copy(baseColor);
-    this.material.needsUpdate = true;
+    // For materials with textures, use emissiveIntensity if available
+    if (this.material instanceof THREE.MeshStandardMaterial) {
+      // Store original emissive if not already stored
+      if (!this.material.userData.originalEmissive) {
+        this.material.userData.originalEmissive = this.material.emissive.clone();
+      }
+      
+      // Apply brightness through emissive
+      const originalEmissive = this.material.userData.originalEmissive as THREE.Color;
+      this.material.emissive.copy(originalEmissive).multiplyScalar(this.config.brightness);
+      this.material.needsUpdate = true;
+    } 
+    else if (this.material instanceof THREE.MeshBasicMaterial) {
+      // For MeshBasicMaterial (like skybox), preserve the base color and multiply
+      if (!this.material.userData.originalColor) {
+        this.material.userData.originalColor = this.material.color.clone();
+      }
+      
+      const originalColor = this.material.userData.originalColor as THREE.Color;
+      this.material.color.copy(originalColor).multiplyScalar(this.config.brightness);
+      this.material.needsUpdate = true;
+    }
   }
 }

@@ -4,7 +4,6 @@ import type { TextureResolverService } from '@client/application/TextureResolver
 import type { ICelestialComponent } from './components/ICelestialComponent';
 import { TextureComponent } from './components/TextureComponent';
 import { TintComponent } from './components/TintComponent';
-import { BrightnessComponent } from './components/BrightnessComponent';
 import { RotationComponent } from './components/RotationComponent';
 import * as THREE from 'three';
 
@@ -111,14 +110,15 @@ export class Skybox implements ISceneObject, ITextureReloadable {
   addTo(scene: THREE.Scene): void {
     this.scene = scene;
     
-    const { radius, initialRotation, segments, depthWrite, tint } = this.config;
+    const { radius, initialRotation, segments, depthWrite, tint, brightness } = this.config;
 
     // Create large sphere geometry (BackSide so visible from inside)
     const geometry = new THREE.SphereGeometry(radius, segments, segments);
     
-    // Create basic material for skybox
+    // Create basic material for skybox with brightness applied to color
+    const materialColor = new THREE.Color(tint).multiplyScalar(brightness);
     const material = new THREE.MeshBasicMaterial({
-      color: tint,
+      color: materialColor,
       side: THREE.BackSide,
       fog: false,
       depthWrite: depthWrite,
@@ -137,7 +137,7 @@ export class Skybox implements ISceneObject, ITextureReloadable {
   }
 
   private setupComponents(): void {
-    const { texture, brightness, tint, tintIntensity, rotationSpeed } = this.config;
+    const { texture, tint, tintIntensity, rotationSpeed } = this.config;
 
     // Add texture component
     this.addComponent(
@@ -147,15 +147,6 @@ export class Skybox implements ISceneObject, ITextureReloadable {
         applyAsEmissive: false,
       })
     );
-
-    // Add brightness component if different from default
-    if (brightness !== 1.0) {
-      this.addComponent(
-        new BrightnessComponent({
-          brightness,
-        })
-      );
-    }
 
     // Add tint component if intensity > 0
     if (tintIntensity > 0) {
@@ -252,9 +243,11 @@ export class Skybox implements ISceneObject, ITextureReloadable {
   setBrightness(brightness: number): void {
     this.config.brightness = brightness;
     
-    const brightnessComp = this.getComponent(BrightnessComponent);
-    if (brightnessComp) {
-      brightnessComp.setBrightness(brightness);
+    // Apply brightness directly to material color
+    if (this.mesh && this.mesh.material instanceof THREE.MeshBasicMaterial) {
+      const baseColor = new THREE.Color(this.config.tint);
+      this.mesh.material.color.copy(baseColor).multiplyScalar(brightness);
+      this.mesh.material.needsUpdate = true;
     }
   }
 
