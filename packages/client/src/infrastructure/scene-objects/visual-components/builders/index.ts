@@ -7,3 +7,6 @@ export type { StarBuilderConfig } from './StarBuilder';
 
 export { PlanetBuilder } from './PlanetBuilder';
 export type { PlanetBuilderConfig } from './PlanetBuilder';
+
+export { SkyboxBuilder } from './SkyboxBuilder';
+export type { SkyboxBuilderConfig } from './SkyboxBuilder';

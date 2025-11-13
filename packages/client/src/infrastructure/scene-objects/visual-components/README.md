@@ -16,10 +16,12 @@ Sistema componentizado y genérico para crear cuerpos celestes (estrellas, plane
 ```
 celestial/
 ├── CelestialBody.ts              # Clase base que compone componentes
+├── ComponentSkybox.ts            # Skybox basado en componentes
 ├── components/                    # Componentes modulares
 │   ├── ICelestialComponent.ts    # Interface base
 │   ├── TextureComponent.ts       # Carga de texturas con fallback
 │   ├── TintComponent.ts          # Coloración/tinte
+│   ├── BrightnessComponent.ts    # Ajuste de brillo
 │   ├── AtmosphereComponent.ts    # Atmósfera con shader Fresnel
 │   ├── CoronaComponent.ts        # Corona/glow para estrellas
 │   ├── LightEmissionComponent.ts # PointLight para iluminación
@@ -30,6 +32,87 @@ celestial/
 │   ├── PlanetBuilder.ts          # Constructor de planetas
 │   └── index.ts
 └── index.ts                       # Exports públicos
+```
+
+## 🌌 ComponentSkybox
+
+Skybox basado en el sistema de componentes, comparte los mismos componentes modulares que los cuerpos celestes.
+
+### Uso con Builder (Recomendado)
+
+```ts
+import { SkyboxBuilder } from '@client/infrastructure/scene-objects/visual-components';
+
+// Opción 1: Milky Way preset (común para menús)
+const skybox = SkyboxBuilder.createMilkyWay('menu-skybox', textureResolver);
+
+// Opción 2: Milky Way con configuración custom
+const skybox = SkyboxBuilder.createMilkyWay('menu-skybox', textureResolver, {
+  brightness: 2.0,
+  rotationSpeed: 0.00005
+});
+
+// Opción 3: Starfield básico
+const skybox = SkyboxBuilder.createStarfield('game-skybox', textureResolver);
+
+// Opción 4: Estático (sin rotación)
+const skybox = SkyboxBuilder.createStatic('static-skybox', textureResolver, {
+  texture: 'stars_milky_way',
+  brightness: 1.5
+});
+
+// Opción 5: Configuración completa manual
+const skybox = SkyboxBuilder.create('custom-skybox', textureResolver, {
+  texture: 'stars_milky_way',
+  radius: 1000,
+  rotationSpeed: 0.00002,
+  brightness: 1.5,
+  tint: 0xff8844,
+  tintIntensity: 0.3
+});
+
+this.addObject(engine, skybox);
+```
+
+### Uso Directo (Avanzado)
+
+```ts
+import { ComponentSkybox } from '@client/infrastructure/scene-objects/visual-components';
+
+const skybox = new ComponentSkybox('menu-skybox', textureResolver, {
+  texture: 'stars_milky_way',  // 'stars' o 'stars_milky_way'
+  radius: 1000,                 // Radio grande para envolver la escena
+  rotationSpeed: 0.00002,       // Rotación muy lenta
+  brightness: 1.5,              // Brillo aumentado
+  tint: 0xffffff,               // Sin tinte (blanco puro)
+  segments: 64,                 // Calidad de la geometría
+  depthWrite: false             // No escribir en depth buffer
+});
+
+this.addObject(engine, skybox);
+```
+
+### Componentes Utilizados
+
+- **TextureComponent**: Carga la textura del skybox con fallback de calidad
+- **BrightnessComponent**: Ajusta el brillo global del skybox
+- **TintComponent**: Aplica coloración si tintIntensity > 0
+- **RotationComponent**: Rotación continua del skybox
+
+### Métodos Runtime
+
+```ts
+// Cambiar textura en runtime
+await skybox.setTexture('stars');
+
+// Ajustar rotación
+skybox.setRotationSpeed(0.00005);
+
+// Ajustar brillo
+skybox.setBrightness(2.0);
+
+// Aplicar tinte
+skybox.setTint(0xff8844, 0.3);
 ```
 
 ## 📦 Componentes Disponibles
@@ -52,6 +135,15 @@ Aplica coloración a la textura.
 new TintComponent({
   tintColor: 0xff6644,  // Naranja rojizo
   intensity: 0.3        // 30% de intensidad
+})
+```
+
+### BrightnessComponent
+Ajusta el brillo del material.
+
+```ts
+new BrightnessComponent({
+  brightness: 1.5  // 150% de brillo (1.0 = normal)
 })
 ```
 
@@ -107,7 +199,7 @@ new RotationComponent({
 Para tipos comunes (estrellas, planetas), usa los builders:
 
 ```ts
-import { StarBuilder, PlanetBuilder } from '@client/infrastructure/scene-objects/celestial';
+import { StarBuilder, PlanetBuilder } from '@client/infrastructure/scene-objects/visual-components';
 
 // Crear un sol
 const sun = StarBuilder.create('sun', textureResolver, {
@@ -137,14 +229,14 @@ this.addObject(engine, mars);
 Para cuerpos celestes personalizados, compone los componentes manualmente:
 
 ```ts
-import { CelestialBody } from '@client/infrastructure/scene-objects/celestial';
+import { CelestialBody } from '@client/infrastructure/scene-objects/visual-components';
 import {
   TextureComponent,
   TintComponent,
   CoronaComponent,
   LightEmissionComponent,
   RotationComponent
-} from '@client/infrastructure/scene-objects/celestial/components';
+} from '@client/infrastructure/scene-objects/visual-components/components';
 
 // Crear base
 const customStar = new CelestialBody('red-giant', {

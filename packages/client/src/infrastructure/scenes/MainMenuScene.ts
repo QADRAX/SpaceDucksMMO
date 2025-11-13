@@ -4,8 +4,7 @@ import type { SettingsService } from '@client/application/SettingsService';
 import { BaseScene } from '@client/infrastructure/scenes/BaseScene';
 import SceneId from '@client/domain/scene/SceneId';
 import * as THREE from 'three';
-import { StarBuilder, PlanetBuilder } from '@client/infrastructure/scene-objects/celestial';
-import { Skybox } from '@client/infrastructure/scene-objects';
+import { StarBuilder, PlanetBuilder, SkyboxBuilder } from '@client/infrastructure/scene-objects/visual-components';
 
 /**
  * Main menu background scene: ambient, non-interactive visual backdrop.
@@ -140,15 +139,10 @@ export class MainMenuScene extends BaseScene {
       rotationSpeed: 0.02,
     });
     
-    // Starfield skybox background
-    const skybox = new Skybox('menu-skybox', this.textureResolver, {
-      texture: 'stars_milky_way',
-      radius: 1000,
-      rotationSpeed: 0.00002,
-      brightness: 1.5, // Más brillante que el default
-      tint: 0xffffff, // Sin tinte (blanco puro)
-      segments: 64, // Suave y detallado
-      depthWrite: false // No escribe en depth buffer
+    // Starfield skybox background using SkyboxBuilder
+    const skybox = SkyboxBuilder.createMilkyWay('menu-skybox', this.textureResolver, {
+      brightness: 1.5,
+      rotationSpeed: 0.00002
     });
     
     // Add all objects using addObject to enable automatic texture reloading
@@ -205,29 +199,3 @@ export class MainMenuScene extends BaseScene {
 }
 
 export default MainMenuScene;
-
-/* ========================================
- * SISTEMA DE CUERPOS CELESTES COMPONENTIZADO
- * ========================================
- * 
- * Esta escena usa el nuevo sistema de builders celestiales:
- * 
- * ✅ StarBuilder: Crea estrellas con corona, luz y efectos
- * ✅ PlanetBuilder: Crea planetas con texturas, tintes y atmósferas
- * 
- * Características:
- * - Componentes modulares (TextureComponent, TintComponent, AtmosphereComponent, etc.)
- * - Sistema de composición limpio
- * - Recarga automática de texturas cuando cambia la calidad
- * - API consistente con setPosition() y getComponent()
- * 
- * Documentación completa: celestial/README.md
- * Ejemplo detallado: celestial/EXAMPLE.ts
- * 
- * Ventajas vs sistema legacy:
- * - Más flexible y extensible
- * - Código más limpio y organizado
- * - Fácil añadir nuevos efectos
- * - Mejor separación de responsabilidades
- * - Reutilización de componentes
- */

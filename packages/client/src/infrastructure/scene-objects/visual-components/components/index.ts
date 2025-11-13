@@ -10,6 +10,9 @@ export type { TextureComponentConfig } from './TextureComponent';
 export { TintComponent } from './TintComponent';
 export type { TintComponentConfig } from './TintComponent';
 
+export { BrightnessComponent } from './BrightnessComponent';
+export type { BrightnessComponentConfig } from './BrightnessComponent';
+
 export { AtmosphereComponent } from './AtmosphereComponent';
 export type { AtmosphereComponentConfig } from './AtmosphereComponent';
 

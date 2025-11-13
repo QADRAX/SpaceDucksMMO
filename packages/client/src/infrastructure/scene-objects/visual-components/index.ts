@@ -13,7 +13,7 @@
  * 
  * ### Using Builders (recommended for common types)
  * ```ts
- * import { StarBuilder, PlanetBuilder } from '@client/infrastructure/scene-objects/celestial';
+ * import { StarBuilder, PlanetBuilder } from '@client/infrastructure/scene-objects/visual-components';
  * 
  * const sun = StarBuilder.create('sun', textureResolver, {
  *   radius: 1.2,
@@ -30,8 +30,8 @@
  * 
  * ### Using Components Directly (for custom bodies)
  * ```ts
- * import { CelestialBody } from '@client/infrastructure/scene-objects/celestial';
- * import { TextureComponent, CoronaComponent } from '@client/infrastructure/scene-objects/celestial/components';
+ * import { CelestialBody } from '@client/infrastructure/scene-objects/visual-components';
+ * import { TextureComponent, CoronaComponent } from '@client/infrastructure/scene-objects/visual-components/components';
  * 
  * const custom = new CelestialBody('custom', { radius: 2.0 });
  * custom.addComponent(new TextureComponent(resolver, { textureId: 'sun' }));
@@ -42,11 +42,16 @@
 export { CelestialBody } from './CelestialBody';
 export type { CelestialBodyBaseConfig } from './CelestialBody';
 
+// Export component-based objects
+export { Skybox as ComponentSkybox } from './Skybox';
+export type { SkyboxConfig, SkyboxTexture } from './Skybox';
+
 // Components (explicit exports to avoid type/value confusion)
 export type { ICelestialComponent } from './components';
 export { 
   TextureComponent,
   TintComponent,
+  BrightnessComponent,
   AtmosphereComponent,
   CoronaComponent,
   LightEmissionComponent,
@@ -55,6 +60,7 @@ export {
 export type {
   TextureComponentConfig,
   TintComponentConfig,
+  BrightnessComponentConfig,
   AtmosphereComponentConfig,
   CoronaComponentConfig,
   LightEmissionComponentConfig,
@@ -62,5 +68,5 @@ export type {
 } from './components';
 
 // Builders
-export { StarBuilder, PlanetBuilder } from './builders';
-export type { StarBuilderConfig, PlanetBuilderConfig } from './builders';
+export { StarBuilder, PlanetBuilder, SkyboxBuilder } from './builders';
+export type { StarBuilderConfig, PlanetBuilderConfig, SkyboxBuilderConfig } from './builders';
