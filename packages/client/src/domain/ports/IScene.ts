@@ -1,4 +1,5 @@
 import type IRenderingEngine from './IRenderingEngine';
+import type { ISceneController } from '../scene/ISceneController';
 
 /**
  * Port abstraction for a complete 3D scene.
@@ -31,6 +32,12 @@ export interface IScene {
    * @param engine - The rendering engine to remove objects from
    */
   teardown(engine: IRenderingEngine): void;
+
+  /** Get all controllers in this scene */
+  getControllers?(): ISceneController[];
+  
+  /** Get a specific controller by ID */
+  getController?(id: string): ISceneController | undefined;
 }
 
 export default IScene;

@@ -5,6 +5,7 @@ import { BaseScene } from '@client/infrastructure/scenes/BaseScene';
 import SceneId from '@client/domain/scene/SceneId';
 import * as THREE from 'three';
 import { StarBuilder, PlanetBuilder, SkyboxBuilder } from '@client/infrastructure/scene-objects/visual-components';
+import { OrbitCameraController } from '@client/infrastructure/scene-controllers';
 
 /**
  * Sandbox Scene - Testing and prototyping environment
@@ -114,6 +115,28 @@ export class SandboxScene extends BaseScene {
       .add(testMoon, { position: [4, 0, 0] })
       .add(testStar, { position: [-6, 2, -3] })
       .build();
+
+    // ===================================
+    // CONTROLLERS - Camera & Object Control
+    // ===================================
+
+    // Camera controller: orbit around center of scene
+    if (this.camera) {
+      const cameraController = new OrbitCameraController(
+        'sandbox-camera-orbit',
+        this.camera,
+        {
+          target: new THREE.Vector3(0, 0, 0),
+          distance: this.cameraDistance,
+          speed: 0.0001,
+          height: 5,
+          autoRotate: true
+        }
+      );
+
+      this.addController(cameraController);
+      cameraController.enable();
+    }
   }
 
   private addHelpers(scene: THREE.Scene): void {
@@ -130,16 +153,8 @@ export class SandboxScene extends BaseScene {
     // Update all scene objects
     this.objects.forEach(obj => obj.update(dt));
     
-    // Slowly orbit camera around origin
-    if (this.camera) {
-      this.cameraAngle += 0.0001 * dt;
-      
-      const x = Math.cos(this.cameraAngle) * this.cameraDistance;
-      const z = Math.sin(this.cameraAngle) * this.cameraDistance;
-      
-      this.camera.position.set(x, 5, z);
-      this.camera.lookAt(0, 0, 0);
-    }
+    // Update all controllers (camera, objects, etc.)
+    this.updateControllers(dt);
   }
 
   teardown(engine: IRenderingEngine): void {

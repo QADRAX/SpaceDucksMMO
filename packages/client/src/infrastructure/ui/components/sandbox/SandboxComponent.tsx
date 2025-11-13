@@ -1,21 +1,30 @@
 /** @jsxImportSource preact */
-import { useState } from 'preact/hooks';
-import { useNavigation } from '../../hooks/useServices';
+import { useState, useEffect } from 'preact/hooks';
+import { useNavigation, useSceneControllers } from '../../hooks/useServices';
 import useI18n from '../../hooks/useI18n';
 import { GameScreens } from '@client/domain/ui/GameScreenRegistry';
 import Button from '../common/utility/Button';
 import IconButton from '../common/utility/IconButton';
 import { SettingsIcon } from '../common/icons';
 import SettingsPopup from '../settings/SettingsPopup';
+import SceneControllerPanel from '../debug/SceneControllerPanel';
 import './sandbox.css';
 
 /**
  * Sandbox Component - UI for visual component testing
  */
 export function SandboxComponent() {
+  const [, forceUpdate] = useState({});
+  const controllers = useSceneControllers();
   const { navigateTo } = useNavigation();
   const { t } = useI18n();
   const [showSettings, setShowSettings] = useState(false);
+
+  // Force re-render after scene is loaded
+  useEffect(() => {
+    const timer = setTimeout(() => forceUpdate({}), 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleBackToMenu = async () => {
     await navigateTo(GameScreens.MainMenu);
@@ -41,6 +50,9 @@ export function SandboxComponent() {
           />
         </div>
       </div>
+
+      {/* Controller panel for debugging */}
+      {controllers.length > 0 && <SceneControllerPanel controllers={controllers} />}
 
       <SettingsPopup
         isOpen={showSettings}

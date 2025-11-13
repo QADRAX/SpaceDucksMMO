@@ -1,6 +1,7 @@
 import type IScene from '@client/domain/ports/IScene';
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
+import type { ISceneController } from '@client/domain/scene/ISceneController';
 import type { SettingsService } from '@client/application/SettingsService';
 import { isTextureReloadable } from '@client/domain/scene/ITextureReloadable';
 import type SceneId from '@client/domain/scene/SceneId';
@@ -45,6 +46,7 @@ export abstract class BaseScene implements IScene {
   abstract readonly id: SceneId;
   
   protected objects: ISceneObject[] = [];
+  protected controllers: ISceneController[] = [];
   private settingsUnsubscribe?: () => void;
   private previousTextureQuality: string;
   
@@ -95,6 +97,38 @@ export abstract class BaseScene implements IScene {
   }
 
   /**
+   * Add a controller to the scene (camera control, object manipulation, etc.)
+   */
+  protected addController(controller: ISceneController): void {
+    this.controllers.push(controller);
+  }
+
+  /**
+   * Update all enabled controllers
+   */
+  protected updateControllers(dt: number): void {
+    for (const controller of this.controllers) {
+      if (controller.isEnabled()) {
+        controller.update(dt);
+      }
+    }
+  }
+
+  /**
+   * Get all controllers in this scene
+   */
+  getControllers(): ISceneController[] {
+    return this.controllers;
+  }
+
+  /**
+   * Get a specific controller by ID
+   */
+  getController(id: string): ISceneController | undefined {
+    return this.controllers.find(c => c.id === id);
+  }
+
+  /**
    * Reload textures for all ITextureReloadable objects in the scene.
    */
   private reloadAllTextures(): void {
@@ -138,6 +172,14 @@ export abstract class BaseScene implements IScene {
       engine.remove(obj.id);
     });
     this.objects = [];
+
+    // Dispose all controllers
+    this.controllers.forEach(controller => {
+      if (controller.dispose) {
+        controller.dispose();
+      }
+    });
+    this.controllers = [];
   }
 }
 

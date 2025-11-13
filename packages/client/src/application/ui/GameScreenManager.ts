@@ -45,9 +45,9 @@ export class GameScreenManager implements IGameScreenNavigator {
     if (this.isInitialLoad) {
       this.isInitialLoad = false;
       
-      // Direct navigation without fade
-      this.screenRouter.show(config.screenId);
+      // Switch scene FIRST, then screen
       this.sceneManager.switchTo(config.sceneId);
+      this.screenRouter.show(config.screenId);
       this.currentScreen = config;
       return;
     }
@@ -56,19 +56,22 @@ export class GameScreenManager implements IGameScreenNavigator {
     this.notifyTransition(true);
     await this.wait(this.TRANSITION_DURATION);
     
-    // 2. Transition UI screen (hidden behind fade)
-    this.screenRouter.show(config.screenId);
-    
-    // 3. Transition 3D scene (hidden behind fade)
+    // 2. Transition 3D scene FIRST (hidden behind fade)
     this.sceneManager.switchTo(config.sceneId);
     
-    // 4. Wait a bit for textures to start loading
-    await this.wait(100);
+    // 3. Wait a bit for scene setup to complete
+    await this.wait(50);
     
-    // 5. Update current state
+    // 4. Transition UI screen (now scene is ready)
+    this.screenRouter.show(config.screenId);
+    
+    // 5. Wait a bit more for textures to start loading
+    await this.wait(50);
+    
+    // 6. Update current state
     this.currentScreen = config;
     
-    // 6. Start fade-in
+    // 7. Start fade-in
     this.notifyTransition(false);
   }
 

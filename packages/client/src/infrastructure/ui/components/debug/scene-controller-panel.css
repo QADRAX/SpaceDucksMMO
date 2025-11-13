@@ -1,0 +1,162 @@
+.scene-controller-panel {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  width: 320px;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  background: var(--panel);
+  backdrop-filter: blur(10px);
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+.panel-header {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--accent);
+}
+
+.controllers-list {
+  padding: 8px;
+}
+
+.controller-card {
+  margin-bottom: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.controller-header {
+  padding: 10px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.controller-header:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.controller-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.controller-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.toggle-btn {
+  padding: 4px 8px;
+  font-size: 12px;
+  background: rgba(93, 211, 255, 0.1);
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  color: var(--accent);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.toggle-btn:hover {
+  background: rgba(93, 211, 255, 0.2);
+}
+
+.expand-icon {
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.controller-body {
+  padding: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.param-control {
+  margin-bottom: 16px;
+}
+
+.param-control:last-child {
+  margin-bottom: 0;
+}
+
+.param-control > label {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--text);
+}
+
+.param-control input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.param-control input[type="text"],
+.param-control select {
+  width: 100%;
+  padding: 6px 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+}
+
+.number-control {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.number-control input[type="range"] {
+  flex: 1;
+}
+
+.number-input {
+  width: 70px;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+  text-align: center;
+}
+
+.param-desc {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* Scrollbar styles */
+.scene-controller-panel::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scene-controller-panel::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.scene-controller-panel::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.scene-controller-panel::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+}

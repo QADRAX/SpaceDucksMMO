@@ -7,6 +7,7 @@ import type WindowService from "@client/application/WindowService";
 import type TextureResolverService from "@client/application/TextureResolverService";
 import type GameScreenManager from "@client/application/ui/GameScreenManager";
 import type { GameScreenConfig } from "@client/domain/ui/GameScreen";
+import type { ISceneController } from "@client/domain/scene/ISceneController";
 
 /**
  * Services available through dependency injection context
@@ -51,6 +52,21 @@ export function useNavigation() {
     navigateTo: async (config: GameScreenConfig) => await services.navigation!.navigateTo(config),
     getCurrentScreen: () => services.navigation!.getCurrentScreen(),
   };
+}
+
+/**
+ * Hook to access current scene's controllers
+ * Convenience hook for getting controllers from the current scene
+ */
+export function useSceneControllers(): ISceneController[] {
+  const services = useServices();
+  
+  if (!services.navigation) {
+    return [];
+  }
+  
+  const scene = services.navigation.getSceneManager().getCurrent();
+  return scene?.getControllers?.() || [];
 }
 
 export default useServices;
