@@ -4,7 +4,8 @@ import type { SettingsService } from '@client/application/SettingsService';
 import { BaseScene } from '@client/infrastructure/scenes/BaseScene';
 import SceneId from '@client/domain/scene/SceneId';
 import * as THREE from 'three';
-import { TexturedSunStar, RockyPlanet, RockyTexturedPlanet, Skybox } from '@client/infrastructure/scene-objects';
+import { StarBuilder, PlanetBuilder } from '@client/infrastructure/scene-objects/celestial';
+import { Skybox } from '@client/infrastructure/scene-objects';
 
 /**
  * Main menu background scene: ambient, non-interactive visual backdrop.
@@ -40,94 +41,103 @@ export class MainMenuScene extends BaseScene {
     // Setup lighting - solo el sol ilumina la escena
     const scene = engine.getScene();
 
-    // Add scene objects
-    const star = new TexturedSunStar('menu-sun', this.textureResolver, {
-      radius: 1,
-      glowColor: 0xffdd44,
-      glowRadiusMultiplier: 1.7,
-      glowIntensity: 0.004,
-      innerGlowRadius: 1.03,
-      innerGlowIntensity: 0.8,
-      rotationSpeed: -0.03,
+    // Create sun using StarBuilder
+    const star = StarBuilder.create('menu-sun', this.textureResolver, {
+      radius: 1.0,
+      textureId: 'sun',
+      coronaColor: 0xffdd44,
+      coronaRadius: 1.04,
+      coronaIntensity: 1.4,
+      coronaPulse: true,
       lightIntensity: 6.0,
+      lightColor: 0xffaa44,
+      rotationSpeed: 0.1,
+      emissiveColor: 0xffaa00,
       emissiveIntensity: 4.0,
-      enablePulse: true
     });
     
-    // Textured planet with rocky-planet.jpg
-    const rockyTextured = new RockyTexturedPlanet('planet-textured-rocky', this.textureResolver, {
+    // Rocky textured planet using PlanetBuilder
+    const rockyTextured = PlanetBuilder.create('planet-textured-rocky', this.textureResolver, {
       radius: 0.5,
+      textureId: 'rocky-planet',
+      tintColor: 0xffffff,
+      tintIntensity: 0,
+      hasAtmosphere: false,
       roughness: 0.8,
       metalness: 0.1,
       rotationSpeed: 0.04,
-      hasAtmosphere: false
     });
     
     // Planet 1: Earth-like with blue atmosphere
-    const earthPlanet = new RockyPlanet('planet-earth', {
+    const earthPlanet = PlanetBuilder.create('planet-earth', this.textureResolver, {
       radius: 0.4,
-      surfaceColor: 0x4488cc,
-      secondaryColor: 0x228844,
+      textureId: 'rocky-planet',
+      tintColor: 0x4488cc,
+      tintIntensity: 0.5,
       hasAtmosphere: true,
       atmosphereColor: 0x88ccff,
-      atmosphereOpacity: 2.5,
       atmosphereThickness: 1.3,
+      atmosphereIntensity: 2.5,
       roughness: 0.7,
       metalness: 0.2,
-      rotationSpeed: 0.03
+      rotationSpeed: 0.03,
     });
     
     // Planet 2: Mars-like with thin red atmosphere
-    const marsPlanet = new RockyPlanet('planet-mars', {
+    const marsPlanet = PlanetBuilder.create('planet-mars', this.textureResolver, {
       radius: 0.3,
-      surfaceColor: 0xcc6644,
-      secondaryColor: 0x884422,
+      textureId: 'rocky-planet',
+      tintColor: 0xcc6644,
+      tintIntensity: 0.6,
       hasAtmosphere: true,
       atmosphereColor: 0xff4422,
-      atmosphereOpacity: 2.0,
       atmosphereThickness: 1.25,
+      atmosphereIntensity: 2.0,
       roughness: 0.9,
       metalness: 0.1,
-      rotationSpeed: 0.05
+      rotationSpeed: 0.05,
     });
     
     // Planet 3: Desert/Venus-like with thick orange atmosphere
-    const venusPlanet = new RockyPlanet('planet-venus', {
+    const venusPlanet = PlanetBuilder.create('planet-venus', this.textureResolver, {
       radius: 0.35,
-      surfaceColor: 0xe89b3c,
-      secondaryColor: 0xd4843d,
+      textureId: 'rocky-planet',
+      tintColor: 0xe89b3c,
+      tintIntensity: 0.7,
       hasAtmosphere: true,
       atmosphereColor: 0xffaa00,
-      atmosphereOpacity: 3.0,
       atmosphereThickness: 1.35,
+      atmosphereIntensity: 3.0,
       roughness: 0.6,
       metalness: 0.15,
-      rotationSpeed: -0.02 // rotación inversa
+      rotationSpeed: 0.02,
     });
     
     // Planet 4: Icy/frozen with cyan atmosphere
-    const icePlanet = new RockyPlanet('planet-ice', {
+    const icePlanet = PlanetBuilder.create('planet-ice', this.textureResolver, {
       radius: 0.25,
-      surfaceColor: 0xaaddff,
-      secondaryColor: 0x6699cc,
+      textureId: 'rocky-planet',
+      tintColor: 0xaaddff,
+      tintIntensity: 0.8,
       hasAtmosphere: true,
       atmosphereColor: 0x00ffff,
-      atmosphereOpacity: 2.2,
       atmosphereThickness: 1.28,
+      atmosphereIntensity: 2.2,
       roughness: 0.3,
       metalness: 0.4,
-      rotationSpeed: 0.08
+      rotationSpeed: 0.08,
     });
     
     // Planet 5: Rocky without atmosphere (like Mercury)
-    const mercuryPlanet = new RockyPlanet('planet-mercury', {
+    const mercuryPlanet = PlanetBuilder.create('planet-mercury', this.textureResolver, {
       radius: 0.2,
-      surfaceColor: 0x8c7853,
-      secondaryColor: 0x6b5d4f,
+      textureId: 'rocky-planet',
+      tintColor: 0x8c7853,
+      tintIntensity: 0.4,
       hasAtmosphere: false,
       roughness: 0.95,
       metalness: 0.05,
-      rotationSpeed: 0.02
+      rotationSpeed: 0.02,
     });
     
     // Starfield skybox background
@@ -151,25 +161,14 @@ export class MainMenuScene extends BaseScene {
     this.addObject(engine, icePlanet);
     this.addObject(engine, mercuryPlanet);
     
-    // Position textured planet prominently
-    const rockyObj = rockyTextured.getObject3D();
-    if (rockyObj) rockyObj.position.set(-3.5, 0, 0);
-    
-    // Position planets in different locations to see them all
-    const earthObj = earthPlanet.getObject3D();
-    if (earthObj) earthObj.position.set(3, 0, 0);
-    
-    const marsObj = marsPlanet.getObject3D();
-    if (marsObj) marsObj.position.set(-2.5, 0.5, 1);
-    
-    const venusObj = venusPlanet.getObject3D();
-    if (venusObj) venusObj.position.set(1, -0.5, -3);
-    
-    const iceObj = icePlanet.getObject3D();
-    if (iceObj) iceObj.position.set(-1.5, 1, -2);
-    
-    const mercuryObj = mercuryPlanet.getObject3D();
-    if (mercuryObj) mercuryObj.position.set(2, -1, 2);
+    // Position celestial bodies using setPosition (new API)
+    star.setPosition(0, 0, 0);
+    rockyTextured.setPosition(-3.5, 0, 0);
+    earthPlanet.setPosition(3, 0, 0);
+    marsPlanet.setPosition(-2.5, 0.5, 1);
+    venusPlanet.setPosition(1, -0.5, -3);
+    icePlanet.setPosition(-1.5, 1, -2);
+    mercuryPlanet.setPosition(2, -1, 2);
   }
 
   update(dt: number): void {
@@ -206,3 +205,29 @@ export class MainMenuScene extends BaseScene {
 }
 
 export default MainMenuScene;
+
+/* ========================================
+ * SISTEMA DE CUERPOS CELESTES COMPONENTIZADO
+ * ========================================
+ * 
+ * Esta escena usa el nuevo sistema de builders celestiales:
+ * 
+ * ✅ StarBuilder: Crea estrellas con corona, luz y efectos
+ * ✅ PlanetBuilder: Crea planetas con texturas, tintes y atmósferas
+ * 
+ * Características:
+ * - Componentes modulares (TextureComponent, TintComponent, AtmosphereComponent, etc.)
+ * - Sistema de composición limpio
+ * - Recarga automática de texturas cuando cambia la calidad
+ * - API consistente con setPosition() y getComponent()
+ * 
+ * Documentación completa: celestial/README.md
+ * Ejemplo detallado: celestial/EXAMPLE.ts
+ * 
+ * Ventajas vs sistema legacy:
+ * - Más flexible y extensible
+ * - Código más limpio y organizado
+ * - Fácil añadir nuevos efectos
+ * - Mejor separación de responsabilidades
+ * - Reutilización de componentes
+ */
