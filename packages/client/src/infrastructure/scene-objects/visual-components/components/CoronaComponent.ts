@@ -1,4 +1,5 @@
-import type { ICelestialComponent } from './ICelestialComponent';
+import type { IInspectableComponent } from './IVisualComponent';
+import type { InspectableProperty } from '@client/domain/scene/IInspectable';
 import * as THREE from 'three';
 
 /**
@@ -16,7 +17,7 @@ export interface CoronaComponentConfig {
  * Component that adds a corona/glow effect around stars.
  * Uses Fresnel shader with optional pulsing animation.
  */
-export class CoronaComponent implements ICelestialComponent {
+export class CoronaComponent implements IInspectableComponent {
   private config: Required<CoronaComponentConfig>;
   private coronaMesh?: THREE.Mesh;
   private parentMesh?: THREE.Mesh;
@@ -112,8 +113,83 @@ export class CoronaComponent implements ICelestialComponent {
     }
   }
 
+  // ============================================
+  // IInspectableComponent Implementation
+  // ============================================
+
+  getInspectableProperties(): InspectableProperty[] {
+    return [
+      {
+        name: 'corona.color',
+        label: 'Corona Color',
+        type: 'color',
+        value: this.config.color,
+        description: 'Color of star corona'
+      },
+      {
+        name: 'corona.radius',
+        label: 'Corona Radius',
+        type: 'number',
+        value: this.config.radiusMultiplier,
+        min: 1.0,
+        max: 3.0,
+        step: 0.1,
+        description: 'Size multiplier for corona effect'
+      },
+      {
+        name: 'corona.intensity',
+        label: 'Corona Intensity',
+        type: 'number',
+        value: this.config.intensity,
+        min: 0,
+        max: 3,
+        step: 0.1,
+        description: 'Brightness of corona glow'
+      }
+    ];
+  }
+
+  setProperty(name: string, value: any): void {
+    const propName = name.split('.')[1]; // Extract 'color' from 'corona.color'
+    
+    if (propName === 'color') {
+      this.config.color = value;
+      if (this.coronaMesh) {
+        const material = this.coronaMesh.material as THREE.ShaderMaterial;
+        material.uniforms.glowColor.value = new THREE.Color(value);
+      }
+    } else if (propName === 'radius') {
+      this.config.radiusMultiplier = value;
+      // Recreate corona mesh with new size
+      if (this.coronaMesh && this.parentMesh) {
+        const scene = this.coronaMesh.parent;
+        if (scene) {
+          this.dispose(scene as THREE.Scene);
+          this.initialize(scene as THREE.Scene, this.parentMesh);
+        }
+      }
+    } else if (propName === 'intensity') {
+      this.config.intensity = value;
+      if (this.coronaMesh) {
+        const material = this.coronaMesh.material as THREE.ShaderMaterial;
+        material.uniforms.intensity.value = value;
+      }
+    }
+  }
+
+  getProperty(name: string): any {
+    const propName = name.split('.')[1];
+    
+    if (propName === 'color') return this.config.color;
+    if (propName === 'radius') return this.config.radiusMultiplier;
+    if (propName === 'intensity') return this.config.intensity;
+    
+    return undefined;
+  }
+
   /**
    * Update corona intensity at runtime
+   * @deprecated Use setProperty('corona.intensity', value) instead
    */
   setIntensity(intensity: number): void {
     this.config.intensity = intensity;

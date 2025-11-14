@@ -3,7 +3,7 @@ import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type { IInspectable } from '@client/domain/scene/IInspectable';
 import { isInspectable } from '@client/domain/scene/IInspectable';
-import type { CameraObject } from '@client/infrastructure/scene-objects/cameras';
+import type { CameraBody } from '@client/infrastructure/scene-objects/cameras';
 import * as THREE from 'three';
 
 export interface SceneObjectInfo {
@@ -275,20 +275,22 @@ export class SceneEditor {
       return;
     }
 
-    // Check if camera is a CameraObject
-    if (isInspectable(camera) && camera.getTypeName?.() === 'Camera') {
-      const cameraObj = camera as unknown as CameraObject;
+    // Check if camera is a CameraBody
+    if (isInspectable(camera) && camera.getTypeName?.()?.includes('Camera')) {
+      // TODO: Implement target tracking with new component architecture
+      // The new CameraBody doesn't have setTargetFromObject/setTargetObjectTransform methods
+      // This functionality needs to be reimplemented using TargetTrackingComponent
+      console.warn('[SceneEditor] Camera target tracking not yet implemented with new component architecture');
       
+      // const cameraObj = camera as unknown as CameraBody;
       // Get target object position
-      const targetInspectable = isInspectable(targetObj) ? targetObj : null;
-      if (targetInspectable) {
-        const targetTransform = targetInspectable.getTransform();
-        if (targetTransform) {
-          cameraObj.setTargetFromObject(targetTransform.position, targetObjectId);
-          // Set the transform so camera can track it dynamically
-          cameraObj.setTargetObjectTransform(targetTransform);
-        }
-      }
+      // const targetInspectable = isInspectable(targetObj) ? targetObj : null;
+      // if (targetInspectable) {
+      //   const targetTransform = targetInspectable.getTransform();
+      //   if (targetTransform) {
+      //     // Need to use TargetTrackingComponent instead
+      //   }
+      // }
     }
   }
 

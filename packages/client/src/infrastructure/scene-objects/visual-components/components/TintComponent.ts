@@ -1,4 +1,5 @@
-import type { ICelestialComponent } from './ICelestialComponent';
+import type { IInspectableComponent } from './IVisualComponent';
+import type { InspectableProperty } from '@client/domain/scene/IInspectable';
 import * as THREE from 'three';
 
 /**
@@ -13,7 +14,7 @@ export interface TintComponentConfig {
  * Component that applies color tinting to a material.
  * Blends the tint color with the base texture/color.
  */
-export class TintComponent implements ICelestialComponent {
+export class TintComponent implements IInspectableComponent {
   private config: TintComponentConfig;
   private material?: THREE.MeshStandardMaterial;
 
@@ -34,8 +35,56 @@ export class TintComponent implements ICelestialComponent {
     // No resources to dispose
   }
 
+  // ============================================
+  // IInspectableComponent Implementation
+  // ============================================
+
+  getInspectableProperties(): InspectableProperty[] {
+    return [
+      {
+        name: 'tint.color',
+        label: 'Tint Color',
+        type: 'color',
+        value: this.config.tintColor,
+        description: 'Color overlay for the surface'
+      },
+      {
+        name: 'tint.intensity',
+        label: 'Tint Intensity',
+        type: 'number',
+        value: this.config.intensity,
+        min: 0,
+        max: 1,
+        step: 0.05,
+        description: 'Strength of color tint'
+      }
+    ];
+  }
+
+  setProperty(name: string, value: any): void {
+    const propName = name.split('.')[1];
+    
+    if (propName === 'color') {
+      this.config.tintColor = value;
+      this.applyTint();
+    } else if (propName === 'intensity') {
+      this.config.intensity = Math.max(0, Math.min(1, value));
+      this.applyTint();
+    }
+  }
+
+  getProperty(name: string): any {
+    const propName = name.split('.')[1];
+    
+    if (propName === 'color') return this.config.tintColor;
+    if (propName === 'intensity') return this.config.intensity;
+    
+    return undefined;
+  }
+
   /**
    * Change tint color and intensity at runtime
+   * @deprecated Use setProperty instead
    */
   setTint(color: number, intensity?: number): void {
     this.config.tintColor = color;

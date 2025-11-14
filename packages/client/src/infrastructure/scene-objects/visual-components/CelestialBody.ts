@@ -1,12 +1,15 @@
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type { ITextureReloadable } from '@client/domain/scene/ITextureReloadable';
 import type { IInspectable, InspectableProperty } from '@client/domain/scene/IInspectable';
-import type { ICelestialComponent } from './components/ICelestialComponent';
+import type { IVisualComponent } from './components/IVisualComponent';
 import { TextureComponent } from './components/TextureComponent';
 import { TintComponent } from './components/TintComponent';
 import { AtmosphereComponent } from './components/AtmosphereComponent';
 import { CoronaComponent } from './components/CoronaComponent';
 import { RotationComponent } from './components/RotationComponent';
+import { AccretionDiskComponent } from './components/AccretionDiskComponent';
+import { EventHorizonComponent } from './components/EventHorizonComponent';
+import { JetStreamComponent } from './components/JetStreamComponent';
 import * as THREE from 'three';
 
 /**
@@ -49,7 +52,7 @@ export class CelestialBody implements ISceneObject, ITextureReloadable, IInspect
   
   private mainMesh!: THREE.Mesh;
   private config: Required<CelestialBodyBaseConfig>;
-  private components: ICelestialComponent[] = [];
+  private components: IVisualComponent[] = [];
   private scene?: THREE.Scene;
 
   constructor(id: string, config: CelestialBodyBaseConfig) {
@@ -70,7 +73,7 @@ export class CelestialBody implements ISceneObject, ITextureReloadable, IInspect
   /**
    * Add a component to this celestial body
    */
-  addComponent(component: ICelestialComponent): this {
+  addComponent(component: IVisualComponent): this {
     this.components.push(component);
     
     // If already initialized, initialize the component immediately
@@ -84,7 +87,7 @@ export class CelestialBody implements ISceneObject, ITextureReloadable, IInspect
   /**
    * Get a component by type
    */
-  getComponent<T extends ICelestialComponent>(type: new (...args: any[]) => T): T | undefined {
+  getComponent<T extends IVisualComponent>(type: new (...args: any[]) => T): T | undefined {
     return this.components.find(c => c instanceof type) as T | undefined;
   }
 
@@ -228,118 +231,14 @@ export class CelestialBody implements ISceneObject, ITextureReloadable, IInspect
       );
     }
 
-    // Tint Component properties
-    const tintComp = this.getComponent(TintComponent);
-    if (tintComp) {
-      const config = (tintComp as any).config as { tintColor: number; intensity: number };
-      properties.push(
-        {
-          name: 'tint.color',
-          label: 'Tint Color',
-          type: 'color',
-          value: config.tintColor,
-          description: 'Color overlay for the surface'
-        },
-        {
-          name: 'tint.intensity',
-          label: 'Tint Intensity',
-          type: 'number',
-          value: config.intensity,
-          min: 0,
-          max: 1,
-          step: 0.05,
-          description: 'Strength of color tint'
-        }
-      );
-    }
-
-    // Atmosphere Component properties
-    const atmosphereComp = this.getComponent(AtmosphereComponent);
-    if (atmosphereComp) {
-      const config = (atmosphereComp as any).config as { color: number; thickness: number; intensity: number };
-      properties.push(
-        {
-          name: 'atmosphere.color',
-          label: 'Atmosphere Color',
-          type: 'color',
-          value: config.color,
-          description: 'Color of atmospheric glow'
-        },
-        {
-          name: 'atmosphere.thickness',
-          label: 'Atmosphere Thickness',
-          type: 'number',
-          value: config.thickness,
-          min: 1.0,
-          max: 2.0,
-          step: 0.05,
-          description: 'Size multiplier for atmosphere layer'
-        },
-        {
-          name: 'atmosphere.intensity',
-          label: 'Atmosphere Intensity',
-          type: 'number',
-          value: config.intensity,
-          min: 0,
-          max: 2,
-          step: 0.1,
-          description: 'Brightness of atmospheric glow'
-        }
-      );
-    }
-
-    // Corona Component properties
-    const coronaComp = this.getComponent(CoronaComponent);
-    if (coronaComp) {
-      const config = (coronaComp as any).config as { color: number; radiusMultiplier: number; intensity: number };
-      properties.push(
-        {
-          name: 'corona.color',
-          label: 'Corona Color',
-          type: 'color',
-          value: config.color,
-          description: 'Color of star corona'
-        },
-        {
-          name: 'corona.radius',
-          label: 'Corona Radius',
-          type: 'number',
-          value: config.radiusMultiplier,
-          min: 1.0,
-          max: 3.0,
-          step: 0.1,
-          description: 'Size multiplier for corona effect'
-        },
-        {
-          name: 'corona.intensity',
-          label: 'Corona Intensity',
-          type: 'number',
-          value: config.intensity,
-          min: 0,
-          max: 3,
-          step: 0.1,
-          description: 'Brightness of corona glow'
-        }
-      );
-    }
-
-    // Rotation Component properties
-    const rotationComp = this.getComponent(RotationComponent);
-    if (rotationComp) {
-      const config = (rotationComp as any).config as { axis: THREE.Vector3; speed: number };
-      properties.push(
-        {
-          name: 'rotation.speed',
-          label: 'Rotation Speed',
-          type: 'number',
-          value: config.speed,
-          min: -0.01,
-          max: 0.01,
-          step: 0.0001,
-          description: 'Speed of self-rotation'
-        }
-      );
-    }
+    // Delegate to components: each component provides its own properties
+    // This follows the Open/Closed principle - new components don't require changes here
+    this.components.forEach(component => {
+      if ('getInspectableProperties' in component && typeof component.getInspectableProperties === 'function') {
+        const componentProperties = component.getInspectableProperties();
+        properties.push(...componentProperties);
+      }
+    });
 
     return properties;
   }
@@ -380,86 +279,19 @@ export class CelestialBody implements ISceneObject, ITextureReloadable, IInspect
       return;
     }
 
-    // Component properties
-    const [componentName, propName] = name.split('.');
-
-    if (componentName === 'tint' && propName) {
-      const tintComp = this.getComponent(TintComponent);
-      if (tintComp) {
-        if (propName === 'color') {
-          (tintComp as any).config.tintColor = value;
-          (tintComp as any).applyTint();
-        } else if (propName === 'intensity') {
-          (tintComp as any).config.intensity = value;
-          (tintComp as any).applyTint();
-        }
-      }
-      return;
-    }
-
-    if (componentName === 'atmosphere' && propName) {
-      const atmosphereComp = this.getComponent(AtmosphereComponent);
-      if (atmosphereComp) {
-        const config = (atmosphereComp as any).config;
-        if (propName === 'color') {
-          config.color = value;
-          if ((atmosphereComp as any).atmosphereMesh) {
-            const material = (atmosphereComp as any).atmosphereMesh.material as THREE.ShaderMaterial;
-            material.uniforms.glowColor.value = new THREE.Color(value);
-          }
-        } else if (propName === 'thickness') {
-          config.thickness = value;
-          // Recreate atmosphere mesh with new size
-          if (this.scene && (atmosphereComp as any).atmosphereMesh) {
-            this.scene.remove((atmosphereComp as any).atmosphereMesh);
-            (atmosphereComp as any).atmosphereMesh = null;
-            atmosphereComp.initialize(this.scene, this.mainMesh);
-          }
-        } else if (propName === 'intensity') {
-          config.intensity = value;
-          if ((atmosphereComp as any).atmosphereMesh) {
-            const material = (atmosphereComp as any).atmosphereMesh.material as THREE.ShaderMaterial;
-            material.uniforms.intensity.value = value;
+    // Component properties - delegate to components
+    // Components handle their own property names with namespace (e.g., 'corona.color')
+    for (const component of this.components) {
+      if ('setProperty' in component && typeof component.setProperty === 'function') {
+        // Check if this property belongs to this component by trying to get it
+        if ('getProperty' in component && typeof component.getProperty === 'function') {
+          const currentValue = component.getProperty(name);
+          if (currentValue !== undefined) {
+            component.setProperty(name, value);
+            return;
           }
         }
       }
-      return;
-    }
-
-    if (componentName === 'corona' && propName) {
-      const coronaComp = this.getComponent(CoronaComponent);
-      if (coronaComp) {
-        const config = (coronaComp as any).config;
-        if (propName === 'color') {
-          config.color = value;
-          if ((coronaComp as any).coronaMesh) {
-            const material = (coronaComp as any).coronaMesh.material as THREE.ShaderMaterial;
-            material.uniforms.glowColor.value = new THREE.Color(value);
-          }
-        } else if (propName === 'radius') {
-          config.radiusMultiplier = value;
-          if (this.scene && (coronaComp as any).coronaMesh) {
-            this.scene.remove((coronaComp as any).coronaMesh);
-            (coronaComp as any).coronaMesh = null;
-            coronaComp.initialize(this.scene, this.mainMesh);
-          }
-        } else if (propName === 'intensity') {
-          config.intensity = value;
-          if ((coronaComp as any).coronaMesh) {
-            const material = (coronaComp as any).coronaMesh.material as THREE.ShaderMaterial;
-            material.uniforms.intensity.value = value;
-          }
-        }
-      }
-      return;
-    }
-
-    if (componentName === 'rotation' && propName === 'speed') {
-      const rotationComp = this.getComponent(RotationComponent);
-      if (rotationComp) {
-        (rotationComp as any).config.speed = value;
-      }
-      return;
     }
   }
 
@@ -470,42 +302,13 @@ export class CelestialBody implements ISceneObject, ITextureReloadable, IInspect
     if (name === 'metalness') return this.config.metalness;
     if (name === 'emissiveIntensity') return this.config.emissiveIntensity;
 
-    // Component properties
-    const [componentName, propName] = name.split('.');
-
-    if (componentName === 'tint' && propName) {
-      const tintComp = this.getComponent(TintComponent);
-      if (tintComp) {
-        const config = (tintComp as any).config;
-        if (propName === 'color') return config.tintColor;
-        if (propName === 'intensity') return config.intensity;
-      }
-    }
-
-    if (componentName === 'atmosphere' && propName) {
-      const atmosphereComp = this.getComponent(AtmosphereComponent);
-      if (atmosphereComp) {
-        const config = (atmosphereComp as any).config;
-        if (propName === 'color') return config.color;
-        if (propName === 'thickness') return config.thickness;
-        if (propName === 'intensity') return config.intensity;
-      }
-    }
-
-    if (componentName === 'corona' && propName) {
-      const coronaComp = this.getComponent(CoronaComponent);
-      if (coronaComp) {
-        const config = (coronaComp as any).config;
-        if (propName === 'color') return config.color;
-        if (propName === 'radius') return config.radiusMultiplier;
-        if (propName === 'intensity') return config.intensity;
-      }
-    }
-
-    if (componentName === 'rotation' && propName === 'speed') {
-      const rotationComp = this.getComponent(RotationComponent);
-      if (rotationComp) {
-        return (rotationComp as any).config.speed;
+    // Component properties - delegate to components
+    for (const component of this.components) {
+      if ('getProperty' in component && typeof component.getProperty === 'function') {
+        const value = component.getProperty(name);
+        if (value !== undefined) {
+          return value;
+        }
       }
     }
 
@@ -514,6 +317,9 @@ export class CelestialBody implements ISceneObject, ITextureReloadable, IInspect
 
   getTypeName(): string {
     // Detect type based on components
+    if (this.getComponent(AccretionDiskComponent)) {
+      return 'Black Hole';
+    }
     if (this.getComponent(CoronaComponent)) {
       return 'Star';
     }

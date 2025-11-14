@@ -4,6 +4,32 @@ import type { IInspectable, InspectableProperty } from '@client/domain/scene/IIn
 
 export type CameraMode = 'orbit' | 'fixed';
 
+/**
+ * @deprecated Use CameraBody with camera components instead.
+ * 
+ * Legacy camera implementation with hardcoded behaviors.
+ * For new code, use the component-based architecture:
+ * 
+ * @example
+ * ```typescript
+ * // Old (deprecated):
+ * const camera = new CameraObject('camera', { orbitDistance: 20 });
+ * 
+ * // New (recommended):
+ * import { OrbitCameraBuilder } from './builders';
+ * const camera = OrbitCameraBuilder.create('camera', {
+ *   orbit: { distance: 20, height: 10, speed: 0.001, autoRotate: true },
+ *   target: new THREE.Vector3(0, 0, 0)
+ * });
+ * ```
+ * 
+ * @see CameraBody - Component container
+ * @see OrbitComponent - Orbit behavior
+ * @see LookAtComponent - Look-at behavior
+ * @see TargetTrackingComponent - Object tracking
+ * @see OrbitCameraBuilder - Convenient builders
+ */
+
 export interface CameraObjectConfig {
   fov?: number;
   aspect?: number;

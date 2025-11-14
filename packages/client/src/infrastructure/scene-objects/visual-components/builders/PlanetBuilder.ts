@@ -1,6 +1,8 @@
-import { CelestialBody } from '../CelestialBody';
+import { VisualBody } from '../VisualBody';
 import type { TextureResolverService } from '@client/application/TextureResolverService';
 import {
+  GeometryComponent,
+  MaterialComponent,
   TextureComponent,
   TintComponent,
   AtmosphereComponent,
@@ -43,7 +45,7 @@ export class PlanetBuilder {
     id: string,
     textureResolver: TextureResolverService,
     config: PlanetBuilderConfig = {}
-  ): CelestialBody {
+  ): VisualBody {
     const {
       radius = 1.0,
       textureId = 'rocky-planet',
@@ -58,14 +60,26 @@ export class PlanetBuilder {
       metalness = 0.1,
     } = config;
 
-    const planet = new CelestialBody(id, {
-      radius,
-      segments: 128,
-      roughness,
-      metalness,
-      receiveShadows: true,
-      castShadows: true,
-    });
+    const planet = new VisualBody(id);
+
+    // Add base components
+    planet.addComponent(
+      new GeometryComponent({
+        type: 'sphere',
+        radius,
+        segments: 128,
+      })
+    );
+
+    planet.addComponent(
+      new MaterialComponent({
+        color: 0xffffff,
+        roughness,
+        metalness,
+        receiveShadows: true,
+        castShadows: true,
+      })
+    );
 
     // Add texture
     planet.addComponent(

@@ -1,24 +1,34 @@
-# Celestial Body System
+# Visual Components System
 
-Sistema componentizado y genérico para crear cuerpos celestes (estrellas, planetas, lunas) con una arquitectura limpia y modular.
+Sistema genérico de renderizado 3D usando composición sobre herencia.
 
 ## 🏗️ Arquitectura
 
 ### Principios de Diseño
 
 - **Composición sobre Herencia**: Los efectos se añaden como componentes modulares
+- **Infraestructura Genérica**: VisualBody puede renderizar cualquier objeto 3D
 - **Separación de Responsabilidades**: Cada componente maneja una funcionalidad específica
 - **Reutilización**: Los mismos componentes se pueden combinar de diferentes formas
 - **Clean Code**: Código organizado en carpetas lógicas
 
+### Filosofía
+
+- **VisualBody** = Infraestructura (contenedor genérico 3D, no sabe qué renderiza)
+- **Componentes** = Definen QUÉ renderizar (geometría, materiales, efectos)
+- **Builders** = Capa de dominio (definen CUÁLES componentes usar para tipos específicos)
+
 ### Estructura de Carpetas
 
 ```
-celestial/
-├── CelestialBody.ts              # Clase base que compone componentes
-├── ComponentSkybox.ts            # Skybox basado en componentes
+visual-components/
+├── VisualBody.ts                 # Contenedor genérico de objetos 3D
+├── Skybox.ts                     # Implementación de skybox
 ├── components/                    # Componentes modulares
-│   ├── ICelestialComponent.ts    # Interface base
+│   ├── IVisualComponent.ts       # Interface base
+│   ├── GeometryComponent.ts      # Gestión de geometría (esfera, caja, etc.)
+│   ├── MaterialComponent.ts      # Propiedades de material PBR
+│   ├── EmissiveComponent.ts      # Efectos emisivos/glow
 │   ├── TextureComponent.ts       # Carga de texturas con fallback
 │   ├── TintComponent.ts          # Coloración/tinte
 │   ├── BrightnessComponent.ts    # Ajuste de brillo
@@ -26,10 +36,15 @@ celestial/
 │   ├── CoronaComponent.ts        # Corona/glow para estrellas
 │   ├── LightEmissionComponent.ts # PointLight para iluminación
 │   ├── RotationComponent.ts      # Rotación continua
+│   ├── AccretionDiskComponent.ts # Disco de acreción (agujeros negros)
+│   ├── EventHorizonComponent.ts  # Horizonte de eventos (agujeros negros)
+│   ├── JetStreamComponent.ts     # Jets relativistas (agujeros negros)
 │   └── index.ts
 ├── builders/                      # Factories para tipos comunes
 │   ├── StarBuilder.ts            # Constructor de estrellas
 │   ├── PlanetBuilder.ts          # Constructor de planetas
+│   ├── BlackHoleBuilder.ts       # Constructor de agujeros negros
+│   ├── SkyboxBuilder.ts          # Constructor de skybox
 │   └── index.ts
 └── index.ts                       # Exports públicos
 ```
@@ -226,33 +241,10 @@ this.addObject(engine, mars);
 
 ### Opción 2: Composición Manual
 
-Para cuerpos celestes personalizados, compone los componentes manualmente:
+Para objetos personalizados, compone los componentes manualmente:
 
 ```ts
-import { CelestialBody } from '@client/infrastructure/scene-objects/visual-components';
-import {
-  TextureComponent,
-  TintComponent,
-  CoronaComponent,
-  LightEmissionComponent,
-  RotationComponent
-} from '@client/infrastructure/scene-objects/visual-components/components';
-
-// Crear base
-const customStar = new CelestialBody('red-giant', {
-  radius: 2.5,
-  emissive: 0xff0000,
-  emissiveIntensity: 3.0
-});
-
-// Añadir componentes según necesites
-customStar
-  .addComponent(new TextureComponent(textureResolver, {
-    textureId: 'sun',
-    applyAsEmissive: true
-  }))
-  .addComponent(new TintComponent({
-    tintColor: 0xff0000,
+import { VisualBody } from '@client/infrastructure/scene-objects/visual-components';\nimport {\n  GeometryComponent,\n  MaterialComponent,\n  EmissiveComponent,\n  TextureComponent,\n  TintComponent,\n  CoronaComponent,\n  LightEmissionComponent,\n  RotationComponent\n} from '@client/infrastructure/scene-objects/visual-components/components';\n\n// Crear contenedor\nconst customStar = new VisualBody('red-giant');\n\n// Añadir componentes base\ncustomStar.addComponent(\n  new GeometryComponent({\n    type: 'sphere',\n    radius: 2.5,\n    segments: 128\n  })\n);\n\ncustomStar.addComponent(\n  new MaterialComponent({\n    color: 0xffffff,\n    roughness: 1.0,\n    metalness: 0.0\n  })\n);\n\ncustomStar.addComponent(\n  new EmissiveComponent({\n    color: 0xff0000,\n    intensity: 3.0\n  })\n);\n\n// Añadir componentes visuales según necesites\ncustomStar\n  .addComponent(new TextureComponent(textureResolver, {\n    textureId: 'sun',\n    applyAsEmissive: true\n  }))\n  .addComponent(new TintComponent({\n    tintColor: 0xff0000,
     intensity: 0.8
   }))
   .addComponent(new CoronaComponent({
@@ -410,13 +402,10 @@ const planet = PlanetBuilder.create('rocky-1', textureResolver, {
 
 ## 📝 Crear Nuevos Componentes
 
-Para añadir nuevos efectos, implementa `ICelestialComponent`:
+Para añadir nuevos efectos, implementa `IVisualComponent`:
 
 ```ts
-import type { ICelestialComponent } from './ICelestialComponent';
-import * as THREE from 'three';
-
-export class MyCustomComponent implements ICelestialComponent {
+import type { IVisualComponent } from './IVisualComponent';\nimport * as THREE from 'three';\n\nexport class MyCustomComponent implements IVisualComponent {
   initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
     // Setup: crear meshes, luces, etc.
   }
@@ -434,5 +423,211 @@ export class MyCustomComponent implements ICelestialComponent {
 Luego úsalo:
 
 ```ts
-celestialBody.addComponent(new MyCustomComponent());
+visualBody.addComponent(new MyCustomComponent());
 ```
+
+## ⚫ Agujeros Negros (Black Holes)
+
+Sistema completo para crear agujeros negros con efectos visuales avanzados:
+
+### Componentes Especializados
+
+#### AccretionDiskComponent
+Disco de acreción rotatorio con gradiente de color del borde interno caliente al externo frío.
+
+```ts
+import { AccretionDiskComponent } from './components';
+
+visualBody.addComponent(new AccretionDiskComponent({
+  innerRadius: 1.2,
+  outerRadius: 3.5,
+  innerColor: 0xffaa00,    // Caliente (naranja)
+  outerColor: 0x4488ff,    // Frío (azul)
+  rotationSpeed: 0.5,
+  segments: 128,
+  opacity: 0.8,
+  emissiveIntensity: 2.5
+}));
+```
+
+**Características:**
+- Geometría de anillo (RingGeometry)
+- Shader personalizado con gradiente radial
+- Rotación animada
+- Blending aditivo para efecto de brillo
+- Semi-transparente con propiedades emisivas
+
+#### EventHorizonComponent
+Horizonte de eventos con distorsión espacial y efecto de borde (Fresnel).
+
+```ts
+import { EventHorizonComponent } from './components';
+
+visualBody.addComponent(new EventHorizonComponent({
+  radiusMultiplier: 1.3,
+  color: 0x000000,
+  distortionStrength: 0.1,
+  pulseSpeed: 0.5,
+  enablePulse: true
+}));
+```
+
+**Características:**
+- Esfera oscura con brillo en los bordes (efecto Fresnel)
+- Distorsión de vértices con ruido
+- Pulsación opcional
+- Renderizado desde el interior (BackSide)
+
+#### JetStreamComponent
+Jets relativistas de partículas desde los polos.
+
+```ts
+import { JetStreamComponent } from './components';
+
+visualBody.addComponent(new JetStreamComponent({
+  length: 5.0,
+  radius: 0.3,
+  color: 0x88ccff,
+  intensity: 1.5,
+  particleCount: 200,
+  speed: 2.0
+}));
+```
+
+**Características:**
+- Sistema de partículas (Points)
+- Jets desde ambos polos (arriba/abajo)
+- Animación de flujo de partículas
+- Blending aditivo para apariencia energética
+- Reciclado de partículas para rendimiento
+
+### BlackHoleBuilder
+
+Builder con presets predefinidos para crear agujeros negros rápidamente:
+
+#### Preset: Standard
+```ts
+import { BlackHoleBuilder } from './builders';
+
+const blackHole = BlackHoleBuilder.create('bh-1', textureResolver, {
+  radius: 0.8,
+  diskInnerColor: 0xffaa00,
+  diskOuterColor: 0x4488ff,
+  enableJets: true
+});
+```
+
+#### Preset: Supermassive
+Agujero negro supermasivo con disco de acreción grande e intenso.
+
+```ts
+const blackHole = BlackHoleBuilder.createSupermassive('bh-super', textureResolver);
+```
+
+**Características:**
+- Radio: 1.5
+- Disco: 2.0 → 6.0
+- Colores: Rojo intenso → Azul
+- Jets largos (8.0) y rápidos
+- 300 partículas en jets
+
+#### Preset: Stellar
+Agujero negro de masa estelar, más pequeño y tranquilo.
+
+```ts
+const blackHole = BlackHoleBuilder.createStellar('bh-stellar', textureResolver);
+```
+
+**Características:**
+- Radio: 0.5
+- Disco: 0.8 → 2.0
+- Sin jets
+- Rotación más rápida
+
+#### Preset: Quasar
+Núcleo galáctico activo extremadamente brillante y activo.
+
+```ts
+const blackHole = BlackHoleBuilder.createQuasar('quasar-1', textureResolver);
+```
+
+**Características:**
+- Disco muy brillante (blanco → azul)
+- Jets extremadamente largos (10.0)
+- 400 partículas en jets
+- Jets muy rápidos (speed: 4.0)
+- Rotación rápida del disco
+
+### Uso en ObjectFactory
+
+Los agujeros negros están integrados en el factory:
+
+```ts
+// Desde el UI o código
+const blackHole = objectFactory.createBlackHole({
+  preset: 'supermassive',
+  position: [0, 0, 0]
+});
+
+// Custom
+const blackHole = objectFactory.createBlackHole({
+  radius: 1.0,
+  diskInnerColor: 0xff0000,
+  diskOuterColor: 0x0000ff,
+  enableJets: false
+});
+```
+
+### Propiedades Inspeccionables
+
+Todos los agujeros negros son editables en el Object Inspector:
+
+**Accretion Disk:**
+- `disk.innerColor` - Color del borde interno caliente
+- `disk.outerColor` - Color del borde externo frío
+- `disk.rotationSpeed` - Velocidad de rotación (0-2)
+- `disk.opacity` - Transparencia (0-1)
+
+**Event Horizon:**
+- `horizon.color` - Color del horizonte de eventos
+- `horizon.distortion` - Intensidad de distorsión (0-0.5)
+- `horizon.pulseSpeed` - Velocidad de pulsación (0-2)
+
+**Jet Streams:**
+- `jet.color` - Color de los jets
+- `jet.speed` - Velocidad del flujo de partículas (0-5)
+
+### Tipos de Agujero Negro Disponibles
+
+En el Scene Hierarchy se pueden crear:
+
+- **Black Hole** - Configuración estándar balanceada
+- **Black Hole (Supermassive)** - Gigante con disco intenso
+- **Black Hole (Stellar)** - Pequeño sin jets
+- **Quasar** - Núcleo galáctico activo extremo
+
+### Patrón de Sincronización de Posición
+
+Todos los componentes de agujero negro siguen el patrón de sincronización de posición:
+
+```ts
+export class AccretionDiskComponent implements IVisualComponent {
+  private parentMesh?: THREE.Mesh;
+
+  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
+    this.parentMesh = parentMesh;
+    // ... crear meshes
+  }
+
+  update(deltaTime: number): void {
+    // Sincronizar posición con el objeto padre cada frame
+    if (this.parentMesh) {
+      this.diskMesh.position.copy(this.parentMesh.position);
+    }
+    // ... resto de lógica de animación
+  }
+}
+```
+
+Este patrón asegura que todos los efectos visuales sigan al objeto cuando se mueve su transform en el inspector.
+

@@ -5,7 +5,7 @@ import type { SettingsService } from '@client/application/SettingsService';
 import { BaseScene } from './BaseScene';
 import SceneId from '@client/domain/scene/SceneId';
 import * as THREE from 'three';
-import { CameraObject, type CameraObjectConfig } from '@client/infrastructure/scene-objects/cameras';
+import { CameraBody, type CameraBodyConfig } from '@client/infrastructure/scene-objects/cameras';
 
 /**
  * Object configuration for scene setup
@@ -20,7 +20,7 @@ export interface SceneObjectConfig {
  */
 export interface SceneDefinition {
   id: SceneId;
-  camera: CameraObject;  // Camera is mandatory and always a CameraObject
+  camera: CameraBody;  // Camera is mandatory and always a CameraBody
   objects: SceneObjectConfig[];
   controllers?: ISceneController[];
 }
@@ -47,14 +47,13 @@ class DeclarativeScene extends BaseScene {
     this.camera = camera instanceof THREE.PerspectiveCamera ? camera : null;
 
     if (this.camera) {
-      // Wrap the engine's camera with the CameraObject from definition
+      // Wrap the engine's camera with the CameraBody from definition
       const cameraObj = this.definition.camera;
       
       // Re-create wrapping the engine's camera
-      const wrappedCamera = new CameraObject(
+      const wrappedCamera = new CameraBody(
         cameraObj.id,
-        {} as CameraObjectConfig,
-        this.camera  // Wrap engine camera
+        { externalCamera: this.camera }
       );
       
       // Copy all properties from the definition camera to the wrapped one
@@ -127,9 +126,9 @@ export class SceneDefinitionBuilder {
   }
 
   /**
-   * Configure camera using CameraObject (appears in scene hierarchy)
+   * Configure camera using CameraBody (appears in scene hierarchy)
    */
-  withCameraObject(cameraObject: CameraObject): this {
+  withCameraObject(cameraObject: CameraBody): this {
     this.definition.camera = cameraObject;
     return this;
   }

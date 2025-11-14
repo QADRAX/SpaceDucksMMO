@@ -1,4 +1,5 @@
-import type { ICelestialComponent } from './ICelestialComponent';
+import type { IInspectableComponent } from './IVisualComponent';
+import type { InspectableProperty } from '@client/domain/scene/IInspectable';
 import * as THREE from 'three';
 
 /**
@@ -12,7 +13,7 @@ export interface RotationComponentConfig {
 /**
  * Component that handles continuous rotation of the parent mesh.
  */
-export class RotationComponent implements ICelestialComponent {
+export class RotationComponent implements IInspectableComponent {
   private config: Required<RotationComponentConfig>;
   private parentMesh?: THREE.Mesh;
 
@@ -46,8 +47,44 @@ export class RotationComponent implements ICelestialComponent {
     // No resources to dispose
   }
 
+  // ============================================
+  // IInspectableComponent Implementation
+  // ============================================
+
+  getInspectableProperties(): InspectableProperty[] {
+    return [
+      {
+        name: 'rotation.speed',
+        label: 'Rotation Speed',
+        type: 'number',
+        value: this.config.speed,
+        min: -0.01,
+        max: 0.01,
+        step: 0.0001,
+        description: 'Speed of self-rotation'
+      }
+    ];
+  }
+
+  setProperty(name: string, value: any): void {
+    const propName = name.split('.')[1];
+    
+    if (propName === 'speed') {
+      this.config.speed = value;
+    }
+  }
+
+  getProperty(name: string): any {
+    const propName = name.split('.')[1];
+    
+    if (propName === 'speed') return this.config.speed;
+    
+    return undefined;
+  }
+
   /**
    * Change rotation speed at runtime
+   * @deprecated Use setProperty instead
    */
   setSpeed(speed: number): void {
     this.config.speed = speed;

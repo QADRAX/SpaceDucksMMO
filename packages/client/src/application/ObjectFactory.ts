@@ -1,9 +1,9 @@
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type { TextureResolverService } from '@client/application/TextureResolverService';
-import { PlanetBuilder, StarBuilder, SkyboxBuilder } from '@client/infrastructure/scene-objects/visual-components';
-import { AmbientLightObject, DirectionalLightObject } from '@client/infrastructure/scene-objects/lights';
-import { GridHelperObject, AxesHelperObject } from '@client/infrastructure/scene-objects/helpers';
-import { CameraObject } from '@client/infrastructure/scene-objects/cameras';
+import { PlanetBuilder, StarBuilder, SkyboxBuilder, BlackHoleBuilder } from '@client/infrastructure/scene-objects/visual-components';
+import { LightBuilder } from '@client/infrastructure/scene-objects/lights';
+import { HelperBuilder } from '@client/infrastructure/scene-objects/helpers';
+import { OrbitCameraBuilder } from '@client/infrastructure/scene-objects/cameras';
 import * as THREE from 'three';
 
 export interface ObjectFactoryOptions {
@@ -23,6 +23,14 @@ export interface StarOptions extends ObjectFactoryOptions {
   size?: number;
   color?: number;
   intensity?: number;
+}
+
+export interface BlackHoleOptions extends ObjectFactoryOptions {
+  radius?: number;
+  preset?: 'standard' | 'supermassive' | 'stellar' | 'quasar';
+  diskInnerColor?: number;
+  diskOuterColor?: number;
+  enableJets?: boolean;
 }
 
 export interface LightOptions extends ObjectFactoryOptions {
@@ -107,6 +115,36 @@ export class ObjectFactory {
   }
 
   /**
+   * Create a black hole object
+   */
+  createBlackHole(options: BlackHoleOptions = {}): ISceneObject {
+    const id = options.id || `black-hole-${++ObjectFactory.objectCounter}`;
+    const preset = options.preset || 'standard';
+
+    let blackHole: ISceneObject;
+
+    // Use preset if specified
+    if (preset === 'supermassive') {
+      blackHole = BlackHoleBuilder.createSupermassive(id, this.textureResolver);
+    } else if (preset === 'stellar') {
+      blackHole = BlackHoleBuilder.createStellar(id, this.textureResolver);
+    } else if (preset === 'quasar') {
+      blackHole = BlackHoleBuilder.createQuasar(id, this.textureResolver);
+    } else {
+      // Custom configuration
+      blackHole = BlackHoleBuilder.create(id, this.textureResolver, {
+        radius: options.radius,
+        diskInnerColor: options.diskInnerColor,
+        diskOuterColor: options.diskOuterColor,
+        enableJets: options.enableJets,
+      });
+    }
+
+    this.applyTransform(blackHole, options);
+    return blackHole;
+  }
+
+  /**
    * Create an ambient light
    */
   createAmbientLight(options: LightOptions = {}): ISceneObject {
@@ -114,7 +152,7 @@ export class ObjectFactory {
     const color = options.color !== undefined ? options.color : 0xffffff;
     const intensity = options.intensity !== undefined ? options.intensity : 0.5;
 
-    const light = new AmbientLightObject(id, color, intensity);
+    const light = LightBuilder.createAmbient(id, { color, intensity });
     
     this.applyTransform(light, options);
     return light;
@@ -130,14 +168,14 @@ export class ObjectFactory {
     const castShadow = options.castShadow !== undefined ? options.castShadow : true;
     const position: [number, number, number] = options.position || [10, 10, 10];
     
-    const light = new DirectionalLightObject(id, {
+    const light = LightBuilder.createDirectional(id, {
       color,
       intensity,
       position,
       castShadow
     });
     
-    // Position already set in constructor, skip in applyTransform
+    // Position already set in builder, skip in applyTransform
     this.applyTransform(light, { ...options, position: undefined });
     return light;
   }
@@ -148,7 +186,12 @@ export class ObjectFactory {
   createGrid(options: ObjectFactoryOptions = {}): ISceneObject {
     const id = options.id || `grid-${++ObjectFactory.objectCounter}`;
     
-    const grid = new GridHelperObject(id, 20, 20, 0x444444, 0x222222);
+    const grid = HelperBuilder.createGrid(id, {
+      size: 20,
+      divisions: 20,
+      colorCenterLine: 0x444444,
+      colorGrid: 0x222222
+    });
     
     this.applyTransform(grid, options);
     return grid;
@@ -160,7 +203,7 @@ export class ObjectFactory {
   createAxes(options: ObjectFactoryOptions = {}): ISceneObject {
     const id = options.id || `axes-${++ObjectFactory.objectCounter}`;
     
-    const axes = new AxesHelperObject(id, 5);
+    const axes = HelperBuilder.createAxes(id, { size: 5 });
     
     this.applyTransform(axes, options);
     return axes;
@@ -185,23 +228,23 @@ export class ObjectFactory {
     const id = options.id || `camera-${++ObjectFactory.objectCounter}`;
     const fov = options.fov || 75;
     const position: [number, number, number] = options.position || [0, 5, 10];
-    const orbitTarget: [number, number, number] = [0, 0, 0];
     const orbitDistance = options.orbitDistance || 10;
     const orbitHeight = options.orbitHeight || 5;
     const orbitSpeed = options.orbitSpeed || 0.0005;
     const autoRotate = options.autoRotate !== undefined ? options.autoRotate : false;
 
-    const camera = new CameraObject(id, {
-      fov,
-      position,
-      orbitTarget,
-      orbitDistance,
-      orbitHeight,
-      orbitSpeed,
-      autoRotate
+    const camera = OrbitCameraBuilder.create(id, {
+      orbit: {
+        distance: orbitDistance,
+        height: orbitHeight,
+        speed: orbitSpeed,
+        autoRotate
+      },
+      target: new THREE.Vector3(0, 0, 0),
+      fov
     });
 
-    // Position already set in constructor
+    // Position already set in builder
     this.applyTransform(camera, { ...options, position: undefined });
     return camera;
   }
@@ -239,6 +282,10 @@ export class ObjectFactory {
     return [
       { value: 'planet', label: 'Planet', category: 'Visual' },
       { value: 'star', label: 'Star', category: 'Visual' },
+      { value: 'black-hole', label: 'Black Hole', category: 'Visual' },
+      { value: 'black-hole-supermassive', label: 'Black Hole (Supermassive)', category: 'Visual' },
+      { value: 'black-hole-stellar', label: 'Black Hole (Stellar)', category: 'Visual' },
+      { value: 'black-hole-quasar', label: 'Quasar', category: 'Visual' },
       { value: 'skybox', label: 'Skybox', category: 'Visual' },
       { value: 'ambient-light', label: 'Ambient Light', category: 'Lights' },
       { value: 'directional-light', label: 'Directional Light', category: 'Lights' },

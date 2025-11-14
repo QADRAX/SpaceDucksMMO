@@ -4,6 +4,24 @@ import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 /**
  * Grid Helper as ISceneObject
  * Provides spatial reference on XZ plane
+ * 
+ * @deprecated Use HelperBody with GridComponent instead.
+ * 
+ * For new code, use the component-based architecture:
+ * 
+ * @example
+ * ```typescript
+ * // Old (deprecated):
+ * const grid = new GridHelperObject('grid', 20, 20);
+ * 
+ * // New (recommended):
+ * import { HelperBuilder } from './builders';
+ * const grid = HelperBuilder.createGrid('grid', { size: 20, divisions: 20 });
+ * ```
+ * 
+ * @see HelperBody - Component container
+ * @see GridComponent - Grid visualization
+ * @see HelperBuilder - Convenient builders
  */
 export class GridHelperObject implements ISceneObject {
   readonly id: string;

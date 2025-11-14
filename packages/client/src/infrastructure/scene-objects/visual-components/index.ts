@@ -1,17 +1,20 @@
 /**
- * Celestial body system - component-based, clean architecture
+ * Visual components system - generic 3D rendering through composition
  * 
  * This system uses composition over inheritance with modular components.
+ * VisualBody is infrastructure-level (generic 3D container), while domain objects
+ * (Sun, Planet, BlackHole) define which components to use.
  * 
  * ## Architecture
  * 
- * - **CelestialBody**: Base class that composes components
- * - **Components**: Modular effects (texture, tint, atmosphere, corona, light, rotation)
- * - **Builders**: Factory functions to create common types (stars, planets)
+ * - **VisualBody**: Generic 3D object container (pure infrastructure)
+ * - **CelestialBody**: Legacy alias, will be deprecated
+ * - **Components**: Modular rendering features (geometry, material, effects)
+ * - **Builders**: Domain factories for common celestial body types
  * 
  * ## Usage
  * 
- * ### Using Builders (recommended for common types)
+ * ### Using Builders (recommended for celestial bodies)
  * ```ts
  * import { StarBuilder, PlanetBuilder } from '@client/infrastructure/scene-objects/visual-components';
  * 
@@ -28,45 +31,64 @@
  * });
  * ```
  * 
- * ### Using Components Directly (for custom bodies)
+ * ### Using VisualBody Directly (for custom objects)
  * ```ts
- * import { CelestialBody } from '@client/infrastructure/scene-objects/visual-components';
- * import { TextureComponent, CoronaComponent } from '@client/infrastructure/scene-objects/visual-components/components';
+ * import { VisualBody } from '@client/infrastructure/scene-objects/visual-components';
+ * import { 
+ *   GeometryComponent,
+ *   MaterialComponent,
+ *   EmissiveComponent,
+ *   CoronaComponent 
+ * } from '@client/infrastructure/scene-objects/visual-components/components';
  * 
- * const custom = new CelestialBody('custom', { radius: 2.0 });
- * custom.addComponent(new TextureComponent(resolver, { textureId: 'sun' }));
- * custom.addComponent(new CoronaComponent({ color: 0xff0000, radiusMultiplier: 2.0 }));
+ * const custom = new VisualBody('custom-star')
+ *   .addComponent(new GeometryComponent({ type: 'sphere', radius: 2.0 }))
+ *   .addComponent(new MaterialComponent({ color: 0xffaa00 }))
+ *   .addComponent(new EmissiveComponent({ color: 0xffdd44, intensity: 2.0 }))
+ *   .addComponent(new CoronaComponent({ color: 0xff0000, radiusMultiplier: 2.0 }));
  * ```
  */
 
-export { CelestialBody } from './CelestialBody';
-export type { CelestialBodyBaseConfig } from './CelestialBody';
+// Core visual body (generic 3D object container)
+export { VisualBody } from './VisualBody';
 
 // Export component-based objects
 export { Skybox as ComponentSkybox } from './Skybox';
 export type { SkyboxConfig, SkyboxTexture } from './Skybox';
 
 // Components (explicit exports to avoid type/value confusion)
-export type { ICelestialComponent } from './components';
+export type { IVisualComponent, IInspectableComponent } from './components';
 export { 
+  GeometryComponent,
+  MaterialComponent,
+  EmissiveComponent,
   TextureComponent,
   TintComponent,
   BrightnessComponent,
   AtmosphereComponent,
   CoronaComponent,
   LightEmissionComponent,
-  RotationComponent
+  RotationComponent,
+  AccretionDiskComponent,
+  EventHorizonComponent,
+  JetStreamComponent
 } from './components';
 export type {
+  GeometryComponentConfig,
+  MaterialComponentConfig,
+  EmissiveComponentConfig,
   TextureComponentConfig,
   TintComponentConfig,
   BrightnessComponentConfig,
   AtmosphereComponentConfig,
   CoronaComponentConfig,
   LightEmissionComponentConfig,
-  RotationComponentConfig
+  RotationComponentConfig,
+  AccretionDiskConfig,
+  EventHorizonConfig,
+  JetStreamConfig
 } from './components';
 
 // Builders
-export { StarBuilder, PlanetBuilder, SkyboxBuilder } from './builders';
-export type { StarBuilderConfig, PlanetBuilderConfig, SkyboxBuilderConfig } from './builders';
+export { StarBuilder, PlanetBuilder, SkyboxBuilder, BlackHoleBuilder } from './builders';
+export type { StarBuilderConfig, PlanetBuilderConfig, SkyboxBuilderConfig, BlackHoleBuilderConfig } from './builders';

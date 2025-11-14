@@ -1,4 +1,5 @@
-import type { ICelestialComponent } from './ICelestialComponent';
+import type { IInspectableComponent } from './IVisualComponent';
+import type { InspectableProperty } from '@client/domain/scene/IInspectable';
 import * as THREE from 'three';
 
 /**
@@ -13,9 +14,10 @@ export interface AtmosphereComponentConfig {
 /**
  * Component that adds an atmospheric glow layer using Fresnel shader.
  */
-export class AtmosphereComponent implements ICelestialComponent {
+export class AtmosphereComponent implements IInspectableComponent {
   private config: AtmosphereComponentConfig;
   private atmosphereMesh?: THREE.Mesh;
+  private parentMesh?: THREE.Mesh;
   private parentRadius: number = 1.0;
 
   constructor(config: AtmosphereComponentConfig) {
@@ -23,6 +25,7 @@ export class AtmosphereComponent implements ICelestialComponent {
   }
 
   initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
+    this.parentMesh = parentMesh;
     // Calculate parent radius from geometry
     const geometry = parentMesh.geometry as THREE.SphereGeometry;
     const bbox = new THREE.Box3().setFromObject(parentMesh);
@@ -74,10 +77,15 @@ export class AtmosphereComponent implements ICelestialComponent {
   }
 
   update(deltaTime: number): void {
-    // Atmosphere can slowly rotate if needed
-    if (this.atmosphereMesh) {
-      this.atmosphereMesh.rotation.y += 0.00003 * deltaTime;
+    if (!this.atmosphereMesh) return;
+
+    // Keep atmosphere synchronized with parent position
+    if (this.parentMesh) {
+      this.atmosphereMesh.position.copy(this.parentMesh.position);
     }
+
+    // Atmosphere can slowly rotate if needed
+    this.atmosphereMesh.rotation.y += 0.00003 * deltaTime;
   }
 
   dispose(scene: THREE.Scene): void {
@@ -88,8 +96,83 @@ export class AtmosphereComponent implements ICelestialComponent {
     }
   }
 
+  // ============================================
+  // IInspectableComponent Implementation
+  // ============================================
+
+  getInspectableProperties(): InspectableProperty[] {
+    return [
+      {
+        name: 'atmosphere.color',
+        label: 'Atmosphere Color',
+        type: 'color',
+        value: this.config.color,
+        description: 'Color of atmospheric glow'
+      },
+      {
+        name: 'atmosphere.thickness',
+        label: 'Atmosphere Thickness',
+        type: 'number',
+        value: this.config.thickness,
+        min: 1.0,
+        max: 2.0,
+        step: 0.05,
+        description: 'Size multiplier for atmosphere layer'
+      },
+      {
+        name: 'atmosphere.intensity',
+        label: 'Atmosphere Intensity',
+        type: 'number',
+        value: this.config.intensity,
+        min: 0,
+        max: 2,
+        step: 0.1,
+        description: 'Brightness of atmospheric glow'
+      }
+    ];
+  }
+
+  setProperty(name: string, value: any): void {
+    const propName = name.split('.')[1];
+    
+    if (propName === 'color') {
+      this.config.color = value;
+      if (this.atmosphereMesh) {
+        const material = this.atmosphereMesh.material as THREE.ShaderMaterial;
+        material.uniforms.glowColor.value = new THREE.Color(value);
+      }
+    } else if (propName === 'thickness') {
+      this.config.thickness = value;
+      // Recreate atmosphere mesh with new size
+      if (this.atmosphereMesh && this.parentMesh) {
+        const scene = this.atmosphereMesh.parent;
+        if (scene) {
+          this.dispose(scene as THREE.Scene);
+          this.initialize(scene as THREE.Scene, this.parentMesh);
+        }
+      }
+    } else if (propName === 'intensity') {
+      this.config.intensity = value;
+      if (this.atmosphereMesh) {
+        const material = this.atmosphereMesh.material as THREE.ShaderMaterial;
+        material.uniforms.intensity.value = value;
+      }
+    }
+  }
+
+  getProperty(name: string): any {
+    const propName = name.split('.')[1];
+    
+    if (propName === 'color') return this.config.color;
+    if (propName === 'thickness') return this.config.thickness;
+    if (propName === 'intensity') return this.config.intensity;
+    
+    return undefined;
+  }
+
   /**
    * Update atmosphere intensity at runtime
+   * @deprecated Use setProperty('atmosphere.intensity', value) instead
    */
   setIntensity(intensity: number): void {
     this.config.intensity = intensity;

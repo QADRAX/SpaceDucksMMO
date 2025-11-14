@@ -1,4 +1,5 @@
-import type { ICelestialComponent } from './ICelestialComponent';
+import type { IInspectableComponent } from './IVisualComponent';
+import type { InspectableProperty } from '@client/domain/scene/IInspectable';
 import * as THREE from 'three';
 
 /**
@@ -12,7 +13,7 @@ export interface BrightnessComponentConfig {
  * Component that applies brightness multiplier to a material.
  * Works by scaling the material's color by the brightness value.
  */
-export class BrightnessComponent implements ICelestialComponent {
+export class BrightnessComponent implements IInspectableComponent {
   private config: BrightnessComponentConfig;
   private material?: THREE.MeshBasicMaterial | THREE.MeshStandardMaterial;
 
@@ -35,6 +36,7 @@ export class BrightnessComponent implements ICelestialComponent {
 
   /**
    * Change brightness at runtime
+   * @deprecated Use setProperty('brightness.value', brightness) instead
    */
   setBrightness(brightness: number): void {
     this.config.brightness = brightness;
@@ -66,5 +68,28 @@ export class BrightnessComponent implements ICelestialComponent {
       this.material.color.copy(originalColor).multiplyScalar(this.config.brightness);
       this.material.needsUpdate = true;
     }
+  }
+
+  getInspectableProperties(): InspectableProperty[] {
+    return [
+      { name: 'brightness.value', label: 'Brightness', type: 'number', value: this.config.brightness, min: 0, max: 3, step: 0.1 },
+    ];
+  }
+
+  setProperty(name: string, value: any): void {
+    const propName = name.split('.')[1];
+    
+    if (propName === 'value') {
+      this.config.brightness = value;
+      this.applyBrightness();
+    }
+  }
+
+  getProperty(name: string): any {
+    const propName = name.split('.')[1];
+    
+    if (propName === 'value') return this.config.brightness;
+    
+    return undefined;
   }
 }

@@ -2,7 +2,8 @@ import SceneId from '@client/domain/scene/SceneId';
 import { SceneFactory, type SceneDefinition } from '../SceneFactory';
 import type { TextureResolverService } from '@client/application/TextureResolverService';
 import { StarBuilder, PlanetBuilder, SkyboxBuilder } from '@client/infrastructure/scene-objects/visual-components';
-import { CameraObject } from '@client/infrastructure/scene-objects/cameras';
+import { OrbitCameraBuilder } from '@client/infrastructure/scene-objects/cameras';
+import * as THREE from 'three';
 
 /**
  * Main menu scene - Ambient background with planets and sun
@@ -10,15 +11,15 @@ import { CameraObject } from '@client/infrastructure/scene-objects/cameras';
  */
 export function createMainMenuSceneDefinition(textureResolver: TextureResolverService): SceneDefinition {
   return SceneFactory.define(SceneId.MainMenu)
-    .withCameraObject(new CameraObject('menu-camera', {
+    .withCameraObject(OrbitCameraBuilder.create('menu-camera', {
       fov: 75,
-      position: [-2, 0, 1.5],
-      lookAt: [-3.5, 0, 0],
-      orbitTarget: [-3.5, 0, 0],
-      orbitDistance: 1.5,
-      orbitHeight: 0,
-      orbitSpeed: 0.0003,
-      autoRotate: true
+      orbit: {
+        distance: 1.5,
+        height: 0,
+        speed: 0.0003,
+        autoRotate: true
+      },
+      target: new THREE.Vector3(-3.5, 0, 0)
     }))
     .addObject(SkyboxBuilder.createStarfield('menu-skybox', textureResolver, {
       brightness: 1.5,

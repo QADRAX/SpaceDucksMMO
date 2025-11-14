@@ -1,7 +1,7 @@
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type { ITextureReloadable } from '@client/domain/scene/ITextureReloadable';
 import type { TextureResolverService } from '@client/application/TextureResolverService';
-import type { ICelestialComponent } from './components/ICelestialComponent';
+import type { IVisualComponent } from './components/IVisualComponent';
 import { TextureComponent } from './components/TextureComponent';
 import { TintComponent } from './components/TintComponent';
 import { RotationComponent } from './components/RotationComponent';
@@ -61,7 +61,7 @@ export class Skybox implements ISceneObject, ITextureReloadable {
   private mesh!: THREE.Mesh;
   private config: Required<SkyboxConfig>;
   private textureResolver: TextureResolverService;
-  private components: ICelestialComponent[] = [];
+  private components: IVisualComponent[] = [];
   private scene?: THREE.Scene;
 
   constructor(
@@ -89,7 +89,7 @@ export class Skybox implements ISceneObject, ITextureReloadable {
   /**
    * Add a component to the skybox
    */
-  addComponent(component: ICelestialComponent): this {
+  addComponent(component: IVisualComponent): this {
     this.components.push(component);
     
     // If already initialized, initialize the component immediately
@@ -103,7 +103,7 @@ export class Skybox implements ISceneObject, ITextureReloadable {
   /**
    * Get a component by type
    */
-  getComponent<T extends ICelestialComponent>(type: new (...args: any[]) => T): T | undefined {
+  getComponent<T extends IVisualComponent>(type: new (...args: any[]) => T): T | undefined {
     return this.components.find(c => c instanceof type) as T | undefined;
   }
 

@@ -5,6 +5,24 @@ import type { IInspectable, InspectableProperty } from '@client/domain/scene/IIn
 /**
  * Ambient Light as ISceneObject
  * Provides uniform lighting from all directions
+ * 
+ * @deprecated Use LightBody with AmbientLightComponent instead.
+ * 
+ * For new code, use the component-based architecture:
+ * 
+ * @example
+ * ```typescript
+ * // Old (deprecated):
+ * const light = new AmbientLightObject('ambient', 0xffffff, 0.3);
+ * 
+ * // New (recommended):
+ * import { LightBuilder } from './builders';
+ * const light = LightBuilder.createAmbient('ambient', { color: 0xffffff, intensity: 0.3 });
+ * ```
+ * 
+ * @see LightBody - Component container
+ * @see AmbientLightComponent - Ambient light
+ * @see LightBuilder - Convenient builders
  */
 export class AmbientLightObject implements ISceneObject, IInspectable {
   readonly id: string;

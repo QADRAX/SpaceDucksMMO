@@ -5,6 +5,28 @@ import type { IInspectable, InspectableProperty } from '@client/domain/scene/IIn
 /**
  * Directional Light as ISceneObject
  * Provides parallel rays of light (like sun)
+ * 
+ * @deprecated Use LightBody with DirectionalLightComponent instead.
+ * 
+ * For new code, use the component-based architecture:
+ * 
+ * @example
+ * ```typescript
+ * // Old (deprecated):
+ * const light = new DirectionalLightObject('sun', { color: 0xffffff, intensity: 0.7 });
+ * 
+ * // New (recommended):
+ * import { LightBuilder } from './builders';
+ * const light = LightBuilder.createDirectional('sun', { 
+ *   color: 0xffffff, 
+ *   intensity: 0.7,
+ *   position: [5, 10, 5] 
+ * });
+ * ```
+ * 
+ * @see LightBody - Component container
+ * @see DirectionalLightComponent - Directional light
+ * @see LightBuilder - Convenient builders
  */
 export class DirectionalLightObject implements ISceneObject, IInspectable {
   readonly id: string;

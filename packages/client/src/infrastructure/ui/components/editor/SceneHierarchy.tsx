@@ -83,6 +83,18 @@ export function SceneHierarchy({ editor, factory }: SceneHierarchyProps) {
       case 'star':
         newObject = factory.createStar({ size: 1.0, color: 0xffff00 });
         break;
+      case 'black-hole':
+        newObject = factory.createBlackHole({ preset: 'standard' });
+        break;
+      case 'black-hole-supermassive':
+        newObject = factory.createBlackHole({ preset: 'supermassive' });
+        break;
+      case 'black-hole-stellar':
+        newObject = factory.createBlackHole({ preset: 'stellar' });
+        break;
+      case 'black-hole-quasar':
+        newObject = factory.createBlackHole({ preset: 'quasar' });
+        break;
       case 'skybox':
         newObject = factory.createSkybox();
         break;
@@ -117,6 +129,10 @@ export function SceneHierarchy({ editor, factory }: SceneHierarchyProps) {
   const objectTypes = [
     { value: 'planet', label: 'Planet', category: 'Visual' },
     { value: 'star', label: 'Star', category: 'Visual' },
+    { value: 'black-hole', label: 'Black Hole', category: 'Visual' },
+    { value: 'black-hole-supermassive', label: 'Black Hole (Supermassive)', category: 'Visual' },
+    { value: 'black-hole-stellar', label: 'Black Hole (Stellar)', category: 'Visual' },
+    { value: 'black-hole-quasar', label: 'Quasar', category: 'Visual' },
     { value: 'skybox', label: 'Skybox', category: 'Visual' },
     { value: 'ambient-light', label: 'Ambient Light', category: 'Lights' },
     { value: 'directional-light', label: 'Directional Light', category: 'Lights' },
@@ -233,6 +249,7 @@ function getObjectIcon(typeName: string): string {
   switch (typeName.toLowerCase()) {
     case 'planet': return '🌍';
     case 'star': return '⭐';
+    case 'black hole': return '⚫';
     case 'moon': return '🌙';
     case 'skybox': return '🌌';
     case 'camera': return '📷';

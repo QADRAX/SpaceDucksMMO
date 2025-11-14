@@ -1,6 +1,9 @@
-import { CelestialBody } from '../CelestialBody';
+import { VisualBody } from '../VisualBody';
 import type { TextureResolverService } from '@client/application/TextureResolverService';
 import {
+  GeometryComponent,
+  MaterialComponent,
+  EmissiveComponent,
   TextureComponent,
   CoronaComponent,
   LightEmissionComponent,
@@ -42,7 +45,7 @@ export class StarBuilder {
     id: string,
     textureResolver: TextureResolverService,
     config: StarBuilderConfig = {}
-  ): CelestialBody {
+  ): VisualBody {
     const {
       radius = 1.2,
       textureId = 'sun',
@@ -58,16 +61,33 @@ export class StarBuilder {
       emissiveIntensity = 2.0,
     } = config;
 
-    const star = new CelestialBody(id, {
-      radius,
-      segments: 64,
-      emissive: emissiveColor,
-      emissiveIntensity,
-      roughness: 1.0,
-      metalness: 0.0,
-      receiveShadows: false,
-      castShadows: false,
-    });
+    const star = new VisualBody(id);
+
+    // Add base components
+    star.addComponent(
+      new GeometryComponent({
+        type: 'sphere',
+        radius,
+        segments: 64,
+      })
+    );
+
+    star.addComponent(
+      new MaterialComponent({
+        color: 0xffffff,
+        roughness: 1.0,
+        metalness: 0.0,
+        receiveShadows: false,
+        castShadows: false,
+      })
+    );
+
+    star.addComponent(
+      new EmissiveComponent({
+        color: emissiveColor,
+        intensity: emissiveIntensity,
+      })
+    );
 
     // Add texture
     star.addComponent(

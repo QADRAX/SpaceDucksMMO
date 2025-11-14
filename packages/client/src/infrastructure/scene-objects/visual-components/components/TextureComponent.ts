@@ -1,4 +1,4 @@
-import type { ICelestialComponent } from './ICelestialComponent';
+import type { IVisualComponent } from './IVisualComponent';
 import type { TextureResolverService } from '@client/application/TextureResolverService';
 import type { CelestialBodyId, TextureType } from '@client/domain/assets/TextureTypes';
 import * as THREE from 'three';
@@ -16,7 +16,7 @@ export interface TextureComponentConfig {
  * Component that handles texture loading with quality fallback.
  * Implements ITextureReloadable pattern for runtime quality changes.
  */
-export class TextureComponent implements ICelestialComponent {
+export class TextureComponent implements IVisualComponent {
   private textureResolver: TextureResolverService;
   private textureLoader: THREE.TextureLoader;
   private config: Required<TextureComponentConfig>;

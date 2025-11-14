@@ -1,9 +1,20 @@
 /**
- * Celestial body components - modular, composable effects
+ * Visual components - modular, composable effects
  */
 
-export type { ICelestialComponent } from './ICelestialComponent';
+export type { IVisualComponent, IInspectableComponent } from './IVisualComponent';
 
+// Base components (geometry, material, emissive)
+export { GeometryComponent } from './GeometryComponent';
+export type { GeometryComponentConfig } from './GeometryComponent';
+
+export { MaterialComponent } from './MaterialComponent';
+export type { MaterialComponentConfig } from './MaterialComponent';
+
+export { EmissiveComponent } from './EmissiveComponent';
+export type { EmissiveComponentConfig } from './EmissiveComponent';
+
+// Visual effect components
 export { TextureComponent } from './TextureComponent';
 export type { TextureComponentConfig } from './TextureComponent';
 
@@ -24,3 +35,12 @@ export type { LightEmissionComponentConfig } from './LightEmissionComponent';
 
 export { RotationComponent } from './RotationComponent';
 export type { RotationComponentConfig } from './RotationComponent';
+
+export { AccretionDiskComponent } from './AccretionDiskComponent';
+export type { AccretionDiskConfig } from './AccretionDiskComponent';
+
+export { EventHorizonComponent } from './EventHorizonComponent';
+export type { EventHorizonConfig } from './EventHorizonComponent';
+
+export { JetStreamComponent } from './JetStreamComponent';
+export type { JetStreamConfig } from './JetStreamComponent';
