@@ -28,6 +28,13 @@ export class RendererBootstrap {
     const uiBootstrap = new UIBootstrap(root);
     uiBootstrap.registerScreens(services, renderingBootstrap.getSceneManager());
     
+    // Inject editor services
+    uiBootstrap.injectEditorServices(
+      services,
+      renderingBootstrap.getSceneEditor(),
+      renderingBootstrap.getObjectFactory()
+    );
+    
     // Show initial screen with transition (async but don't block)
     uiBootstrap.showInitialScreen().catch(err => {
       console.error('Failed to show initial screen:', err);

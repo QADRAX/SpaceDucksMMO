@@ -8,6 +8,8 @@ import type TextureResolverService from "@client/application/TextureResolverServ
 import type GameScreenManager from "@client/application/ui/GameScreenManager";
 import type { GameScreenConfig } from "@client/domain/ui/GameScreen";
 import type { ISceneController } from "@client/domain/scene/ISceneController";
+import type { SceneEditor } from "@client/application/SceneEditor";
+import type { ObjectFactory } from "@client/application/ObjectFactory";
 
 /**
  * Services available through dependency injection context
@@ -19,6 +21,8 @@ export interface Services {
   window: WindowService;
   textureResolver: TextureResolverService;
   navigation?: GameScreenManager; // Injected later in UIBootstrap
+  sceneEditor?: SceneEditor; // Injected later in UIBootstrap
+  objectFactory?: ObjectFactory; // Injected later in UIBootstrap
 }
 
 // Context for services

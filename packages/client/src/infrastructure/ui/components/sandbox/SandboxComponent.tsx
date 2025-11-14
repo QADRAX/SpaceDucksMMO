@@ -1,6 +1,6 @@
 /** @jsxImportSource preact */
 import { useState, useEffect } from 'preact/hooks';
-import { useNavigation, useSceneControllers } from '../../hooks/useServices';
+import { useNavigation, useSceneControllers, useServices } from '../../hooks/useServices';
 import useI18n from '../../hooks/useI18n';
 import { GameScreens } from '@client/domain/ui/GameScreenRegistry';
 import Button from '../common/utility/Button';
@@ -8,17 +8,28 @@ import IconButton from '../common/utility/IconButton';
 import { SettingsIcon } from '../common/icons';
 import SettingsPopup from '../settings/SettingsPopup';
 import SceneControllerPanel from '../debug/SceneControllerPanel';
+import { SceneHierarchy, ObjectInspector } from '../editor';
 import './sandbox.css';
 
 /**
- * Sandbox Component - UI for visual component testing
+ * Sandbox Component - UI for visual component testing and scene editing
  */
 export function SandboxComponent() {
   const [, forceUpdate] = useState({});
   const controllers = useSceneControllers();
   const { navigateTo } = useNavigation();
+  const services = useServices();
   const { t } = useI18n();
   const [showSettings, setShowSettings] = useState(false);
+
+  // Initialize scene editor with current scene
+  useEffect(() => {
+    if (services.sceneEditor && services.navigation) {
+      const currentScene = services.navigation.getSceneManager().getCurrent();
+      services.sceneEditor.setScene(currentScene);
+      console.log('[SandboxComponent] SceneEditor initialized with current scene');
+    }
+  }, [services.sceneEditor, services.navigation]);
 
   // Force re-render after scene is loaded
   useEffect(() => {
@@ -32,6 +43,19 @@ export function SandboxComponent() {
 
   return (
     <div class="sandbox-container">
+      {/* Scene Hierarchy - Left Side with integrated Add button */}
+      {services.sceneEditor && services.objectFactory && (
+        <SceneHierarchy 
+          editor={services.sceneEditor}
+          factory={services.objectFactory}
+        />
+      )}
+
+      {/* Object Inspector - Right Side */}
+      {services.sceneEditor && (
+        <ObjectInspector editor={services.sceneEditor} />
+      )}
+
       <div class="sandbox-topbar">
         <div class="sandbox-topbar-buttons">
           <Button

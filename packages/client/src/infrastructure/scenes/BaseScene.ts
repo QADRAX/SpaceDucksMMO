@@ -129,6 +129,13 @@ export abstract class BaseScene implements IScene {
   }
 
   /**
+   * Get all objects in this scene (for SceneEditor)
+   */
+  getObjects(): ISceneObject[] {
+    return this.objects;
+  }
+
+  /**
    * Reload textures for all ITextureReloadable objects in the scene.
    */
   private reloadAllTextures(): void {
@@ -152,10 +159,20 @@ export abstract class BaseScene implements IScene {
     }
   }
 
-  abstract update(dt: number): void;
+  /**
+   * Update all objects and controllers.
+   * Most scenes don't need to override this.
+   */
+  update(dt: number): void {
+    // Update all scene objects
+    this.objects.forEach(obj => obj.update(dt));
+    
+    // Update all controllers
+    this.updateControllers(dt);
+  }
 
   /**
-   * Teardown the scene. Call super.teardown(engine) in derived classes.
+   * Teardown the scene. Call super.teardown(engine) if overriding.
    */
   teardown(engine: IRenderingEngine): void {
     // Unsubscribe from settings changes

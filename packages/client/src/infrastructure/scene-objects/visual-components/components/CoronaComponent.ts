@@ -19,6 +19,7 @@ export interface CoronaComponentConfig {
 export class CoronaComponent implements ICelestialComponent {
   private config: Required<CoronaComponentConfig>;
   private coronaMesh?: THREE.Mesh;
+  private parentMesh?: THREE.Mesh;
   private parentRadius: number = 1.0;
   private time: number = 0;
 
@@ -33,6 +34,7 @@ export class CoronaComponent implements ICelestialComponent {
   }
 
   initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
+    this.parentMesh = parentMesh;
     const bbox = new THREE.Box3().setFromObject(parentMesh);
     this.parentRadius = (bbox.max.x - bbox.min.x) / 2;
 
@@ -84,14 +86,22 @@ export class CoronaComponent implements ICelestialComponent {
   }
 
   update(deltaTime: number): void {
-    if (!this.coronaMesh || !this.config.enablePulse) return;
+    if (!this.coronaMesh) return;
 
-    this.time += deltaTime;
-    const material = this.coronaMesh.material as THREE.ShaderMaterial;
-    
-    // Pulse between 0.8x and 1.2x intensity
-    const pulse = Math.sin(this.time * this.config.pulseSpeed * 0.002) * 0.2;
-    material.uniforms.intensity.value = this.config.intensity * (1.0 + pulse);
+    // Keep corona synchronized with parent position
+    if (this.parentMesh) {
+      this.coronaMesh.position.copy(this.parentMesh.position);
+    }
+
+    // Update pulse animation
+    if (this.config.enablePulse) {
+      this.time += deltaTime;
+      const material = this.coronaMesh.material as THREE.ShaderMaterial;
+      
+      // Pulse between 0.8x and 1.2x intensity
+      const pulse = Math.sin(this.time * this.config.pulseSpeed * 0.002) * 0.2;
+      material.uniforms.intensity.value = this.config.intensity * (1.0 + pulse);
+    }
   }
 
   dispose(scene: THREE.Scene): void {

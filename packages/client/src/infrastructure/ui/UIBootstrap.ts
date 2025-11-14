@@ -51,6 +51,14 @@ export class UIBootstrap {
   }
 
   /**
+   * Inject scene editor and object factory into services
+   */
+  injectEditorServices(services: Services, sceneEditor: any, objectFactory: any): void {
+    (services as any).sceneEditor = sceneEditor;
+    (services as any).objectFactory = objectFactory;
+  }
+
+  /**
    * Show initial screen with transition
    */
   async showInitialScreen(): Promise<void> {

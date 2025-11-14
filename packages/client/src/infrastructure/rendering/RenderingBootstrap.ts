@@ -1,45 +1,48 @@
 import { ThreeRenderer } from "@client/infrastructure/rendering/ThreeRenderer";
 import { SceneService } from "@client/application/SceneService";
 import SceneManager from "@client/application/SceneManager";
-import MainMenuScene from "@client/infrastructure/scenes/MainMenuScene";
-import GameWorldScene from "@client/infrastructure/scenes/GameWorldScene";
-import SandboxScene from "@client/infrastructure/scenes/SandboxScene";
 import SceneId from "@client/domain/scene/SceneId";
 import GraphicsController from "../ui/GraphicsController";
 import type { GameSettings } from "@client/domain/settings/GameSettings";
 import type { TextureResolverService } from "@client/application/TextureResolverService";
 import type { SettingsService } from "@client/application/SettingsService";
+import { createMainMenuSceneDefinition, createSandboxSceneDefinition } from "@client/infrastructure/scenes/definitions";
+import { SceneEditor } from "@client/application/SceneEditor";
+import { ObjectFactory } from "@client/application/ObjectFactory";
 
 /**
  * Rendering Bootstrap
  * Responsible for initializing the 3D rendering engine (Three.js),
- * scene management, and graphics controller
+ * scene management, graphics controller, and scene editor
  */
 export class RenderingBootstrap {
   private engine: ThreeRenderer;
   private sceneManager: SceneManager;
   private sceneService: SceneService;
   private graphicsController: GraphicsController;
+  private sceneEditor: SceneEditor;
+  private objectFactory: ObjectFactory;
 
   constructor(
     private textureResolver: TextureResolverService,
     private settingsService: SettingsService
   ) {
     this.engine = new ThreeRenderer();
-    this.sceneManager = new SceneManager(this.engine);
+    this.sceneManager = new SceneManager(this.engine, this.settingsService);
     this.sceneService = new SceneService(this.engine, this.sceneManager);
     this.graphicsController = new GraphicsController(this.engine);
+    this.sceneEditor = new SceneEditor(this.engine);
+    this.objectFactory = new ObjectFactory(this.textureResolver);
   }
 
   /**
    * Initialize rendering engine and register scenes
    */
   initialize(container: HTMLElement): void {
-    // Register available 3D scenes
-    this.sceneManager.register(new MainMenuScene(this.textureResolver, this.settingsService));
-    this.sceneManager.register(new GameWorldScene());
-    this.sceneManager.register(new SandboxScene(this.textureResolver, this.settingsService));
-
+    // Register scenes using declarative definitions
+    this.sceneManager.registerDefinition(createMainMenuSceneDefinition(this.textureResolver));
+    this.sceneManager.registerDefinition(createSandboxSceneDefinition(this.textureResolver));
+    
     // Initialize Three.js renderer, camera, scene
     this.sceneService.init(container);
 
@@ -91,6 +94,20 @@ export class RenderingBootstrap {
    */
   getSceneManager(): SceneManager {
     return this.sceneManager;
+  }
+
+  /**
+   * Get scene editor for runtime scene manipulation
+   */
+  getSceneEditor(): SceneEditor {
+    return this.sceneEditor;
+  }
+
+  /**
+   * Get object factory for creating scene objects
+   */
+  getObjectFactory(): ObjectFactory {
+    return this.objectFactory;
   }
 }
 

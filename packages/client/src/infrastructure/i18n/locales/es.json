@@ -14,7 +14,48 @@
   "lobby": {
     "play": "Jugar",
     "settings": "Ajustes",
-    "quit": "Salir"
+    "quit": "Salir",
+    "sandbox": "Sandbox"
+  },
+  "sandbox": {
+    "backToMenu": "Volver al Menú"
+  },
+  "editor": {
+    "sceneHierarchy": {
+      "title": "Jerarquía de Escena",
+      "objectCount": "{count} objetos",
+      "empty": "No hay objetos en la escena",
+      "addObjects": "Añade objetos desde el menú",
+      "deleteConfirm": "¿Eliminar objeto \"{id}\"?",
+      "cannotDeleteCamera": "No se puede eliminar la cámara. La escena siempre debe tener una cámara."
+    },
+    "objectInspector": {
+      "title": "Inspector de Objetos",
+      "noSelection": "Ningún objeto seleccionado",
+      "selectFromHierarchy": "Selecciona un objeto de la jerarquía de escena para inspeccionar sus propiedades.",
+      "transform": "Transformación",
+      "properties": "Propiedades",
+      "position": "Posición",
+      "rotation": "Rotación",
+      "scale": "Escala"
+    },
+    "camera": {
+      "modes": {
+        "orbit": "Órbita",
+        "fixed": "Fijo"
+      },
+      "orbitTarget": "Objetivo de Órbita",
+      "manualPosition": "Posición Manual"
+    },
+    "addObject": {
+      "title": "Añadir Objeto",
+      "categories": {
+        "visual": "Visual",
+        "lights": "Luces",
+        "helpers": "Ayudantes",
+        "cameras": "Cámaras"
+      }
+    }
   },
   "settings": {
     "title": "Ajustes",
