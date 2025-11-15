@@ -2,11 +2,15 @@ import * as THREE from 'three';
 import type { IRenderingEngine } from '@client/domain/ports/IRenderingEngine';
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import { FpsCounter } from '@client/infrastructure/ui/FpsCounter';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 
 export class ThreeRenderer implements IRenderingEngine {
   private scene!: THREE.Scene;
   private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
+  private composer?: EffectComposer;
+  private usePostProcessing = false;
   private objects = new Map<string, ISceneObject>();
   private container!: HTMLElement;
   private resolutionPolicy: 'auto' | 'scale' = 'auto';
@@ -23,7 +27,7 @@ export class ThreeRenderer implements IRenderingEngine {
   init(container: HTMLElement): void {
     this.container = container;
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a0e14); // Dark space background
+    // No background color - let skybox handle it
     this.camera = new THREE.PerspectiveCamera(
       75,
       container.clientWidth / container.clientHeight,
@@ -61,6 +65,10 @@ export class ThreeRenderer implements IRenderingEngine {
       obj.removeFrom(this.scene);
       // Then remove from tracking map
       this.objects.delete(id);
+      
+      // Debug: Log scene children count
+      console.log('[ThreeRenderer] Scene children after removal:', this.scene.children.length);
+      console.log('[ThreeRenderer] Scene children types:', this.scene.children.map(c => c.type).join(', '));
     }
   }
 
@@ -131,7 +139,11 @@ export class ThreeRenderer implements IRenderingEngine {
 
   renderFrame(): void {
     // Objects are updated by SceneService loop, not here
-    this.renderer.render(this.scene, this.camera);
+    if (this.usePostProcessing && this.composer) {
+      this.composer.render();
+    } else {
+      this.renderer.render(this.scene, this.camera);
+    }
     
     // Update FPS counter
     this.fpsCounter.update();
@@ -163,6 +175,41 @@ export class ThreeRenderer implements IRenderingEngine {
    */
   getFps(): number {
     return this.fpsCounter.getFps();
+  }
+
+  /**
+   * Enable post-processing with EffectComposer
+   * Returns the composer so passes can be added
+   */
+  enablePostProcessing(): EffectComposer {
+    if (!this.composer) {
+      this.composer = new EffectComposer(this.renderer);
+      const renderPass = new RenderPass(this.scene, this.camera);
+      this.composer.addPass(renderPass);
+    }
+    this.usePostProcessing = true;
+    return this.composer;
+  }
+
+  /**
+   * Disable post-processing (use direct rendering)
+   */
+  disablePostProcessing(): void {
+    this.usePostProcessing = false;
+  }
+
+  /**
+   * Get the effect composer (if enabled)
+   */
+  getComposer(): EffectComposer | undefined {
+    return this.composer;
+  }
+
+  /**
+   * Get the WebGL renderer instance
+   */
+  getRenderer(): THREE.WebGLRenderer {
+    return this.renderer;
   }
 }
 

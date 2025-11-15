@@ -17,7 +17,7 @@ export interface StarBuilderConfig {
   radius?: number;
   textureId?: string;
   coronaColor?: number;
-  coronaRadius?: number;
+  coronaRadius?: number; // Height above surface (offset)
   coronaIntensity?: number;
   coronaPulse?: boolean;
   lightIntensity?: number;
@@ -50,7 +50,7 @@ export class StarBuilder {
       radius = 1.2,
       textureId = 'sun',
       coronaColor = 0xffdd44,
-      coronaRadius = 1.4,
+      coronaRadius = 0.3, // Height above surface
       coronaIntensity = 1.5,
       coronaPulse = true,
       lightIntensity = 6.0,

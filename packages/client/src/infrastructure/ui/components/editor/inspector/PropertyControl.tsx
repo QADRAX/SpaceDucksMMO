@@ -33,7 +33,11 @@ export function PropertyControl({ property, onChange, editor: editorProp }: Prop
   
   // Special case: camera/orbit target object selector
   if ((property.name === 'targetObjectId' || property.name === 'tracking.targetObjectId' || property.name === 'orbit.target') && editor) {
-    const objects = editor.listObjects().filter(obj => !obj.typeName.includes('Camera'));
+    const allowedTypes = new Set(['Planet', 'Star', 'Black Hole']);
+    const objects = editor
+      .listObjects()
+      .filter(obj => !obj.typeName.includes('Camera'))
+      .filter(obj => allowedTypes.has(obj.typeName));
     
     return (
       <div class="property-control">

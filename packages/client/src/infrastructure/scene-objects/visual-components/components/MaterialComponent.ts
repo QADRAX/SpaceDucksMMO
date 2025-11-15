@@ -36,7 +36,7 @@ export class MaterialComponent implements IInspectableComponent {
     };
   }
 
-  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
+  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh, visualBody?: any): void {
     this.parentMesh = parentMesh;
     
     // Save original material if not already saved

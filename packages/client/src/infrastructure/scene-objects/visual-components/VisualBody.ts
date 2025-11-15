@@ -164,7 +164,7 @@ export class VisualBody implements ISceneObject, ITextureReloadable, IInspectabl
       
       // Initialize new component if already in scene
       if (this.scene && this.mainMesh) {
-        newComponent.initialize(this.scene, this.mainMesh);
+        newComponent.initialize(this.scene, this.mainMesh, this);
       }
     } else {
       // Component doesn't exist, just add it
@@ -222,7 +222,7 @@ export class VisualBody implements ISceneObject, ITextureReloadable, IInspectabl
 
     // Initialize all components - they will configure the mesh
     this.components.forEach(component => {
-      component.initialize(scene, this.mainMesh);
+      component.initialize(scene, this.mainMesh, this);
     });
   }
 
@@ -260,17 +260,43 @@ export class VisualBody implements ISceneObject, ITextureReloadable, IInspectabl
   }
 
   removeFrom(scene: THREE.Scene): void {
-    // Dispose all components
+    console.log('[VisualBody] Removing', this.id, 'from scene');
+    console.log('[VisualBody] Components to dispose:', this.components.length);
+    
+    // Dispose all components (but keep them in the array for re-initialization)
     this.components.forEach(component => {
+      console.log('[VisualBody] Disposing component:', component.constructor.name);
       component.dispose(scene);
     });
 
     // Remove main mesh
     if (this.mainMesh) {
+      console.log('[VisualBody] Removing main mesh from scene');
       scene.remove(this.mainMesh);
-      this.mainMesh.geometry.dispose();
-      (this.mainMesh.material as THREE.Material).dispose();
+      
+      // More aggressive cleanup
+      if (this.mainMesh.geometry) {
+        this.mainMesh.geometry.dispose();
+      }
+      
+      if (this.mainMesh.material) {
+        if (Array.isArray(this.mainMesh.material)) {
+          this.mainMesh.material.forEach(mat => mat.dispose());
+        } else {
+          this.mainMesh.material.dispose();
+        }
+      }
+      
+      // Clear references
+      this.mainMesh.parent = null;
+      this.mainMesh.clear();
+      
+      console.log('[VisualBody] Main mesh removed and disposed');
     }
+    
+    // DO NOT clear components array - they need to be re-initialized when addTo() is called again
+    // this.components = [];
+    // this.managedComponents.clear();
   }
 
   dispose(): void {
@@ -283,6 +309,18 @@ export class VisualBody implements ISceneObject, ITextureReloadable, IInspectabl
 
   getTransform(): THREE.Object3D {
     return this.mainMesh;
+  }
+
+  /**
+   * Override to hide scale from inspector - size should be controlled via GeometryComponent.radius
+   * Scaling a sphere creates visual inconsistencies with adaptive components
+   */
+  getTransformProperties(): { position: boolean; rotation: boolean; scale: boolean } {
+    return {
+      position: true,
+      rotation: true,
+      scale: false // Hide scale - use GeometryComponent.radius instead
+    };
   }
 
   getInspectableProperties(): InspectableProperty[] {
@@ -368,7 +406,7 @@ export class VisualBody implements ISceneObject, ITextureReloadable, IInspectabl
       managed.enabled = true;
       // Re-initialize if in scene
       if (this.scene && this.mainMesh) {
-        managed.component.initialize(this.scene, this.mainMesh);
+        managed.component.initialize(this.scene, this.mainMesh, this);
       }
     }
   }
@@ -431,7 +469,7 @@ export class VisualBody implements ISceneObject, ITextureReloadable, IInspectabl
 
     // Initialize if already in scene
     if (this.scene && this.mainMesh) {
-      component.initialize(this.scene, this.mainMesh);
+      component.initialize(this.scene, this.mainMesh, this);
     }
 
     return instanceId;

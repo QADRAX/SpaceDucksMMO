@@ -48,6 +48,7 @@ export class OrbitComponent implements IInspectableCameraComponent {
   private target: THREE.Vector3;
   private targetObjectId: string | null = null;
   private targetTransform: THREE.Object3D | null = null; // Reference to target object for dynamic tracking
+  private targetRadius: number = 0; // Cached radius for surface-relative height
   private distance: number;
   private height: number;
   private speed: number;
@@ -96,7 +97,9 @@ export class OrbitComponent implements IInspectableCameraComponent {
   private updateCameraPosition(camera: THREE.Camera): void {
     const x = this.target.x + Math.cos(this.angle) * this.distance;
     const z = this.target.z + Math.sin(this.angle) * this.distance;
-    const y = this.target.y + this.height;
+    // If we have a target radius, height is applied above surface instead of center
+    const surfaceOffset = this.targetRadius > 0 ? this.targetRadius : 0;
+    const y = this.target.y + surfaceOffset + this.height;
 
     camera.position.set(x, y, z);
   }
@@ -112,6 +115,7 @@ export class OrbitComponent implements IInspectableCameraComponent {
     this.targetTransform = transform;
     if (transform) {
       this.target.copy(transform.position);
+      this.targetRadius = this.computeObjectRadius(transform);
       if (this.camera) {
         this.updateCameraPosition(this.camera);
       }
@@ -281,5 +285,35 @@ export class OrbitComponent implements IInspectableCameraComponent {
       case 'orbit.autoRotate': return this.autoRotate;
       default: return undefined;
     }
+  }
+
+  // ============================================
+  // Internal helpers
+  // ============================================
+
+  private computeObjectRadius(obj: THREE.Object3D): number {
+    // Mesh geometry-based radius preferred
+    if ((obj as any).isMesh) {
+      const mesh = obj as THREE.Mesh;
+      const geom = mesh.geometry as THREE.BufferGeometry | undefined;
+      if (geom) {
+        if (!geom.boundingSphere) geom.computeBoundingSphere();
+        if (geom.boundingSphere) return geom.boundingSphere.radius;
+        if (!geom.boundingBox) geom.computeBoundingBox();
+        if (geom.boundingBox) {
+          const size = new THREE.Vector3();
+          geom.boundingBox.getSize(size);
+          return Math.max(size.x, size.y, size.z) / 2;
+        }
+      }
+    }
+    // Fallback: bounding box of object hierarchy
+    const box = new THREE.Box3().setFromObject(obj);
+    if (!box.isEmpty()) {
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      return Math.max(size.x, size.y, size.z) / 2;
+    }
+    return 0;
   }
 }

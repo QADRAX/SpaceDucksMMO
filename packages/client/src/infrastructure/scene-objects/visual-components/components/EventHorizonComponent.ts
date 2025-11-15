@@ -1,5 +1,6 @@
 import type { IInspectableComponent } from './IVisualComponent';
 import type { InspectableProperty } from '@client/domain/scene/IInspectable';
+import { GeometryComponent } from './GeometryComponent';
 import * as THREE from 'three';
 
 export interface EventHorizonConfig {
@@ -25,6 +26,9 @@ export class EventHorizonComponent implements IInspectableComponent {
   private config: Required<EventHorizonConfig>;
   private time: number = 0;
   private parentMesh?: THREE.Mesh;
+  private scene?: THREE.Scene;
+  private parentRadius: number = 1.0;
+  private disposed: boolean = false;
 
   constructor(config: EventHorizonConfig) {
     this.config = {
@@ -36,11 +40,36 @@ export class EventHorizonComponent implements IInspectableComponent {
     };
   }
 
-  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
+  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh, visualBody?: any): void {
+    this.scene = scene;
     this.parentMesh = parentMesh;
 
     const radius = (parentMesh.geometry as THREE.SphereGeometry).parameters.radius;
-    const horizonRadius = radius * this.config.radiusMultiplier;
+    this.parentRadius = radius;
+
+    // Subscribe to geometry changes if available
+    if (visualBody && visualBody.getComponent) {
+      const geometryComp = visualBody.getComponent(GeometryComponent);
+      if (geometryComp) {
+        geometryComp.onGeometryChanged(this.handleGeometryChange);
+      }
+    }
+
+    this.createHorizon(scene);
+  }
+
+  private handleGeometryChange = (newRadius: number): void => {
+    if (this.disposed) return; // Don't recreate if disposed
+    
+    this.parentRadius = newRadius;
+    if (this.scene && this.parentMesh) {
+      this.dispose(this.scene);
+      this.createHorizon(this.scene);
+    }
+  };
+
+  private createHorizon(scene: THREE.Scene): void {
+    const horizonRadius = this.parentRadius * this.config.radiusMultiplier;
 
     const geometry = new THREE.SphereGeometry(horizonRadius, 64, 64);
 
@@ -99,7 +128,9 @@ export class EventHorizonComponent implements IInspectableComponent {
     });
 
     this.horizonMesh = new THREE.Mesh(geometry, material);
-    this.horizonMesh.position.copy(parentMesh.position);
+    if (this.parentMesh) {
+      this.horizonMesh.position.copy(this.parentMesh.position);
+    }
     
     scene.add(this.horizonMesh);
   }
@@ -125,11 +156,40 @@ export class EventHorizonComponent implements IInspectableComponent {
   }
 
   dispose(scene: THREE.Scene): void {
+    console.log('[EventHorizon] Disposing event horizon');
+    this.disposed = true; // Mark as disposed to prevent recreation
+    
     if (this.horizonMesh) {
+      // Remove from scene first
       scene.remove(this.horizonMesh);
-      this.horizonMesh.geometry.dispose();
-      (this.horizonMesh.material as THREE.Material).dispose();
+      
+      // Dispose geometry
+      if (this.horizonMesh.geometry) {
+        this.horizonMesh.geometry.dispose();
+      }
+      
+      // Dispose material (ShaderMaterial needs proper cleanup)
+      if (this.horizonMesh.material) {
+        const material = this.horizonMesh.material as THREE.ShaderMaterial;
+        
+        // Dispose any textures in uniforms
+        if (material.uniforms) {
+          Object.values(material.uniforms).forEach((uniform: any) => {
+            if (uniform.value && uniform.value.isTexture) {
+              uniform.value.dispose();
+            }
+          });
+        }
+        
+        material.dispose();
+      }
+      
+      // Clear all references
+      this.horizonMesh.clear();
+      this.horizonMesh.parent = null;
       this.horizonMesh = undefined;
+      
+      console.log('[EventHorizon] Disposed successfully');
     }
   }
 

@@ -1,5 +1,6 @@
 import type { IInspectableComponent } from './IVisualComponent';
 import type { InspectableProperty } from '@client/domain/scene/IInspectable';
+import { GeometryComponent } from './GeometryComponent';
 import * as THREE from 'three';
 
 /**
@@ -7,7 +8,7 @@ import * as THREE from 'three';
  */
 export interface CoronaComponentConfig {
   color: number;
-  radiusMultiplier: number;
+  radiusMultiplier: number; // Height above surface (offset from geometry radius)
   intensity: number;
   enablePulse?: boolean;
   pulseSpeed?: number;
@@ -23,6 +24,8 @@ export class CoronaComponent implements IInspectableComponent {
   private parentMesh?: THREE.Mesh;
   private parentRadius: number = 1.0;
   private time: number = 0;
+  private scene?: THREE.Scene;
+  private disposed: boolean = false;
 
   constructor(config: CoronaComponentConfig) {
     this.config = {
@@ -34,13 +37,41 @@ export class CoronaComponent implements IInspectableComponent {
     };
   }
 
-  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
+  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh, visualBody?: any): void {
+    this.disposed = false; // Reset disposed flag
+    this.scene = scene;
     this.parentMesh = parentMesh;
     const bbox = new THREE.Box3().setFromObject(parentMesh);
     this.parentRadius = (bbox.max.x - bbox.min.x) / 2;
 
+    // Subscribe to geometry changes if available
+    if (visualBody && visualBody.getComponent) {
+      const geometryComp = visualBody.getComponent(GeometryComponent);
+      if (geometryComp) {
+        geometryComp.onGeometryChanged(this.handleGeometryChange);
+      }
+    }
+
+    this.createCorona(scene);
+  }
+
+  private handleGeometryChange = (newRadius: number): void => {
+    if (this.disposed) return; // Don't recreate if disposed
+    
+    this.parentRadius = newRadius;
+    if (this.scene && this.parentMesh) {
+      // Remove existing mesh WITHOUT marking component disposed to allow future updates
+      this.removeCoronaMesh(this.scene);
+      this.createCorona(this.scene);
+    }
+  };
+
+  private createCorona(scene: THREE.Scene): void {
+    // Corona radius = base radius + height offset
+    const coronaRadius = this.parentRadius + this.config.radiusMultiplier;
+    
     const coronaGeometry = new THREE.SphereGeometry(
-      this.parentRadius * this.config.radiusMultiplier,
+      coronaRadius,
       64,
       64
     );
@@ -82,7 +113,9 @@ export class CoronaComponent implements IInspectableComponent {
     });
 
     this.coronaMesh = new THREE.Mesh(coronaGeometry, coronaMaterial);
-    this.coronaMesh.position.copy(parentMesh.position);
+    if (this.parentMesh) {
+      this.coronaMesh.position.copy(this.parentMesh.position);
+    }
     scene.add(this.coronaMesh);
   }
 
@@ -106,11 +139,9 @@ export class CoronaComponent implements IInspectableComponent {
   }
 
   dispose(scene: THREE.Scene): void {
-    if (this.coronaMesh) {
-      scene.remove(this.coronaMesh);
-      this.coronaMesh.geometry.dispose();
-      (this.coronaMesh.material as THREE.Material).dispose();
-    }
+    this.disposed = true; // Mark as disposed to prevent recreation
+    
+    this.removeCoronaMesh(scene);
   }
 
   // ============================================
@@ -128,13 +159,13 @@ export class CoronaComponent implements IInspectableComponent {
       },
       {
         name: 'corona.radius',
-        label: 'Corona Radius',
+        label: 'Corona Height',
         type: 'number',
         value: this.config.radiusMultiplier,
-        min: 1.0,
-        max: 3.0,
+        min: 0.1,
+        max: 5.0,
         step: 0.1,
-        description: 'Size multiplier for corona effect'
+        description: 'Height above surface (offset from geometry radius)'
       },
       {
         name: 'corona.intensity',
@@ -161,12 +192,9 @@ export class CoronaComponent implements IInspectableComponent {
     } else if (propName === 'radius') {
       this.config.radiusMultiplier = value;
       // Recreate corona mesh with new size
-      if (this.coronaMesh && this.parentMesh) {
-        const scene = this.coronaMesh.parent;
-        if (scene) {
-          this.dispose(scene as THREE.Scene);
-          this.initialize(scene as THREE.Scene, this.parentMesh);
-        }
+      if (this.parentMesh && this.scene) {
+        this.removeCoronaMesh(this.scene);
+        this.createCorona(this.scene);
       }
     } else if (propName === 'intensity') {
       this.config.intensity = value;
@@ -193,5 +221,14 @@ export class CoronaComponent implements IInspectableComponent {
    */
   setIntensity(intensity: number): void {
     this.config.intensity = intensity;
+  }
+
+  // Removes the corona mesh resources without altering disposed state (used for recreation)
+  private removeCoronaMesh(scene: THREE.Scene): void {
+    if (!this.coronaMesh) return;
+    scene.remove(this.coronaMesh);
+    this.coronaMesh.geometry.dispose();
+    (this.coronaMesh.material as THREE.Material).dispose();
+    this.coronaMesh = undefined;
   }
 }

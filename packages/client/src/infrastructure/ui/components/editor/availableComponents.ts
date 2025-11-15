@@ -14,6 +14,7 @@ import { AxesComponent } from '@client/infrastructure/scene-objects/helpers/comp
 import { AccretionDiskComponent } from '@client/infrastructure/scene-objects/visual-components/components/AccretionDiskComponent';
 import { EventHorizonComponent } from '@client/infrastructure/scene-objects/visual-components/components/EventHorizonComponent';
 import { JetStreamComponent } from '@client/infrastructure/scene-objects/visual-components/components/JetStreamComponent';
+import { GravitationalLensingComponent } from '@client/infrastructure/scene-objects/visual-components/components/GravitationalLensingComponent';
 
 /**
  * Registry of all available visual components that can be added to objects
@@ -148,8 +149,8 @@ export function getAvailableComponents(): AvailableComponent[] {
       description: 'Rotating disk of superheated matter',
       icon: '🌀',
       factory: () => new AccretionDiskComponent({
-        innerRadius: 1.5,
-        outerRadius: 4.0,
+        innerRadius: 0.2, // Offset from parent surface
+        outerRadius: 2.5, // Offset from parent surface
         innerColor: 0xffaa00,
         outerColor: 0xff0000,
         rotationSpeed: 0.2
@@ -174,6 +175,22 @@ export function getAvailableComponents(): AvailableComponent[] {
       description: 'High-energy particle streams',
       icon: '🚀',
       factory: () => new JetStreamComponent({ length: 8, radius: 0.2, color: 0x4488ff, intensity: 2.0 })
+    },
+    
+    // Black Hole - Gravitational Lensing
+    {
+      id: 'gravitational-lensing',
+      name: 'Gravitational Lensing',
+      category: 'Black Hole',
+      description: 'Space-time distortion effect',
+      icon: '🌌',
+      factory: () => new GravitationalLensingComponent({
+        strength: 1.0,
+        radius: 4.0, // Offset from parent surface
+        falloff: 0.15,
+        enableBloom: true,
+        bloomStrength: 1.5
+      })
     }
   ];
 }

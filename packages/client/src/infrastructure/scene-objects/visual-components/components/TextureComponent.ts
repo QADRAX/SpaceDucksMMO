@@ -20,7 +20,7 @@ export class TextureComponent implements IVisualComponent {
   private textureResolver: TextureResolverService;
   private textureLoader: THREE.TextureLoader;
   private config: Required<TextureComponentConfig>;
-  private material?: THREE.MeshStandardMaterial;
+  private material?: THREE.MeshStandardMaterial | THREE.MeshBasicMaterial;
   private isDisposed = false; // Track if component was disposed
 
   constructor(
@@ -37,7 +37,7 @@ export class TextureComponent implements IVisualComponent {
   }
 
   initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
-    this.material = parentMesh.material as THREE.MeshStandardMaterial;
+    this.material = parentMesh.material as THREE.MeshStandardMaterial | THREE.MeshBasicMaterial;
     this.isDisposed = false; // Reset disposed flag
     this.loadTexture();
   }
@@ -53,7 +53,8 @@ export class TextureComponent implements IVisualComponent {
       this.material.map.dispose();
       this.material.map = null;
     }
-    if (this.material?.emissiveMap) {
+    // Only dispose emissive map if material supports it
+    if (this.material && 'emissiveMap' in this.material && this.material.emissiveMap) {
       this.material.emissiveMap.dispose();
       this.material.emissiveMap = null;
     }
@@ -70,7 +71,8 @@ export class TextureComponent implements IVisualComponent {
       this.material.map.dispose();
       this.material.map = null;
     }
-    if (this.material.emissiveMap) {
+    // Only dispose emissive map if material supports it
+    if ('emissiveMap' in this.material && this.material.emissiveMap) {
       this.material.emissiveMap.dispose();
       this.material.emissiveMap = null;
     }
@@ -108,7 +110,8 @@ export class TextureComponent implements IVisualComponent {
         }
 
         this.material.map = texture;
-        if (this.config.applyAsEmissive) {
+        // Only apply emissive map if material supports it (MeshStandardMaterial)
+        if (this.config.applyAsEmissive && 'emissiveMap' in this.material) {
           this.material.emissiveMap = texture;
         }
         this.material.needsUpdate = true;

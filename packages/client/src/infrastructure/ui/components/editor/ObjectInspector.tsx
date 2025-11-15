@@ -79,7 +79,18 @@ export function ObjectInspector({ editor }: ObjectInspectorProps) {
 
   const handleTransformChange = (property: 'position' | 'rotation' | 'scale', axis: 'x' | 'y' | 'z', value: number) => {
     if (!transform) return;
+    // Mutate underlying transform
     transform[property][axis] = value;
+    // If editing position and object provides a setPosition helper, invoke it for consistency
+    if (property === 'position' && inspectable && 'setPosition' in (selectedObject as any)) {
+      const pos = transform.position;
+      try {
+        (selectedObject as any).setPosition(pos.x, pos.y, pos.z);
+      } catch (e) {
+        // Non critical - fallback to direct transform mutation already applied
+        console.warn('[ObjectInspector] setPosition invocation failed:', e);
+      }
+    }
     forceUpdate(prev => prev + 1);
   };
 

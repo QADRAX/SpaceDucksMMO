@@ -26,6 +26,7 @@ export class GeometryComponent implements IInspectableComponent {
   private parentMesh?: THREE.Mesh;
   private geometry?: THREE.BufferGeometry;
   private originalGeometry?: THREE.BufferGeometry; // Save original geometry
+  private onGeometryChangedCallbacks: Array<(radius: number) => void> = [];
 
   constructor(config: GeometryComponentConfig) {
     this.config = {
@@ -38,7 +39,7 @@ export class GeometryComponent implements IInspectableComponent {
     };
   }
 
-  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
+  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh, visualBody?: any): void {
     this.parentMesh = parentMesh;
     
     // Save original geometry if not already saved
@@ -169,6 +170,22 @@ export class GeometryComponent implements IInspectableComponent {
     return this.config.radius;
   }
 
+  /**
+   * Subscribe to geometry changes
+   * Other components can listen for radius changes to adapt automatically
+   */
+  onGeometryChanged(callback: (radius: number) => void): void {
+    this.onGeometryChangedCallbacks.push(callback);
+  }
+
+  /**
+   * Notify subscribers that geometry has changed
+   */
+  private notifyGeometryChanged(): void {
+    const radius = this.config.radius;
+    this.onGeometryChangedCallbacks.forEach(callback => callback(radius));
+  }
+
   private createGeometry(): THREE.BufferGeometry {
     switch (this.config.type) {
       case 'sphere':
@@ -206,5 +223,8 @@ export class GeometryComponent implements IInspectableComponent {
     // Create new geometry
     this.geometry = this.createGeometry();
     this.parentMesh.geometry = this.geometry;
+
+    // Notify subscribers that geometry has changed
+    this.notifyGeometryChanged();
   }
 }

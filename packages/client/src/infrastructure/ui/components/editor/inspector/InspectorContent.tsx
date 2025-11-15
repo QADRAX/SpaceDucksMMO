@@ -70,6 +70,7 @@ export function InspectorContent({
           <TransformSection
             transform={transform}
             onChange={onTransformChange}
+            transformProperties={inspectable?.getTransformProperties?.()}
           />
         </div>
       )}

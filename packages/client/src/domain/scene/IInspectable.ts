@@ -54,6 +54,13 @@ export interface IInspectable {
   getTransform(): THREE.Object3D | null;
   
   /**
+   * Optional: Specify which transform properties should be visible in inspector.
+   * Useful for objects where scale doesn't make sense (e.g., spheres should use radius instead).
+   * If not implemented, all transform properties are shown by default.
+   */
+  getTransformProperties?(): { position: boolean; rotation: boolean; scale: boolean };
+  
+  /**
    * Get all inspectable properties for this object.
    * Includes custom properties beyond standard transform.
    */

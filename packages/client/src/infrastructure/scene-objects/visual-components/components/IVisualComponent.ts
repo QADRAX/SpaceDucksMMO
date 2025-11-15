@@ -8,8 +8,11 @@ import type { InspectableProperty } from '@client/domain/scene/IInspectable';
 export interface IVisualComponent {
   /**
    * Initialize component and add any meshes to the scene
+   * @param scene The Three.js scene
+   * @param parentMesh The parent mesh this component belongs to
+   * @param visualBody Optional reference to the parent VisualBody (for accessing other components)
    */
-  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void;
+  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh, visualBody?: any): void;
   
   /**
    * Update component state each frame

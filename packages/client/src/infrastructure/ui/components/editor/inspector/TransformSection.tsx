@@ -10,35 +10,48 @@ import './transform-section.css';
 export interface TransformSectionProps {
   transform: THREE.Object3D;
   onChange: (property: 'position' | 'rotation' | 'scale', axis: 'x' | 'y' | 'z', value: number) => void;
+  transformProperties?: { position: boolean; rotation: boolean; scale: boolean };
 }
 
 /**
  * Complete transform section container
  * 
  * Displays position, rotation, and scale controls
+ * Can selectively hide transform properties based on object type
  */
-export function TransformSection({ transform, onChange }: TransformSectionProps) {
+export function TransformSection({ transform, onChange, transformProperties }: TransformSectionProps) {
   const { t } = useI18n();
+  
+  // Default to showing all properties if not specified
+  const showPosition = transformProperties?.position ?? true;
+  const showRotation = transformProperties?.rotation ?? true;
+  const showScale = transformProperties?.scale ?? true;
   
   return (
     <div class="transform-section">
       <h3 class="section-title">{t('editor.objectInspector.transform')}</h3>
       
       <div class="transform-controls">
-        <PositionControl
-          position={transform.position}
-          onChange={(axis, value) => onChange('position', axis, value)}
-        />
+        {showPosition && (
+          <PositionControl
+            position={transform.position}
+            onChange={(axis, value) => onChange('position', axis, value)}
+          />
+        )}
         
-        <RotationControl
-          rotation={transform.rotation}
-          onChange={(axis, value) => onChange('rotation', axis, value)}
-        />
+        {showRotation && (
+          <RotationControl
+            rotation={transform.rotation}
+            onChange={(axis, value) => onChange('rotation', axis, value)}
+          />
+        )}
         
-        <ScaleControl
-          scale={transform.scale}
-          onChange={(axis, value) => onChange('scale', axis, value)}
-        />
+        {showScale && (
+          <ScaleControl
+            scale={transform.scale}
+            onChange={(axis, value) => onChange('scale', axis, value)}
+          />
+        )}
       </div>
     </div>
   );

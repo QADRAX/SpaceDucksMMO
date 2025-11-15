@@ -1,5 +1,6 @@
 import type { IInspectableComponent } from './IVisualComponent';
 import type { InspectableProperty } from '@client/domain/scene/IInspectable';
+import { GeometryComponent } from './GeometryComponent';
 import * as THREE from 'three';
 
 /**
@@ -19,18 +20,43 @@ export class AtmosphereComponent implements IInspectableComponent {
   private atmosphereMesh?: THREE.Mesh;
   private parentMesh?: THREE.Mesh;
   private parentRadius: number = 1.0;
+  private scene?: THREE.Scene;
+  private disposed: boolean = false;
 
   constructor(config: AtmosphereComponentConfig) {
     this.config = config;
   }
 
-  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
+  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh, visualBody?: any): void {
+    this.scene = scene;
     this.parentMesh = parentMesh;
     // Calculate parent radius from geometry
     const geometry = parentMesh.geometry as THREE.SphereGeometry;
     const bbox = new THREE.Box3().setFromObject(parentMesh);
     this.parentRadius = (bbox.max.x - bbox.min.x) / 2;
 
+    // Subscribe to geometry changes if available
+    if (visualBody && visualBody.getComponent) {
+      const geometryComp = visualBody.getComponent(GeometryComponent);
+      if (geometryComp) {
+        geometryComp.onGeometryChanged(this.handleGeometryChange);
+      }
+    }
+
+    this.createAtmosphere(scene);
+  }
+
+  private handleGeometryChange = (newRadius: number): void => {
+    if (this.disposed) return; // Don't recreate if disposed
+    
+    this.parentRadius = newRadius;
+    if (this.scene && this.parentMesh) {
+      this.dispose(this.scene);
+      this.createAtmosphere(this.scene);
+    }
+  };
+
+  private createAtmosphere(scene: THREE.Scene): void {
     const atmosphereGeometry = new THREE.SphereGeometry(
       this.parentRadius * this.config.thickness,
       64,
@@ -72,7 +98,9 @@ export class AtmosphereComponent implements IInspectableComponent {
     });
 
     this.atmosphereMesh = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
-    this.atmosphereMesh.position.copy(parentMesh.position);
+    if (this.parentMesh) {
+      this.atmosphereMesh.position.copy(this.parentMesh.position);
+    }
     scene.add(this.atmosphereMesh);
   }
 
@@ -89,6 +117,8 @@ export class AtmosphereComponent implements IInspectableComponent {
   }
 
   dispose(scene: THREE.Scene): void {
+    this.disposed = true; // Mark as disposed to prevent recreation
+    
     if (this.atmosphereMesh) {
       scene.remove(this.atmosphereMesh);
       this.atmosphereMesh.geometry.dispose();
@@ -144,12 +174,9 @@ export class AtmosphereComponent implements IInspectableComponent {
     } else if (propName === 'thickness') {
       this.config.thickness = value;
       // Recreate atmosphere mesh with new size
-      if (this.atmosphereMesh && this.parentMesh) {
-        const scene = this.atmosphereMesh.parent;
-        if (scene) {
-          this.dispose(scene as THREE.Scene);
-          this.initialize(scene as THREE.Scene, this.parentMesh);
-        }
+      if (this.atmosphereMesh && this.parentMesh && this.scene) {
+        this.dispose(this.scene);
+        this.createAtmosphere(this.scene);
       }
     } else if (propName === 'intensity') {
       this.config.intensity = value;

@@ -8,6 +8,7 @@ import {
   EventHorizonComponent,
   JetStreamComponent,
   RotationComponent,
+  GravitationalLensingComponent,
 } from '../components';
 
 /**
@@ -23,12 +24,14 @@ export interface BlackHoleBuilderConfig {
   horizonPulseSpeed?: number;
   
   // Accretion Disk config
-  diskInnerRadius?: number;
-  diskOuterRadius?: number;
+  diskInnerRadius?: number; // Offset from parent surface
+  diskOuterRadius?: number; // Offset from parent surface
   diskInnerColor?: number;
   diskOuterColor?: number;
   diskRotationSpeed?: number;
   diskOpacity?: number;
+  diskTurbulence?: number;
+  diskDopplerEffect?: boolean;
   
   // Jet Stream config
   enableJets?: boolean;
@@ -37,6 +40,13 @@ export interface BlackHoleBuilderConfig {
   jetColor?: number;
   jetParticleCount?: number;
   jetSpeed?: number;
+  
+  // Gravitational Lensing (post-processing)
+  enableLensing?: boolean;
+  lensingStrength?: number;
+  lensingRadius?: number; // Offset from parent surface
+  lensingFalloff?: number;
+  bloomStrength?: number;
   
   // Core rotation
   rotationSpeed?: number;
@@ -77,12 +87,14 @@ export class BlackHoleBuilder {
       horizonPulseSpeed = 0.5,
       
       // Accretion Disk
-      diskInnerRadius = 1.2,
-      diskOuterRadius = 3.5,
+      diskInnerRadius = 0.2, // Offset from surface
+      diskOuterRadius = 2.5, // Offset from surface
       diskInnerColor = 0xffaa00,
       diskOuterColor = 0x4488ff,
       diskRotationSpeed = 0.5,
       diskOpacity = 0.8,
+      diskTurbulence = 0.5,
+      diskDopplerEffect = true,
       
       // Jet Streams
       enableJets = true,
@@ -91,6 +103,13 @@ export class BlackHoleBuilder {
       jetColor = 0x88ccff,
       jetParticleCount = 200,
       jetSpeed = 2.0,
+      
+      // Gravitational Lensing
+      enableLensing = true,
+      lensingStrength = 1.0,
+      lensingRadius = 4.0, // Offset from parent surface
+      lensingFalloff = 0.15,
+      bloomStrength = 1.5,
       
       // Core rotation
       rotationSpeed = 0.05,
@@ -137,11 +156,30 @@ export class BlackHoleBuilder {
         innerColor: diskInnerColor,
         outerColor: diskOuterColor,
         rotationSpeed: diskRotationSpeed,
-        segments: 128,
+        segments: 256,
         opacity: diskOpacity,
-        emissiveIntensity: 2.5,
+        emissiveIntensity: 4.0,
+        turbulence: diskTurbulence,
+        turbulenceScale: 3.0,
+        dopplerEffect: diskDopplerEffect,
+        relativisticSpeed: 0.3,
       })
     );
+
+    // Add gravitational lensing post-processing
+    if (enableLensing) {
+      blackHole.addComponent(
+        new GravitationalLensingComponent({
+          strength: lensingStrength,
+          radius: lensingRadius,
+          falloff: lensingFalloff,
+          enableBloom: true,
+          bloomStrength: bloomStrength,
+          bloomRadius: 0.8,
+          bloomThreshold: 0.3,
+        })
+      );
+    }
 
     // Add jet streams if enabled
     if (enableJets) {

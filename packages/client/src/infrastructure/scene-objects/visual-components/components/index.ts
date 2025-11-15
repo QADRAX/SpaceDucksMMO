@@ -44,3 +44,6 @@ export type { EventHorizonConfig } from './EventHorizonComponent';
 
 export { JetStreamComponent } from './JetStreamComponent';
 export type { JetStreamConfig } from './JetStreamComponent';
+
+export { GravitationalLensingComponent } from './GravitationalLensingComponent';
+export type { GravitationalLensingConfig } from './GravitationalLensingComponent';

@@ -1,5 +1,6 @@
 import type { IInspectableComponent } from './IVisualComponent';
 import type { InspectableProperty } from '@client/domain/scene/IInspectable';
+import { GeometryComponent } from './GeometryComponent';
 import * as THREE from 'three';
 
 export interface JetStreamConfig {
@@ -28,6 +29,9 @@ export class JetStreamComponent implements IInspectableComponent {
   private particleVelocities: Float32Array;
   private time: number = 0;
   private parentMesh?: THREE.Mesh;
+  private scene?: THREE.Scene;
+  private parentRadius: number = 1.0;
+  private disposed: boolean = false;
 
   constructor(config: JetStreamConfig) {
     this.config = {
@@ -44,8 +48,38 @@ export class JetStreamComponent implements IInspectableComponent {
     this.particleVelocities = new Float32Array(this.config.particleCount);
   }
 
-  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
+  initialize(scene: THREE.Scene, parentMesh: THREE.Mesh, visualBody?: any): void {
+    this.scene = scene;
     this.parentMesh = parentMesh;
+
+    // Get parent radius for future scaling
+    const geometry = parentMesh.geometry as THREE.SphereGeometry;
+    if (geometry.parameters) {
+      this.parentRadius = geometry.parameters.radius;
+    }
+
+    // Subscribe to geometry changes if available
+    if (visualBody && visualBody.getComponent) {
+      const geometryComp = visualBody.getComponent(GeometryComponent);
+      if (geometryComp) {
+        geometryComp.onGeometryChanged(this.handleGeometryChange);
+      }
+    }
+
+    this.createJetStream(scene);
+  }
+
+  private handleGeometryChange = (newRadius: number): void => {
+    if (this.disposed) return; // Don't recreate if disposed
+    
+    this.parentRadius = newRadius;
+    if (this.scene && this.parentMesh) {
+      this.dispose(this.scene);
+      this.createJetStream(this.scene);
+    }
+  };
+
+  private createJetStream(scene: THREE.Scene): void {
 
     const geometry = new THREE.BufferGeometry();
 
@@ -84,7 +118,9 @@ export class JetStreamComponent implements IInspectableComponent {
     });
 
     this.jetParticles = new THREE.Points(geometry, material);
-    this.jetParticles.position.copy(parentMesh.position);
+    if (this.parentMesh) {
+      this.jetParticles.position.copy(this.parentMesh.position);
+    }
     
     scene.add(this.jetParticles);
   }
@@ -125,11 +161,15 @@ export class JetStreamComponent implements IInspectableComponent {
   }
 
   dispose(scene: THREE.Scene): void {
+    console.log('[JetStream] Disposing jet stream');
+    this.disposed = true; // Mark as disposed to prevent recreation
+    
     if (this.jetParticles) {
       scene.remove(this.jetParticles);
       this.jetParticles.geometry.dispose();
       (this.jetParticles.material as THREE.Material).dispose();
       this.jetParticles = undefined;
+      console.log('[JetStream] Disposed successfully');
     }
   }
 

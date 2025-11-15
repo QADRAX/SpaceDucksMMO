@@ -117,18 +117,20 @@ export class Skybox implements ISceneObject, ITextureReloadable {
     
     // Create basic material for skybox with brightness applied to color
     const materialColor = new THREE.Color(tint).multiplyScalar(brightness);
+    
     const material = new THREE.MeshBasicMaterial({
       color: materialColor,
       side: THREE.BackSide,
       fog: false,
-      depthWrite: depthWrite,
-      depthTest: true,
+      depthWrite: false,  // Never write to depth buffer
+      depthTest: false,   // Don't test against depth buffer (always render behind)
     });
 
     this.mesh = new THREE.Mesh(geometry, material);
     this.mesh.rotation.y = initialRotation;
     this.mesh.renderOrder = -1000; // Render first (behind everything)
     this.mesh.frustumCulled = false; // Always visible
+    this.mesh.position.set(0, 0, 0); // Explicitly at origin
     
     scene.add(this.mesh);
 
@@ -191,16 +193,44 @@ export class Skybox implements ISceneObject, ITextureReloadable {
   }
 
   removeFrom(scene: THREE.Scene): void {
+    console.log('[Skybox] Removing skybox from scene');
+    
     // Dispose all components
     this.components.forEach(component => {
       component.dispose(scene);
     });
 
-    // Remove main mesh
+    // Remove main mesh with aggressive cleanup
     if (this.mesh) {
+      console.log('[Skybox] Removing skybox mesh');
       scene.remove(this.mesh);
-      this.mesh.geometry.dispose();
-      (this.mesh.material as THREE.Material).dispose();
+      
+      // Dispose geometry
+      if (this.mesh.geometry) {
+        this.mesh.geometry.dispose();
+      }
+      
+      // Dispose material and textures
+      if (this.mesh.material) {
+        const material = this.mesh.material as THREE.Material;
+        
+        // If material has textures, dispose them
+        if ('map' in material && material.map) {
+          material.map.dispose();
+        }
+        if ('emissiveMap' in material && (material as any).emissiveMap) {
+          (material as any).emissiveMap.dispose();
+        }
+        
+        material.dispose();
+      }
+      
+      // Clear references
+      this.mesh.clear();
+      this.mesh.parent = null;
+      this.mesh = undefined;
+      
+      console.log('[Skybox] Skybox removed and disposed');
     }
   }
 
