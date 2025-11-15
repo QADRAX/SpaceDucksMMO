@@ -1,0 +1,22 @@
+.properties-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.properties-section .section-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #999);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-subtle, #333);
+}
+
+.properties-section .properties-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}

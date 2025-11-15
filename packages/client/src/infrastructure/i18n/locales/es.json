@@ -33,11 +33,29 @@
       "title": "Inspector de Objetos",
       "noSelection": "Ningún objeto seleccionado",
       "selectFromHierarchy": "Selecciona un objeto de la jerarquía de escena para inspeccionar sus propiedades.",
+      "objectId": "ID",
+      "objectType": "Tipo",
       "transform": "Transformación",
       "properties": "Propiedades",
+      "components": "Componentes",
+      "notInspectable": {
+        "title": "Este objeto no es inspeccionable",
+        "description": "El objeto no implementa la interfaz IInspectable"
+      }
+    },
+    "transform": {
       "position": "Posición",
       "rotation": "Rotación",
       "scale": "Escala"
+    },
+    "components": {
+      "empty": {
+        "title": "Aún no hay componentes",
+        "description": "Añade componentes para personalizar este objeto"
+      },
+      "remove": {
+        "confirm": "¿Eliminar este componente?"
+      }
     },
     "camera": {
       "modes": {

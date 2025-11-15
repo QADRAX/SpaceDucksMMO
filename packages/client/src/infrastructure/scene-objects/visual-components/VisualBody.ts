@@ -1,6 +1,7 @@
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type { ITextureReloadable } from '@client/domain/scene/ITextureReloadable';
 import type { IInspectable, InspectableProperty } from '@client/domain/scene/IInspectable';
+import type { IComponentManager, ManagedComponent, ComponentMetadata } from '@client/domain/scene/IComponentManager';
 import type { IVisualComponent } from './components/IVisualComponent';
 import { TextureComponent } from './components/TextureComponent';
 import * as THREE from 'three';
@@ -57,11 +58,13 @@ import * as THREE from 'three';
  *   .addComponent(new EngineGlowComponent({ color: 0x00ffff }));
  * ```
  */
-export class VisualBody implements ISceneObject, ITextureReloadable, IInspectable {
+export class VisualBody implements ISceneObject, ITextureReloadable, IInspectable, IComponentManager {
   readonly id: string;
   
   private mainMesh!: THREE.Mesh;
   private components: IVisualComponent[] = [];
+  private managedComponents: Map<string, ManagedComponent> = new Map();
+  private nextInstanceId = 0;
   private scene?: THREE.Scene;
 
   constructor(id: string) {
@@ -70,16 +73,49 @@ export class VisualBody implements ISceneObject, ITextureReloadable, IInspectabl
 
   /**
    * Add a component to this visual body
+   * @deprecated Use addManagedComponent for better control
    */
   addComponent(component: IVisualComponent): this {
-    this.components.push(component);
-    
-    // If already initialized, initialize the component immediately
-    if (this.scene && this.mainMesh) {
-      component.initialize(this.scene, this.mainMesh);
-    }
+    // Auto-generate metadata from component type
+    const componentName = component.constructor.name.replace('Component', '');
+    this.addManagedComponent(component, {
+      displayName: componentName,
+      category: this.inferCategory(component),
+      icon: this.inferIcon(component)
+    });
     
     return this;
+  }
+
+  private inferCategory(component: IVisualComponent): string {
+    const name = component.constructor.name;
+    if (name.includes('Geometry')) return 'Geometry';
+    if (name.includes('Material')) return 'Material';
+    if (name.includes('Texture')) return 'Texture';
+    if (name.includes('Emissive')) return 'Emission';
+    if (name.includes('Light')) return 'Lighting';
+    if (name.includes('Corona') || name.includes('Atmosphere') || name.includes('Glow')) return 'Effects';
+    if (name.includes('Rotation') || name.includes('Orbit')) return 'Animation';
+    if (name.includes('Grid') || name.includes('Axes')) return 'Helpers';
+    if (name.includes('Accretion') || name.includes('EventHorizon') || name.includes('Jet')) return 'Black Hole';
+    return 'General';
+  }
+
+  private inferIcon(component: IVisualComponent): string {
+    const name = component.constructor.name;
+    if (name.includes('Geometry')) return '📐';
+    if (name.includes('Material')) return '🎨';
+    if (name.includes('Texture')) return '🖼️';
+    if (name.includes('Emissive')) return '💡';
+    if (name.includes('Light')) return '☀️';
+    if (name.includes('Corona')) return '🌟';
+    if (name.includes('Atmosphere')) return '🌍';
+    if (name.includes('Rotation')) return '🔄';
+    if (name.includes('Grid')) return '📏';
+    if (name.includes('Axes')) return '📍';
+    if (name.includes('Accretion')) return '🌀';
+    if (name.includes('EventHorizon')) return '⚫';
+    return '🔹';
   }
 
   /**
@@ -191,10 +227,12 @@ export class VisualBody implements ISceneObject, ITextureReloadable, IInspectabl
   }
 
   update(deltaTime: number): void {
-    // Update all components
-    this.components.forEach(component => {
-      component.update(deltaTime);
-    });
+    // Update only enabled components
+    for (const managed of this.managedComponents.values()) {
+      if (managed.enabled) {
+        managed.component.update(deltaTime);
+      }
+    }
   }
 
   async reloadTexture(): Promise<void> {
@@ -308,5 +346,94 @@ export class VisualBody implements ISceneObject, ITextureReloadable, IInspectabl
     }
     
     return 'Visual Object';
+  }
+
+  // ============================================
+  // IComponentManager Implementation
+  // ============================================
+
+  getManagedComponents(): ManagedComponent[] {
+    return Array.from(this.managedComponents.values());
+  }
+
+  getComponentByInstanceId(instanceId: string): ManagedComponent | undefined {
+    return this.managedComponents.get(instanceId);
+  }
+
+  enableComponent(instanceId: string): void {
+    const managed = this.managedComponents.get(instanceId);
+    if (!managed) return;
+
+    if (!managed.enabled) {
+      managed.enabled = true;
+      // Re-initialize if in scene
+      if (this.scene && this.mainMesh) {
+        managed.component.initialize(this.scene, this.mainMesh);
+      }
+    }
+  }
+
+  disableComponent(instanceId: string): void {
+    const managed = this.managedComponents.get(instanceId);
+    if (!managed) return;
+
+    if (managed.enabled) {
+      managed.enabled = false;
+      // Dispose without removing
+      if (this.scene) {
+        managed.component.dispose(this.scene);
+      }
+    }
+  }
+
+  removeComponentByInstanceId(instanceId: string): boolean {
+    const managed = this.managedComponents.get(instanceId);
+    if (!managed) return false;
+
+    // Dispose component
+    if (this.scene && managed.enabled) {
+      managed.component.dispose(this.scene);
+    }
+
+    // Remove from components array
+    const index = this.components.indexOf(managed.component);
+    if (index !== -1) {
+      this.components.splice(index, 1);
+    }
+
+    // Remove from managed map
+    this.managedComponents.delete(instanceId);
+    
+    return true;
+  }
+
+  addManagedComponent(component: IVisualComponent, metadata: Partial<ComponentMetadata>): string {
+    const instanceId = `${this.id}-component-${this.nextInstanceId++}`;
+    
+    // Create full metadata with defaults
+    const fullMetadata: ComponentMetadata = {
+      instanceId,
+      displayName: metadata.displayName || component.constructor.name,
+      category: metadata.category || 'General',
+      description: metadata.description,
+      icon: metadata.icon
+    };
+
+    const managed: ManagedComponent = {
+      instanceId,
+      component,
+      enabled: true,
+      metadata: fullMetadata
+    };
+
+    this.managedComponents.set(instanceId, managed);
+    this.components.push(component);
+
+    // Initialize if already in scene
+    if (this.scene && this.mainMesh) {
+      component.initialize(this.scene, this.mainMesh);
+    }
+
+    return instanceId;
   }
 }

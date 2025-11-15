@@ -33,11 +33,29 @@
       "title": "Object Inspector",
       "noSelection": "No object selected",
       "selectFromHierarchy": "Select an object from the scene hierarchy to inspect its properties.",
+      "objectId": "ID",
+      "objectType": "Type",
       "transform": "Transform",
       "properties": "Properties",
+      "components": "Components",
+      "notInspectable": {
+        "title": "This object is not inspectable",
+        "description": "The object doesn't implement IInspectable interface"
+      }
+    },
+    "transform": {
       "position": "Position",
       "rotation": "Rotation",
       "scale": "Scale"
+    },
+    "components": {
+      "empty": {
+        "title": "No components yet",
+        "description": "Add components to customize this object"
+      },
+      "remove": {
+        "confirm": "Remove this component?"
+      }
     },
     "camera": {
       "modes": {

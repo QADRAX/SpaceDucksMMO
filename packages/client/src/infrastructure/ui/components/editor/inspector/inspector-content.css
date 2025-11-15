@@ -1,0 +1,17 @@
+.inspector-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 12px;
+}
+
+.inspector-content .inspector-section {
+  padding: 12px;
+  background: var(--bg-secondary, #1a1a1a);
+  border: 1px solid var(--border-subtle, #333);
+  border-radius: 6px;
+}
+
+.inspector-content .inspector-section:hover {
+  border-color: var(--border-hover, #444);
+}

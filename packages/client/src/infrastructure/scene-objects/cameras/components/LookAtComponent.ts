@@ -30,6 +30,7 @@ export interface LookAtComponentConfig {
  */
 export class LookAtComponent implements IInspectableCameraComponent {
   private target: THREE.Vector3;
+  private targetTransform: THREE.Object3D | null = null; // Reference to target object for dynamic tracking
 
   constructor(config: LookAtComponentConfig = {}) {
     this.target = config.target?.clone() || new THREE.Vector3(0, 0, 0);
@@ -41,6 +42,11 @@ export class LookAtComponent implements IInspectableCameraComponent {
   }
 
   update(deltaTime: number, camera: THREE.Camera): void {
+    // Update target position from transform if tracking an object
+    if (this.targetTransform) {
+      this.target.copy(this.targetTransform.position);
+    }
+    
     // Update lookAt every frame (in case target changes)
     camera.lookAt(this.target);
   }
@@ -52,6 +58,16 @@ export class LookAtComponent implements IInspectableCameraComponent {
   // ============================================
   // Public API
   // ============================================
+
+  /**
+   * Set the target object transform to track dynamically
+   */
+  setTargetTransform(transform: THREE.Object3D | null): void {
+    this.targetTransform = transform;
+    if (transform) {
+      this.target.copy(transform.position);
+    }
+  }
 
   /**
    * Set the target position to look at

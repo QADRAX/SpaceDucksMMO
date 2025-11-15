@@ -1,5 +1,5 @@
 // Component interfaces
-export { ICameraComponent, IInspectableCameraComponent } from './ICameraComponent';
+export type { ICameraComponent, IInspectableCameraComponent } from './ICameraComponent';
 
 // Camera behavior components
 export { OrbitComponent } from './OrbitComponent';

@@ -91,12 +91,12 @@ export class SceneEditor {
     // Prevent adding multiple cameras
     if (isInspectable(obj)) {
       const typeName = obj.getTypeName?.();
-      if (typeName === 'Camera') {
+      if (typeName?.includes('Camera')) {
         // Check if scene already has a camera
         const hasCamera = Array.from(this.sceneObjects.values()).some(existing => {
           if (!isInspectable(existing)) return false;
           const existingType = existing.getTypeName?.();
-          return existingType === 'Camera';
+          return existingType?.includes('Camera');
         });
         
         if (hasCamera) {

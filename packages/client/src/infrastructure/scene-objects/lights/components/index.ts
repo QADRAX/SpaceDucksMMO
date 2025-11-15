@@ -1,5 +1,5 @@
 // Component interfaces
-export { ILightComponent, IInspectableLightComponent } from './ILightComponent';
+export type { ILightComponent, IInspectableLightComponent } from './ILightComponent';
 
 // Light components
 export { AmbientLightComponent, type AmbientLightComponentConfig } from './AmbientLightComponent';

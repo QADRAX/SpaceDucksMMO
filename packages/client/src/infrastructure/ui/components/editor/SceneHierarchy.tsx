@@ -63,7 +63,7 @@ export function SceneHierarchy({ editor, factory }: SceneHierarchyProps) {
     e.stopPropagation(); // Prevent selection
     
     // Prevent camera deletion
-    if (typeName === 'Camera') {
+    if (typeName.includes('Camera')) {
       alert(t('editor.sceneHierarchy.cannotDeleteCamera'));
       return;
     }
@@ -210,7 +210,7 @@ export function SceneHierarchy({ editor, factory }: SceneHierarchyProps) {
           </div>
         ) : (
           objects.map(obj => {
-            const isCamera = obj.typeName === 'Camera';
+            const isCamera = obj.typeName.includes('Camera');
             return (
             <div
               key={obj.id}

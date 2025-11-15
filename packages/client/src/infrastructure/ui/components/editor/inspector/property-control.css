@@ -1,0 +1,23 @@
+.property-control {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.property-control:last-child {
+  margin-bottom: 0;
+}
+
+.property-control .property-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary, #999);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: help;
+}
+
+.property-control .property-label:hover {
+  color: var(--accent, #ff69b4);
+}

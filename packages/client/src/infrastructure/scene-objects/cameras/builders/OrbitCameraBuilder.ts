@@ -47,20 +47,34 @@ export class OrbitCameraBuilder {
       externalCamera: config.externalCamera
     });
 
-    // Add orbit behavior
-    cameraBody.addComponent(new OrbitComponent({
-      target: target,
-      distance: config.orbit?.distance ?? 15,
-      height: config.orbit?.height ?? 5,
-      speed: config.orbit?.speed ?? 0.001,
-      startAngle: config.orbit?.startAngle ?? 0,
-      autoRotate: config.orbit?.autoRotate ?? true
-    }));
+    // Add orbit behavior as managed component
+    cameraBody.addManagedComponent(
+      new OrbitComponent({
+        target: target,
+        distance: config.orbit?.distance ?? 15,
+        height: config.orbit?.height ?? 5,
+        speed: config.orbit?.speed ?? 0.001,
+        startAngle: config.orbit?.startAngle ?? 0,
+        autoRotate: config.orbit?.autoRotate ?? true
+      }),
+      {
+        displayName: 'Orbit',
+        category: 'Camera Behavior',
+        description: 'Makes camera orbit around a target point',
+        icon: '🔄'
+      }
+    );
 
-    // Add look-at behavior
-    cameraBody.addComponent(new LookAtComponent({
-      target: target
-    }));
+    // Add look-at behavior as managed component
+    cameraBody.addManagedComponent(
+      new LookAtComponent({ target: target }),
+      {
+        displayName: 'Look At',
+        category: 'Camera Behavior',
+        description: 'Makes camera always look at a target point',
+        icon: '👁️'
+      }
+    );
 
     return cameraBody;
   }

@@ -25,6 +25,7 @@ export class GeometryComponent implements IInspectableComponent {
   private config: Required<GeometryComponentConfig>;
   private parentMesh?: THREE.Mesh;
   private geometry?: THREE.BufferGeometry;
+  private originalGeometry?: THREE.BufferGeometry; // Save original geometry
 
   constructor(config: GeometryComponentConfig) {
     this.config = {
@@ -40,13 +41,15 @@ export class GeometryComponent implements IInspectableComponent {
   initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
     this.parentMesh = parentMesh;
     
+    // Save original geometry if not already saved
+    if (!this.originalGeometry && parentMesh.geometry) {
+      this.originalGeometry = parentMesh.geometry;
+    }
+    
     // Create initial geometry based on type
     this.geometry = this.createGeometry();
     
-    // Replace parent mesh geometry
-    if (parentMesh.geometry) {
-      parentMesh.geometry.dispose();
-    }
+    // Replace parent mesh geometry (don't dispose original, we saved it)
     parentMesh.geometry = this.geometry;
   }
 
@@ -55,6 +58,12 @@ export class GeometryComponent implements IInspectableComponent {
   }
 
   dispose(scene: THREE.Scene): void {
+    // Restore original geometry
+    if (this.parentMesh && this.originalGeometry) {
+      this.parentMesh.geometry = this.originalGeometry;
+    }
+    
+    // Dispose our geometry
     if (this.geometry) {
       this.geometry.dispose();
       this.geometry = undefined;

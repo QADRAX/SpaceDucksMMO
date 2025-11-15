@@ -56,6 +56,12 @@ class DeclarativeScene extends BaseScene {
         { externalCamera: this.camera }
       );
       
+      // Copy all managed components from the definition camera with metadata
+      const managedComponents = cameraObj.getManagedComponents();
+      for (const managed of managedComponents) {
+        wrappedCamera.addManagedComponent(managed.component, managed.metadata);
+      }
+      
       // Copy all properties from the definition camera to the wrapped one
       const props = cameraObj.getInspectableProperties();
       for (const prop of props) {

@@ -1,0 +1,23 @@
+.property-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.property-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent, #ff69b4);
+}
+
+.property-checkbox-wrapper .checkbox-label {
+  font-size: 12px;
+  color: var(--text-primary, #fff);
+}
+
+.property-checkbox-wrapper:hover .checkbox-label {
+  color: var(--accent, #ff69b4);
+}

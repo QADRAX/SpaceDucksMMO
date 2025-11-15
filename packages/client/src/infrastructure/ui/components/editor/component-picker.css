@@ -1,0 +1,225 @@
+.component-picker {
+  background: var(--section-bg, #2a2a2a);
+  border: 1px solid var(--border-color, #3a3a3a);
+  border-radius: 4px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+
+.picker-header {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--header-bg, #252525);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.picker-header:hover {
+  background: var(--header-hover-bg, #2d2d2d);
+}
+
+.picker-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-color, #e0e0e0);
+}
+
+.picker-icon {
+  font-size: 16px;
+}
+
+.expand-icon {
+  color: var(--text-muted, #888);
+  font-size: 12px;
+}
+
+.picker-content {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.picker-search {
+  position: sticky;
+  top: 0;
+  background: var(--section-bg, #2a2a2a);
+  padding-bottom: 8px;
+  z-index: 1;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 10px;
+  font-size: 12px;
+  background: var(--input-bg, #1a1a1a);
+  border: 1px solid var(--border-color, #3a3a3a);
+  border-radius: 3px;
+  color: var(--text-color, #e0e0e0);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-color, #ff4d94);
+}
+
+.category-filter {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.category-btn {
+  padding: 4px 10px;
+  font-size: 11px;
+  background: var(--button-bg, #1a1a1a);
+  border: 1px solid var(--border-color, #3a3a3a);
+  border-radius: 3px;
+  color: var(--text-color, #e0e0e0);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: capitalize;
+}
+
+.category-btn:hover {
+  background: var(--button-hover-bg, #2a2a2a);
+}
+
+.category-btn.active {
+  background: var(--accent-color, #ff4d94);
+  border-color: var(--accent-color, #ff4d94);
+  color: white;
+}
+
+.components-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.component-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.group-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted, #888);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+
+.component-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--item-bg, #1e1e1e);
+  border: 1px solid var(--border-color, #3a3a3a);
+  border-radius: 3px;
+  transition: all 0.2s;
+}
+
+.component-item:hover {
+  background: var(--item-hover-bg, #252525);
+  border-color: var(--accent-color, #ff4d94);
+}
+
+.component-item-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.component-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.component-item-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-color, #e0e0e0);
+}
+
+.component-item-description {
+  font-size: 10px;
+  color: var(--text-muted, #888);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.add-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--accent-color, #ff4d94);
+  border: none;
+  color: white;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+  flex-shrink: 0;
+}
+
+.add-btn:hover {
+  transform: scale(1.1);
+}
+
+.add-btn:active {
+  transform: scale(0.95);
+}
+
+.no-results {
+  padding: 24px;
+  text-align: center;
+  color: var(--text-muted, #666);
+}
+
+.no-results p {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+}
+
+.no-results small {
+  font-size: 11px;
+  color: var(--text-muted, #555);
+}
+
+/* Scrollbar styling */
+.picker-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.picker-content::-webkit-scrollbar-track {
+  background: var(--scrollbar-track, #1a1a1a);
+  border-radius: 3px;
+}
+
+.picker-content::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb, #3a3a3a);
+  border-radius: 3px;
+}
+
+.picker-content::-webkit-scrollbar-thumb:hover {
+  background: var(--scrollbar-thumb-hover, #4a4a4a);
+}

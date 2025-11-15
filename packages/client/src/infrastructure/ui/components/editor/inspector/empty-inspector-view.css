@@ -1,0 +1,29 @@
+.empty-inspector-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  min-height: 200px;
+}
+
+.empty-inspector-view .empty-icon {
+  font-size: 48px;
+  opacity: 0.4;
+}
+
+.empty-inspector-view .empty-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary, #999);
+}
+
+.empty-inspector-view .empty-description {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted, #666);
+  line-height: 1.4;
+}

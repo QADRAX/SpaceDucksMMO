@@ -24,6 +24,7 @@ export class MaterialComponent implements IInspectableComponent {
   private config: Required<MaterialComponentConfig>;
   private parentMesh?: THREE.Mesh;
   private material?: THREE.MeshStandardMaterial;
+  private originalMaterial?: THREE.Material; // Save original material
 
   constructor(config: MaterialComponentConfig) {
     this.config = {
@@ -37,6 +38,11 @@ export class MaterialComponent implements IInspectableComponent {
 
   initialize(scene: THREE.Scene, parentMesh: THREE.Mesh): void {
     this.parentMesh = parentMesh;
+    
+    // Save original material if not already saved
+    if (!this.originalMaterial && parentMesh.material) {
+      this.originalMaterial = parentMesh.material as THREE.Material;
+    }
     
     // Create or replace material
     if (parentMesh.material instanceof THREE.MeshStandardMaterial) {
@@ -69,9 +75,16 @@ export class MaterialComponent implements IInspectableComponent {
   }
 
   dispose(scene: THREE.Scene): void {
-    // Material disposal is handled by VisualBody
-    // We don't dispose here to avoid double-disposal
-    this.material = undefined;
+    // Restore original material
+    if (this.parentMesh && this.originalMaterial) {
+      this.parentMesh.material = this.originalMaterial;
+    }
+    
+    // Dispose our material
+    if (this.material) {
+      this.material.dispose();
+      this.material = undefined;
+    }
   }
 
   getInspectableProperties(): InspectableProperty[] {

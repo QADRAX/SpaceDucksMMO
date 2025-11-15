@@ -50,9 +50,15 @@ export class FixedCameraBuilder {
 
     // Add look-at behavior if target provided
     if (config.lookAt) {
-      cameraBody.addComponent(new LookAtComponent({
-        target: config.lookAt
-      }));
+      cameraBody.addManagedComponent(
+        new LookAtComponent({ target: config.lookAt }),
+        {
+          displayName: 'Look At',
+          category: 'Camera Behavior',
+          description: 'Makes camera always look at a target point',
+          icon: '👁️'
+        }
+      );
     }
 
     return cameraBody;

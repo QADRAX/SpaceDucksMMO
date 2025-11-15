@@ -48,6 +48,30 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Components List */
+.components-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.no-components {
+  padding: 24px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.no-components p {
+  margin: 0 0 4px 0;
+  font-size: 13px;
+}
+
+.no-components small {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
 /* Property rows */
 .property-row {
   display: flex;

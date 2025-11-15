@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type { IInspectable, InspectableProperty } from '@client/domain/scene/IInspectable';
-import { ICameraComponent, IInspectableCameraComponent } from './components/ICameraComponent';
+import type { IComponentManager, ManagedComponent, ComponentMetadata } from '@client/domain/scene/IComponentManager';
+import type { ICameraComponent, IInspectableCameraComponent } from './components/ICameraComponent';
 
 export interface CameraBodyConfig {
   /** Field of view in degrees */
@@ -56,10 +57,11 @@ export interface CameraBodyConfig {
  * fixedCam.addComponent(new LookAtComponent({ target: new THREE.Vector3(0, 0, 0) }));
  * ```
  */
-export class CameraBody implements ISceneObject, IInspectable {
+export class CameraBody implements ISceneObject, IInspectable, IComponentManager {
   readonly id: string;
   private camera: THREE.PerspectiveCamera;
   private components: ICameraComponent[] = [];
+  private managedComponents: Map<string, ManagedComponent> = new Map();
   private scene: THREE.Scene | null = null;
   private isInitialized: boolean = false;
 
@@ -112,10 +114,30 @@ export class CameraBody implements ISceneObject, IInspectable {
   update(deltaTime: number): void {
     if (!this.isInitialized) return;
 
-    // Update all components
-    this.components.forEach(component => {
-      component.update(deltaTime, this.camera);
-    });
+    // Update only enabled managed components
+    for (const managed of this.managedComponents.values()) {
+      if (managed.enabled) {
+        const comp = managed.component as unknown as ICameraComponent;
+        if (comp && typeof comp.update === 'function') {
+          comp.update(deltaTime, this.camera);
+        }
+      }
+    }
+    
+    // Update non-managed components (if any)
+    for (const component of this.components) {
+      // Check if this component is already managed
+      let isManaged = false;
+      for (const managed of this.managedComponents.values()) {
+        if ((managed.component as unknown as ICameraComponent) === component) {
+          isManaged = true;
+          break;
+        }
+      }
+      if (!isManaged && typeof component.update === 'function') {
+        component.update(deltaTime, this.camera);
+      }
+    }
   }
 
   dispose(): void {
@@ -335,6 +357,106 @@ export class CameraBody implements ISceneObject, IInspectable {
       .join('+');
     
     return componentTypes ? `Camera (${componentTypes})` : 'Camera';
+  }
+
+  // ============================================
+  // IComponentManager Implementation
+  // ============================================
+
+  getManagedComponents(): ManagedComponent[] {
+    return Array.from(this.managedComponents.values());
+  }
+
+  getComponentByInstanceId(instanceId: string): ManagedComponent | undefined {
+    return this.managedComponents.get(instanceId);
+  }
+
+  enableComponent(instanceId: string): void {
+    const managed = this.managedComponents.get(instanceId);
+    if (!managed) return;
+
+    if (!managed.enabled) {
+      managed.enabled = true;
+      // Re-initialize if in scene
+      if (this.scene && this.isInitialized) {
+        (managed.component as unknown as ICameraComponent).initialize(this.camera, this.scene);
+      }
+    }
+  }
+
+  disableComponent(instanceId: string): void {
+    const managed = this.managedComponents.get(instanceId);
+    if (!managed) return;
+
+    if (managed.enabled) {
+      managed.enabled = false;
+      // Dispose without removing
+      (managed.component as unknown as ICameraComponent).dispose();
+    }
+  }
+
+  removeComponentByInstanceId(instanceId: string): boolean {
+    const managed = this.managedComponents.get(instanceId);
+    if (!managed) return false;
+
+    // Dispose component
+    if (managed.enabled) {
+      (managed.component as unknown as ICameraComponent).dispose();
+    }
+
+    // Remove from components array
+    const index = this.components.indexOf(managed.component as unknown as ICameraComponent);
+    if (index !== -1) {
+      this.components.splice(index, 1);
+    }
+
+    // Remove from managed map
+    this.managedComponents.delete(instanceId);
+    return true;
+  }
+
+  addManagedComponent(component: any, metadata: Partial<ComponentMetadata>): string {
+    const instanceId = metadata.instanceId || `${component.constructor.name}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    const cameraComponent = component as unknown as ICameraComponent;
+    const displayName = metadata.displayName || component.constructor.name;
+    
+    // Check for mutually exclusive components
+    const exclusiveGroups = [
+      ['Look At', 'Target Tracking'], // Direction control - mutually exclusive
+      ['Orbit'] // Movement control - could add more movement types here
+    ];
+    
+    for (const group of exclusiveGroups) {
+      if (group.includes(displayName)) {
+        // Remove other components in the same exclusive group
+        const toRemove: string[] = [];
+        for (const [id, managed] of this.managedComponents.entries()) {
+          if (group.includes(managed.metadata.displayName) && managed.metadata.displayName !== displayName) {
+            toRemove.push(id);
+          }
+        }
+        toRemove.forEach(id => this.removeComponentByInstanceId(id));
+      }
+    }
+    
+    const managed: ManagedComponent = {
+      instanceId,
+      component: component, // Store as IVisualComponent for interface compatibility
+      enabled: true,
+      metadata: {
+        instanceId,
+        displayName: displayName,
+        category: metadata.category || 'Camera',
+        description: metadata.description,
+        icon: metadata.icon
+      }
+    };
+
+    this.managedComponents.set(instanceId, managed);
+    this.addComponent(cameraComponent);
+    
+    return instanceId;
   }
 
   // ============================================

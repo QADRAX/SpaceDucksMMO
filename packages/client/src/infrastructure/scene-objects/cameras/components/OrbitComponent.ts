@@ -46,11 +46,14 @@ export interface OrbitComponentConfig {
  */
 export class OrbitComponent implements IInspectableCameraComponent {
   private target: THREE.Vector3;
+  private targetObjectId: string | null = null;
+  private targetTransform: THREE.Object3D | null = null; // Reference to target object for dynamic tracking
   private distance: number;
   private height: number;
   private speed: number;
   private angle: number;
   private autoRotate: boolean;
+  private camera?: THREE.Camera; // Reference to camera for immediate updates
 
   constructor(config: OrbitComponentConfig = {}) {
     this.target = config.target?.clone() || new THREE.Vector3(0, 0, 0);
@@ -62,11 +65,18 @@ export class OrbitComponent implements IInspectableCameraComponent {
   }
 
   initialize(camera: THREE.Camera, scene: THREE.Scene): void {
+    // Save camera reference for property updates
+    this.camera = camera;
     // Position camera at starting angle
     this.updateCameraPosition(camera);
   }
 
   update(deltaTime: number, camera: THREE.Camera): void {
+    // Update target position from transform if tracking an object
+    if (this.targetTransform) {
+      this.target.copy(this.targetTransform.position);
+    }
+    
     if (!this.autoRotate) return;
 
     // Increment angle based on speed and delta time
@@ -94,6 +104,19 @@ export class OrbitComponent implements IInspectableCameraComponent {
   // ============================================
   // Public API
   // ============================================
+
+  /**
+   * Set the target object transform to track dynamically
+   */
+  setTargetTransform(transform: THREE.Object3D | null): void {
+    this.targetTransform = transform;
+    if (transform) {
+      this.target.copy(transform.position);
+      if (this.camera) {
+        this.updateCameraPosition(this.camera);
+      }
+    }
+  }
 
   /**
    * Set the orbit target position
@@ -138,6 +161,14 @@ export class OrbitComponent implements IInspectableCameraComponent {
 
   getInspectableProperties(): InspectableProperty[] {
     return [
+      {
+        name: 'orbit.target',
+        label: 'Orbit Target',
+        type: 'select',
+        value: this.targetObjectId || 'manual',
+        options: [],
+        description: 'Object to orbit around (or manual position)'
+      },
       {
         name: 'orbit.targetX',
         label: 'Target X',
@@ -204,20 +235,30 @@ export class OrbitComponent implements IInspectableCameraComponent {
 
   setProperty(name: string, value: any): void {
     switch (name) {
+      case 'orbit.target':
+        this.targetObjectId = value === 'manual' ? null : value;
+        // Target object will be resolved by the UI/Editor
+        // This is handled by ObjectTargetSelector
+        break;
       case 'orbit.targetX':
         this.target.x = value;
+        if (this.camera) this.updateCameraPosition(this.camera);
         break;
       case 'orbit.targetY':
         this.target.y = value;
+        if (this.camera) this.updateCameraPosition(this.camera);
         break;
       case 'orbit.targetZ':
         this.target.z = value;
+        if (this.camera) this.updateCameraPosition(this.camera);
         break;
       case 'orbit.distance':
         this.distance = value;
+        if (this.camera) this.updateCameraPosition(this.camera);
         break;
       case 'orbit.height':
         this.height = value;
+        if (this.camera) this.updateCameraPosition(this.camera);
         break;
       case 'orbit.speed':
         this.speed = value;
@@ -230,6 +271,7 @@ export class OrbitComponent implements IInspectableCameraComponent {
 
   getProperty(name: string): any {
     switch (name) {
+      case 'orbit.target': return null; // Manual position by default
       case 'orbit.targetX': return this.target.x;
       case 'orbit.targetY': return this.target.y;
       case 'orbit.targetZ': return this.target.z;

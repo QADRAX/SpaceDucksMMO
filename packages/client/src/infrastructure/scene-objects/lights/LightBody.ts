@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type { IInspectable, InspectableProperty } from '@client/domain/scene/IInspectable';
-import { ILightComponent, IInspectableLightComponent } from './components/ILightComponent';
+import type { ILightComponent, IInspectableLightComponent } from './components/ILightComponent';
 
 /**
  * LightBody - Pure component container for light sources.

@@ -1,0 +1,42 @@
+.property-color-wrapper {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.property-color {
+  width: 40px;
+  height: 28px;
+  padding: 2px;
+  background: var(--input-bg, #2a2a2a);
+  border: 1px solid var(--input-border, #444);
+  border-radius: 3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.property-color:hover {
+  border-color: var(--accent, #ff69b4);
+  box-shadow: 0 0 8px rgba(255, 105, 180, 0.3);
+}
+
+.property-color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.property-color::-webkit-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+.property-color::-moz-color-swatch {
+  border: none;
+  border-radius: 2px;
+}
+
+.property-color-wrapper .color-hex {
+  font-size: 11px;
+  font-family: 'Courier New', monospace;
+  color: var(--text-secondary, #999);
+  user-select: all;
+}
