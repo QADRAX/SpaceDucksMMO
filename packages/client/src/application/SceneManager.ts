@@ -2,8 +2,6 @@ import type IScene from '@client/domain/ports/IScene';
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type SceneId from '@client/domain/scene/SceneId';
 import type { SettingsService } from '@client/application/SettingsService';
-import { SceneFactory, type SceneDefinition } from '@client/infrastructure/scenes/SceneFactory';
-
 /**
  * Application service that manages 3D scene lifecycle and transitions.
  * Orchestrates scene setup/teardown and delegates per-frame updates.
@@ -26,15 +24,6 @@ export class SceneManager {
    */
   register(scene: IScene): void {
     this.scenes.set(scene.id, scene);
-  }
-
-  /**
-   * Register a scene from a declarative definition
-   * @param definition - The scene definition
-   */
-  registerDefinition(definition: SceneDefinition): void {
-    const scene = SceneFactory.createScene(definition, this.settingsService);
-    this.register(scene);
   }
 
   /**

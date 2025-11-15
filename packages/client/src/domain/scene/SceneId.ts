@@ -10,6 +10,8 @@ enum SceneId {
   ServerBrowser = 'server-browser',
   /** Sandbox scene (testing and prototyping visual components) */
   Sandbox = 'sandbox',
+  /** ECS demo scene for POC */
+  EcsDemo = 'ecs-demo',
 }
 
 export default SceneId;

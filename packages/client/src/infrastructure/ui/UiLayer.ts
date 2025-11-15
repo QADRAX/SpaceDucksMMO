@@ -16,13 +16,19 @@ export class UiLayer {
     const uiRoot = document.createElement('div');
     uiRoot.className = 'ui-root';
     // Ensure overlay above the WebGL canvas if parent styles change.
-    uiRoot.style.zIndex = '100';
+    // Place UI as fixed overlay to guarantee it's above the renderer canvas
+    uiRoot.style.position = 'fixed';
+    uiRoot.style.inset = '0';
+    uiRoot.style.pointerEvents = 'none';
+    uiRoot.style.zIndex = '2000';
     this.host.appendChild(uiRoot);
     this.root = uiRoot;
 
     // Create container for screen router (DOM-based rendering)
     this.screenContainer = document.createElement('div');
     this.screenContainer.className = 'screen-container';
+    // Allow UI elements inside screenContainer to receive pointer events
+    this.screenContainer.style.pointerEvents = 'auto';
     this.root.appendChild(this.screenContainer);
 
     // Create container for transition overlay (Preact-based)

@@ -75,6 +75,21 @@ export class ThreeRenderer implements IRenderingEngine {
   getScene(): THREE.Scene { return this.scene; }
   getCamera(): THREE.Camera { return this.camera; }
 
+  /** Replace the active camera used for rendering. Accepts any THREE.Camera. */
+  setCamera(camera: THREE.Camera): void {
+    // Prefer to keep a PerspectiveCamera reference when possible
+    if (camera instanceof THREE.PerspectiveCamera) {
+      this.camera = camera;
+    } else {
+      // Fallback: try to keep the provided camera reference
+      // (may affect applyResolutionScale behavior which expects PerspectiveCamera)
+      // @ts-ignore
+      this.camera = camera;
+    }
+    // Ensure aspect/projection matrix matches current container size
+    this.applyResolutionScale();
+  }
+
   /**
    * Apply a resolution scale factor to the WebGL renderer. This keeps the CSS size the same
    * but renders to a smaller/larger internal buffer for performance/quality tradeoff.

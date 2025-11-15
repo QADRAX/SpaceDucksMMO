@@ -8,7 +8,6 @@ import IconButton from '../common/utility/IconButton';
 import { SettingsIcon } from '../common/icons';
 import SettingsPopup from '../settings/SettingsPopup';
 import SceneControllerPanel from '../debug/SceneControllerPanel';
-import { SceneHierarchy, ObjectInspector } from '../editor';
 import './sandbox.css';
 
 /**
@@ -43,18 +42,6 @@ export function SandboxComponent() {
 
   return (
     <div class="sandbox-container">
-      {/* Scene Hierarchy - Left Side with integrated Add button */}
-      {services.sceneEditor && services.objectFactory && (
-        <SceneHierarchy 
-          editor={services.sceneEditor}
-          factory={services.objectFactory}
-        />
-      )}
-
-      {/* Object Inspector - Right Side */}
-      {services.sceneEditor && (
-        <ObjectInspector editor={services.sceneEditor} />
-      )}
 
       <div class="sandbox-topbar">
         <div class="sandbox-topbar-buttons">

@@ -45,6 +45,13 @@ export const GameScreens = {
     name: 'Sandbox'
   } as GameScreenConfig,
 
+  /** ECS Demo - small demo scene driven by ECS adapter POC */
+  EcsDemo: {
+    screenId: ScreenId.EcsDemo,
+    sceneId: SceneId.EcsDemo,
+    name: 'ECS Demo'
+  } as GameScreenConfig,
+
   // Add more game screens here as needed
   // Example:
   // ServerBrowser: {

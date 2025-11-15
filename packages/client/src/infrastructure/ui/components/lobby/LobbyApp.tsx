@@ -19,6 +19,10 @@ export default function LobbyApp() {
     await navigateTo(GameScreens.Sandbox);
   };
 
+  const handleEcsDemoClick = async () => {
+    await navigateTo(GameScreens.EcsDemo);
+  };
+
   return (
     <div className="lobby-container">
       {/* Settings button - top right */}
@@ -49,6 +53,13 @@ export default function LobbyApp() {
             onClick={handleSandboxClick}
           >
             🧪 Sandbox
+          </Button>
+          <Button
+            variant="secondary"
+            size="medium"
+            onClick={handleEcsDemoClick}
+          >
+            ⚙️ ECS Demo
           </Button>
         </div>
       </div>

@@ -6,6 +6,7 @@ import MainScreen from "./screens/MainScreen";
 import SandboxScreen from "./screens/SandboxScreen";
 import type { Services } from "./hooks/useServices";
 import type SceneManager from "@client/application/SceneManager";
+import EcsDemoScreen from "./screens/EcsDemoScreen";
 
 /**
  * UI Bootstrap
@@ -44,10 +45,14 @@ export class UIBootstrap {
 
     const sandboxScreen = new SandboxScreen();
     (sandboxScreen as any).services = services;
+    
+    const ecsDemoScreen = new EcsDemoScreen();
+    (ecsDemoScreen as any).services = services;
 
     // Register screens with router
     this.router.register(mainScreen);
     this.router.register(sandboxScreen);
+    this.router.register(ecsDemoScreen);
   }
 
   /**

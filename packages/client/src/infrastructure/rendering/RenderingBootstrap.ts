@@ -6,9 +6,9 @@ import GraphicsController from "../ui/GraphicsController";
 import type { GameSettings } from "@client/domain/settings/GameSettings";
 import type { TextureResolverService } from "@client/application/TextureResolverService";
 import type { SettingsService } from "@client/application/SettingsService";
-import { createMainMenuSceneDefinition, createSandboxSceneDefinition } from "@client/infrastructure/scenes/definitions";
-import { SceneEditor } from "@client/application/SceneEditor";
-import { ObjectFactory } from "@client/application/ObjectFactory";
+import { DemoEcsScene } from '@client/infrastructure/scenes/DemoEcsScene';
+import { MainMenuScene } from '@client/infrastructure/scenes/MainMenuScene';
+import { SandboxScene } from '@client/infrastructure/scenes/SandboxScene';
 
 /**
  * Rendering Bootstrap
@@ -20,8 +20,6 @@ export class RenderingBootstrap {
   private sceneManager: SceneManager;
   private sceneService: SceneService;
   private graphicsController: GraphicsController;
-  private sceneEditor: SceneEditor;
-  private objectFactory: ObjectFactory;
 
   constructor(
     private textureResolver: TextureResolverService,
@@ -31,17 +29,17 @@ export class RenderingBootstrap {
     this.sceneManager = new SceneManager(this.engine, this.settingsService);
     this.sceneService = new SceneService(this.engine, this.sceneManager);
     this.graphicsController = new GraphicsController(this.engine);
-    this.sceneEditor = new SceneEditor(this.engine);
-    this.objectFactory = new ObjectFactory(this.textureResolver);
   }
 
   /**
    * Initialize rendering engine and register scenes
    */
   initialize(container: HTMLElement): void {
-    // Register scenes using declarative definitions
-    this.sceneManager.registerDefinition(createMainMenuSceneDefinition(this.textureResolver));
-    this.sceneManager.registerDefinition(createSandboxSceneDefinition(this.textureResolver));
+    // Register scenes as class instances (migrating away from definition-based SceneFactory)
+    this.sceneManager.register(new MainMenuScene(this.settingsService));
+    this.sceneManager.register(new SandboxScene(this.settingsService));
+    // Register ECS demo scene (POC)
+    this.sceneManager.register(new DemoEcsScene(this.settingsService, this.textureResolver));
     
     // Initialize Three.js renderer, camera, scene
     this.sceneService.init(container);
@@ -94,20 +92,6 @@ export class RenderingBootstrap {
    */
   getSceneManager(): SceneManager {
     return this.sceneManager;
-  }
-
-  /**
-   * Get scene editor for runtime scene manipulation
-   */
-  getSceneEditor(): SceneEditor {
-    return this.sceneEditor;
-  }
-
-  /**
-   * Get object factory for creating scene objects
-   */
-  getObjectFactory(): ObjectFactory {
-    return this.objectFactory;
   }
 }
 

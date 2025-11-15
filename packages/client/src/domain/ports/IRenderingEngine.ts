@@ -11,6 +11,8 @@ export interface IRenderingEngine {
   remove(id: string): void;
   getScene(): THREE.Scene;
   getCamera(): THREE.Camera;
+  /** Replace the active camera used for rendering. When set, renderer will use this camera. */
+  setCamera(camera: THREE.Camera): void;
   renderFrame(): void;
 }
 
