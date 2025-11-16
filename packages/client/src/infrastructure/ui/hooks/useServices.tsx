@@ -1,12 +1,12 @@
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";
-import type I18nService from "@client/application/I18nService";
-import type SettingsService from "@client/application/SettingsService";
-import type ServerBrowserService from "@client/application/ServerBrowserService";
-import type WindowService from "@client/application/WindowService";
-import type TextureResolverService from "@client/application/TextureResolverService";
-import type GameScreenManager from "@client/application/ui/GameScreenManager";
-import type { GameScreenConfig } from "@client/domain/ui/GameScreen";
+import type I18nService from "../../../application/I18nService";
+import type SettingsService from "../../../application/SettingsService";
+import type ServerBrowserService from "../../../application/ServerBrowserService";
+import type WindowService from "../../../application/WindowService";
+import type TextureResolverService from "../../../application/TextureResolverService";
+import type GameScreenManager from "../../../application/ui/GameScreenManager";
+import type { GameScreenConfig } from "../../../domain/ui/GameScreen";
 
 /**
  * Services available through dependency injection context

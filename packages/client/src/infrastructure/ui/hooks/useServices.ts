@@ -5,8 +5,8 @@ import { WindowService } from "@client/application/WindowService";
 import { TextureResolverService } from "@client/application/TextureResolverService";
 import { FpsCounter } from "@client/infrastructure/ui/FpsCounter";
 import { ThreeRenderer } from "@client/infrastructure/rendering/ThreeRenderer";
-import { createContext } from "preact"; // Corrected import for createContext
-import { useContext } from "preact/hooks"; // Added missing import for useContext
+import { createContext } from "preact";
+import { useContext } from "preact/hooks";
 import GameScreenManager from "@client/application/ui/GameScreenManager";
 
 /**
