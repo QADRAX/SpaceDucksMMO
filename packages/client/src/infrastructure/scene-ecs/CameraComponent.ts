@@ -10,9 +10,9 @@ export interface CameraOptions {
 
 /**
  * CameraComponent wraps a THREE.PerspectiveCamera and keeps it synchronized
- * with a TransformComponent. Scenes should register this camera with their
- * own scene registration helpers (e.g. `BaseScene.registerCamera` /
- * `BaseScene.setActiveCamera`) during scene setup. Engines no longer expose a
+ * with a TransformComponent. CameraEntity (which uses this component) implements
+ * ISceneCamera and is added to scenes via `scene.addObject(cameraEntity)` and
+ * activated via `scene.setActiveCamera(id)`. Engines no longer expose a
  * `setCamera` API.
  */
 export class CameraComponent {

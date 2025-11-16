@@ -30,13 +30,12 @@ export class DemoEcsScene extends BaseScene {
     this.textureResolver = textureResolver;
   }
 
-  setup(engine: IRenderingEngine): void {
-    super.setup(engine);
+  setup(engine: IRenderingEngine, renderScene: any): void {
+    super.setup(engine, renderScene);
 
+    // Create and add camera as a scene object
     this.cameraEntity = new CameraEntity('camera-main', { fov: 60 });
-    this.addObject(engine, this.cameraEntity);
-    const cam = this.cameraEntity.getCamera();
-    this.registerCamera('camera-main', cam);
+    this.addObject(this.cameraEntity);
     this.setActiveCamera('camera-main');
 
     // Add simple lighting so MeshStandardMaterial is visible. Wrap raw
@@ -52,37 +51,37 @@ export class DemoEcsScene extends BaseScene {
     }
 
     this.ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
-    this.addObject(engine, new RawSceneObject('ambient-light', this.ambientLight));
+    this.addObject(new RawSceneObject('ambient-light', this.ambientLight));
 
     // Create sun (native SceneEntity using new ECS primitives)
     const sunEntity = new SceneEntity('sun-1', { radius: 1.0, textureId: 'sun', emissive: 0xffaa00 }, this.textureResolver);
     // Add rotation component to entity
     sunEntity.entity.addComponent(new RotationComponent(sunEntity.transform, 0.0001));
     this.entities.push(sunEntity.entity);
-    this.addObject(engine, sunEntity);
+    this.addObject(sunEntity);
 
     // Add a point light attached to the sun position to simulate emissive sun
     this.sunLight = new THREE.PointLight(0xffeeaa, 2.5, 100);
     this.sunLight.position.copy(sunEntity.transform.position);
-    this.addObject(engine, new RawSceneObject('sun-light', this.sunLight));
+    this.addObject(new RawSceneObject('sun-light', this.sunLight));
 
     // Add axes helper for debugging visuals
     this.axes = new THREE.AxesHelper(2.0);
-    this.addObject(engine, new RawSceneObject('axes-helper', this.axes));
+    this.addObject(new RawSceneObject('axes-helper', this.axes));
 
     // Planet A
     const planetA = new SceneEntity('planet-a', { radius: 0.5, textureId: 'rocky-planet', color: 0xffffff }, this.textureResolver);
     planetA.transform.setPosition(-3.5, 0, 0);
     planetA.entity.addComponent(new RotationComponent(planetA.transform, 0.00005));
     this.entities.push(planetA.entity);
-    this.addObject(engine, planetA);
+    this.addObject(planetA);
 
     // Planet B
     const planetB = new SceneEntity('planet-b', { radius: 0.4, textureId: 'rocky-planet', color: 0x88ccff }, this.textureResolver);
     planetB.transform.setPosition(3, 0, 0);
     planetB.entity.addComponent(new RotationComponent(planetB.transform, 0.00003));
     this.entities.push(planetB.entity);
-    this.addObject(engine, planetB);
+    this.addObject(planetB);
   }
 
   update(dt: number): void {
@@ -97,14 +96,11 @@ export class DemoEcsScene extends BaseScene {
       e.update(dt);
     }
 
-    // Let BaseScene update objects/controllers
     super.update(dt);
   }
 
-  teardown(engine: IRenderingEngine): void {
-    // `super.teardown` will remove all objects added via `addObject` (including
-    // the wrapped lights/helpers), so no direct scene manipulation is required.
-    super.teardown(engine);
+  teardown(engine: IRenderingEngine, renderScene: any): void {
+    super.teardown(engine, renderScene);
     this.ambientLight = undefined;
     this.sunLight = undefined;
     this.axes = undefined;

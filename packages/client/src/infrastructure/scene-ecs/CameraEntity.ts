@@ -3,14 +3,18 @@ import * as THREE from 'three';
 import { TransformComponent } from './TransformComponent';
 import CameraComponent from './CameraComponent';
 import RotationComponent from './RotationComponent';
-import type { ISceneObject } from '@client/domain/scene/ISceneObject';
+import type { ISceneCamera } from '@client/domain/scene/ISceneCamera';
 
-export class CameraEntity implements ISceneObject {
+/**
+ * CameraEntity — ISceneCamera implementation that wraps a CameraComponent.
+ * Scenes add this via scene.addObject(cameraEntity) and activate it via
+ * scene.setActiveCamera(id). No separate camera registration is needed.
+ */
+export class CameraEntity implements ISceneCamera {
   readonly id: string;
   readonly entity: Entity;
   readonly transform: TransformComponent;
   readonly cameraComponent: CameraComponent;
-  // ISceneObject requires addTo/removeFrom/update
 
   constructor(id: string, opts?: { fov?: number; near?: number; far?: number; aspect?: number; rotationSpeed?: number }) {
     this.id = id;
@@ -23,22 +27,18 @@ export class CameraEntity implements ISceneObject {
       near: opts?.near,
       far: opts?.far,
     });
+    
     // Optionally attach a RotationComponent to rotate the camera around its Y axis
     if (typeof opts?.rotationSpeed === 'number') {
       this.entity.addComponent(new RotationComponent(this.transform, opts.rotationSpeed));
     }
   }
 
+  // --- ISceneObject lifecycle methods ---
 
-  /** Scenes should register this camera during scene.setup using
-   * `scene.registerCamera(id, camera)` or `scene.setActiveCamera(id)`.
-   * CameraEntity does not perform registration itself.
-   */
-  // Intentionally no activate(...) method: the scene owns activation.
-
-  /** ISceneObject: add to three.js scene. Camera has no visual representation to add, but keep lifecycle symmetric. */
+  /** ISceneObject: add to three.js scene. Cameras have no visual representation, so this is a no-op. */
   addTo(scene: THREE.Scene): void {
-    // Nothing to add to scene for camera itself
+    // Cameras don't add anything to the scene visually
   }
 
   /** ISceneObject: remove from three.js scene. */
@@ -46,20 +46,58 @@ export class CameraEntity implements ISceneObject {
     // Nothing to remove
   }
 
+  /** ISceneObject: dispose resources. */
   dispose(): void {
-    // No disposable resources owned here (camera instances are managed by Three.js renderer)
+    // Camera instances are managed by Three.js; no explicit disposal needed here
   }
 
-  update(dt: number) {
+  /** ISceneObject: per-frame update. Updates entity components (e.g. rotation) then syncs camera from transform. */
+  update(dt: number): void {
     // Update entity components first (e.g., RotationComponent which modifies the transform)
     this.entity.update(dt);
     // Then sync camera from transform
     this.cameraComponent.update(dt);
   }
 
-  /** Allow external code (e.g. the scene) to obtain the camera instance. */
+  // --- ISceneCamera methods ---
+
+  /** ISceneCamera: return the underlying THREE.Camera instance. */
   getCamera(): THREE.PerspectiveCamera {
     return this.cameraComponent.getCamera();
+  }
+
+  /** ISceneCamera: update aspect ratio and projection matrix. */
+  updateAspect(aspect: number): void {
+    const cam = this.cameraComponent.camera;
+    cam.aspect = aspect;
+    cam.updateProjectionMatrix();
+  }
+
+  /** ISceneCamera: set field of view in degrees. */
+  setFov(fov: number): void {
+    const cam = this.cameraComponent.camera;
+    cam.fov = fov;
+    cam.updateProjectionMatrix();
+  }
+
+  /** ISceneCamera: set near and far clipping planes. */
+  setNearFar(near: number, far: number): void {
+    const cam = this.cameraComponent.camera;
+    cam.near = near;
+    cam.far = far;
+    cam.updateProjectionMatrix();
+  }
+
+  /** ISceneCamera: point camera at target position in world space. */
+  lookAt(target: THREE.Vector3 | [number, number, number]): void {
+    const cam = this.cameraComponent.camera;
+    if (Array.isArray(target)) {
+      cam.lookAt(new THREE.Vector3(...target));
+    } else {
+      cam.lookAt(target);
+    }
+    // Optionally sync transform rotation back from camera if needed
+    this.cameraComponent.syncToTransform();
   }
 }
 

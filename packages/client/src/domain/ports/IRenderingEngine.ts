@@ -1,17 +1,21 @@
-import type { ISceneObject } from '../scene/ISceneObject';
 import type IScene from './IScene';
 
 /**
  * Port abstraction for a rendering engine.
  *
  * NOTE: design decision — the engine does NOT provide a default camera.
- * Scenes are responsible for creating/registering a camera (for example
- * by exposing it via `IScene.getActiveCamera()` or by registering a camera
- * with the scene via `BaseScene.registerCamera(id, camera)` and calling
- * `BaseScene.setActiveCamera(id)`).
- * The renderer will query the active scene for its camera each frame and
+ * Scenes are responsible for managing their own cameras by adding them as
+ * ISceneCamera objects via `scene.addObject(cameraEntity)` and calling
+ * `scene.setActiveCamera(id)` to make one active. The engine queries the
+ * active scene for its camera each frame via `scene.getActiveCamera()` and
  * will fail-fast if it's missing. This makes camera ownership explicit
  * and aligns with the ECS-first model.
+ * 
+ * Object management: Scenes manage their own objects via addObject/removeObject.
+ * The engine injects its internal rendering scene (e.g. THREE.Scene) during
+ * setup()/teardown() so scenes can add/remove visual representations without
+ * the engine port exposing renderer-specific types. The engine does NOT track
+ * scene objects — that's the scene's responsibility.
  */
 export interface IRenderingEngine {
   /** Initialize engine resources and attach to DOM container */
@@ -22,19 +26,6 @@ export interface IRenderingEngine {
 
   /** Stop the loop and pause updates */
   stop(): void;
-
-  /** Add a scene object (ISceneObject implements addTo/removeFrom/update) */
-  add(object: ISceneObject): void;
-
-  /** Remove an object by id and dispose its resources */
-  remove(id: string): void;
-
-  /** Engine implementations must NOT expose renderer internals (Three.js types).
-   *  The engine is intentionally agnostic from the port perspective. Scenes
-   *  provide cameras via the `IScene` contract; the renderer implementation
-   *  may query the active scene internally but should not leak Three.js types
-   *  through this interface.
-   */
 
   /** Set the active scene for the engine. The engine will call teardown on the previous scene and setup on the new one. */
   setScene(scene: IScene): void;

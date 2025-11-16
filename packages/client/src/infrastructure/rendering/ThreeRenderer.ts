@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import type { IRenderingEngine } from "@client/domain/ports/IRenderingEngine";
-import type { ISceneObject } from "@client/domain/scene/ISceneObject";
 import type IScene from "@client/domain/ports/IScene";
 import { FpsCounter } from "@client/infrastructure/ui/FpsCounter";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
@@ -12,7 +11,6 @@ export class ThreeRenderer implements IRenderingEngine {
   private composer?: EffectComposer;
   private renderPass?: RenderPass;
   private usePostProcessing = false;
-  private objects = new Map<string, ISceneObject>();
   private container!: HTMLElement;
   private resolutionPolicy: "auto" | "scale" = "auto";
   private resolutionScale = 1.0;
@@ -39,19 +37,6 @@ export class ThreeRenderer implements IRenderingEngine {
     container.appendChild(this.renderer.domElement);
 
     window.addEventListener("resize", this.onResizeBound);
-  }
-
-  add(object: ISceneObject): void {
-    this.objects.set(object.id, object);
-    object.addTo(this.scene);
-  }
-
-  remove(id: string): void {
-    const obj = this.objects.get(id);
-    if (obj) {
-      obj.removeFrom(this.scene);
-      this.objects.delete(id);
-    }
   }
 
   private getActiveCamera(): THREE.Camera | null {
@@ -255,21 +240,14 @@ export class ThreeRenderer implements IRenderingEngine {
       const previous = this.activeIScene;
       if (previous && typeof previous.teardown === 'function') {
         try {
-          previous.teardown(this);
+          previous.teardown(this, this.scene);
         } catch (e) {
           console.warn('[ThreeRenderer] error during previous scene.teardown()', e);
         }
       }
 
-      // Remove any objects we were tracking and clear the map
-      try {
-        for (const obj of Array.from(this.objects.values())) {
-          try { obj.removeFrom(this.scene); } catch (e) {}
-        }
-      } catch (e) {}
-      this.objects.clear();
-
       // Remove any remaining children from the internal three scene
+      // (scenes should have cleaned up during teardown, but ensure clean slate)
       while (this.scene.children.length > 0) {
         const c = this.scene.children[0];
         try { this.scene.remove(c); } catch (e) {}
@@ -283,9 +261,9 @@ export class ThreeRenderer implements IRenderingEngine {
         this.usePostProcessing = false;
       }
 
-      // Set and initialize the new scene
+      // Set and initialize the new scene, injecting the THREE.Scene
       this.activeIScene = scene;
-      scene.setup(this);
+      scene.setup(this, this.scene);
 
       try { this.onActiveCameraChanged?.(); } catch (e) {}
 

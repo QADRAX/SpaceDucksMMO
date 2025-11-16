@@ -13,13 +13,13 @@ export class SandboxScene extends BaseScene {
     super(settingsService);
   }
 
-  setup(engine: IRenderingEngine): void {
-    super.setup(engine);
+  setup(engine: IRenderingEngine, renderScene: any): void {
+    super.setup(engine, renderScene);
     // empty by design for now
   }
 
-  teardown(engine: IRenderingEngine): void {
-    super.teardown(engine);
+  teardown(engine: IRenderingEngine, renderScene: any): void {
+    super.teardown(engine, renderScene);
   }
 }
 
