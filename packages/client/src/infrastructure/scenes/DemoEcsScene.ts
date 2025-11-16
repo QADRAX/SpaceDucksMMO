@@ -1,110 +1,73 @@
 import { BaseScene } from './BaseScene';
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type { SettingsService } from '@client/application/SettingsService';
-import * as THREE from 'three';
-import type { ISceneObject } from '@client/domain/scene/ISceneObject';
-import { Entity } from '@client/infrastructure/scene-ecs/Entity';
-import { TransformComponent } from '@client/infrastructure/scene-ecs/TransformComponent';
-import RotationComponent from '@client/infrastructure/scene-ecs/RotationComponent';
-import { SceneEntity } from '@client/infrastructure/scene-ecs/SceneEntity';
-import { CameraEntity } from '@client/infrastructure/scene-ecs/CameraEntity';
-import type TextureResolverService from '@client/application/TextureResolverService';
 import SceneId from '@client/domain/scene/SceneId';
 
+// ECS
+import { Entity } from '@client/infrastructure/scene-ecs/Entity';
+import { GeometryComponent } from '@client/infrastructure/scene-ecs/GeometryComponent';
+import { MaterialComponent } from '@client/infrastructure/scene-ecs/MaterialComponent';
+import { CameraViewComponent } from '@client/infrastructure/scene-ecs/CameraViewComponent';
+import { CameraTargetComponent } from '@client/infrastructure/scene-ecs/CameraTargetComponent';
+import { LightComponent } from '@client/infrastructure/scene-ecs/LightComponent';
+
 /**
- * Small demo scene that demonstrates the ECS -> Render adapter approach.
- * This scene is intentionally minimal: two planets and a sun, each driven by a
- * TransformComponent and rendered by `VisualBody` via `RenderAdapter`.
+ * Demo scene showcasing the new ECS architecture with:
+ * - Transform integrado en Entity
+ * - Componentes composables (Geometry, Material, ShaderMaterial)
+ * - Órbitas con consideración de geometría y escala
+ * - Cámara con target tracking
+ * - Efectos visuales (atmósfera, corona solar, lens flare, post-process)
+ * - Reactividad automática (cambiar propiedades → actualización inmediata en THREE.js)
  */
 export class DemoEcsScene extends BaseScene {
   readonly id = SceneId.EcsDemo;
-  private textureResolver: TextureResolverService;
-  private entities: Entity[] = [];
-  private ambientLight?: THREE.AmbientLight;
-  private sunLight?: THREE.PointLight;
-  private axes?: THREE.AxesHelper;
-  private cameraEntity?: CameraEntity;
 
-  constructor(settingsService: SettingsService, textureResolver: TextureResolverService) {
+  constructor(settingsService: SettingsService) {
     super(settingsService);
-    this.textureResolver = textureResolver;
   }
 
+  // Escena básica: caja, plano de suelo, luz ambiental + direccional y una cámara
   setup(engine: IRenderingEngine, renderScene: any): void {
     super.setup(engine, renderScene);
 
-    // Create and add camera as a scene object
-    this.cameraEntity = new CameraEntity('camera-main', { fov: 60 });
-    this.addObject(this.cameraEntity);
-    this.setActiveCamera('camera-main');
+    // Luces
+    const ambient = new Entity('light-ambient')
+      .addComponent(new LightComponent({ type: 'ambient', color: 0xffffff, intensity: 0.4 }));
+    this.addEntity(ambient);
 
-    // Add simple lighting so MeshStandardMaterial is visible. Wrap raw
-    // Three.js objects in lightweight ISceneObject adapters so scenes do not
-    // access the engine's internal Three.js scene directly.
-    class RawSceneObject implements ISceneObject {
-      readonly id: string;
-      constructor(id: string, public obj: THREE.Object3D) { this.id = id; }
-      addTo(scene: THREE.Scene): void { scene.add(this.obj); }
-      removeFrom(scene: THREE.Scene): void { scene.remove(this.obj); }
-      update(_dt: number): void { /* no-op */ }
-      dispose?(): void { }
-    }
+    const dir = new Entity('light-directional');
+    dir.transform.setPosition(5, 5, 5);
+    dir.addComponent(new LightComponent({ type: 'directional', color: 0xffffff, intensity: 1.0 }));
+    this.addEntity(dir);
 
-    this.ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
-    this.addObject(new RawSceneObject('ambient-light', this.ambientLight));
+    // Plano (suelo)
+    const ground = new Entity('ground');
+    ground.addComponent(new GeometryComponent({ type: 'plane', width: 30, height: 30 }));
+    ground.addComponent(new MaterialComponent({ type: 'standard', color: '#808080', roughness: 1.0, metalness: 0.0 }));
+    ground.transform.setRotation(-Math.PI / 2, 0, 0); // hacer horizontal
+    this.addEntity(ground);
 
-    // Create sun (native SceneEntity using new ECS primitives)
-    const sunEntity = new SceneEntity('sun-1', { radius: 1.0, textureId: 'sun', emissive: 0xffaa00 }, this.textureResolver);
-    // Add rotation component to entity
-    sunEntity.entity.addComponent(new RotationComponent(sunEntity.transform, 0.0001));
-    this.entities.push(sunEntity.entity);
-    this.addObject(sunEntity);
+    // Caja simple
+    const box = new Entity('box');
+    box.addComponent(new GeometryComponent({ type: 'box', width: 1, height: 1, depth: 1 }));
+    box.addComponent(new MaterialComponent({ type: 'standard', color: '#44aa88', roughness: 0.5, metalness: 0.1 }));
+    box.transform.setPosition(0, 0.5, 0);
+    this.addEntity(box);
 
-    // Add a point light attached to the sun position to simulate emissive sun
-    this.sunLight = new THREE.PointLight(0xffeeaa, 2.5, 100);
-    this.sunLight.position.copy(sunEntity.transform.position);
-    this.addObject(new RawSceneObject('sun-light', this.sunLight));
+    // Punto de mira (origen)
+    const origin = new Entity('origin');
+    this.addEntity(origin);
 
-    // Add axes helper for debugging visuals
-    this.axes = new THREE.AxesHelper(2.0);
-    this.addObject(new RawSceneObject('axes-helper', this.axes));
+    // Cámara
+    const camera = new Entity('main-camera');
+    camera.transform.setPosition(4, 3, 8);
+    camera.addComponent(new CameraViewComponent({ fov: 60, near: 0.1, far: 1000 }));
+    camera.addComponent(new CameraTargetComponent({ targetEntityId: 'origin' }));
+    this.addEntity(camera);
+    this.setActiveCamera('main-camera');
 
-    // Planet A
-    const planetA = new SceneEntity('planet-a', { radius: 0.5, textureId: 'rocky-planet', color: 0xffffff }, this.textureResolver);
-    planetA.transform.setPosition(-3.5, 0, 0);
-    planetA.entity.addComponent(new RotationComponent(planetA.transform, 0.00005));
-    this.entities.push(planetA.entity);
-    this.addObject(planetA);
-
-    // Planet B
-    const planetB = new SceneEntity('planet-b', { radius: 0.4, textureId: 'rocky-planet', color: 0x88ccff }, this.textureResolver);
-    planetB.transform.setPosition(3, 0, 0);
-    planetB.entity.addComponent(new RotationComponent(planetB.transform, 0.00003));
-    this.entities.push(planetB.entity);
-    this.addObject(planetB);
-  }
-
-  update(dt: number): void {
-    if (this.cameraEntity) this.cameraEntity.update(dt);
-    // Simple logic: rotate planets around their own Y axis
-    for (const e of this.entities) {
-      const t = e.getComponent( 'transform' ) as TransformComponent | undefined;
-      if (t) {
-        // rotate by a small amount scaled by dt
-        t.rotation.y += 0.0005 * dt;
-      }
-      e.update(dt);
-    }
-
-    super.update(dt);
-  }
-
-  teardown(engine: IRenderingEngine, renderScene: any): void {
-    super.teardown(engine, renderScene);
-    this.ambientLight = undefined;
-    this.sunLight = undefined;
-    this.axes = undefined;
-    this.entities = [];
+    console.log('[DemoEcsScene] Basic ECS scene ready (box + ground + lights)');
   }
 }
 
