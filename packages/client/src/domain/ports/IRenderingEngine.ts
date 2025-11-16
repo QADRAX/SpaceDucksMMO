@@ -4,18 +4,17 @@ import type IScene from './IScene';
  * Port abstraction for a rendering engine.
  *
  * NOTE: design decision — the engine does NOT provide a default camera.
- * Scenes are responsible for managing their own cameras by adding them as
- * ISceneCamera objects via `scene.addObject(cameraEntity)` and calling
- * `scene.setActiveCamera(id)` to make one active. The engine queries the
- * active scene for its camera each frame via `scene.getActiveCamera()` and
- * will fail-fast if it's missing. This makes camera ownership explicit
+ * Scenes are responsible for managing their own cameras by creating camera
+ * entities (with CameraViewComponent) and calling `scene.setActiveCamera(id)`.
+ * The engine queries the active scene each frame via `scene.getActiveCamera()`
+ * and will fail-fast if it's missing. This keeps camera ownership explicit
  * and aligns with the ECS-first model.
- * 
- * Object management: Scenes manage their own objects via addObject/removeObject.
- * The engine injects its internal rendering scene (e.g. THREE.Scene) during
- * setup()/teardown() so scenes can add/remove visual representations without
- * the engine port exposing renderer-specific types. The engine does NOT track
- * scene objects — that's the scene's responsibility.
+ *
+ * Entity management: Scenes manage their Entities (domain) and the engine
+ * injects its internal rendering scene (e.g. THREE.Scene) during
+ * setup()/teardown(). Visual representations are created by infrastructure
+ * sync systems (e.g., RenderSyncSystem). The engine does NOT track scene
+ * objects; it only renders using the active camera provided by the scene.
  */
 export interface IRenderingEngine {
   /** Initialize engine resources and attach to DOM container */

@@ -1,6 +1,6 @@
 import type IRenderingEngine from './IRenderingEngine';
 import * as THREE from 'three';
-import type { ISceneObject } from '../scene/ISceneObject';
+import type { Entity } from '../ecs/core/Entity';
 
 /**
  * Port abstraction for a complete 3D scene.
@@ -11,10 +11,10 @@ import type { ISceneObject } from '../scene/ISceneObject';
  * 2. update(dt) - Per-frame logic (animations, physics, etc.)
  * 3. teardown() - Cleanup resources when switching to another scene
  * 
- * Object management:
- * - All scene objects (including cameras) are added via addObject()
- * - Cameras implementing ISceneCamera can be marked as active via setActiveCamera(id)
- * - The engine queries getActiveCamera() to render from the active camera's perspective
+ * Entity-first management (ECS):
+ * - All scene content is represented as Entities with Components in the domain.
+ * - The scene adds/removes entities via addEntity()/removeEntity().
+ * - The engine queries getActiveCamera() to render from the active camera's perspective.
  */
 export interface IScene {
   /** Unique identifier for this scene */
@@ -41,26 +41,17 @@ export interface IScene {
    */
   teardown(engine: IRenderingEngine, renderScene: any): void;
 
-  /**
-   * Add a scene object (mesh, light, camera, etc.) to this scene.
-   * The object will be added to the Three.js scene via obj.addTo(scene).
-   * @param obj - The scene object to add
-   */
-  addObject(obj: ISceneObject): void;
+  /** Add an ECS Entity to this scene */
+  addEntity(entity: Entity): void;
+
+  /** Remove an ECS Entity by ID */
+  removeEntity(id: string): void;
 
   /**
-   * Remove a scene object by ID from this scene.
-   * The object will be removed from the Three.js scene via obj.removeFrom(scene).
-   * @param id - The ID of the object to remove
-   */
-  removeObject(id: string): void;
-
-  /**
-   * Mark the camera object with the given ID as the active camera for this scene.
-   * The object must implement ISceneCamera and must have been added via addObject() first.
-   * Implementations should notify the engine (via engine.onActiveCameraChanged()) so
-   * the renderer can update its internal state.
-   * @param id - The ID of the camera object to activate
+  * Mark the camera entity with the given ID as the active camera for this scene.
+  * Implementations should notify the engine (via engine.onActiveCameraChanged()) so
+  * the renderer can update its internal state.
+  * @param id - The ID of the camera entity to activate
    */
   setActiveCamera(id: string): void;
 

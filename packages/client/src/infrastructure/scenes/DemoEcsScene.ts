@@ -4,12 +4,12 @@ import type { SettingsService } from '@client/application/SettingsService';
 import SceneId from '@client/domain/scene/SceneId';
 
 // ECS
-import { Entity } from '@client/infrastructure/scene-ecs/Entity';
-import { GeometryComponent } from '@client/infrastructure/scene-ecs/GeometryComponent';
-import { MaterialComponent } from '@client/infrastructure/scene-ecs/MaterialComponent';
-import { CameraViewComponent } from '@client/infrastructure/scene-ecs/CameraViewComponent';
-import { CameraTargetComponent } from '@client/infrastructure/scene-ecs/CameraTargetComponent';
-import { LightComponent } from '@client/infrastructure/scene-ecs/LightComponent';
+import { Entity } from '@client/domain/ecs/core/Entity';
+import { GeometryComponent } from '@client/domain/ecs/components/GeometryComponent';
+import { MaterialComponent } from '@client/domain/ecs/components/MaterialComponent';
+import { CameraViewComponent } from '@client/domain/ecs/components/CameraViewComponent';
+import { CameraTargetComponent } from '@client/domain/ecs/components/CameraTargetComponent';
+import { LightComponent } from '@client/domain/ecs/components/LightComponent';
 
 /**
  * Demo scene showcasing the new ECS architecture with:

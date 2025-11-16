@@ -39,7 +39,7 @@ export class RenderingBootstrap {
     this.sceneManager.register(new MainMenuScene(this.settingsService));
     this.sceneManager.register(new SandboxScene(this.settingsService));
     // Register ECS demo scene (POC)
-    this.sceneManager.register(new DemoEcsScene(this.settingsService, this.textureResolver));
+    this.sceneManager.register(new DemoEcsScene(this.settingsService));
     
     // Initialize Three.js renderer, camera, scene
     this.sceneService.init(container);
