@@ -1,13 +1,12 @@
 /** @jsxImportSource preact */
 import { useState, useEffect } from 'preact/hooks';
-import { useNavigation, useSceneControllers, useServices } from '../../hooks/useServices';
+import { useNavigation } from '../../hooks/useServices';
 import useI18n from '../../hooks/useI18n';
 import { GameScreens } from '@client/domain/ui/GameScreenRegistry';
 import Button from '../common/utility/Button';
 import IconButton from '../common/utility/IconButton';
 import { SettingsIcon } from '../common/icons';
 import SettingsPopup from '../settings/SettingsPopup';
-import SceneControllerPanel from '../debug/SceneControllerPanel';
 import './sandbox.css';
 
 /**
@@ -15,7 +14,6 @@ import './sandbox.css';
  */
 export function SandboxComponent() {
   const [, forceUpdate] = useState({});
-  const controllers = useSceneControllers();
   const { navigateTo } = useNavigation();
   const { t } = useI18n();
   const [showSettings, setShowSettings] = useState(false);
@@ -52,9 +50,6 @@ export function SandboxComponent() {
           />
         </div>
       </div>
-
-      {/* Controller panel for debugging */}
-      {controllers.length > 0 && <SceneControllerPanel controllers={controllers} />}
 
       <SettingsPopup
         isOpen={showSettings}

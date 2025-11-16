@@ -7,7 +7,6 @@ import type WindowService from "@client/application/WindowService";
 import type TextureResolverService from "@client/application/TextureResolverService";
 import type GameScreenManager from "@client/application/ui/GameScreenManager";
 import type { GameScreenConfig } from "@client/domain/ui/GameScreen";
-import type { ISceneController } from "@client/domain/scene/ISceneController";
 
 /**
  * Services available through dependency injection context
@@ -53,23 +52,3 @@ export function useNavigation() {
     getCurrentScreen: () => services.navigation!.getCurrentScreen(),
   };
 }
-
-/**
- * Hook to access current scene's controllers
- * Convenience hook for getting controllers from the current scene
- */
-export function useSceneControllers(): ISceneController[] {
-  const services = useServices();
-  
-  if (!services.navigation) {
-    return [];
-  }
-  
-  const scene = services.navigation.getSceneManager().getCurrent();
-  // Controller API was removed from the public scene contract. Return an
-  // empty list here; UI components that rely on controllers must be
-  // updated to use scene-specific APIs or the SceneEditor subsystem.
-  return [];
-}
-
-export default useServices;
