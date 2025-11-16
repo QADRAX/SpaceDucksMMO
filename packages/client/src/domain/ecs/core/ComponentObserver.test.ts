@@ -41,4 +41,16 @@ describe('Component observer pattern', () => {
     comp.mutate();
     expect(obs.calls.length).toBe(1);
   });
+
+  test('toggling enabled triggers notifications', () => {
+    const e = new Entity('E2');
+    const comp = new ObservableTestComponent();
+    const obs = new TestObserver();
+    comp.addObserver(obs);
+    e.addComponent(comp);
+    comp.enabled = false;
+    comp.enabled = true;
+    expect(obs.calls.length).toBe(2);
+    expect(obs.calls[0]).toEqual({ entityId: 'E2', componentType: 'ObservableTest' });
+  });
 });

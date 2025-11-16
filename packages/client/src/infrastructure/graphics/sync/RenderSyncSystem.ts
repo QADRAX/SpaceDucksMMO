@@ -54,6 +54,23 @@ export class RenderSyncSystem implements IComponentObserver {
   onComponentChanged(entityId: string, componentType: string): void {
     const entity = this.entities.get(entityId);
     if (!entity) return;
+    // support removal notifications encoded as 'type:removed'
+    if (componentType.endsWith(':removed')) {
+      const base = componentType.split(':')[0];
+      switch (base) {
+        case 'geometry':
+        case 'shaderMaterial':
+        case 'material':
+        case 'light':
+        case 'cameraView':
+          this.registry.remove(entityId, this.scene);
+          break;
+        default:
+          break;
+      }
+      return;
+    }
+
     switch (componentType) {
       case "geometry":
       case "shaderMaterial":
@@ -78,17 +95,20 @@ export class RenderSyncSystem implements IComponentObserver {
     const material = entity.getComponent<MaterialComponent>("material");
     const shaderMaterial =
       entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
-    if (geometry && (material || shaderMaterial)) {
+    if (
+      geometry && geometry.enabled !== false &&
+      ((material && material.enabled !== false) || (shaderMaterial && shaderMaterial.enabled !== false))
+    ) {
       this.createMesh(entity, geometry, material, shaderMaterial);
       return;
     }
     const cameraView = entity.getComponent<CameraViewComponent>("cameraView");
-    if (cameraView) {
+    if (cameraView && cameraView.enabled !== false) {
       this.createCamera(entity, cameraView);
       return;
     }
     const lightComp = entity.getComponent<LightComponent>("light");
-    if (lightComp) {
+    if (lightComp && lightComp.enabled !== false) {
       this.createLight(entity, lightComp);
       return;
     }
@@ -130,28 +150,50 @@ export class RenderSyncSystem implements IComponentObserver {
 
   private recreateMesh(entity: Entity): void {
     const rc = this.registry.get(entity.id);
-    if (rc?.object3D) {
-      this.scene.remove(rc.object3D);
-      if (rc.geometry) rc.geometry.dispose();
-      if (rc.material) rc.material.dispose();
-    }
     const geometry = entity.getComponent<GeometryComponent>("geometry");
     const material = entity.getComponent<MaterialComponent>("material");
     const shaderMaterial =
       entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
-    if (geometry && (material || shaderMaterial))
+
+    // If we have an existing rendered object and components are disabled, hide it
+    if (rc?.object3D) {
+      const shouldBeVisible =
+        !!geometry && geometry.enabled !== false &&
+        ((material && material.enabled !== false) || (shaderMaterial && shaderMaterial.enabled !== false));
+      if (!shouldBeVisible) {
+        rc.object3D.visible = false;
+        return;
+      }
+
+      // If should be visible but we have an existing object, remove and recreate to apply changes
+      this.scene.remove(rc.object3D);
+      if (rc.geometry) rc.geometry.dispose();
+      if (rc.material) rc.material.dispose();
+      this.registry.remove(entity.id, this.scene);
+    }
+
+    if (
+      geometry && geometry.enabled !== false &&
+      ((material && material.enabled !== false) || (shaderMaterial && shaderMaterial.enabled !== false))
+    ) {
       this.createMesh(entity, geometry, material, shaderMaterial);
+    }
   }
 
   private syncMaterial(entity: Entity): void {
     const rc = this.registry.get(entity.id);
     if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) return;
     const materialComp = entity.getComponent<MaterialComponent>("material");
-    if (!materialComp) return;
+    // If material removed or disabled, hide mesh but keep registry/resources
+    if (!materialComp || materialComp.enabled === false) {
+      rc.object3D.visible = false;
+      return;
+    }
     if (rc.material) rc.material.dispose();
     const newMat = MaterialFactory.build(materialComp, this.textureCache);
     rc.object3D.material = newMat;
     rc.material = newMat;
+    rc.object3D.visible = true;
   }
 
   private syncCamera(entity: Entity): void {
@@ -169,9 +211,16 @@ export class RenderSyncSystem implements IComponentObserver {
 
   private recreateLight(entity: Entity): void {
     const rc = this.registry.get(entity.id);
-    if (rc?.object3D) this.scene.remove(rc.object3D);
     const lightComp = entity.getComponent<LightComponent>("light");
-    if (lightComp) this.createLight(entity, lightComp);
+    if (rc?.object3D) {
+      if (!lightComp || lightComp.enabled === false) {
+        rc.object3D.visible = false;
+        return;
+      }
+      this.scene.remove(rc.object3D);
+      if (rc) this.registry.remove(entity.id, this.scene);
+    }
+    if (lightComp && lightComp.enabled !== false) this.createLight(entity, lightComp);
   }
 
   private onTransformChanged(entityId: string): void {

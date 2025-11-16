@@ -7,7 +7,7 @@ export class OrbitSystem {
   update(dt: number): void {
     for (const entity of this.entities.values()) {
       const orbit = entity.getComponent<OrbitComponent>('orbit');
-      if (!orbit) continue;
+      if (!orbit || (orbit as any).enabled === false) continue;
       const target = this.entities.get(orbit.targetEntityId); if (!target) continue;
       // Effective radius (simplified: sphere/box only)
       const geom = target.getComponent<GeometryComponent>('geometry');

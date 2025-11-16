@@ -32,6 +32,8 @@ export class Entity {
         `Cannot remove component '${type}' from entity '${this.id}':\n` +
           errors.map((e) => `  - ${e}`).join("\n")
       );
+    // notify observers registered on the component that it's being removed
+    comp.notifyRemoved();
     this.components.delete(type);
   }
   getComponent<T extends Component>(type: string): T | undefined {
@@ -96,7 +98,10 @@ export class Entity {
     return this._parent;
   }
   update(dt: number): void {
-    for (const comp of this.components.values()) comp.update(dt);
+    for (const comp of this.components.values()) {
+      if ((comp as any).enabled === false) continue;
+      comp.update(dt);
+    }
     for (const child of this.children) child.update(dt);
   }
 }

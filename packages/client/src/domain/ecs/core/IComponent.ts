@@ -5,6 +5,7 @@ interface IComponent {
   readonly metadata: ComponentMetadata;
   update(dt: number): void;
   validate?(entity: any): string[];
+  notifyRemoved(): void;
 }
 
 export default IComponent;

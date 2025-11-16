@@ -44,4 +44,21 @@ describe('Entity component validation', () => {
     expect(() => e.removeComponent('X')).not.toThrow();
     expect(e.hasComponent('X')).toBe(false);
   });
+
+  test('Entity.update skips disabled components', () => {
+    const e = new Entity('E2');
+    let called = 0;
+    class UpComp extends Component {
+      readonly type = 'up';
+      readonly metadata = { type: 'up' } as any;
+      update(dt: number) { called += 1; }
+    }
+    const c = new UpComp();
+    e.addComponent(c as any);
+    e.update(0.016);
+    expect(called).toBe(1);
+    c.enabled = false;
+    e.update(0.016);
+    expect(called).toBe(1);
+  });
 });

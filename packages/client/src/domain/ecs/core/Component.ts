@@ -7,6 +7,17 @@ export abstract class Component implements IComponent {
   abstract readonly metadata: ComponentMetadata;
   protected entityId?: string;
   protected observers: IComponentObserver[] = [];
+  private _enabled = true;
+
+  get enabled(): boolean {
+    return this._enabled;
+  }
+
+  set enabled(value: boolean) {
+    if (this._enabled === value) return;
+    this._enabled = value;
+    this.notifyChanged();
+  }
 
   addObserver(observer: IComponentObserver): void {
     if (!this.observers.includes(observer)) this.observers.push(observer);
@@ -19,6 +30,13 @@ export abstract class Component implements IComponent {
     if (!this.entityId) return;
     for (const o of this.observers)
       o.onComponentChanged(this.entityId, this.type);
+  }
+  // Notify observers that this component was removed from its entity.
+  // We encode removal by sending a special componentType suffix ':removed'.
+  notifyRemoved(): void {
+    if (!this.entityId) return;
+    for (const o of this.observers)
+      o.onComponentChanged(this.entityId, `${this.type}:removed`);
   }
   setEntityId(id: string): void {
     this.entityId = id;

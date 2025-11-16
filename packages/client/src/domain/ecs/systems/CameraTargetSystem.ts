@@ -6,7 +6,7 @@ export class CameraTargetSystem {
   update(dt: number): void {
     for (const entity of this.entities.values()) {
       const targetComp = entity.getComponent<CameraTargetComponent>('cameraTarget');
-      if (!targetComp) continue;
+      if (!targetComp || (targetComp as any).enabled === false) continue;
       const targetEntity = this.entities.get(targetComp.targetEntityId); if (!targetEntity) continue;
       let targetPos = targetEntity.transform.worldPosition.clone();
       if (targetComp.lookAtOffset) targetPos.add({ x: targetComp.lookAtOffset[0], y: targetComp.lookAtOffset[1], z: targetComp.lookAtOffset[2] } as any);
