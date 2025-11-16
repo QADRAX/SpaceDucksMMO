@@ -9,6 +9,7 @@ import type { SettingsService } from "@client/application/SettingsService";
 import { DemoEcsScene } from '@client/infrastructure/scenes/DemoEcsScene';
 import { MainMenuScene } from '@client/infrastructure/scenes/MainMenuScene';
 import { SandboxScene } from '@client/infrastructure/scenes/SandboxScene';
+import { FpsCounter } from "@client/infrastructure/ui/FpsCounter";
 
 /**
  * Rendering Bootstrap
@@ -23,9 +24,10 @@ export class RenderingBootstrap {
 
   constructor(
     private textureResolver: TextureResolverService,
-    private settingsService: SettingsService
+    private settingsService: SettingsService,
+    private fpsCounter: FpsCounter // Add fpsCounter as a dependency
   ) {
-    this.engine = new ThreeRenderer();
+    this.engine = new ThreeRenderer(fpsCounter); // Pass fpsCounter to ThreeRenderer
     this.sceneManager = new SceneManager(this.engine, this.settingsService);
     this.sceneService = new SceneService(this.engine, this.sceneManager);
     this.graphicsController = new GraphicsController(this.engine);

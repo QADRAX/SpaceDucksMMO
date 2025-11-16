@@ -29,7 +29,7 @@ import { ServicesContext } from '../hooks/useServices';
 export abstract class BaseScreen implements IScreen {
   readonly id: ScreenId;
   protected root: HTMLElement | null = null;
-  protected services?: Services;
+  protected services!: Services; // Ensure proper typing for `services`
 
   constructor(id: ScreenId) {
     this.id = id;
@@ -70,8 +70,9 @@ export abstract class BaseScreen implements IScreen {
 
     const content = this.renderContent();
     
+    console.log('[BaseScreen] Services:', this.services);
     render(
-      <ServicesContext.Provider value={this.services || null}>
+      <ServicesContext.Provider value={this.services}>
         {content}
       </ServicesContext.Provider>,
       this.root

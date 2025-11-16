@@ -6,7 +6,7 @@ import InputRow from "../common/form/InputRow";
 import List from "../common/list/List";
 import ListItem from "../common/list/ListItem";
 import useI18n from "../../hooks/useI18n";
-import useServices from "../../hooks/useServices";
+import { useServices } from "../../hooks/useServices";
 import { TrashIcon, PlusIcon } from "../common/icons";
 
 type ServerInfo = {

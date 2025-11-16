@@ -52,10 +52,6 @@ export interface IRenderingEngine {
   enablePostProcessing(): any;
   disablePostProcessing(): void;
   getComposer(): any | undefined;
-
-  /** Debug helpers */
-  toggleFpsCounter(): void;
-  getFps(): number;
 }
 
 export default IRenderingEngine;

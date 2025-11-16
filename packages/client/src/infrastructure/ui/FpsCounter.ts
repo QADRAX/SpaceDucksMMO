@@ -8,6 +8,7 @@ export class FpsCounter {
   private lastTime: number = performance.now();
   private fps: number = 0;
   private updateInterval: number = 500; // Update every 500ms
+  private running: boolean = false;
 
   constructor() {
     // Create overlay element
@@ -104,6 +105,33 @@ export class FpsCounter {
   setPosition(top: string, left: string): void {
     this.element.style.top = top;
     this.element.style.left = left;
+  }
+
+  /**
+   * Start the FPS counter
+   */
+  start(): void {
+    if (!this.running) {
+      this.show();
+      this.running = true;
+    }
+  }
+
+  /**
+   * Stop the FPS counter
+   */
+  stop(): void {
+    if (this.running) {
+      this.hide();
+      this.running = false;
+    }
+  }
+
+  /**
+   * Check if the FPS counter is running
+   */
+  isRunning(): boolean {
+    return this.running;
   }
 }
 

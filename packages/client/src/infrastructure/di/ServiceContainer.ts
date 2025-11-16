@@ -9,7 +9,12 @@ import PersistentServerDirectory from "@client/infrastructure/server/PersistentS
 import IpcStorage from "@client/infrastructure/storage/IpcStorage";
 import { BrowserStorage } from "@client/infrastructure/storage/BrowserStorage";
 import BrowserFileExistenceChecker from "@client/infrastructure/assets/BrowserFileExistenceChecker";
+import { FpsCounter } from "@client/infrastructure/ui/FpsCounter";
+import ThreeRenderer from "@client/infrastructure/rendering/ThreeRenderer";
 import type { Services } from "../ui/hooks/useServices";
+import ScreenRouter from "@client/application/ui/ScreenRouter";
+import SceneManager from "@client/application/SceneManager";
+import GameScreenManager from "@client/application/ui/GameScreenManager";
 
 /**
  * Service Container - Composition Root for Dependency Injection
@@ -46,12 +51,27 @@ export class ServiceContainer {
     // Asset services
     const textureResolver = new TextureResolverService(settingsService, fileChecker);
 
+    // Debug utilities
+    const fpsCounter = new FpsCounter();
+
+    // Rendering engine
+    const renderingEngine = new ThreeRenderer(fpsCounter);
+
+    // Screen and Scene Managers
+    const root = document.getElementById('app-root') || document.body; // Use app root or fallback to body
+    const screenRouter = new ScreenRouter(root);
+    const sceneManager = new SceneManager(renderingEngine, settingsService);
+    const gameScreenManager = new GameScreenManager(screenRouter, sceneManager);
+
     this.services = {
       settings: settingsService,
       i18n: i18nService,
       serverBrowser: serverBrowser,
       window: windowService,
       textureResolver: textureResolver,
+      fpsCounter: fpsCounter,
+      renderingEngine: renderingEngine,
+      navigation: gameScreenManager,
     };
 
     return this.services;
