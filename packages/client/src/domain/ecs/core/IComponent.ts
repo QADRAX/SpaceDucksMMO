@@ -1,4 +1,4 @@
-import type { ComponentMetadata } from './ComponentMetadata';
+import type { ComponentMetadata } from "./ComponentMetadata";
 
 interface IComponent {
   readonly type: string;

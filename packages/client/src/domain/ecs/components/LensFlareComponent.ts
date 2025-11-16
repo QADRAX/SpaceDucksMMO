@@ -1,14 +1,36 @@
-import { Component } from '../core/Component';
-import type { ComponentMetadata } from '../core/ComponentMetadata';
+import { Component } from "../core/Component";
+import type { ComponentMetadata } from "../core/ComponentMetadata";
 
-export interface LensFlareElement { size: number; distance: number; opacity: number; }
+export interface LensFlareElement {
+  size: number;
+  distance: number;
+  opacity: number;
+}
 
 export class LensFlareComponent extends Component {
-  readonly type = 'lensFlare';
-  readonly metadata: ComponentMetadata = { type: 'lensFlare', unique: true, requires: [], conflicts: [] };
-  intensity: number; color: [number, number, number]; flareElements: LensFlareElement[]; occlusionEnabled: boolean;
-  constructor(params: { intensity: number; color: [number, number, number]; flareElements: LensFlareElement[]; occlusionEnabled?: boolean }) {
-    super(); this.intensity = params.intensity; this.color = params.color; this.flareElements = params.flareElements; this.occlusionEnabled = params.occlusionEnabled ?? true; }
+  readonly type = "lensFlare";
+  readonly metadata: ComponentMetadata = {
+    type: "lensFlare",
+    unique: true,
+    requires: [],
+    conflicts: [],
+  };
+  intensity: number;
+  color: [number, number, number];
+  flareElements: LensFlareElement[];
+  occlusionEnabled: boolean;
+  constructor(params: {
+    intensity: number;
+    color: [number, number, number];
+    flareElements: LensFlareElement[];
+    occlusionEnabled?: boolean;
+  }) {
+    super();
+    this.intensity = params.intensity;
+    this.color = params.color;
+    this.flareElements = params.flareElements;
+    this.occlusionEnabled = params.occlusionEnabled ?? true;
+  }
 }
 
 export default LensFlareComponent;

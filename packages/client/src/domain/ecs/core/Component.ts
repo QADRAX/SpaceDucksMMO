@@ -2,7 +2,6 @@ import { ComponentMetadata } from "./ComponentMetadata";
 import IComponent from "./IComponent";
 import IComponentObserver from "./IComponentObserver";
 
-
 export abstract class Component implements IComponent {
   abstract readonly type: string;
   abstract readonly metadata: ComponentMetadata;
@@ -18,10 +17,15 @@ export abstract class Component implements IComponent {
   }
   protected notifyChanged(): void {
     if (!this.entityId) return;
-    for (const o of this.observers) o.onComponentChanged(this.entityId, this.type);
+    for (const o of this.observers)
+      o.onComponentChanged(this.entityId, this.type);
   }
-  setEntityId(id: string): void { this.entityId = id; }
-  update(dt: number): void { /* optional override */ }
+  setEntityId(id: string): void {
+    this.entityId = id;
+  }
+  update(dt: number): void {
+    /* optional override */
+  }
   validate?(entity: any): string[];
 }
 
