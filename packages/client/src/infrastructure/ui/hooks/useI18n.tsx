@@ -1,6 +1,6 @@
 import { useState, useEffect } from "preact/hooks";
-import useServices from "./useServices";
 import type { LanguageCode } from "@client/domain/i18n/Language";
+import { useServices } from "./useServices";
 
 /**
  * Hook to access i18n service in components

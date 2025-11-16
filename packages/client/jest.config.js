@@ -1,19 +1,13 @@
 /** @type {import('jest').Config} */
 module.exports = {
-  preset: 'ts-jest/presets/default-esm',
+  preset: 'ts-jest',
   testEnvironment: 'node',
+  injectGlobals: true,
   roots: ['<rootDir>/src'],
-  extensionsToTreatAsEsm: ['.ts'],
-  globals: {
-    'ts-jest': {
-      useESM: true,
-      tsconfig: '<rootDir>/tsconfig.json'
-    }
-  },
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/'],
   moduleNameMapper: {
     '^(.*)\\.(css|less|scss)$': '<rootDir>/__mocks__/styleMock.js',
-    '^@client/(.*)$': '<rootDir>/src/$1',
-    '^(\\.{1,2}/.*)\\.js$': '$1'
+    '^@client/(.*)$': '<rootDir>/src/$1'
   },
   testMatch: ['**/*.test.ts'],
   collectCoverageFrom: [

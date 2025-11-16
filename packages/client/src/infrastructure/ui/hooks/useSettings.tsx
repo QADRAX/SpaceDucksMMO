@@ -1,6 +1,6 @@
 import { useState, useEffect } from "preact/hooks";
-import useServices from "./useServices";
 import type { GameSettings } from "@client/domain/settings/GameSettings";
+import { useServices } from "./useServices";
 
 /**
  * Hook to access and modify game settings

@@ -64,6 +64,12 @@ export class ShaderMaterialComponent extends Component {
     this._transparent = v;
     this.notifyChanged();
   }
+  get blending(): string {
+    return this._blending;
+  }
+  get depthWrite(): boolean {
+    return this._depthWrite;
+  }
   setUniform(name: string, value: any): void {
     if (this._uniforms[name]) {
       this._uniforms[name].value = value;
