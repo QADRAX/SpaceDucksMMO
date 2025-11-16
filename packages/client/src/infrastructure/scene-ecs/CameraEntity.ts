@@ -3,7 +3,6 @@ import * as THREE from 'three';
 import { TransformComponent } from './TransformComponent';
 import CameraComponent from './CameraComponent';
 import RotationComponent from './RotationComponent';
-import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 
 export class CameraEntity implements ISceneObject {
@@ -30,10 +29,12 @@ export class CameraEntity implements ISceneObject {
     }
   }
 
-  /** Activate this camera on the given engine (engine will render using it) */
-  activate(engine: IRenderingEngine) {
-    this.cameraComponent.activateOnEngine(engine);
-  }
+
+  /** Scenes should register this camera during scene.setup using
+   * `scene.registerCamera(id, camera)` or `scene.setActiveCamera(id)`.
+   * CameraEntity does not perform registration itself.
+   */
+  // Intentionally no activate(...) method: the scene owns activation.
 
   /** ISceneObject: add to three.js scene. Camera has no visual representation to add, but keep lifecycle symmetric. */
   addTo(scene: THREE.Scene): void {
@@ -54,6 +55,11 @@ export class CameraEntity implements ISceneObject {
     this.entity.update(dt);
     // Then sync camera from transform
     this.cameraComponent.update(dt);
+  }
+
+  /** Allow external code (e.g. the scene) to obtain the camera instance. */
+  getCamera(): THREE.PerspectiveCamera {
+    return this.cameraComponent.getCamera();
   }
 }
 

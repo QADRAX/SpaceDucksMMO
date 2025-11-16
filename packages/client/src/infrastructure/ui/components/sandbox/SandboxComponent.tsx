@@ -17,18 +17,9 @@ export function SandboxComponent() {
   const [, forceUpdate] = useState({});
   const controllers = useSceneControllers();
   const { navigateTo } = useNavigation();
-  const services = useServices();
   const { t } = useI18n();
   const [showSettings, setShowSettings] = useState(false);
 
-  // Initialize scene editor with current scene
-  useEffect(() => {
-    if (services.sceneEditor && services.navigation) {
-      const currentScene = services.navigation.getSceneManager().getCurrent();
-      services.sceneEditor.setScene(currentScene);
-      console.log('[SandboxComponent] SceneEditor initialized with current scene');
-    }
-  }, [services.sceneEditor, services.navigation]);
 
   // Force re-render after scene is loaded
   useEffect(() => {

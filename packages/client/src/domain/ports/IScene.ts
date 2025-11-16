@@ -1,4 +1,5 @@
 import type IRenderingEngine from './IRenderingEngine';
+import * as THREE from 'three';
 import type { ISceneController } from '../scene/ISceneController';
 
 /**
@@ -34,10 +35,25 @@ export interface IScene {
   teardown(engine: IRenderingEngine): void;
 
   /** Get all controllers in this scene */
-  getControllers?(): ISceneController[];
-  
-  /** Get a specific controller by ID */
-  getController?(id: string): ISceneController | undefined;
+  // Controller management moved out of the scene port. Scene implementations
+  // may manage controllers internally but the public API no longer exposes
+  // controller lists. This intentionally breaks backwards compatibility.
+
+  /** Register a camera instance with the scene under an id. The scene is
+   * responsible for owning camera lifecycle and for exposing which camera is
+   * active via `getActiveCamera()`.
+   */
+  registerCamera(id: string, camera: THREE.Camera): void;
+
+  /** Set which registered camera is active for this scene. Implementations
+   * must ensure that calling this method will make the engine reflect the
+   * change (for example by notifying the engine or by making
+   * `getActiveCamera()` return the new camera immediately).
+   */
+  setActiveCamera(id: string): void;
+
+  /** Return the active THREE.Camera for this scene, or null if none */
+  getActiveCamera(): THREE.Camera | null;
 }
 
 export default IScene;

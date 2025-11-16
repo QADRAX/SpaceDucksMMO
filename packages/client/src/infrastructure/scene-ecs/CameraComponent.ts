@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import { TransformComponent } from './TransformComponent';
 
 export interface CameraOptions {
@@ -11,8 +10,10 @@ export interface CameraOptions {
 
 /**
  * CameraComponent wraps a THREE.PerspectiveCamera and keeps it synchronized
- * with a TransformComponent. The engine camera can be set to this component's
- * camera via `engine.setCamera(component.camera)`.
+ * with a TransformComponent. Scenes should register this camera with their
+ * own scene registration helpers (e.g. `BaseScene.registerCamera` /
+ * `BaseScene.setActiveCamera`) during scene setup. Engines no longer expose a
+ * `setCamera` API.
  */
 export class CameraComponent {
   public camera: THREE.PerspectiveCamera;
@@ -42,9 +43,9 @@ export class CameraComponent {
     this.transform.rotation.copy(this.camera.rotation);
   }
 
-  /** Convenience: activate this camera on the engine (sets as active camera) */
-  activateOnEngine(engine: IRenderingEngine) {
-    engine.setCamera(this.camera);
+  /** Return the underlying THREE.Camera instance for registration by the scene. */
+  getCamera(): THREE.PerspectiveCamera {
+    return this.camera;
   }
 
   /** Update per-frame: keep camera synced from transform */

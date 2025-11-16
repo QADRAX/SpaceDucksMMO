@@ -1,5 +1,4 @@
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
-import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type SceneManager from './SceneManager';
 
 /**
@@ -37,7 +36,11 @@ export class SceneService {
       // Delegate scene update to SceneManager
       // (SceneManager calls update on current scene, which updates its objects)
       this.sceneManager.update(dt);
-      
+      // Previously we failed-fast when a scene did not provide a camera.
+      // To support scenes that intentionally have no camera (editor modes,
+      // background-only scenes, etc.) we no longer throw here. The engine's
+      // `renderFrame()` should handle missing cameras gracefully and simply
+      // skip rendering while keeping the app alive.
       this.engine.renderFrame();
       this.frameHandle = requestAnimationFrame(loop);
     };

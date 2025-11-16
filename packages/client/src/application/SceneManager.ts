@@ -44,8 +44,17 @@ export class SceneManager {
       this.currentScene.teardown(this.engine);
     }
 
-    // Setup new scene
-    nextScene.setup(this.engine);
+    // Delegate scene activation to the engine. There is NO fallback: the
+    // engine MUST implement `setScene(scene)` and be responsible for calling
+    // `scene.setup(engine)`. Throw an error otherwise to enforce the
+    // ECS-first lifecycle and avoid silent, inconsistent behavior.
+    // @ts-ignore - assert runtime capability
+    if (typeof (this.engine as any).setScene === 'function') {
+      (this.engine as any).setScene(nextScene);
+    } else {
+      throw new Error('Engine does not support setScene(scene). The engine must implement setScene to activate scenes.');
+    }
+
     this.currentScene = nextScene;
   }
 

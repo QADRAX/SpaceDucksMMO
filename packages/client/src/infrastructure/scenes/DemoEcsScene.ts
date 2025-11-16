@@ -2,6 +2,7 @@ import { BaseScene } from './BaseScene';
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type { SettingsService } from '@client/application/SettingsService';
 import * as THREE from 'three';
+import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import { Entity } from '@client/infrastructure/scene-ecs/Entity';
 import { TransformComponent } from '@client/infrastructure/scene-ecs/TransformComponent';
 import RotationComponent from '@client/infrastructure/scene-ecs/RotationComponent';
@@ -32,17 +33,26 @@ export class DemoEcsScene extends BaseScene {
   setup(engine: IRenderingEngine): void {
     super.setup(engine);
 
-    // Create a camera entity and activate it on the engine (phase 2: engine uses ECS cameras)
     this.cameraEntity = new CameraEntity('camera-main', { fov: 60 });
-    // Track camera entity as a scene object so it's updated/teardown with the scene
     this.addObject(engine, this.cameraEntity);
-    // Activate camera on engine so renderer uses it
-    this.cameraEntity.activate(engine);
+    const cam = this.cameraEntity.getCamera();
+    this.registerCamera('camera-main', cam);
+    this.setActiveCamera('camera-main');
 
-    // Add simple lighting so MeshStandardMaterial is visible
-    const scene = engine.getScene();
+    // Add simple lighting so MeshStandardMaterial is visible. Wrap raw
+    // Three.js objects in lightweight ISceneObject adapters so scenes do not
+    // access the engine's internal Three.js scene directly.
+    class RawSceneObject implements ISceneObject {
+      readonly id: string;
+      constructor(id: string, public obj: THREE.Object3D) { this.id = id; }
+      addTo(scene: THREE.Scene): void { scene.add(this.obj); }
+      removeFrom(scene: THREE.Scene): void { scene.remove(this.obj); }
+      update(_dt: number): void { /* no-op */ }
+      dispose?(): void { }
+    }
+
     this.ambientLight = new THREE.AmbientLight(0xffffff, 0.35);
-    scene.add(this.ambientLight);
+    this.addObject(engine, new RawSceneObject('ambient-light', this.ambientLight));
 
     // Create sun (native SceneEntity using new ECS primitives)
     const sunEntity = new SceneEntity('sun-1', { radius: 1.0, textureId: 'sun', emissive: 0xffaa00 }, this.textureResolver);
@@ -54,11 +64,11 @@ export class DemoEcsScene extends BaseScene {
     // Add a point light attached to the sun position to simulate emissive sun
     this.sunLight = new THREE.PointLight(0xffeeaa, 2.5, 100);
     this.sunLight.position.copy(sunEntity.transform.position);
-    scene.add(this.sunLight);
+    this.addObject(engine, new RawSceneObject('sun-light', this.sunLight));
 
     // Add axes helper for debugging visuals
     this.axes = new THREE.AxesHelper(2.0);
-    scene.add(this.axes);
+    this.addObject(engine, new RawSceneObject('axes-helper', this.axes));
 
     // Planet A
     const planetA = new SceneEntity('planet-a', { radius: 0.5, textureId: 'rocky-planet', color: 0xffffff }, this.textureResolver);
@@ -92,11 +102,12 @@ export class DemoEcsScene extends BaseScene {
   }
 
   teardown(engine: IRenderingEngine): void {
+    // `super.teardown` will remove all objects added via `addObject` (including
+    // the wrapped lights/helpers), so no direct scene manipulation is required.
     super.teardown(engine);
-    const scene = engine.getScene();
-    if (this.ambientLight) { scene.remove(this.ambientLight); this.ambientLight = undefined; }
-    if (this.sunLight) { scene.remove(this.sunLight); this.sunLight = undefined; }
-    if (this.axes) { scene.remove(this.axes); this.axes = undefined; }
+    this.ambientLight = undefined;
+    this.sunLight = undefined;
+    this.axes = undefined;
     this.entities = [];
   }
 }
