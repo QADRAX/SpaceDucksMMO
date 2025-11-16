@@ -1,6 +1,7 @@
 import type IRenderingEngine from './IRenderingEngine';
 import * as THREE from 'three';
 import type { Entity } from '../ecs/core/Entity';
+import type { SceneChangeEvent } from '../scene/SceneChangeEvent';
 
 /**
  * Port abstraction for a complete 3D scene.
@@ -61,6 +62,11 @@ export interface IScene {
    * @returns The active THREE.Camera instance, or null
    */
   getActiveCamera(): THREE.Camera | null;
+
+  // Debug / inspector helpers (optional to keep backward compatibility)
+  getEntities?(): ReadonlyArray<Entity>;
+  subscribeChanges?(listener: (ev: SceneChangeEvent) => void): () => void;
+  reparentEntity?(childId: string, newParentId: string | null): void;
 }
 
 export default IScene;

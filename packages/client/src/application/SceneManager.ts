@@ -1,6 +1,8 @@
 import type IScene from '@client/domain/ports/IScene';
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type SceneId from '@client/domain/scene/SceneId';
+import type { Entity } from '@client/domain/ecs/core/Entity';
+import type { SceneChangeEvent } from '@client/domain/scene/SceneChangeEvent';
 import type { SettingsService } from '@client/application/SettingsService';
 /**
  * Application service that manages 3D scene lifecycle and transitions.
@@ -60,6 +62,36 @@ export class SceneManager {
    */
   getCurrent(): IScene | null {
     return this.currentScene;
+  }
+
+  /**
+   * Convenience: return entities of the current scene or empty array.
+   */
+  getEntities(): ReadonlyArray<Entity> {
+    if (!this.currentScene) return [];
+    try {
+      const res = this.currentScene.getEntities?.();
+      return (res ?? []) as ReadonlyArray<Entity>;
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Convenience: subscribe to changes on the current scene. Returns unsubscribe.
+   */
+  subscribeToSceneChanges(listener: (ev: SceneChangeEvent) => void): () => void {
+    if (!this.currentScene) return () => {};
+    const sub = this.currentScene.subscribeChanges;
+    if (!sub) return () => {};
+    try { return sub.call(this.currentScene, listener); } catch { return () => {}; }
+  }
+
+  /**
+   * Convenience: reparent an entity in the current scene if supported.
+   */
+  reparentEntity(childId: string, newParentId: string | null): void {
+    try { this.currentScene?.reparentEntity?.(childId, newParentId); } catch {}
   }
 }
 

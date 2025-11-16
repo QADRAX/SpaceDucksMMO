@@ -7,11 +7,15 @@ import { RenderSyncSystem } from '../graphics/sync/RenderSyncSystem';
 import { CameraTargetSystem } from '@client/domain/ecs/systems/CameraTargetSystem';
 import { OrbitSystem } from '@client/domain/ecs/systems/OrbitSystem';
 import type { Entity } from '@client/domain/ecs/core/Entity';
+import type { SceneChangeEvent } from '@client/domain/scene/SceneChangeEvent';
+import type { IComponentObserver } from '@client/domain/ecs/core/IComponentObserver';
 
 export abstract class BaseScene implements IScene {
   abstract readonly id: SceneId;
   
   protected entities: Map<string, Entity> = new Map();
+  private _changeListeners: Set<(ev: SceneChangeEvent) => void> = new Set();
+  private entitySubscriptions: Map<string, () => void> = new Map();
   protected activeCameraId: string | null = null;
   protected engine?: IRenderingEngine;
   protected renderScene?: any; // THREE.Scene injected by engine
@@ -41,6 +45,9 @@ export abstract class BaseScene implements IScene {
     if (this.renderSyncSystem) {
       this.renderSyncSystem.addEntity(entity);
     }
+    // subscribe to entity-level events for inspector/debug
+    this.attachEntityObservers(entity);
+    this.emitChange({ kind: 'entity-added', entity });
   }
 
   /** Remove an ECS Entity by ID */
@@ -59,7 +66,9 @@ export abstract class BaseScene implements IScene {
         try { this.engine.onActiveCameraChanged(); } catch {}
       }
     }
+    this.detachEntityObservers(id);
     this.entities.delete(id);
+    this.emitChange({ kind: 'entity-removed', entityId: id });
   }
 
   /**
@@ -140,6 +149,73 @@ export abstract class BaseScene implements IScene {
     }
   }
 
+  // --- Scene debug/inspector helpers -------------------------------------
+  public getEntities(): ReadonlyArray<Entity> {
+    return Array.from(this.entities.values());
+  }
+
+  public subscribeChanges(listener: (ev: SceneChangeEvent) => void): () => void {
+    this._changeListeners.add(listener);
+    return () => this._changeListeners.delete(listener);
+  }
+
+  public reparentEntity(childId: string, newParentId: string | null): void {
+    const child = this.entities.get(childId);
+    if (!child) return;
+    const oldParent = child.parent;
+    if (oldParent && oldParent.id === newParentId) return; // no-op
+
+    // detach from old parent
+    if (oldParent) oldParent.removeChild(childId);
+
+    // attach to new parent if given
+    if (newParentId) {
+      const newParent = this.entities.get(newParentId);
+      if (!newParent) return;
+      newParent.addChild(child);
+    }
+
+    this.emitChange({ kind: 'hierarchy-changed', childId, newParentId });
+  }
+
+  private emitChange(ev: SceneChangeEvent) {
+    for (const l of this._changeListeners) {
+      try { l(ev); } catch (e) { /* swallow listener errors */ }
+    }
+  }
+
+  private attachEntityObservers(entity: Entity) {
+    const componentObserver: IComponentObserver = {
+      onComponentChanged: (_entityId: string, componentType: string) => {
+        // forward both normal change and removal notifications
+        this.emitChange({ kind: 'component-changed', entityId: entity.id, componentType });
+      },
+    };
+
+    const transformListener = () => this.emitChange({ kind: 'transform-changed', entityId: entity.id });
+
+    for (const comp of entity.getAllComponents()) comp.addObserver(componentObserver);
+    try { entity.transform.onChange(transformListener); } catch {}
+
+    const cleanup = () => {
+      for (const comp of entity.getAllComponents()) {
+        try { comp.removeObserver(componentObserver); } catch {}
+      }
+      try { entity.transform.removeOnChange(transformListener); } catch {}
+    };
+
+    this.entitySubscriptions.set(entity.id, cleanup);
+  }
+
+  private detachEntityObservers(entityId: string) {
+    const cleanup = this.entitySubscriptions.get(entityId);
+    if (cleanup) {
+      try { cleanup(); } catch {}
+      this.entitySubscriptions.delete(entityId);
+    }
+  }
+
+
   /**
    * Teardown the scene. Call super.teardown(engine, renderScene) if overriding.
    */
@@ -153,7 +229,13 @@ export abstract class BaseScene implements IScene {
     if (this.renderSyncSystem) {
       for (const ent of this.entities.values()) {
         this.renderSyncSystem.removeEntity(ent.id);
+        // detach any observers attached for inspector/debug
+        try { this.detachEntityObservers(ent.id); } catch {}
       }
+    }
+    // ensure cleanup of any remaining subscriptions
+    for (const id of Array.from(this.entitySubscriptions.keys())) {
+      try { this.detachEntityObservers(id); } catch {}
     }
     this.entities.clear();
 
