@@ -14,6 +14,10 @@ export class SceneManager {
   private scenes = new Map<string, IScene>();
   private currentScene: IScene | null = null;
   private settingsService: SettingsService;
+  // manager-level listeners that want to receive scene change events across scene switches
+  private _listeners: Set<(ev: SceneChangeEvent) => void> = new Set();
+  // unsubscribe function for the currently bound scene subscription
+  private _sceneUnsub?: () => void;
 
   constructor(engine: IRenderingEngine, settingsService: SettingsService) {
     this.engine = engine;
@@ -41,10 +45,16 @@ export class SceneManager {
     }
     if (this.currentScene === nextScene) return; // already active
 
+    // Unsubscribe from previous scene debug events (if any)
+    try { if (this._sceneUnsub) { this._sceneUnsub(); this._sceneUnsub = undefined; } } catch {}
+
     // Delegate scene activation to the engine. The engine calls teardown on
     // the previous scene and setup on the new one, injecting the render scene.
     this.engine.setScene(nextScene);
     this.currentScene = nextScene;
+
+    // If we have active listeners, subscribe to the new scene and forward events
+    this.bindToCurrentSceneIfNeeded();
   }
 
   /**
@@ -81,10 +91,34 @@ export class SceneManager {
    * Convenience: subscribe to changes on the current scene. Returns unsubscribe.
    */
   subscribeToSceneChanges(listener: (ev: SceneChangeEvent) => void): () => void {
-    if (!this.currentScene) return () => {};
+    this._listeners.add(listener);
+    // ensure we are subscribed to the current scene
+    this.bindToCurrentSceneIfNeeded();
+
+    return () => {
+      try { this._listeners.delete(listener); } catch {}
+      // if no more listeners, detach underlying scene subscription
+      if (this._listeners.size === 0 && this._sceneUnsub) {
+        try { this._sceneUnsub(); } catch {}
+        this._sceneUnsub = undefined;
+      }
+    };
+  }
+
+  private bindToCurrentSceneIfNeeded() {
+    if (!this.currentScene) return;
+    if (this._sceneUnsub) return; // already bound
     const sub = this.currentScene.subscribeChanges;
-    if (!sub) return () => {};
-    try { return sub.call(this.currentScene, listener); } catch { return () => {}; }
+    if (!sub) return;
+    try {
+      this._sceneUnsub = sub.call(this.currentScene, (ev: SceneChangeEvent) => {
+        for (const l of Array.from(this._listeners)) {
+          try { l(ev); } catch (e) { /* swallow listener errors */ }
+        }
+      });
+    } catch {
+      this._sceneUnsub = undefined;
+    }
   }
 
   /**

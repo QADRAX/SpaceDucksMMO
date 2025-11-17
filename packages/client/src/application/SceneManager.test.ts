@@ -158,4 +158,98 @@ describe('SceneManager debug passthrough', () => {
       }, 10);
     }, 10);
   }, 1000);
+
+  it('listeners registered before switch receive events from the new scene', (done) => {
+    const engine: any = { setScene: () => {} };
+    const settingsService: any = {};
+    const manager = new (SceneManager as any)(engine, settingsService);
+
+    const listenersA: Array<(ev: any) => void> = [];
+    const sceneA: any = {
+      id: 'A',
+      setup: () => Promise.resolve(),
+      update: (_: number) => {},
+      teardown: () => Promise.resolve(),
+      addEntity: () => {},
+      removeEntity: () => {},
+      setActiveCamera: () => {},
+      getActiveCamera: () => null,
+      getEntities: () => [],
+      subscribeChanges: (l: (ev: any) => void) => { listenersA.push(l); return () => { const i = listenersA.indexOf(l); if (i>=0) listenersA.splice(i,1); }; }
+    };
+
+    const listenersB: Array<(ev: any) => void> = [];
+    const sceneB: any = {
+      id: 'B',
+      setup: () => Promise.resolve(),
+      update: (_: number) => {},
+      teardown: () => Promise.resolve(),
+      addEntity: () => {},
+      removeEntity: () => {},
+      setActiveCamera: () => {},
+      getActiveCamera: () => null,
+      getEntities: () => [],
+      subscribeChanges: (l: (ev: any) => void) => { listenersB.push(l); return () => { const i = listenersB.indexOf(l); if (i>=0) listenersB.splice(i,1); }; }
+    };
+
+    manager.register(sceneA);
+    manager.register(sceneB);
+
+    // start on A
+    manager.switchTo('A');
+
+    const events: any[] = [];
+    // subscribe while A is active
+    const unsub = manager.subscribeToSceneChanges((ev: any) => events.push(ev));
+
+    // switch to B - the manager should unbind A and bind B, forwarding events to our listener
+    manager.switchTo('B');
+
+    // emit on B
+    listenersB.forEach((l) => l({ kind: 'entity-added', entity: { id: 'yb' } }));
+
+    setTimeout(() => {
+      expect(events.find((e) => e.kind === 'entity-added' && e.entity.id === 'yb')).toBeDefined();
+      // cleanup
+      unsub();
+      done();
+    }, 10);
+  });
+
+  it('listeners registered before any active scene bind when a scene becomes active', (done) => {
+    const engine: any = { setScene: () => {} };
+    const settingsService: any = {};
+    const manager = new (SceneManager as any)(engine, settingsService);
+
+    const listeners: Array<(ev: any) => void> = [];
+    const scene: any = {
+      id: 'S',
+      setup: () => Promise.resolve(),
+      update: (_: number) => {},
+      teardown: () => Promise.resolve(),
+      addEntity: () => {},
+      removeEntity: () => {},
+      setActiveCamera: () => {},
+      getActiveCamera: () => null,
+      getEntities: () => [],
+      subscribeChanges: (l: (ev: any) => void) => { listeners.push(l); return () => { const i = listeners.indexOf(l); if (i>=0) listeners.splice(i,1); }; }
+    };
+
+    const events: any[] = [];
+    // subscribe BEFORE any scene is active
+    const unsub = manager.subscribeToSceneChanges((ev: any) => events.push(ev));
+
+    // now register and switch to scene; manager should bind our listener
+    manager.register(scene);
+    manager.switchTo('S');
+
+    // emit
+    listeners.forEach((l) => l({ kind: 'entity-removed', entityId: 'z' }));
+
+    setTimeout(() => {
+      expect(events.find((e) => e.kind === 'entity-removed' && e.entityId === 'z')).toBeDefined();
+      unsub();
+      done();
+    }, 10);
+  });
 });
