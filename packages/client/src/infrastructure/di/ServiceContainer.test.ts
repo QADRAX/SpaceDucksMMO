@@ -5,7 +5,7 @@ import I18nService from '@client/application/I18nService';
 import ServerBrowserService from '@client/application/ServerBrowserService';
 import WindowService from '@client/application/WindowService';
 import TextureResolverService from '@client/application/TextureResolverService';
-import { FpsCounter } from '@client/infrastructure/ui/FpsCounter';
+import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
 
 // Mock ThreeRenderer to avoid Three.js ES module issues in Jest
 jest.mock('@client/infrastructure/rendering/ThreeRenderer', () => {
@@ -37,7 +37,7 @@ describe('ServiceContainer', () => {
       expect(services.serverBrowser).toBeInstanceOf(ServerBrowserService);
       expect(services.window).toBeInstanceOf(WindowService);
       expect(services.textureResolver).toBeInstanceOf(TextureResolverService);
-      expect(services.fpsCounter).toBeInstanceOf(FpsCounter);
+      expect(services.fpsController).toBeInstanceOf(FpsController);
       expect(services.renderingEngine).toBeDefined();
       expect(services.navigation).toBeInstanceOf(GameScreenManager);
     });

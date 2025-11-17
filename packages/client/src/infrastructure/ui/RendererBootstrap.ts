@@ -21,7 +21,7 @@ export class RendererBootstrap {
     const services = serviceContainer.build();
 
     // 3. Initialize 3D rendering engine
-    const renderingBootstrap = new RenderingBootstrap(services.textureResolver, services.settings);
+    const renderingBootstrap = new RenderingBootstrap(services.textureResolver, services.settings, services.fpsController);
     renderingBootstrap.initialize(container);
 
     // 4. Initialize UI layer

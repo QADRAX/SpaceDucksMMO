@@ -3,7 +3,7 @@ import type { IRenderingEngine } from "@client/domain/ports/IRenderingEngine";
 import type IScene from "@client/domain/ports/IScene";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
-import { FpsCounter } from "@client/infrastructure/ui/FpsCounter";
+import type { FpsController } from "@client/infrastructure/ui/dev/FpsController";
 
 export class ThreeRenderer implements IRenderingEngine {
   private scene!: THREE.Scene;
@@ -19,10 +19,10 @@ export class ThreeRenderer implements IRenderingEngine {
   private antialias = true;
   private shadows = true;
   private missingCameraWarned = false;
-  private fpsCounter: FpsCounter;
+  private fpsController: FpsController;
 
-  constructor(fpsCounter: FpsCounter) {
-    this.fpsCounter = fpsCounter;
+  constructor(fpsController: FpsController) {
+    this.fpsController = fpsController;
   }
 
   init(container: HTMLElement): void {
@@ -106,6 +106,8 @@ export class ThreeRenderer implements IRenderingEngine {
     if (!cam) {
       this.warnMissingCamera();
       this.clearRenderer();
+      // Update FPS counter even when skipping render
+      try { this.fpsController.update(); } catch { /* ignore */ }
       return;
     }
 
@@ -117,8 +119,9 @@ export class ThreeRenderer implements IRenderingEngine {
     } else {
       this.renderer.render(this.scene, cam);
     }
+    // Update FPS counter after rendering
+    try { this.fpsController.update(); } catch { /* ignore */ }
   }
-
   private warnMissingCamera(): void {
     if (!this.missingCameraWarned) {
       console.warn("[ThreeRenderer] No active camera for current scene — skipping render frame.");
@@ -235,10 +238,12 @@ export class ThreeRenderer implements IRenderingEngine {
   }
 
   toggleFpsCounter(): void {
-    if (this.fpsCounter.isRunning()) {
-      this.fpsCounter.stop();
+    if (this.fpsController.isRunning()) {
+      this.fpsController.stop();
+      this.fpsController.hide();
     } else {
-      this.fpsCounter.start();
+      this.fpsController.start();
+      this.fpsController.show();
     }
   }
 }

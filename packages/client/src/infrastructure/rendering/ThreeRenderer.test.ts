@@ -37,29 +37,31 @@ jest.mock('three', () => {
 });
 
 import { ThreeRenderer } from './ThreeRenderer';
-import { FpsCounter } from '@client/infrastructure/ui/FpsCounter';
+import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
 
-// Mock FpsCounter
-jest.mock('@client/infrastructure/ui/FpsCounter', () => {
+// Mock FpsController
+jest.mock('@client/infrastructure/ui/dev/FpsController', () => {
   return {
-    FpsCounter: jest.fn().mockImplementation(() => ({
+    FpsController: jest.fn().mockImplementation(() => ({
       start: jest.fn(),
       stop: jest.fn(),
+      update: jest.fn(),
       getFps: jest.fn().mockReturnValue(60),
+      isRunning: jest.fn().mockReturnValue(true),
     })),
   };
 });
 
 describe('ThreeRenderer', () => {
   let container: HTMLElement;
-  let fpsCounter: FpsCounter; // Declare fpsCounter at the top
+  let fpsController: FpsController; // Declare fpsController at the top
   let renderer: ThreeRenderer;
 
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
-    fpsCounter = new FpsCounter(); // Initialize fpsCounter
-    renderer = new ThreeRenderer(fpsCounter);
+    fpsController = new FpsController(); // Initialize fpsController
+    renderer = new ThreeRenderer(fpsController as any);
   });
 
   afterEach(() => {

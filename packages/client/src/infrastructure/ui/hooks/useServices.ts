@@ -3,25 +3,19 @@ import { I18nService } from "@client/application/I18nService";
 import { ServerBrowserService } from "@client/application/ServerBrowserService";
 import { WindowService } from "@client/application/WindowService";
 import { TextureResolverService } from "@client/application/TextureResolverService";
-import { FpsCounter } from "@client/infrastructure/ui/FpsCounter";
+import DevRegistry from '@client/infrastructure/ui/dev/DevRegistry';
+import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
 import { ThreeRenderer } from "@client/infrastructure/rendering/ThreeRenderer";
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";
 import GameScreenManager from "@client/application/ui/GameScreenManager";
+import { Services } from '@client/infrastructure/di/Services';
 
 /**
  * Services interface for dependency injection
  */
-export interface Services {
-  settings: SettingsService;
-  i18n: I18nService;
-  serverBrowser: ServerBrowserService;
-  window: WindowService;
-  textureResolver: TextureResolverService;
-  fpsCounter: FpsCounter;
-  renderingEngine: ThreeRenderer;
-  navigation: GameScreenManager;
-}
+// Services interface is declared in `infrastructure/di/Services` per Clean Architecture
+// and imported above.
 
 // Create ServicesContext for dependency injection
 export const ServicesContext = createContext<Services | null>(null);

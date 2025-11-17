@@ -2,8 +2,8 @@
 import { render, type ComponentChild } from 'preact';
 import type IScreen from '@client/domain/ports/IScreen';
 import type ScreenId from '@client/domain/ui/ScreenId';
-import type { Services } from '../hooks/useServices';
 import { ServicesContext } from '../hooks/useServices';
+import Services from '@client/infrastructure/di/Services';
 
 /**
  * BaseScreen - Generic Screen implementation
@@ -33,6 +33,13 @@ export abstract class BaseScreen implements IScreen {
 
   constructor(id: ScreenId) {
     this.id = id;
+  }
+
+  /**
+   * Inject services bundle into the screen
+   */
+  setServices(services: Services): void {
+    this.services = services;
   }
 
   /**

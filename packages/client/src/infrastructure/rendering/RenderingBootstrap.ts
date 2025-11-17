@@ -9,7 +9,7 @@ import type { SettingsService } from "@client/application/SettingsService";
 import { DemoEcsScene } from '@client/infrastructure/scenes/DemoEcsScene';
 import { MainMenuScene } from '@client/infrastructure/scenes/MainMenuScene';
 import { SandboxScene } from '@client/infrastructure/scenes/SandboxScene';
-import { FpsCounter } from "@client/infrastructure/ui/FpsCounter";
+import type { FpsController } from "@client/infrastructure/ui/dev/FpsController";
 
 /**
  * Rendering Bootstrap
@@ -25,9 +25,9 @@ export class RenderingBootstrap {
   constructor(
     private textureResolver: TextureResolverService,
     private settingsService: SettingsService,
-    private fpsCounter: FpsCounter // Add fpsCounter as a dependency
+    private fpsController: FpsController // Add fpsController as a dependency
   ) {
-    this.engine = new ThreeRenderer(fpsCounter); // Pass fpsCounter to ThreeRenderer
+    this.engine = new ThreeRenderer(fpsController); // Pass fpsController to ThreeRenderer
     this.sceneManager = new SceneManager(this.engine, this.settingsService);
     this.sceneService = new SceneService(this.engine, this.sceneManager);
     this.graphicsController = new GraphicsController(this.engine);
@@ -59,7 +59,7 @@ export class RenderingBootstrap {
   private setupKeyboardShortcuts(): void {
     window.addEventListener('keydown', (event) => {
       // F3 - Toggle FPS counter
-      if (event.key === 'F3') {
+      if (event.key === 'F1') {
         event.preventDefault();
         this.engine.toggleFpsCounter();
       }
