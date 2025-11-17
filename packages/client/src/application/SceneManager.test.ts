@@ -84,6 +84,35 @@ describe('SceneManager debug passthrough', () => {
     expect(() => manager.reparentEntity('a', 'b')).not.toThrow();
   });
 
+  it('getActiveCameraEntityId delegates to current scene and returns null when none', () => {
+    const engine: any = { setScene: () => {} };
+    const settingsService: any = {};
+    const manager = new (SceneManager as any)(engine, settingsService);
+
+    // no scene -> null
+    expect(manager.getActiveCameraEntityId()).toBeNull();
+
+    // scene with implementation
+    const scene: any = {
+      id: 'S',
+      setup: () => Promise.resolve(),
+      update: (_: number) => {},
+      teardown: () => Promise.resolve(),
+      addEntity: () => {},
+      removeEntity: () => {},
+      setActiveCamera: () => {},
+      getActiveCamera: () => null,
+      getEntities: () => [],
+      subscribeChanges: (_l: (ev: any) => void) => { return () => {}; },
+      getActiveCameraEntityId: () => 'cam1',
+    };
+
+    manager.register(scene);
+    manager.switchTo('S');
+
+    expect(manager.getActiveCameraEntityId()).toBe('cam1');
+  });
+
   it('subscriptions bind to current scene and unsubscribe works across scenes', (done) => {
     const engine: any = { setScene: () => {} };
     const settingsService: any = {};

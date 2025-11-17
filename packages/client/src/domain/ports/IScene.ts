@@ -67,6 +67,8 @@ export interface IScene {
   getEntities?(): ReadonlyArray<Entity>;
   subscribeChanges?(listener: (ev: SceneChangeEvent) => void): () => void;
   reparentEntity?(childId: string, newParentId: string | null): void;
+  /** Return id of active camera entity in the scene, or null if none */
+  getActiveCameraEntityId?(): string | null;
 }
 
 export default IScene;

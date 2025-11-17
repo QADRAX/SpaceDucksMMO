@@ -85,6 +85,35 @@ describe('BaseScene debug events', () => {
     expect(h.newParentId).toBe('parent');
   });
 
+  it('setActiveCamera updates activeCameraId and emits event when valid', () => {
+    const scene = new TestScene({} as any);
+    const events: any[] = [];
+    scene.subscribeChanges((ev) => events.push(ev));
+
+    const cam = new Entity('cam');
+    scene.addEntity(cam);
+
+    // No CameraViewComponent in RenderSyncSystem, so setup a fake renderSyncSystem that reports a camera
+    scene['renderSyncSystem'] = { getCamera: (id: string) => ({}) } as any;
+
+    scene.setActiveCamera('cam');
+    const ev = events.find((e) => e.kind === 'active-camera-changed');
+    expect(ev).toBeDefined();
+    expect(scene.getActiveCamera()).toBeDefined();
+    expect(scene['activeCameraId']).toBe('cam');
+  });
+
+  it('setActiveCamera does not emit when invalid', () => {
+    const scene = new TestScene({} as any);
+    const events: any[] = [];
+    scene.subscribeChanges((ev) => events.push(ev));
+
+    // no entities
+    scene['renderSyncSystem'] = { getCamera: (_: string) => undefined } as any;
+    scene.setActiveCamera('nope');
+    expect(events.find((e) => e.kind === 'active-camera-changed')).toBeUndefined();
+  });
+
   it('teardown detaches observers so later component changes are not emitted', () => {
     const scene = new TestScene({} as any);
     const events: any[] = [];

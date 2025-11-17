@@ -87,6 +87,11 @@ export class SceneManager {
     }
   }
 
+  /** Return the active camera entity id from the current scene, or null */
+  getActiveCameraEntityId(): string | null {
+    try { return this.currentScene?.getActiveCameraEntityId?.() ?? null; } catch { return null; }
+  }
+
   /**
    * Convenience: subscribe to changes on the current scene. Returns unsubscribe.
    */

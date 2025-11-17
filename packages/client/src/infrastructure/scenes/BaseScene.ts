@@ -95,6 +95,8 @@ export abstract class BaseScene implements IScene {
         // ignore notify errors
       }
     }
+    // Notify subscribers that active camera changed
+    this.emitChange({ kind: 'active-camera-changed', entityId: this.activeCameraId });
   }
 
   /**
@@ -152,6 +154,10 @@ export abstract class BaseScene implements IScene {
   // --- Scene debug/inspector helpers -------------------------------------
   public getEntities(): ReadonlyArray<Entity> {
     return Array.from(this.entities.values());
+  }
+
+  public getActiveCameraEntityId(): string | null {
+    return this.activeCameraId;
   }
 
   public subscribeChanges(listener: (ev: SceneChangeEvent) => void): () => void {
@@ -257,6 +263,8 @@ export abstract class BaseScene implements IScene {
     this.entities.clear();
 
     this.activeCameraId = null;
+    // notify listeners that active camera is now null
+    this.emitChange({ kind: 'active-camera-changed', entityId: null });
     
     // Clean up systems
     this.renderSyncSystem = undefined;
