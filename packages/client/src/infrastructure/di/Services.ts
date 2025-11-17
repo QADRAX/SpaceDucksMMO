@@ -7,6 +7,7 @@ import DevRegistry from '@client/infrastructure/ui/dev/DevRegistry';
 import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
 import { ThreeRenderer } from "@client/infrastructure/rendering/ThreeRenderer";
 import GameScreenManager from "@client/application/ui/GameScreenManager";
+import type SceneManager from '@client/application/SceneManager';
 
 // Minimal placeholder interfaces for editor/debug services.
 // These are intentionally small so other work can replace them with
@@ -30,6 +31,8 @@ export interface Services {
   devRegistry: DevRegistry;
   renderingEngine: ThreeRenderer;
   navigation: GameScreenManager;
+  /** Reference to the application SceneManager so UI tooling (dev inspector) can access ECS/scene APIs */
+  sceneManager?: SceneManager;
   sceneEditor?: SceneEditor;
   objectFactory?: ObjectFactory;
 }

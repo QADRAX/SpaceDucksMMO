@@ -40,6 +40,8 @@ export class UIBootstrap {
     
     // Inject navigation service into services bundle
     services.navigation = this.gameScreenManager;
+    // Expose sceneManager on services so UI tools can access scene APIs (inspector)
+    services.sceneManager = sceneManager;
 
     // Initialize root app with transition overlay
     this.uiLayer.initializeRootApp(this.gameScreenManager);
