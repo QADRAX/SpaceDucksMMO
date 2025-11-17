@@ -1,22 +1,103 @@
-import { FpsWidget } from './FpsWidget';
+import type { FpsChange } from '@client/infrastructure/ui/dev/DevWidgetController';
+import type { FpsController } from '@client/infrastructure/ui/dev/FpsController';
+import { render, cleanup } from '@testing-library/preact';
 import { h } from 'preact';
 
-// Minimal smoke test: calling the component returns a vnode-like object
 describe('FpsWidget component', () => {
-  it('creates vnode when invoked', () => {
-    // create a minimal controller stub
-    const controller: any = {
-      getFps: () => 60,
-      isRunning: () => true,
-      isVisible: () => true,
-      onChange: (cb: any) => { cb({ fps: 60, visible: true, running: true }); return () => {}; },
-    };
+  let changeListener: ((c: FpsChange) => void) | null = null;
 
-    const vnode = FpsWidget({ controller, updateIntervalMs: 100 });
-    expect(vnode).not.toBeNull();
-    // vnode can be a Preact VNode; basic check for props presence
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const asAny: any = vnode;
-    expect(asAny.props).toBeDefined();
+  const createMockController = (overrides = {}): FpsController => ({
+    getFps: jest.fn(() => 60),
+    isRunning: jest.fn(() => true),
+    isVisible: jest.fn(() => true),
+    show: jest.fn(),
+    hide: jest.fn(),
+    start: jest.fn(),
+    stop: jest.fn(),
+    toggle: jest.fn(),
+    setPosition: jest.fn(),
+    setUpdateInterval: jest.fn(),
+    update: jest.fn(),
+    onChange: jest.fn((cb: (c: FpsChange) => void) => {
+      changeListener = cb;
+      return jest.fn(); // unsubscribe function
+    }),
+    ...overrides,
+  } as any);
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    changeListener = null;
+  });
+
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('calls getFps on controller during initialization', () => {
+    const controller = createMockController();
+    const { FpsWidget } = require('./FpsWidget');
+    render(h(FpsWidget, { controller }));
+
+    expect(controller.getFps).toHaveBeenCalled();
+  });
+
+  it('calls isRunning on controller during initialization', () => {
+    const controller = createMockController();
+    const { FpsWidget } = require('./FpsWidget');
+    render(h(FpsWidget, { controller }));
+
+    expect(controller.isRunning).toHaveBeenCalled();
+  });
+
+  it('calls isVisible on controller during initialization', () => {
+    const controller = createMockController();
+    const { FpsWidget } = require('./FpsWidget');
+    render(h(FpsWidget, { controller }));
+
+    expect(controller.isVisible).toHaveBeenCalled();
+  });
+
+  it('subscribes to onChange when mounted', () => {
+    const controller = createMockController();
+    const { FpsWidget } = require('./FpsWidget');
+    render(h(FpsWidget, { controller }));
+
+    // Give hooks time to run
+    expect(controller.onChange).toHaveBeenCalled();
+    expect(changeListener).not.toBeNull();
+  });
+
+  it('change listener can receive FPS updates', () => {
+    const controller = createMockController();
+    const { FpsWidget } = require('./FpsWidget');
+    render(h(FpsWidget, { controller }));
+
+    expect(changeListener).toBeDefined();
+
+    // Emit a change and verify no error
+    expect(() => changeListener?.({ fps: 144 })).not.toThrow();
+  });
+
+  it('change listener can receive visibility updates', () => {
+    const controller = createMockController();
+    const { FpsWidget } = require('./FpsWidget');
+    render(h(FpsWidget, { controller }));
+
+    expect(changeListener).toBeDefined();
+
+    // Emit visibility change
+    expect(() => changeListener?.({ visible: false })).not.toThrow();
+  });
+
+  it('change listener can receive running state updates', () => {
+    const controller = createMockController();
+    const { FpsWidget } = require('./FpsWidget');
+    render(h(FpsWidget, { controller }));
+
+    expect(changeListener).toBeDefined();
+
+    // Emit running change
+    expect(() => changeListener?.({ running: false })).not.toThrow();
   });
 });
