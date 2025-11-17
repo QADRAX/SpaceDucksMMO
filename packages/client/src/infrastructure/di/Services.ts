@@ -3,6 +3,7 @@ import { I18nService } from "@client/application/I18nService";
 import { ServerBrowserService } from "@client/application/ServerBrowserService";
 import { WindowService } from "@client/application/WindowService";
 import { TextureResolverService } from "@client/application/TextureResolverService";
+import type { TextureCatalogService } from "@client/application/TextureCatalog";
 import DevRegistry from '@client/infrastructure/ui/dev/DevRegistry';
 import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
 import { ThreeRenderer } from "@client/infrastructure/rendering/ThreeRenderer";
@@ -27,6 +28,8 @@ export interface Services {
   serverBrowser: ServerBrowserService;
   window: WindowService;
   textureResolver: TextureResolverService;
+  /** Generic texture catalog (discovered from assets/textures) */
+  textureCatalog?: TextureCatalogService;
   fpsController: FpsController;
   devRegistry: DevRegistry;
   renderingEngine: ThreeRenderer;

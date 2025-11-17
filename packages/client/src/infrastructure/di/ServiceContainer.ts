@@ -3,6 +3,7 @@ import I18nService from "@client/application/I18nService";
 import ServerBrowserService from "@client/application/ServerBrowserService";
 import WindowService from "@client/application/WindowService";
 import TextureResolverService from "@client/application/TextureResolverService";
+import TextureCatalogIpcService from "@client/application/TextureCatalogIpcService";
 import JsonSettingsRepository from "@client/infrastructure/settings/JsonSettingsRepository";
 import JsonTranslationProvider from "@client/infrastructure/i18n/JsonTranslationProvider";
 import PersistentServerDirectory from "@client/infrastructure/server/PersistentServerDirectory";
@@ -28,7 +29,7 @@ export class ServiceContainer {
   /**
    * Build and wire all services
    */
-  build(): Services {
+  build(texturePaths?: string[]): Services {
     // Storage adapters
     const storage = this.createStorage();
     const serverStorage = new IpcStorage();
@@ -51,6 +52,8 @@ export class ServiceContainer {
     
     // Asset services
     const textureResolver = new TextureResolverService(settingsService, fileChecker);
+    // Texture catalog: use IPC-backed service that fetches from main process.
+    const textureCatalog = new TextureCatalogIpcService();
 
     // Debug utilities
     const fpsController = new FpsController();
@@ -71,6 +74,7 @@ export class ServiceContainer {
       serverBrowser: serverBrowser,
       window: windowService,
       textureResolver: textureResolver,
+      textureCatalog: textureCatalog,
       fpsController: fpsController,
       devRegistry: devRegistry,
       renderingEngine: renderingEngine,

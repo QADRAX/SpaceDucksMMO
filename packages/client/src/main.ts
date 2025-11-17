@@ -1,4 +1,5 @@
 import { app } from 'electron';
+import { registerTextureCatalogIpc } from './infrastructure/textures/textureCatalogMain';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as net from 'net';
@@ -60,6 +61,15 @@ app.whenReady().then(async () => {
 
   // Register window IPC handlers
   registerWindowIpcHandlers(windowManager);
+
+  // Register textures IPC so renderer can request texture catalog
+  try {
+    registerTextureCatalogIpc();
+  } catch (e) {
+    // swallow in case of test or environments where ipc cannot be registered
+    // eslint-disable-next-line no-console
+    console.warn('Texture catalog IPC registration failed', e);
+  }
 
   const url = await detectDevUrl();
   createMainWindow(url);

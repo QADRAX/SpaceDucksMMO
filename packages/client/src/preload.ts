@@ -12,6 +12,9 @@ contextBridge.exposeInMainWorld('spaceducks', {
     setFullscreen: (fullscreen: boolean) => ipcRenderer.invoke('spaceducks:window:setFullscreen', fullscreen),
     isFullscreen: () => ipcRenderer.invoke('spaceducks:window:isFullscreen'),
   },
+  textures: {
+    list: () => ipcRenderer.invoke('spaceducks:textures:list')
+  },
   // send generic IPC messages
   send: (channel: string, payload: unknown) => {
     ipcRenderer.send(channel, payload);
