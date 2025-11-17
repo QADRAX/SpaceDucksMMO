@@ -183,21 +183,26 @@ export abstract class BaseScene implements IScene {
     const child = this.entities.get(childId);
     if (!child) return err('invalid-reparent', `Child '${childId}' not found`, { childId, newParentId });
     const oldParent = child.parent;
-    if (oldParent && oldParent.id === newParentId) return ok(undefined); // no-op
 
-    // detach from old parent
-    if (oldParent) oldParent.removeChild(childId);
+    // no-op when parent unchanged
+    if (oldParent && oldParent.id === newParentId) return ok(undefined);
 
-    // attach to new parent if given
+    // Validate new parent (if any) BEFORE mutating hierarchy
+    let newParent: Entity | undefined;
     if (newParentId) {
-      const newParent = this.entities.get(newParentId);
+      newParent = this.entities.get(newParentId);
       if (!newParent) return err('invalid-reparent', `Parent '${newParentId}' not found`, { childId, newParentId });
 
       // Prevent cycles: if the new parent is a descendant of the child, attaching would create a cycle
       if (this.wouldCreateCycle(child, newParent)) {
         return err('invalid-reparent', `Invalid reparent: '${newParentId}' is a descendant of '${childId}'`, { childId, newParentId });
       }
+    }
 
+    // All validations passed; perform the mutation atomically
+    if (oldParent) oldParent.removeChild(childId);
+
+    if (newParent) {
       newParent.addChild(child);
     }
 
