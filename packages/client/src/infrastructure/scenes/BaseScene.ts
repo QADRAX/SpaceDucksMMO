@@ -7,6 +7,9 @@ import { RenderSyncSystem } from '../graphics/sync/RenderSyncSystem';
 import { CameraTargetSystem } from '@client/domain/ecs/systems/CameraTargetSystem';
 import { OrbitSystem } from '@client/domain/ecs/systems/OrbitSystem';
 import type { Entity } from '@client/domain/ecs/core/Entity';
+import { Result, ok, err } from '@client/domain/errors/EngineError';
+
+type VoidResult = Result<void>;
 import type SceneChangeEvent from '@client/domain/scene/SceneChangeEvent';
 import type { IComponentObserver } from '@client/domain/ecs/core/IComponentObserver';
 
@@ -166,10 +169,21 @@ export abstract class BaseScene implements IScene {
   }
 
   public reparentEntity(childId: string, newParentId: string | null): void {
+    const res = this.reparentEntityResult(childId, newParentId);
+    if (!res.ok) {
+      // emit error for backward-compatible behavior and for debug/inspector
+      this.emitChange({ kind: 'error', message: res.error.message });
+    }
+  }
+
+  /**
+   * Result-based reparent operation. Returns structured error on failure.
+   */
+  public reparentEntityResult(childId: string, newParentId: string | null): VoidResult {
     const child = this.entities.get(childId);
-    if (!child) return;
+    if (!child) return err('invalid-reparent', `Child '${childId}' not found`, { childId, newParentId });
     const oldParent = child.parent;
-    if (oldParent && oldParent.id === newParentId) return; // no-op
+    if (oldParent && oldParent.id === newParentId) return ok(undefined); // no-op
 
     // detach from old parent
     if (oldParent) oldParent.removeChild(childId);
@@ -177,18 +191,18 @@ export abstract class BaseScene implements IScene {
     // attach to new parent if given
     if (newParentId) {
       const newParent = this.entities.get(newParentId);
-      if (!newParent) return;
+      if (!newParent) return err('invalid-reparent', `Parent '${newParentId}' not found`, { childId, newParentId });
 
       // Prevent cycles: if the new parent is a descendant of the child, attaching would create a cycle
       if (this.wouldCreateCycle(child, newParent)) {
-        this.emitChange({ kind: 'error', message: `Invalid reparent: '${newParentId}' is a descendant of '${childId}'` });
-        return;
+        return err('invalid-reparent', `Invalid reparent: '${newParentId}' is a descendant of '${childId}'`, { childId, newParentId });
       }
 
       newParent.addChild(child);
     }
 
     this.emitChange({ kind: 'hierarchy-changed', childId, newParentId });
+    return ok(undefined);
   }
 
   private wouldCreateCycle(child: Entity, candidateParent: Entity): boolean {

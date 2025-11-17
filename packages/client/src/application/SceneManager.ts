@@ -1,6 +1,9 @@
 import type IScene from '@client/domain/ports/IScene';
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type SceneId from '@client/domain/scene/SceneId';
+import { Result, ok, err } from '@client/domain/errors/EngineError';
+
+type VoidResult = Result<void>;
 import type { Entity } from '@client/domain/ecs/core/Entity';
 import type SceneChangeEvent from '@client/domain/scene/SceneChangeEvent';
 import type { SettingsService } from '@client/application/SettingsService';
@@ -37,13 +40,12 @@ export class SceneManager {
    * Tears down the current scene (if any) and sets up the new one.
    * @param sceneId - The ID of the scene to switch to
    */
-  switchTo(sceneId: SceneId | string): void {
+  switchTo(sceneId: SceneId | string): VoidResult {
     const nextScene = this.scenes.get(sceneId);
     if (!nextScene) {
-      console.warn(`SceneManager: scene "${sceneId}" not found`);
-      return;
+      return err('scene-not-found', `Scene "${sceneId}" not found`, { sceneId });
     }
-    if (this.currentScene === nextScene) return; // already active
+    if (this.currentScene === nextScene) return ok(undefined); // already active
 
     // Unsubscribe from previous scene debug events (if any)
     try { if (this._sceneUnsub) { this._sceneUnsub(); this._sceneUnsub = undefined; } } catch {}
@@ -55,6 +57,7 @@ export class SceneManager {
 
     // If we have active listeners, subscribe to the new scene and forward events
     this.bindToCurrentSceneIfNeeded();
+    return ok(undefined);
   }
 
   /**
@@ -131,6 +134,19 @@ export class SceneManager {
    */
   reparentEntity(childId: string, newParentId: string | null): void {
     try { this.currentScene?.reparentEntity?.(childId, newParentId); } catch {}
+  }
+
+  /**
+   * Check whether a given scene is inspectable by the tools (has required debug API).
+   */
+  checkInspectable(sceneId: SceneId | string): Result<boolean> {
+    const scene = this.scenes.get(sceneId);
+    if (!scene) return err('scene-not-found', `Scene '${sceneId}' not found`, { sceneId });
+    // Require debug inspector methods
+    if (typeof scene.getEntities !== 'function' || typeof scene.subscribeChanges !== 'function') {
+      return err('scene-not-inspectable', `Scene '${sceneId}' is not inspectable`, { sceneId });
+    }
+    return ok(true);
   }
 }
 
