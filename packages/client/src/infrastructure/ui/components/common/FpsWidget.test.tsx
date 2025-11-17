@@ -1,7 +1,7 @@
 import type { FpsChange } from '@client/infrastructure/ui/dev/DevWidgetController';
 import type { FpsController } from '@client/infrastructure/ui/dev/FpsController';
 import { render, cleanup } from '@testing-library/preact';
-import { h } from 'preact';
+import { FpsWidget } from './FpsWidget';
 
 describe('FpsWidget component', () => {
   let changeListener: ((c: FpsChange) => void) | null = null;
@@ -36,32 +36,28 @@ describe('FpsWidget component', () => {
 
   it('calls getFps on controller during initialization', () => {
     const controller = createMockController();
-    const { FpsWidget } = require('./FpsWidget');
-    render(h(FpsWidget, { controller }));
+    render(<FpsWidget controller={controller} />);
 
     expect(controller.getFps).toHaveBeenCalled();
   });
 
   it('calls isRunning on controller during initialization', () => {
     const controller = createMockController();
-    const { FpsWidget } = require('./FpsWidget');
-    render(h(FpsWidget, { controller }));
+    render(<FpsWidget controller={controller} />);
 
     expect(controller.isRunning).toHaveBeenCalled();
   });
 
   it('calls isVisible on controller during initialization', () => {
     const controller = createMockController();
-    const { FpsWidget } = require('./FpsWidget');
-    render(h(FpsWidget, { controller }));
+    render(<FpsWidget controller={controller} />);
 
     expect(controller.isVisible).toHaveBeenCalled();
   });
 
   it('subscribes to onChange when mounted', () => {
     const controller = createMockController();
-    const { FpsWidget } = require('./FpsWidget');
-    render(h(FpsWidget, { controller }));
+    render(<FpsWidget controller={controller} />);
 
     // Give hooks time to run
     expect(controller.onChange).toHaveBeenCalled();
@@ -70,8 +66,7 @@ describe('FpsWidget component', () => {
 
   it('change listener can receive FPS updates', () => {
     const controller = createMockController();
-    const { FpsWidget } = require('./FpsWidget');
-    render(h(FpsWidget, { controller }));
+    render(<FpsWidget controller={controller} />);
 
     expect(changeListener).toBeDefined();
 
@@ -81,8 +76,7 @@ describe('FpsWidget component', () => {
 
   it('change listener can receive visibility updates', () => {
     const controller = createMockController();
-    const { FpsWidget } = require('./FpsWidget');
-    render(h(FpsWidget, { controller }));
+    render(<FpsWidget controller={controller} />);
 
     expect(changeListener).toBeDefined();
 
@@ -92,8 +86,7 @@ describe('FpsWidget component', () => {
 
   it('change listener can receive running state updates', () => {
     const controller = createMockController();
-    const { FpsWidget } = require('./FpsWidget');
-    render(h(FpsWidget, { controller }));
+    render(<FpsWidget controller={controller} />);
 
     expect(changeListener).toBeDefined();
 
