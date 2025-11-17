@@ -7,4 +7,8 @@ export type SceneChangeEvent =
   | { kind: 'transform-changed'; entityId: string }
   | { kind: 'component-changed'; entityId: string; componentType: string };
 
-export default SceneChangeEvent;
+// Generic error event to notify UI/inspector about invalid operations or problems
+export type SceneChangeErrorEvent = { kind: 'error'; message: string };
+
+export type SceneChangeEventWithError = SceneChangeEvent | SceneChangeErrorEvent;
+export default SceneChangeEventWithError;

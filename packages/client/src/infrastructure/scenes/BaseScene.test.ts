@@ -104,4 +104,31 @@ describe('BaseScene debug events', () => {
 
     expect(events.find((ev) => ev.kind === 'component-changed')).toBeUndefined();
   });
+
+  it('prevents reparenting that would create cycles and emits error', () => {
+    const scene = new TestScene({} as any);
+    const events: any[] = [];
+    scene.subscribeChanges((ev) => events.push(ev));
+
+    const A = new Entity('A');
+    const B = new Entity('B');
+    const C = new Entity('C');
+    scene.addEntity(A);
+    scene.addEntity(B);
+    scene.addEntity(C);
+
+    // Build A -> B -> C (A parent of B, B parent of C)
+    scene.reparentEntity('B', 'A');
+    scene.reparentEntity('C', 'B');
+
+    // Attempt to set A as child of C -> would create cycle. Should be rejected.
+    events.length = 0;
+    scene.reparentEntity('A', 'C');
+
+    const err = events.find((ev) => ev.kind === 'error');
+    expect(err).toBeDefined();
+
+    const h = events.find((ev) => ev.kind === 'hierarchy-changed' && ev.childId === 'A');
+    expect(h).toBeUndefined();
+  });
 });

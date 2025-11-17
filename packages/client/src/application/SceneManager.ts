@@ -2,7 +2,7 @@ import type IScene from '@client/domain/ports/IScene';
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type SceneId from '@client/domain/scene/SceneId';
 import type { Entity } from '@client/domain/ecs/core/Entity';
-import type { SceneChangeEvent } from '@client/domain/scene/SceneChangeEvent';
+import type SceneChangeEvent from '@client/domain/scene/SceneChangeEvent';
 import type { SettingsService } from '@client/application/SettingsService';
 /**
  * Application service that manages 3D scene lifecycle and transitions.

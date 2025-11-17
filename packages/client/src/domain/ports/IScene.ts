@@ -1,7 +1,7 @@
 import type IRenderingEngine from './IRenderingEngine';
 import * as THREE from 'three';
 import type { Entity } from '../ecs/core/Entity';
-import type { SceneChangeEvent } from '../scene/SceneChangeEvent';
+import type SceneChangeEvent from '../scene/SceneChangeEvent';
 
 /**
  * Port abstraction for a complete 3D scene.

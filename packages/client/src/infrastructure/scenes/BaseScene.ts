@@ -7,7 +7,7 @@ import { RenderSyncSystem } from '../graphics/sync/RenderSyncSystem';
 import { CameraTargetSystem } from '@client/domain/ecs/systems/CameraTargetSystem';
 import { OrbitSystem } from '@client/domain/ecs/systems/OrbitSystem';
 import type { Entity } from '@client/domain/ecs/core/Entity';
-import type { SceneChangeEvent } from '@client/domain/scene/SceneChangeEvent';
+import type SceneChangeEvent from '@client/domain/scene/SceneChangeEvent';
 import type { IComponentObserver } from '@client/domain/ecs/core/IComponentObserver';
 
 export abstract class BaseScene implements IScene {
@@ -172,10 +172,27 @@ export abstract class BaseScene implements IScene {
     if (newParentId) {
       const newParent = this.entities.get(newParentId);
       if (!newParent) return;
+
+      // Prevent cycles: if the new parent is a descendant of the child, attaching would create a cycle
+      if (this.wouldCreateCycle(child, newParent)) {
+        this.emitChange({ kind: 'error', message: `Invalid reparent: '${newParentId}' is a descendant of '${childId}'` });
+        return;
+      }
+
       newParent.addChild(child);
     }
 
     this.emitChange({ kind: 'hierarchy-changed', childId, newParentId });
+  }
+
+  private wouldCreateCycle(child: Entity, candidateParent: Entity): boolean {
+    // Walk up candidateParent's ancestor chain; if we encounter the child, it would create a cycle
+    let cur: Entity | undefined = candidateParent;
+    while (cur) {
+      if (cur.id === child.id) return true;
+      cur = cur.parent;
+    }
+    return false;
   }
 
   private emitChange(ev: SceneChangeEvent) {
