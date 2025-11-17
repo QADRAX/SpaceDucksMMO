@@ -1,0 +1,31 @@
+import { Entity } from "@client/domain/ecs/core/Entity";
+import { DefaultEcsComponentFactory } from "./ComponentFactory";
+import { GeometryComponent } from "@client/domain/ecs/components/GeometryComponent";
+import { ShaderMaterialComponent } from "@client/domain/ecs/components/ShaderMaterialComponent";
+
+describe("DefaultEcsComponentFactory", () => {
+  const factory = new DefaultEcsComponentFactory();
+
+  test("create returns component instance with correct type", () => {
+    const comp = factory.create("orbit");
+    expect((comp as any).type).toBe("orbit");
+  });
+
+  test("listCreatableComponents respects 'unique' and 'requires' and 'conflicts'", () => {
+    const e = new Entity("e1");
+    // initially, geometry should be creatable, material should NOT (requires geometry)
+    const initial = factory.listCreatableComponents(e).map((d) => d.type);
+    expect(initial).toContain("geometry");
+    expect(initial).not.toContain("material");
+
+    // add geometry and verify material becomes creatable
+    e.addComponent(new GeometryComponent({ type: "box", width: 1, height: 1, depth: 1 }));
+    const afterGeom = factory.listCreatableComponents(e).map((d) => d.type);
+    expect(afterGeom).toContain("material");
+
+    // add shaderMaterial -- material should now be excluded due to conflict
+    e.addComponent(new ShaderMaterialComponent({ shaderType: "atmosphere", uniforms: {} }));
+    const afterShader = factory.listCreatableComponents(e).map((d) => d.type);
+    expect(afterShader).not.toContain("material");
+  });
+});

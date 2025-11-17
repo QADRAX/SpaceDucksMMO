@@ -17,6 +17,7 @@ import ScreenRouter from "@client/application/ui/ScreenRouter";
 import SceneManager from "@client/application/SceneManager";
 import GameScreenManager from "@client/application/ui/GameScreenManager";
 import type { Services} from "./Services";
+import DefaultEcsComponentFactory from '@client/domain/ecs/core/ComponentFactory';
 
 /**
  * Service Container - Composition Root for Dependency Injection
@@ -79,6 +80,7 @@ export class ServiceContainer {
       devRegistry: devRegistry,
       renderingEngine: renderingEngine,
       navigation: gameScreenManager,
+      ecsComponentFactory: new DefaultEcsComponentFactory(),
     };
 
     return this.services;

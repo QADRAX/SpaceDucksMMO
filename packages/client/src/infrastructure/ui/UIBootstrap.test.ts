@@ -45,8 +45,7 @@ const makeServices = (): Services => ({
   devRegistry: {} as any,
   renderingEngine: {} as any,
   navigation: {} as any,
-  sceneEditor: undefined,
-  objectFactory: undefined,
+    // No sceneEditor/objectFactory: editor operations should go through sceneManager
 } as unknown as Services);
 
 describe('UIBootstrap wiring', () => {

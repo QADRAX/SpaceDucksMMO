@@ -74,6 +74,22 @@ export class UIBootstrap {
           mount: () => fpsController.start(),
           unmount: () => fpsController.stop(),
         });
+
+        // Scene Inspector widget
+        try {
+          // Lazy import to avoid bundling in prod if not present
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          const SceneInspector = require('./components/inspector/SceneInspectorPanel').default;
+          devRegistry.register({
+            id: 'scene-inspector',
+            render: () => h(SceneInspector, {}),
+            mount: () => {},
+            unmount: () => {},
+          });
+        } catch (e) {
+          // ignore if inspector not available in test environment
+        }
       }
     } catch (e) {
       // ignore in environments without DOM
@@ -97,10 +113,7 @@ export class UIBootstrap {
   /**
    * Inject scene editor and object factory into services
    */
-  injectEditorServices(services: Services, sceneEditor: any, objectFactory: any): void {
-    (services as any).sceneEditor = sceneEditor;
-    (services as any).objectFactory = objectFactory;
-  }
+  // Removed injectEditorServices: editor helpers should be accessed via sceneManager
 
   /**
    * Show initial screen with transition

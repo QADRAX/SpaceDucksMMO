@@ -1,0 +1,113 @@
+/* Lightweight styles for Scene Inspector */
+.scene-inspector {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    font-size: 12px;
+    color: #eee;
+}
+
+.inspector-left {
+    width: 260px;
+    min-width: 200px;
+    max-width: 420px;
+    overflow: auto;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    padding: 8px;
+}
+
+.inspector-right {
+    flex: 1;
+    overflow: auto;
+    padding: 8px;
+}
+
+.entity-item {
+    padding: 4px 6px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.entity-item.selected {
+    background: rgba(80, 140, 220, 0.14);
+}
+
+.entity-children {
+    margin-left: 12px;
+}
+
+.invalid-ref {
+    color: #ff8080;
+    font-weight: 600;
+}
+
+.component-section {
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    margin-bottom: 8px;
+    padding: 6px;
+    border-radius: 4px;
+}
+
+.component-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.component-controls button {
+    margin-left: 6px;
+}
+
+.transform-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.vector-input {
+    display: flex;
+    gap: 6px;
+}
+
+.error-box {
+    background: #3a1f1f;
+    color: #ffb3b3;
+    padding: 6px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+}
+
+.inspector-toolbar {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+.small-label {
+    font-size: 11px;
+    color: #ccc;
+}
+
+.select-input,
+.text-input,
+.num-input {
+    width: 100%;
+}
+
+.prop-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.prop-key {
+    width: 120px;
+    color: #cfd8e3;
+}
+
+.prop-value {
+    flex: 1;
+}

@@ -137,6 +137,37 @@ export class SceneManager {
   }
 
   /**
+   * Convenience: set active camera on the current scene if supported.
+   */
+  setActiveCamera(id: string): void {
+    try { this.currentScene?.setActiveCamera?.(id); } catch {}
+  }
+
+  /**
+   * Reparent an entity and return a Result describing success or failure.
+   * Prefer scene-level Result API when available; otherwise call the
+   * legacy void API and convert to Result.
+   */
+  reparentEntityResult(childId: string, newParentId: string | null): VoidResult {
+    try {
+      const scene: any = this.currentScene;
+      if (scene && typeof scene.reparentEntityResult === 'function') {
+        return scene.reparentEntityResult(childId, newParentId) as VoidResult;
+      }
+
+      // Fallback: call older API and wrap
+      try {
+        scene?.reparentEntity?.(childId, newParentId);
+        return ok(undefined);
+      } catch (e: any) {
+        return err('invalid-reparent', String(e), { childId, newParentId });
+      }
+    } catch (e: any) {
+      return err('operation-not-allowed', String(e), { childId, newParentId });
+    }
+  }
+
+  /**
    * Check whether a given scene is inspectable by the tools (has required debug API).
    */
   checkInspectable(sceneId: SceneId | string): Result<boolean> {
