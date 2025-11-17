@@ -1,50 +1,54 @@
 import * as THREE from 'three';
-import type { MaterialComponent } from '../../../domain/ecs/components/MaterialComponent';
+import type { MaterialComponent, MaterialParameters } from '../../../domain/ecs/components/MaterialComponent';
 import type { TextureCache } from './TextureCache';
 
 export class MaterialFactory {
   static build(comp: MaterialComponent, textureCache: TextureCache): THREE.Material {
-    const p = comp.parameters;
+    const p: MaterialParameters = comp.parameters;
     let material: THREE.Material;
 
     switch (p.type) {
-      case 'standard':
-        material = new THREE.MeshStandardMaterial({
-          color: p.color as any,
-          metalness: (p as any).metalness,
-          roughness: (p as any).roughness,
-          emissive: (p as any).emissive as any,
-          emissiveIntensity: (p as any).emissiveIntensity,
-          transparent: (p as any).transparent,
-          opacity: (p as any).opacity,
-        });
+      case 'standard': {
+        const opts: Partial<THREE.MeshStandardMaterialParameters> = {};
+        if ('color' in p && p.color !== undefined) opts.color = p.color as any;
+        if ('metalness' in p && p.metalness !== undefined) opts.metalness = p.metalness;
+        if ('roughness' in p && p.roughness !== undefined) opts.roughness = p.roughness;
+        if ('emissive' in p && p.emissive !== undefined) opts.emissive = p.emissive as any;
+        if ('emissiveIntensity' in p && p.emissiveIntensity !== undefined) opts.emissiveIntensity = p.emissiveIntensity;
+        if ('transparent' in p && p.transparent !== undefined) opts.transparent = p.transparent;
+        if ('opacity' in p && p.opacity !== undefined) opts.opacity = p.opacity;
+        material = new THREE.MeshStandardMaterial(opts);
         break;
-      case 'basic':
-        material = new THREE.MeshBasicMaterial({
-          color: p.color as any,
-          transparent: (p as any).transparent,
-          opacity: (p as any).opacity,
-          wireframe: (p as any).wireframe,
-        });
+      }
+      case 'basic': {
+        const opts: Partial<THREE.MeshBasicMaterialParameters> = {};
+        if ('color' in p && p.color !== undefined) opts.color = p.color as any;
+        if ('transparent' in p && p.transparent !== undefined) opts.transparent = p.transparent;
+        if ('opacity' in p && p.opacity !== undefined) opts.opacity = p.opacity;
+        if ('wireframe' in p && p.wireframe !== undefined) opts.wireframe = p.wireframe;
+        material = new THREE.MeshBasicMaterial(opts);
         break;
-      case 'phong':
-        material = new THREE.MeshPhongMaterial({
-          color: p.color as any,
-          specular: (p as any).specular as any,
-          shininess: (p as any).shininess,
-          emissive: (p as any).emissive as any,
-          transparent: (p as any).transparent,
-          opacity: (p as any).opacity,
-        });
+      }
+      case 'phong': {
+        const opts: Partial<THREE.MeshPhongMaterialParameters> = {};
+        if ('color' in p && p.color !== undefined) opts.color = p.color as any;
+        if ('specular' in p && p.specular !== undefined) opts.specular = p.specular as any;
+        if ('shininess' in p && p.shininess !== undefined) opts.shininess = p.shininess;
+        if ('emissive' in p && p.emissive !== undefined) opts.emissive = p.emissive as any;
+        if ('transparent' in p && p.transparent !== undefined) opts.transparent = p.transparent;
+        if ('opacity' in p && p.opacity !== undefined) opts.opacity = p.opacity;
+        material = new THREE.MeshPhongMaterial(opts);
         break;
-      case 'lambert':
-        material = new THREE.MeshLambertMaterial({
-          color: p.color as any,
-          emissive: (p as any).emissive as any,
-          transparent: (p as any).transparent,
-          opacity: (p as any).opacity,
-        });
+      }
+      case 'lambert': {
+        const opts: Partial<THREE.MeshLambertMaterialParameters> = {};
+        if ('color' in p && p.color !== undefined) opts.color = p.color as any;
+        if ('emissive' in p && p.emissive !== undefined) opts.emissive = p.emissive as any;
+        if ('transparent' in p && p.transparent !== undefined) opts.transparent = p.transparent;
+        if ('opacity' in p && p.opacity !== undefined) opts.opacity = p.opacity;
+        material = new THREE.MeshLambertMaterial(opts);
         break;
+      }
       default:
         material = new THREE.MeshStandardMaterial({ color: 0xcccccc });
         break;

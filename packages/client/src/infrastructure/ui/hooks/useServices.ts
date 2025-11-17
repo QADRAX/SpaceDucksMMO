@@ -32,7 +32,7 @@ export function useServices(): Services {
 // Hook to access navigation service
 export function useNavigation() {
   const services = useServices();
-  return (services as any).navigation;
+  return (services).navigation;
 }
 
 export default { useServices, useNavigation, ServicesContext };
