@@ -2,7 +2,7 @@
 import { h } from "preact";
 import { render, cleanup, fireEvent } from "@testing-library/preact";
 import SceneHierarchyTree from "./SceneHierarchyTree";
-import { ServicesContext } from "../../hooks/useServices";
+import { ServicesContext } from "../../../hooks/useServices";
 import { Entity } from "@client/domain/ecs/core/Entity";
 
 afterEach(() => cleanup());
@@ -37,7 +37,6 @@ describe("SceneHierarchyTree", () => {
 
     const onError = jest.fn();
 
-    // render with selectedId='B' so reparent action is invoked
     const { getByRole } = render(
       <ServicesContext.Provider value={mockServices}>
         <SceneHierarchyTree
@@ -48,7 +47,6 @@ describe("SceneHierarchyTree", () => {
       </ServicesContext.Provider>
     );
 
-    // change parent for B to A
     const select = getByRole("combobox");
     fireEvent.change(select, { target: { value: "A" } });
     expect(mockSceneManager.reparentEntityResult).toHaveBeenCalledWith(

@@ -1,7 +1,6 @@
-import { h } from "preact";
+import { useI18n } from "@client/infrastructure/ui/hooks/useI18n";
+import { useServices } from "@client/infrastructure/ui/hooks/useServices";
 import { useEffect, useState } from "preact/hooks";
-import { useServices } from "../../hooks/useServices";
-import { useI18n } from "../../hooks/useI18n";
 
 type Props = {
   value: string | null | undefined;
@@ -18,7 +17,9 @@ export default function ReferenceField({
 }: Props) {
   const services = useServices();
   const { t } = useI18n();
-  const [entities, setEntities] = useState(() => Array.from(services.sceneManager?.getEntities() || []));
+  const [entities, setEntities] = useState(() =>
+    Array.from(services.sceneManager?.getEntities() || [])
+  );
 
   useEffect(() => {
     const mgr = services.sceneManager;
@@ -28,13 +29,22 @@ export default function ReferenceField({
     update();
     const unsub = mgr.subscribeToSceneChanges
       ? mgr.subscribeToSceneChanges((ev: any) => {
-          if (["entity-added", "entity-removed", "hierarchy-changed"].includes(ev.kind)) update();
+          if (
+            ["entity-added", "entity-removed", "hierarchy-changed"].includes(
+              ev.kind
+            )
+          )
+            update();
         })
       : undefined;
-    return () => { try { unsub && unsub(); } catch {} };
+    return () => {
+      try {
+        unsub && unsub();
+      } catch {}
+    };
   }, [services.sceneManager]);
 
-  const isValid = !value || entities.find((e) => e.id === value);
+  const isValid = !value || entities.find((e: any) => e.id === value);
 
   return (
     <div class={`reference-field ${className || ""}`}>

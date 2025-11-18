@@ -1,6 +1,6 @@
 import { render } from "preact";
 import DevOverlay from "@client/infrastructure/ui/components/dev/DevOverlay";
-import SceneInspectorPanel from "@client/infrastructure/ui/components/inspector/SceneInspectorPanel";
+import SceneInspectorPanel from "@client/infrastructure/ui/components/inspector/organisms/SceneInspectorPanel";
 import type DevRegistry from "./DevRegistry";
 import type { FpsController } from "./FpsController";
 import type { Services } from "../../di/Services";

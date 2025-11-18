@@ -1,4 +1,3 @@
-import { h } from 'preact';
 import ComponentFieldRow from './ComponentFieldRow';
 import type { InspectorFieldConfig } from '@client/domain/ecs/core/ComponentMetadata';
 

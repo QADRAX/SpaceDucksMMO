@@ -1,5 +1,4 @@
-import { h } from 'preact';
-import renderValue, { renderPropertyWithConfig } from './ValueEditor';
+import { renderPropertyWithConfig } from './ValueEditor';
 import type { InspectorFieldConfig } from '@client/domain/ecs/core/ComponentMetadata';
 
 type Props = {

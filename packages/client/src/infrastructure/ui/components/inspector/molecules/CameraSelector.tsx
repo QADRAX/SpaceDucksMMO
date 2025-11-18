@@ -1,6 +1,3 @@
-import { h } from 'preact';
-import type { ComponentChildren } from 'preact';
-
 type Props = {
   entities: any[];
   activeCamera: string | null;

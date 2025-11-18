@@ -4,7 +4,7 @@ import { render, cleanup, fireEvent } from "@testing-library/preact";
 import ComponentInspector from "./ComponentInspector";
 import { Entity } from "@client/domain/ecs/core/Entity";
 import { Component } from "@client/domain/ecs/core/Component";
-import { ServicesContext } from "../../hooks/useServices";
+import { ServicesContext } from "../../../hooks/useServices";
 
 afterEach(() => cleanup());
 
@@ -44,15 +44,12 @@ describe("ComponentInspector", () => {
       </ServicesContext.Provider>
     );
 
-    // component header present
     expect(getByText("TestComp")).toBeDefined();
 
-    // toggle enabled via checkbox
     const checkbox = getByLabelText("Enabled") as HTMLInputElement;
     fireEvent.click(checkbox);
     expect(c.enabled).toBe(false);
 
-    // remove button
     const btn = getByText("Remove");
     fireEvent.click(btn);
     expect(e.getComponent("TestComp")).toBeUndefined();
@@ -89,7 +86,6 @@ describe("ComponentInspector", () => {
       </ServicesContext.Provider>
     );
 
-    // find the add-component select (it contains options like 'OrbitComponent')
     const selects = Array.from(
       container.querySelectorAll("select")
     ) as HTMLSelectElement[];
@@ -98,7 +94,6 @@ describe("ComponentInspector", () => {
     );
     expect(addSelect).toBeDefined();
     if (addSelect) fireEvent.change(addSelect, { target: { value: "orbit" } });
-    // factory mock creates component with type 'orbit'
     expect(e.getComponent("orbit")).toBeDefined();
   });
 });

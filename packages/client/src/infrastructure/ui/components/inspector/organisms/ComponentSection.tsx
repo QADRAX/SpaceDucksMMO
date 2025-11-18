@@ -1,5 +1,4 @@
-import { h } from 'preact';
-import ComponentFieldList from './ComponentFieldList';
+import ComponentFieldList from '../molecules/ComponentFieldList';
 import type Entity from '@client/domain/ecs/core/Entity';
 
 type Props = {

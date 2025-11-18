@@ -1,4 +1,3 @@
-import { h } from 'preact';
 import type Entity from '@client/domain/ecs/core/Entity';
 
 type Props = {

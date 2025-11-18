@@ -5,7 +5,7 @@ import ComponentInspector from "./ComponentInspector";
 import { Entity } from "@client/domain/ecs/core/Entity";
 import { BoxGeometryComponent } from "@client/domain/ecs/components/BoxGeometryComponent";
 import { StandardMaterialComponent } from "@client/domain/ecs/components/StandardMaterialComponent";
-import { ServicesContext } from "../../hooks/useServices";
+import { ServicesContext } from "../../../hooks/useServices";
 import DefaultEcsComponentFactory from "@client/domain/ecs/core/ComponentFactory";
 
 afterEach(() => cleanup());
@@ -24,7 +24,6 @@ describe("Inspector editors", () => {
       </ServicesContext.Provider>
     );
 
-    // find geometry component section
     const sections = document.querySelectorAll('.component-section');
     let geomSection: Element | null = null;
     sections.forEach((s) => {
@@ -33,12 +32,10 @@ describe("Inspector editors", () => {
     });
     expect(geomSection).not.toBeNull();
 
-    // check for Width/Height/Depth labels
     expect(geomSection!.textContent).toContain('Width');
     expect(geomSection!.textContent).toContain('Height');
     expect(geomSection!.textContent).toContain('Depth');
 
-    // find a numeric input and change width via the number input
     const numberInput = geomSection!.querySelector('input[type="number"]') as HTMLInputElement | null;
     expect(numberInput).not.toBeNull();
     fireEvent.input(numberInput!, { target: { value: '2' } });
@@ -62,14 +59,11 @@ describe("Inspector editors", () => {
       </ServicesContext.Provider>
     );
 
-    // find material color input (more robust than searching for text)
     const colorInputGlobal = document.querySelector('input[type="color"]') as HTMLInputElement | null;
     expect(colorInputGlobal).not.toBeNull();
-    // find the component section that contains the color input
     const matSection = colorInputGlobal!.closest('.component-section');
     expect(matSection).not.toBeNull();
 
-    // change color to red
     fireEvent.input(colorInputGlobal!, { target: { value: '#ff0000' } });
 
     expect(mat.color).toBe(0xff0000);
@@ -93,7 +87,6 @@ describe("Inspector editors", () => {
     const colorInputGlobal2 = document.querySelector('input[type="color"]') as HTMLInputElement | null;
     expect(colorInputGlobal2).not.toBeNull();
     fireEvent.input(colorInputGlobal2!, { target: { value: '#0000ff' } });
-    // we expect numeric representation
     expect(mat.color).toBe(0x0000ff);
   });
 });

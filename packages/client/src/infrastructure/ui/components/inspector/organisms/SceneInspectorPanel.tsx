@@ -1,13 +1,12 @@
-import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import SceneHierarchyTree from "./SceneHierarchyTree";
 import ComponentInspector from "./ComponentInspector";
 import TransformEditor from "./TransformEditor";
-import CameraSelector from "./CameraSelector";
-import { useServices } from "../../hooks/useServices";
-import { useI18n } from "../../hooks/useI18n";
+import CameraSelector from "../molecules/CameraSelector";
+import { useServices } from '../../../hooks/useServices';
+import { useI18n } from '../../../hooks/useI18n';
+import { DraggablePanel } from '../../common/organisms/DraggablePanel';
 import "./inspector.css";
-import { DraggablePanel } from "../common/organisms/DraggablePanel";
 
 export default function SceneInspectorPanel() {
   const services = useServices();

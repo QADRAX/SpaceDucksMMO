@@ -1,9 +1,8 @@
-import { h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import type Entity from "@client/domain/ecs/core/Entity";
-import ReferenceField from "./ReferenceField";
-import { useServices } from "../../hooks/useServices";
-import { useI18n } from "../../hooks/useI18n";
+import ReferenceField from "../molecules/ReferenceField";
+import { useServices } from '../../../hooks/useServices';
+import { useI18n } from '../../../hooks/useI18n';
 
 type Props = {
   selectedId?: string | null;
@@ -55,11 +54,9 @@ export default function SceneHierarchyTree({
       setEntities(arr);
     };
 
-    // initial refresh so we reflect the current scene immediately
     try { update(); } catch {}
 
     const unsub = services.sceneManager?.subscribeToSceneChanges((ev) => {
-      // refresh on any hierarchy/entity change
       if (
         ["entity-added", "entity-removed", "hierarchy-changed"].includes(
           ev.kind
@@ -69,11 +66,7 @@ export default function SceneHierarchyTree({
       }
       if (ev.kind === "error" && onError) onError(ev.message || "");
     });
-    return () => {
-      try {
-        unsub && unsub();
-      } catch {}
-    };
+    return () => { try { unsub && unsub(); } catch {} };
   }, [services.sceneManager]);
 
   const roots = useMemo(() => entities.filter((e) => !e.parent), [entities]);
@@ -81,7 +74,6 @@ export default function SceneHierarchyTree({
   const handleReparent = (childId: string, newParentId: string | null) => {
     const mgr = services.sceneManager;
     if (!mgr) return;
-    // Prefer the Result-returning API when available
     if (typeof mgr.reparentEntityResult === "function") {
       try {
         const res = mgr.reparentEntityResult(childId, newParentId);
@@ -93,7 +85,6 @@ export default function SceneHierarchyTree({
       return;
     }
 
-    // Fallback to older void-returning API
     try {
       (mgr as any).reparentEntity &&
         (mgr as any).reparentEntity(childId, newParentId);

@@ -1,11 +1,10 @@
-import { h } from 'preact';
 import ReferenceField from './ReferenceField';
 import TextureSelector from './TextureSelector';
-import { PropertyCheckbox } from '../common/atoms/PropertyCheckbox';
-import { PropertyInput } from '../common/atoms/PropertyInput';
-import { PropertyNumber } from '../common/atoms/PropertyNumber';
-import { PropertyReadonly } from '../common/atoms/PropertyReadonly';
-import { Vector3Input } from '../common/molecules/Vector3Input';
+import { PropertyCheckbox } from '../../common/atoms/PropertyCheckbox';
+import { PropertyInput } from '../../common/atoms/PropertyInput';
+import { PropertyNumber } from '../../common/atoms/PropertyNumber';
+import { PropertyReadonly } from '../../common/atoms/PropertyReadonly';
+import { Vector3Input } from '../../common/molecules/Vector3Input';
 import type { InspectorFieldConfig } from '@client/domain/ecs/core/ComponentMetadata';
 
 function renderValue(

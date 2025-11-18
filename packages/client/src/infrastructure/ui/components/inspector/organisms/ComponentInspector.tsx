@@ -1,10 +1,9 @@
-import { h } from 'preact';
 import { useEffect, useMemo, useState } from 'preact/hooks';
 import type Entity from '@client/domain/ecs/core/Entity';
-import { useServices } from '../../hooks/useServices';
-import { useI18n } from '../../hooks/useI18n';
+import { useServices } from '../../../hooks/useServices';
+import { useI18n } from '../../../hooks/useI18n';
 import ComponentSection from './ComponentSection';
-import AddComponentSection from './AddComponentSection';
+import AddComponentSection from '../molecules/AddComponentSection';
 
 type Props = { entity?: Entity };
 
