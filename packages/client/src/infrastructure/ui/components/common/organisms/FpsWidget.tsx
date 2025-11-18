@@ -7,9 +7,10 @@ type Props = {
   controller: FpsController;
   updateIntervalMs?: number;
   style?: any;
+  className?: string;
 };
 
-export function FpsWidget({ controller, updateIntervalMs = 500, style }: Props) {
+export function FpsWidget({ controller, updateIntervalMs = 500, style, className = '' }: Props) {
   const [fps, setFps] = useState<number>(controller.getFps());
   const [running, setRunning] = useState<boolean>(controller.isRunning());
   const ctrl = controller as unknown as DevWidgetController<FpsChange>;
@@ -45,7 +46,7 @@ export function FpsWidget({ controller, updateIntervalMs = 500, style }: Props) 
   if (!visible) return null;
 
   return (
-    <div className="dev-fps-widget" style={baseStyle}>
+    <div className={`dev-fps-widget ${className}`.trim()} style={baseStyle}>
       FPS: {fps} {running ? '' : '(stopped)'}
     </div>
   );

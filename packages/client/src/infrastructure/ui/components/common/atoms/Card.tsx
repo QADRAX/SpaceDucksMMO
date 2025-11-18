@@ -13,7 +13,8 @@ export interface CardProps {
 
 export function Card({ as = 'div', className = '', variant = 'default', clickable = false, children, ...rest }: CardProps) {
   const Tag = as as any;
-  const cls = ['sd-card', `sd-card--${variant}`, clickable ? 'sd-card--clickable' : '', className]
+  const variantClass = variant && variant !== 'default' ? `sd-card--${variant}` : '';
+  const cls = ['sd-card', variantClass, clickable ? 'sd-card--clickable' : '', className]
     .filter(Boolean)
     .join(' ');
 

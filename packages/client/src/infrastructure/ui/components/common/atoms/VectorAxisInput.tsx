@@ -10,6 +10,7 @@ export interface VectorAxisInputProps {
   precision?: number;
   convertFrom?: (value: number) => number;
   convertTo?: (value: number) => number;
+  className?: string;
 }
 
 export function VectorAxisInput({
@@ -21,6 +22,7 @@ export function VectorAxisInput({
   precision = 2,
   convertFrom,
   convertTo
+  , className = ""
 }: VectorAxisInputProps) {
   const displayValue = convertFrom ? convertFrom(value) : value;
 
@@ -43,7 +45,7 @@ export function VectorAxisInput({
   };
 
   return (
-    <div className="vector-axis-input">
+    <div className={`vector-axis-input ${className}`.trim()}>
       <label className="axis-label">{label}</label>
       <input
         type="number"

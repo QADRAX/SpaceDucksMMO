@@ -8,6 +8,7 @@ type IconButtonProps = {
   variant?: "primary" | "secondary" | "danger" | "ghost";
   size?: "small" | "medium" | "large";
   disabled?: boolean;
+  className?: string;
 };
 
 export function IconButton({
@@ -17,11 +18,13 @@ export function IconButton({
   variant = "secondary",
   size = "medium",
   disabled = false,
+  className = "",
 }: IconButtonProps) {
   const classes = [
     "sd-icon-button",
     `sd-icon-button--${variant}`,
     `sd-icon-button--${size}`,
+    className,
   ].join(" ");
 
   return (

@@ -10,6 +10,7 @@ type PopupProps = {
   children: ComponentChildren;
   footer?: ComponentChildren;
   maxWidth?: string;
+  className?: string;
 };
 
 export function Popup({
@@ -19,6 +20,7 @@ export function Popup({
   children,
   footer,
   maxWidth = "600px",
+  className = "",
 }: PopupProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -40,15 +42,15 @@ export function Popup({
   if (!isVisible) return null;
 
   return (
-    <div 
-      className={`popup-overlay ${isClosing ? 'popup-overlay--closing' : ''}`} 
+    <div
+      className={`popup-overlay ${isClosing ? 'popup-overlay--closing' : ''} ${className}`.trim()}
       onClick={onClose}
     >
       <Card
         as="div"
         className={`popup-content ${isClosing ? 'popup-content--closing' : ''}`}
         style={{ maxWidth }}
-        onClick={(e: MouseEvent) => e.stopPropagation()}
+        onClick={(e: JSX.TargetedMouseEvent<HTMLDivElement>) => e.stopPropagation()}
       >
         {title && (
           <div className="popup-header">

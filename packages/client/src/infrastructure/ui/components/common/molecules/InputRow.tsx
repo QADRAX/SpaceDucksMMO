@@ -9,6 +9,7 @@ type InputRowProps = {
   type?: "text" | "password" | "email" | "url";
   error?: string;
   disabled?: boolean;
+  className?: string;
 };
 
 export function InputRow({
@@ -19,9 +20,10 @@ export function InputRow({
   type = "text",
   error,
   disabled = false,
+  className = "",
 }: InputRowProps) {
   return (
-    <div className="sd-input-row">
+    <div className={`sd-input-row ${className}`.trim()}>
       {label && <label className="sd-input-label">{label}</label>}
       {type === "text" ? (
         <PropertyInput

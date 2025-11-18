@@ -8,7 +8,7 @@ export interface PanelProps {
   collapsible?: boolean;
   collapsed?: boolean;
   onToggle?: () => void;
-  headerOnMouseDown?: (e: MouseEvent) => void;
+  headerOnMouseDown?: (e: JSX.TargetedMouseEvent<HTMLDivElement>) => void;
   children?: ComponentChildren;
   className?: string;
 }
@@ -29,7 +29,10 @@ export function Panel({ title, collapsible = true, collapsed: collapsedProp, onT
 
   return (
     <Card className={`sd-panel ${className}`} variant="panel">
-      <div className={`panel-header ${headerOnMouseDown ? 'draggable' : ''}`} onMouseDown={headerOnMouseDown as any}>
+      <div
+        className={`panel-header ${headerOnMouseDown ? 'draggable' : ''}`}
+        onMouseDown={(e: JSX.TargetedMouseEvent<HTMLDivElement>) => headerOnMouseDown && headerOnMouseDown(e)}
+      >
         <span className="panel-title">{title}</span>
         <div className="panel-controls">
           {collapsible && (

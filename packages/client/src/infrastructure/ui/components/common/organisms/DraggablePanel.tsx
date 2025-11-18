@@ -16,6 +16,7 @@ export interface DraggablePanelProps {
   minWidth?: number;
   minHeight?: number;
   children: ComponentChildren;
+  className?: string;
 }
 
 interface Position { x: number; y: number }
@@ -33,6 +34,7 @@ export function DraggablePanel(props: DraggablePanelProps) {
     minWidth = 200,
     minHeight = 150,
     children,
+    className = '',
   } = props;
 
   const [position, setPosition] = useState<Position>(defaultPosition);
@@ -105,7 +107,7 @@ export function DraggablePanel(props: DraggablePanelProps) {
   return (
     <div
       ref={panelRef}
-      class={`draggable-panel draggable-panel-${theme} ${collapsed ? 'collapsed' : ''} ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''}`}
+      class={`draggable-panel draggable-panel-${theme} ${collapsed ? 'collapsed' : ''} ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''} ${className}`.trim()}
       style={panelStyle}
     >
       <Panel

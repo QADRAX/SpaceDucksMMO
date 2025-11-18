@@ -51,6 +51,13 @@
     box-shadow: none;
 }
 
+/* Secondary variant: explicit no-op that mirrors base button visuals */
+.sd-icon-button--secondary {
+    border-color: var(--border);
+    background: var(--panel);
+    color: var(--text);
+}
+
 /* Sizes */
 .sd-icon-button--small {
     width: 32px;

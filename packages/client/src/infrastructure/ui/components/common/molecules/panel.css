@@ -43,3 +43,10 @@
 /* Hide content/resize when parent has collapsed state */
 .draggable-panel.collapsed .panel-content { display: none; }
 .draggable-panel.collapsed .resize-handle { display: none; }
+
+/* sd-panel base: keeps a semantic hook when `sd-panel` class is used on Card.
+   Minimal rule to avoid missing-class inconsistencies. */
+.sd-panel {
+  width: 100%;
+  box-sizing: border-box;
+}

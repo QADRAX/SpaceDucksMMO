@@ -4,9 +4,10 @@ import { useState, useEffect } from 'preact/hooks';
 export interface PropertyColorProps {
   value: number; // Hex number (e.g., 0xff69b4)
   onChange: (value: number) => void;
+  className?: string;
 }
 
-export function PropertyColor({ value, onChange }: PropertyColorProps) {
+export function PropertyColor({ value, onChange, className = "" }: PropertyColorProps) {
   const initial = `#${value.toString(16).padStart(6, '0')}`;
   const [color, setColor] = useState<string>(initial);
 
@@ -22,7 +23,7 @@ export function PropertyColor({ value, onChange }: PropertyColorProps) {
   };
 
   return (
-    <div className="property-color-wrapper">
+    <div className={`property-color-wrapper ${className}`.trim()}>
       <input
         type="color"
         value={color}

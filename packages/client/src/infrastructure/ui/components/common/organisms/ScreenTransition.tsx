@@ -8,7 +8,7 @@ export interface ScreenTransitionProps {
   duration?: number;
 }
 
-export function ScreenTransition({ isTransitioning, duration = 300 }: ScreenTransitionProps) {
+export function ScreenTransition({ isTransitioning, duration = 300, className = '' }: ScreenTransitionProps & { className?: string }) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -24,7 +24,7 @@ export function ScreenTransition({ isTransitioning, duration = 300 }: ScreenTran
 
   return (
     <div 
-      class={`screen-transition ${isTransitioning ? 'fade-in' : 'fade-out'}`}
+      class={`screen-transition ${isTransitioning ? 'fade-in' : 'fade-out'} ${className}`.trim()}
       style={{ '--transition-duration': `${duration}ms` } as any}
     />
   );

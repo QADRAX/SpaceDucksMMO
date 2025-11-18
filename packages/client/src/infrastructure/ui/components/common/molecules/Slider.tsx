@@ -12,6 +12,7 @@ type SliderProps = {
   disabled?: boolean;
   showTooltip?: boolean;
   formatValue?: (value: number) => string;
+  className?: string;
 };
 
 export function Slider({
@@ -24,12 +25,13 @@ export function Slider({
   disabled,
   showTooltip = true,
   formatValue = (v) => v.toString(),
+  className = "",
 }: SliderProps) {
   const [showValue, setShowValue] = useState(false);
   const sliderRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="sd-slider-wrapper">
+    <div className={`sd-slider-wrapper ${className}`.trim()}>
       <input
         ref={sliderRef}
         type="range"
