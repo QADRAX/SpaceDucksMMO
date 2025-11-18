@@ -43,6 +43,11 @@ export class GeometryComponent extends Component {
     unique: true,
     requires: [],
     conflicts: ["skybox"],
+    inspector: {
+      fields: [
+        { key: "parameters", label: "Parameters", get: (c: GeometryComponent) => c.parameters },
+      ],
+    },
   };
   private _parameters: GeometryParameters;
   constructor(parameters: GeometryParameters) {

@@ -14,6 +14,14 @@ export class LensFlareComponent extends Component {
     unique: true,
     requires: [],
     conflicts: [],
+    inspector: {
+      fields: [
+        { key: "intensity", label: "Intensity", get: (c: LensFlareComponent) => c.intensity, set: (c, v) => { c.intensity = Number(v); } },
+        { key: "color", label: "Color", get: (c: LensFlareComponent) => c.color, set: (c, v) => { c.color = v as any; } },
+        { key: "occlusionEnabled", label: "Occlusion", get: (c: LensFlareComponent) => c.occlusionEnabled, set: (c, v) => { c.occlusionEnabled = Boolean(v); } },
+        { key: "flareElements", label: "Elements", get: (c: LensFlareComponent) => c.flareElements },
+      ],
+    },
   };
   intensity: number;
   color: [number, number, number];

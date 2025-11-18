@@ -1,6 +1,10 @@
 import { h } from "preact";
 import { useEffect, useMemo, useState } from "preact/hooks";
 import type Entity from "@client/domain/ecs/core/Entity";
+import type {
+  ComponentMetadata,
+  InspectorFieldConfig,
+} from "@client/domain/ecs/core/ComponentMetadata";
 import { useServices } from "../../hooks/useServices";
 import { useI18n } from "../../hooks/useI18n";
 import ReferenceField from "./ReferenceField";
@@ -14,7 +18,13 @@ import { KnownComponentType } from "@client/domain/ecs/core/ComponentFactory";
 
 type Props = { entity?: Entity };
 
-function renderValue(key: string, value: any, onChange: (v: any) => void) {
+function renderValue(
+  key: string,
+  value: any,
+  onChange: (v: any) => void,
+  visited?: WeakSet<object>
+) {
+  if (!visited) visited = new WeakSet<object>();
   if (typeof value === "number") {
     return <PropertyNumber value={value as number} onChange={onChange} />;
   }
@@ -41,6 +51,11 @@ function renderValue(key: string, value: any, onChange: (v: any) => void) {
     );
   }
   if (typeof value === "object" && value !== null) {
+    // Prevent infinite recursion on cyclic object graphs
+    if (visited.has(value)) {
+      return <PropertyReadonly value="[Circular]" />;
+    }
+    visited.add(value);
     return (
       <div style={{ paddingLeft: 8 }}>
         {Object.keys(value).map((k) => (
@@ -50,7 +65,7 @@ function renderValue(key: string, value: any, onChange: (v: any) => void) {
               {renderValue(k, (value as any)[k], (nv: any) => {
                 (value as any)[k] = nv;
                 onChange(value);
-              })}
+              }, visited)}
             </div>
           </div>
         ))}
@@ -139,6 +154,86 @@ function renderProperty(comp: any, key: string) {
   });
 }
 
+function renderPropertyWithConfig(comp: any, key: string, cfg?: InspectorFieldConfig) {
+  const value = cfg && cfg.get ? cfg.get(comp) : (comp as any)[key];
+
+  const applyChange = (nv: any) => {
+    if (cfg && cfg.set) {
+      try {
+        cfg.set(comp, nv);
+      } catch {}
+    } else {
+      try {
+        (comp as any)[key] = nv;
+        comp.notifyChanged && comp.notifyChanged();
+      } catch {}
+    }
+  };
+
+  // Entity reference fields
+  if (key === "targetEntityId") {
+    return (
+      <ReferenceField
+        value={(value as any) || null}
+        onChange={(id) => {
+          applyChange(id || "");
+        }}
+      />
+    );
+  }
+
+  // Texture fields on Material-like components
+  if (["texture", "normalMap", "envMap"].includes(key)) {
+    return (
+      <TextureSelector
+        value={(value as any) || null}
+        onChange={(tx) => {
+          applyChange(tx || undefined);
+        }}
+      />
+    );
+  }
+
+  // Shader material uniforms: preserve original uniforms editor when present on the component
+  if (comp && comp.type === "shaderMaterial" && key === "uniforms") {
+    const uniforms = value || {};
+    return (
+      <div style={{ paddingLeft: 8 }}>
+        {Object.keys(uniforms).map((uname) => {
+          const u = uniforms[uname];
+          return (
+            <div class="prop-row" key={uname}>
+              <div class="prop-key">{uname}</div>
+              <div class="prop-value">
+                {u && u.type === "texture" ? (
+                  <TextureSelector
+                    value={u.value || null}
+                    onChange={(tx) => {
+                      u.value = tx || null;
+                      try {
+                        comp.notifyChanged && comp.notifyChanged();
+                      } catch {}
+                    }}
+                  />
+                ) : (
+                  renderValue(uname, u?.value, (nv: any) => {
+                    if (u) u.value = nv;
+                    try {
+                      comp.notifyChanged && comp.notifyChanged();
+                    } catch {}
+                  })
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
+  return renderValue(key, value, applyChange);
+}
+
 export default function ComponentInspector({ entity }: Props) {
   const services = useServices();
   const { t } = useI18n();
@@ -224,14 +319,32 @@ export default function ComponentInspector({ entity }: Props) {
               </div>
             </div>
             <div style={{ paddingTop: 6 }}>
-              {Object.keys(c)
-                .filter((k) => k !== "metadata" && k !== "type")
-                .map((k) => (
-                  <div class="prop-row" key={k}>
-                    <div class="prop-key">{k}</div>
-                    <div class="prop-value">{renderProperty(c, k)}</div>
+              {(() => {
+                const meta = (c as any).metadata as
+                  | ComponentMetadata
+                  | undefined;
+                const inspector = meta?.inspector;
+                type FieldEntry = { key: string; cfg?: InspectorFieldConfig };
+                let fields: FieldEntry[] = [];
+                if (inspector && Array.isArray(inspector.fields)) {
+                  fields = inspector.fields.map((f) => ({ key: f.key, cfg: f }));
+                } else {
+                  fields = Object.keys(c)
+                    .filter((k) => k !== "metadata" && k !== "type" && !k.startsWith("_"))
+                    .filter((k) => typeof (c as any)[k] !== "function")
+                    .filter((k) => !["scene", "renderer", "renderSyncSystem"].includes(k))
+                    .map((k) => ({ key: k }));
+                }
+
+                return fields.map((f) => (
+                  <div class="prop-row" key={f.key}>
+                    <div class="prop-key">{f.cfg?.label ?? f.key}</div>
+                    <div class="prop-value">
+                      {renderPropertyWithConfig(c, f.key, f.cfg)}
+                    </div>
                   </div>
-                ))}
+                ));
+              })()}
             </div>
           </div>
         ))}

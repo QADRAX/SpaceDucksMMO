@@ -8,6 +8,14 @@ export class CameraTargetComponent extends Component {
     unique: true,
     requires: ["cameraView"],
     conflicts: [],
+    inspector: {
+      fields: [
+        { key: "targetEntityId", label: "Target Entity", get: (c: CameraTargetComponent) => c.targetEntityId, set: (c, v) => { c.setTarget(String(v || "")); } },
+        { key: "followSpeed", label: "Follow Speed", get: (c: CameraTargetComponent) => c.followSpeed, set: (c, v) => { c.followSpeed = v === undefined ? undefined : Number(v); c.notifyChanged(); } },
+        { key: "offset", label: "Offset", get: (c: CameraTargetComponent) => c.offset, set: (c, v) => { c.offset = v as any; c.notifyChanged(); } },
+        { key: "lookAtOffset", label: "LookAt Offset", get: (c: CameraTargetComponent) => c.lookAtOffset, set: (c, v) => { c.lookAtOffset = v as any; c.notifyChanged(); } },
+      ],
+    },
   };
   targetEntityId: string;
   followSpeed?: number;

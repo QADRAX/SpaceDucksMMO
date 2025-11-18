@@ -10,6 +10,15 @@ export class OrbitComponent extends Component {
     unique: true,
     requires: [],
     conflicts: [],
+    inspector: {
+      fields: [
+        { key: "targetEntityId", label: "Target", get: (c: OrbitComponent) => c.targetEntityId, set: (c, v) => { c.targetEntityId = String(v || ""); c.notifyChanged(); } },
+        { key: "altitudeFromSurface", label: "Altitude", get: (c: OrbitComponent) => c.altitudeFromSurface, set: (c, v) => { c.altitudeFromSurface = Number(v); c.notifyChanged(); } },
+        { key: "speed", label: "Speed", get: (c: OrbitComponent) => c.speed, set: (c, v) => { c.speed = Number(v); c.notifyChanged(); } },
+        { key: "orbitPlane", label: "Plane", get: (c: OrbitComponent) => c.orbitPlane, set: (c, v) => { c.orbitPlane = String(v) as any; c.notifyChanged(); } },
+        { key: "angle", label: "Angle", get: (c: OrbitComponent) => c.angle },
+      ],
+    },
   };
   targetEntityId: string;
   altitudeFromSurface: number;

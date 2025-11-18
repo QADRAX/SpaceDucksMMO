@@ -43,6 +43,17 @@ export class MaterialComponent extends Component {
     unique: true,
     requires: ["geometry"],
     conflicts: ["shaderMaterial"],
+    inspector: {
+      fields: [
+        { key: "type", label: "Type", get: (c: MaterialComponent) => (c.parameters as any).type },
+        { key: "color", label: "Color", get: (c: MaterialComponent) => c.color, set: (c, v) => { c.color = v as any; } },
+        { key: "opacity", label: "Opacity", get: (c: MaterialComponent) => c.opacity, set: (c, v) => { c.opacity = v === undefined ? undefined : Number(v); } },
+        { key: "transparent", label: "Transparent", get: (c: MaterialComponent) => c.transparent, set: (c, v) => { c.transparent = Boolean(v); } },
+        { key: "texture", label: "Texture", get: (c: MaterialComponent) => c.texture, set: (c, v) => { c.texture = v as any; } },
+        { key: "normalMap", label: "Normal Map", get: (c: MaterialComponent) => c.normalMap, set: (c, v) => { c.normalMap = v as any; } },
+        { key: "envMap", label: "Env Map", get: (c: MaterialComponent) => c.envMap, set: (c, v) => { c.envMap = v as any; } },
+      ],
+    },
   };
   private _parameters: MaterialParameters;
   private _texture?: string;

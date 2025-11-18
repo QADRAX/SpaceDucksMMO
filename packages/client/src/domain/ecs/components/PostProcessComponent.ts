@@ -15,6 +15,11 @@ export class PostProcessComponent extends Component {
     unique: true,
     requires: ["cameraView"],
     conflicts: [],
+    inspector: {
+      fields: [
+        { key: "effects", label: "Effects", get: (c: PostProcessComponent) => c.effects, set: (c, v) => { c.setEffects((v as any) || []); } },
+      ],
+    },
   };
   effects: PostProcessEffectDefinition[];
   constructor(effects: PostProcessEffectDefinition[]) {

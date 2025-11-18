@@ -8,6 +8,14 @@ export class CameraViewComponent extends Component {
     unique: true,
     requires: [],
     conflicts: [],
+    inspector: {
+      fields: [
+        { key: "fov", label: "FOV", get: (c: CameraViewComponent) => c.fov, set: (c, v) => { c.setFov(Number(v)); } },
+        { key: "near", label: "Near", get: (c: CameraViewComponent) => c.near, set: (c, v) => { c.near = Number(v); c.notifyChanged(); } },
+        { key: "far", label: "Far", get: (c: CameraViewComponent) => c.far, set: (c, v) => { c.far = Number(v); c.notifyChanged(); } },
+        { key: "aspect", label: "Aspect", get: (c: CameraViewComponent) => c.aspect, set: (c, v) => { c.aspect = Number(v); c.notifyChanged(); } },
+      ],
+    },
   };
   fov: number;
   near: number;

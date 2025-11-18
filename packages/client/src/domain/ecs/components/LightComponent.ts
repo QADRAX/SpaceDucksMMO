@@ -29,6 +29,17 @@ export class LightComponent extends Component {
     unique: true,
     requires: [],
     conflicts: [],
+    inspector: {
+      fields: [
+        { key: "type", label: "Type", get: (c: LightComponent) => c.params.type, set: (c, v) => { c.params = { ...(c.params as any), type: String(v) } as any; c.notifyChanged(); } },
+        { key: "color", label: "Color", get: (c: LightComponent) => (c.params as any).color, set: (c, v) => { c.setColor(v as any); } },
+        { key: "intensity", label: "Intensity", get: (c: LightComponent) => (c.params as any).intensity, set: (c, v) => { c.setIntensity(Number(v)); } },
+        { key: "distance", label: "Distance", get: (c: LightComponent) => (c.params as any).distance, set: (c, v) => { c.params = { ...(c.params as any), distance: v === undefined ? undefined : Number(v) } as any; c.notifyChanged(); } },
+        { key: "decay", label: "Decay", get: (c: LightComponent) => (c.params as any).decay, set: (c, v) => { c.params = { ...(c.params as any), decay: v === undefined ? undefined : Number(v) } as any; c.notifyChanged(); } },
+        { key: "angle", label: "Angle", get: (c: LightComponent) => (c.params as any).angle, set: (c, v) => { c.params = { ...(c.params as any), angle: v === undefined ? undefined : Number(v) } as any; c.notifyChanged(); } },
+        { key: "penumbra", label: "Penumbra", get: (c: LightComponent) => (c.params as any).penumbra, set: (c, v) => { c.params = { ...(c.params as any), penumbra: v === undefined ? undefined : Number(v) } as any; c.notifyChanged(); } },
+      ],
+    },
   };
   private _params: LightParams;
   constructor(params: LightParams) {

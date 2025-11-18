@@ -39,7 +39,7 @@ export function PropertyNumber({
     <div class="property-number">
       <input
         type="range"
-        value={value}
+        value={Number.isFinite(value) ? value : min}
         onChange={handleChange}
         min={min}
         max={max}
@@ -48,7 +48,7 @@ export function PropertyNumber({
       />
       <input
         type="number"
-        value={value}
+        value={Number.isFinite(value) ? String(value) : ''}
         onChange={handleChange}
         min={min}
         max={max}

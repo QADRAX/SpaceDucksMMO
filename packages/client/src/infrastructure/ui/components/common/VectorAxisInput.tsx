@@ -47,12 +47,14 @@ export function VectorAxisInput({
     onChange(finalValue);
   };
   
+  const safeValue = Number.isFinite(displayValue) ? displayValue.toFixed(precision) : '';
+
   return (
     <div class="vector-axis-input">
       <label class="axis-label">{label}</label>
       <input
         type="number"
-        value={displayValue.toFixed(precision)}
+        value={safeValue}
         onChange={handleChange}
         step={step}
         min={min}
