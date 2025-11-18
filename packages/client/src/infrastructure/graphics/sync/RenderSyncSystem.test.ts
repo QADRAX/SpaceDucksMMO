@@ -4,6 +4,7 @@ import { Entity } from '../../../domain/ecs/core/Entity';
 import { SphereGeometryComponent } from '../../../domain/ecs/components/SphereGeometryComponent';
 import { MaterialComponent } from '../../../domain/ecs/components/MaterialComponent';
 import { LightComponent } from '../../../domain/ecs/components/LightComponent';
+import { BoxGeometryComponent } from '../../../domain/ecs/components/BoxGeometryComponent';
 
 describe('RenderSyncSystem enable/disable handling', () => {
   let scene: THREE.Scene;
@@ -141,5 +142,53 @@ describe('RenderSyncSystem enable/disable handling', () => {
     expect(spyRemove).toHaveBeenCalled();
     if (rc.geometry) expect((rc.geometry.dispose as any)).toHaveBeenCalled();
     if (rc.material) expect((rc.material as any).dispose).toHaveBeenCalled();
+  });
+
+  it('creates mesh when geometry then material are added after addEntity', () => {
+    const e = new Entity('late1');
+
+    rss.addEntity(e);
+
+    // initially no mesh
+    let meshes = scene.children.filter((c) => c instanceof THREE.Mesh);
+    expect(meshes.length).toBe(0);
+
+    // add geometry then material
+    e.addComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 } as any) as any);
+    e.addComponent(new MaterialComponent({ type: 'standard', color: 0xffffff } as any));
+
+    // the entity listener should have created the mesh
+    meshes = scene.children.filter((c) => c instanceof THREE.Mesh);
+    expect(meshes.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('recreates mesh when geometry and material are removed and re-added', () => {
+    const e = new Entity('roundtrip1');
+
+    // Initial geometry + material
+    e.addComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 } as any) as any);
+    e.addComponent(new MaterialComponent({ type: 'standard', color: 0xffffff } as any));
+
+    rss.addEntity(e);
+
+    // ensure mesh created
+    let meshes = scene.children.filter((c) => c instanceof THREE.Mesh);
+    expect(meshes.length).toBeGreaterThanOrEqual(1);
+
+    // remove components
+    e.removeComponent('material');
+    e.removeComponent('boxGeometry');
+
+    // after removals, mesh should be removed
+    meshes = scene.children.filter((c) => c instanceof THREE.Mesh);
+    expect(meshes.length).toBe(0);
+
+    // re-add components
+    e.addComponent(new BoxGeometryComponent({ width: 2, height: 2, depth: 2 } as any) as any);
+    e.addComponent(new MaterialComponent({ type: 'standard', color: 0xff0000 } as any));
+
+    // the listener should recreate the mesh
+    meshes = scene.children.filter((c) => c instanceof THREE.Mesh);
+    expect(meshes.length).toBeGreaterThanOrEqual(1);
   });
 });

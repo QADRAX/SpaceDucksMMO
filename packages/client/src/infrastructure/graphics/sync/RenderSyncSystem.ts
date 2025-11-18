@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { Entity } from "../../../domain/ecs/core/Entity";
+import type { Entity, ComponentEvent, ComponentListener } from "../../../domain/ecs/core/Entity";
 import type IComponentObserver from "../../../domain/ecs/core/IComponentObserver";
 import { MaterialComponent } from "../../../domain/ecs/components/MaterialComponent";
 import { ShaderMaterialComponent } from "../../../domain/ecs/components/ShaderMaterialComponent";
@@ -25,6 +25,7 @@ export class RenderSyncSystem implements IComponentObserver {
   private scene: THREE.Scene;
   private registry = new RenderObjectRegistry();
   private entities = new Map<string, Entity>();
+  private componentListeners = new Map<string, ComponentListener>();
   private textureCache = new TextureCache();
   private uniformUpdater = new ShaderUniformUpdater();
 
@@ -49,6 +50,21 @@ export class RenderSyncSystem implements IComponentObserver {
   addEntity(entity: Entity): void {
     this.entities.set(entity.id, entity);
     for (const comp of entity.getAllComponents()) comp.addObserver(this);
+    // listen for future component additions/removals so we can register as observer
+    // and create render objects when appropriate
+    const listener: ComponentListener = (event: ComponentEvent) => {
+      const { entity: e, component, action } = event;
+      if (!this.entities.has(e.id)) return;
+      if (action === 'added') {
+        component.addObserver(this);
+        // if there's no existing render object for this entity, a newly added
+        // render-relevant component should cause creation
+        if (!this.registry.has(e.id)) this.processEntity(e);
+      }
+      // removals are handled via component.notifyRemoved -> onComponentChanged(':removed')
+    };
+    this.componentListeners.set(entity.id, listener);
+    entity.addComponentListener(listener);
     entity.transform.onChange(() => this.onTransformChanged(entity.id));
     this.processEntity(entity);
     for (const child of entity.getChildren()) this.addEntity(child);
@@ -58,6 +74,12 @@ export class RenderSyncSystem implements IComponentObserver {
     const entity = this.entities.get(entityId);
     if (!entity) return;
     for (const child of entity.getChildren()) this.removeEntity(child.id);
+    // remove component listener if present
+    const l = this.componentListeners.get(entityId);
+    if (l) {
+      entity.removeComponentListener(l);
+      this.componentListeners.delete(entityId);
+    }
     this.registry.remove(entityId, this.scene);
     this.entities.delete(entityId);
   }

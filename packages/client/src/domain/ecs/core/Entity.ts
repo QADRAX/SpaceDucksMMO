@@ -5,12 +5,23 @@ import { Result, ok, err } from '@client/domain/errors/EngineError';
 
 type VoidResult = Result<void>;
 
+export type ComponentEventAction = 'added' | 'removed';
+
+export interface ComponentEvent {
+  entity: Entity;
+  component: Component;
+  action: ComponentEventAction;
+}
+
+export type ComponentListener = (event: ComponentEvent) => void;
+
 export class Entity {
   readonly id: string;
   readonly transform: Transform;
   private components = new Map<string, Component>();
   private _parent?: Entity;
   private children: Entity[] = [];
+  private componentListeners: ComponentListener[] = [];
 
   constructor(id: string, position?: [number, number, number]) {
     this.id = id;
@@ -39,6 +50,7 @@ export class Entity {
     }
     component.setEntityId(this.id);
     this.components.set(component.type, component);
+    this.notifyComponentEvent(component, 'added');
     return ok(undefined);
   }
 
@@ -53,6 +65,9 @@ export class Entity {
       return err('invalid-component', message, { errors });
     }
     // notify observers registered on the component that it's being removed
+    // notify entity-level listeners first
+    this.notifyComponentEvent(comp, 'removed');
+    // notify observers registered on the component that it's being removed
     comp.notifyRemoved();
     this.components.delete(type);
     return ok(undefined);
@@ -65,6 +80,21 @@ export class Entity {
   }
   getAllComponents(): Component[] {
     return [...this.components.values()];
+  }
+
+
+  addComponentListener(listener: ComponentListener): void {
+    if (!this.componentListeners.includes(listener)) this.componentListeners.push(listener);
+  }
+
+  removeComponentListener(listener: ComponentListener): void {
+    const i = this.componentListeners.indexOf(listener);
+    if (i >= 0) this.componentListeners.splice(i, 1);
+  }
+
+  private notifyComponentEvent(component: Component, action: ComponentEventAction): void {
+    const ev: ComponentEvent = { entity: this, component, action };
+    for (const l of this.componentListeners) l(ev);
   }
   private validateComponent(component: Component): string[] {
     const errors: string[] = [];
