@@ -1,7 +1,7 @@
 import { Entity } from '../core/Entity';
 import { SphereGeometryComponent } from './SphereGeometryComponent';
 import { ShaderMaterialComponent } from './ShaderMaterialComponent';
-import { MaterialComponent } from './MaterialComponent';
+import { BasicMaterialComponent } from './BasicMaterialComponent';
 
 class Observer { calls=0; onComponentChanged(){ this.calls++; } }
 
@@ -15,9 +15,9 @@ describe('ShaderMaterialComponent', () => {
   test('conflicts with material enforced', () => {
     const e = new Entity('E');
     e.addComponent(new SphereGeometryComponent({ radius:1 }));
-    e.addComponent(new MaterialComponent({ type:'basic' }));
+    e.addComponent(new BasicMaterialComponent({}));
     const shader = new ShaderMaterialComponent({ shaderType:'custom', uniforms:{ time:{ value:0, type:'float' } } });
-    expect(() => e.addComponent(shader)).toThrow(/conflicts with existing 'material'/);
+    expect(() => e.addComponent(shader)).toThrow(/conflicts/);
   });
 
   test('uniform setters notify', () => {

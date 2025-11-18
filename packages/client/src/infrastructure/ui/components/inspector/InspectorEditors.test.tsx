@@ -4,7 +4,7 @@ import { render, cleanup, fireEvent } from "@testing-library/preact";
 import ComponentInspector from "./ComponentInspector";
 import { Entity } from "@client/domain/ecs/core/Entity";
 import { BoxGeometryComponent } from "@client/domain/ecs/components/BoxGeometryComponent";
-import MaterialComponent from "@client/domain/ecs/components/MaterialComponent";
+import { StandardMaterialComponent } from "@client/domain/ecs/components/StandardMaterialComponent";
 import { ServicesContext } from "../../hooks/useServices";
 import DefaultEcsComponentFactory from "@client/domain/ecs/core/ComponentFactory";
 
@@ -50,7 +50,7 @@ describe("Inspector editors", () => {
   it("material color setter via inspector updates MaterialComponent.color", () => {
     const e = new Entity('E');
     e.safeAddComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 }));
-    const mat = new MaterialComponent({ type: 'standard', color: 0xffffff });
+    const mat = new StandardMaterialComponent({ color: 0xffffff });
     e.safeAddComponent(mat);
 
     const mockI18n: any = { getCurrentLanguage: () => 'en', subscribe: () => () => {}, t: (k: any, f?: any) => f || k, changeLanguage: async () => {}, getTranslations: () => ({}) };
@@ -62,19 +62,15 @@ describe("Inspector editors", () => {
       </ServicesContext.Provider>
     );
 
-    // find material component section
-    const sections = document.querySelectorAll('.component-section');
-    let matSection: Element | null = null;
-    sections.forEach((s) => {
-      if (s.textContent && s.textContent.indexOf('material') >= 0) matSection = s;
-    });
+    // find material color input (more robust than searching for text)
+    const colorInputGlobal = document.querySelector('input[type="color"]') as HTMLInputElement | null;
+    expect(colorInputGlobal).not.toBeNull();
+    // find the component section that contains the color input
+    const matSection = colorInputGlobal!.closest('.component-section');
     expect(matSection).not.toBeNull();
 
-    const colorInput = matSection!.querySelector('input[type="color"]') as HTMLInputElement | null;
-    expect(colorInput).not.toBeNull();
-
     // change color to red
-    fireEvent.input(colorInput!, { target: { value: '#ff0000' } });
+    fireEvent.input(colorInputGlobal!, { target: { value: '#ff0000' } });
 
     expect(mat.color).toBe(0xff0000);
   });
@@ -82,7 +78,7 @@ describe("Inspector editors", () => {
   it('color picker conversion numeric/string behavior', () => {
     const e = new Entity('E');
     e.safeAddComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 }));
-    const mat = new MaterialComponent({ type: 'standard', color: '#00ff00' as any });
+    const mat = new StandardMaterialComponent({ color: '#00ff00' as any });
     e.safeAddComponent(mat);
 
     const mockI18n: any = { getCurrentLanguage: () => 'en', subscribe: () => () => {}, t: (k: any, f?: any) => f || k, changeLanguage: async () => {}, getTranslations: () => ({}) };
@@ -94,19 +90,9 @@ describe("Inspector editors", () => {
       </ServicesContext.Provider>
     );
 
-    const sections = document.querySelectorAll('.component-section');
-    let matSection: Element | null = null;
-    sections.forEach((s) => {
-      if (s.textContent && s.textContent.indexOf('material') >= 0) matSection = s;
-    });
-    expect(matSection).not.toBeNull();
-
-    const colorInput = matSection!.querySelector('input[type="color"]') as HTMLInputElement | null;
-    expect(colorInput).not.toBeNull();
-
-    // change color to blue
-    fireEvent.input(colorInput!, { target: { value: '#0000ff' } });
-
+    const colorInputGlobal2 = document.querySelector('input[type="color"]') as HTMLInputElement | null;
+    expect(colorInputGlobal2).not.toBeNull();
+    fireEvent.input(colorInputGlobal2!, { target: { value: '#0000ff' } });
     // we expect numeric representation
     expect(mat.color).toBe(0x0000ff);
   });

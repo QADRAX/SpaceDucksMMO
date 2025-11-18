@@ -18,7 +18,7 @@ export class ShaderMaterialComponent extends Component {
     type: "shaderMaterial",
     unique: true,
     requires: ["geometry"],
-    conflicts: ["material"],
+    conflicts: ["standardMaterial", "basicMaterial", "phongMaterial", "lambertMaterial"],
     inspector: {
       fields: [
         { key: "shaderType", label: "Shader", get: (c: ShaderMaterialComponent) => c.shaderType },

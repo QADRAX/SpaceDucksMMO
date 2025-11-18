@@ -2,9 +2,11 @@ import * as THREE from 'three';
 import { RenderSyncSystem } from './RenderSyncSystem';
 import { Entity } from '../../../domain/ecs/core/Entity';
 import { SphereGeometryComponent } from '../../../domain/ecs/components/SphereGeometryComponent';
-import { MaterialComponent } from '../../../domain/ecs/components/MaterialComponent';
+// material component replaced by concrete material types
 import { LightComponent } from '../../../domain/ecs/components/LightComponent';
 import { BoxGeometryComponent } from '../../../domain/ecs/components/BoxGeometryComponent';
+import { BasicMaterialComponent } from '../../../domain/ecs/components/BasicMaterialComponent';
+import { StandardMaterialComponent } from '../../../domain/ecs/components/StandardMaterialComponent';
 
 describe('RenderSyncSystem enable/disable handling', () => {
   let scene: THREE.Scene;
@@ -18,9 +20,8 @@ describe('RenderSyncSystem enable/disable handling', () => {
   it('hides mesh when geometry is disabled and shows when enabled', () => {
     const e = new Entity('e1');
     const geom = new SphereGeometryComponent({ radius: 1 });
-    const mat = new MaterialComponent({ type: 'basic', color: 0xffffff });
     e.addComponent(geom as any);
-    e.addComponent(mat as any);
+    e.addComponent(new BasicMaterialComponent({ color: 0xffffff }) as any);
 
     rss.addEntity(e);
 
@@ -70,7 +71,7 @@ describe('RenderSyncSystem enable/disable handling', () => {
   it('hides mesh when material is disabled and shows when enabled', () => {
     const e = new Entity('m1');
     const geom = new SphereGeometryComponent({ radius: 1 });
-    const mat = new MaterialComponent({ type: 'basic', color: 0xffffff });
+    const mat = new BasicMaterialComponent({ color: 0xffffff });
     e.addComponent(geom as any);
     e.addComponent(mat as any);
 
@@ -118,9 +119,8 @@ describe('RenderSyncSystem enable/disable handling', () => {
   it('removing geometry actually removes registry entry and disposes resources', () => {
     const e = new Entity('rem1');
     const geom = new SphereGeometryComponent({ radius: 1 });
-    const mat = new MaterialComponent({ type: 'basic', color: 0xffffff });
     e.addComponent(geom as any);
-    e.addComponent(mat as any);
+    e.addComponent(new BasicMaterialComponent({ color: 0xffffff }) as any);
 
     // spy on scene.remove
     const spyRemove = jest.spyOn((scene as any), 'remove');
@@ -135,7 +135,7 @@ describe('RenderSyncSystem enable/disable handling', () => {
 
     // remove material component from entity -> should trigger registry.remove
     // (removing geometry would be prevented because material requires it)
-    e.removeComponent('material');
+    e.removeComponent('basicMaterial');
 
     expect((rss as any).registry.has('rem1')).toBe(false);
     // scene.remove should be called
@@ -155,7 +155,7 @@ describe('RenderSyncSystem enable/disable handling', () => {
 
     // add geometry then material
     e.addComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 } as any) as any);
-    e.addComponent(new MaterialComponent({ type: 'standard', color: 0xffffff } as any));
+    e.addComponent(new StandardMaterialComponent({ color: 0xffffff } as any));
 
     // the entity listener should have created the mesh
     meshes = scene.children.filter((c) => c instanceof THREE.Mesh);
@@ -167,7 +167,7 @@ describe('RenderSyncSystem enable/disable handling', () => {
 
     // Initial geometry + material
     e.addComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 } as any) as any);
-    e.addComponent(new MaterialComponent({ type: 'standard', color: 0xffffff } as any));
+    e.addComponent(new StandardMaterialComponent({ color: 0xffffff } as any));
 
     rss.addEntity(e);
 
@@ -176,7 +176,7 @@ describe('RenderSyncSystem enable/disable handling', () => {
     expect(meshes.length).toBeGreaterThanOrEqual(1);
 
     // remove components
-    e.removeComponent('material');
+    e.removeComponent('standardMaterial');
     e.removeComponent('boxGeometry');
 
     // after removals, mesh should be removed
@@ -185,7 +185,7 @@ describe('RenderSyncSystem enable/disable handling', () => {
 
     // re-add components
     e.addComponent(new BoxGeometryComponent({ width: 2, height: 2, depth: 2 } as any) as any);
-    e.addComponent(new MaterialComponent({ type: 'standard', color: 0xff0000 } as any));
+    e.addComponent(new StandardMaterialComponent({ color: 0xff0000 } as any));
 
     // the listener should recreate the mesh
     meshes = scene.children.filter((c) => c instanceof THREE.Mesh);

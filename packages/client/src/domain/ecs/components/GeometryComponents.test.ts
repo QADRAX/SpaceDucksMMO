@@ -6,7 +6,7 @@ import { ConeGeometryComponent } from './ConeGeometryComponent';
 import { TorusGeometryComponent } from './TorusGeometryComponent';
 import { CustomGeometryComponent } from './CustomGeometryComponent';
 import { Entity } from '../core/Entity';
-import { MaterialComponent } from './MaterialComponent';
+import { BasicMaterialComponent } from './BasicMaterialComponent';
 
 describe('Geometry components bounding radius', () => {
   test('BoxGeometryComponent diagonal/2 scaled', () => {
@@ -57,7 +57,7 @@ describe('Entity geometry removal protection', () => {
     const e = new Entity('E');
     const box = new BoxGeometryComponent({ width:1, height:1, depth:1 });
     e.addComponent(box);
-    const mat = new MaterialComponent({ type: 'basic', color: '#fff' });
+    const mat = new BasicMaterialComponent({ color: '#fff' });
     // MaterialComponent requires geometry; adding it should succeed
     e.addComponent(mat);
     // Removing the geometry should throw because material requires it

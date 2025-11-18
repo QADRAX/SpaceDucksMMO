@@ -16,16 +16,18 @@ describe("DefaultEcsComponentFactory", () => {
     // initially, geometry types should be creatable, material should NOT (requires geometry)
     const initial = factory.listCreatableComponents(e).map((d) => d.type);
     expect(initial).toContain("boxGeometry");
-    expect(initial).not.toContain("material");
+    expect(initial).not.toContain("standardMaterial");
+    expect(initial).not.toContain("basicMaterial");
 
     // add geometry and verify material becomes creatable
     e.addComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 }) as any);
     const afterGeom = factory.listCreatableComponents(e).map((d) => d.type);
-    expect(afterGeom).toContain("material");
+    expect(afterGeom).toContain("standardMaterial");
 
     // add shaderMaterial -- material should now be excluded due to conflict
     e.addComponent(new ShaderMaterialComponent({ shaderType: "atmosphere", uniforms: {} }));
     const afterShader = factory.listCreatableComponents(e).map((d) => d.type);
-    expect(afterShader).not.toContain("material");
+    expect(afterShader).not.toContain("standardMaterial");
+    expect(afterShader).not.toContain("basicMaterial");
   });
 });

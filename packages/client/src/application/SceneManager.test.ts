@@ -328,7 +328,7 @@ describe('SceneManager debug passthrough', () => {
         expect(added).toContain('d1');
         expect(added).toContain('d2');
       } catch (err) {
-        unsub(); done.fail(err);
+        unsub(); done.fail(String(err));
         return;
       }
 
@@ -343,7 +343,7 @@ describe('SceneManager debug passthrough', () => {
           unsub();
           done();
         } catch (err) {
-          unsub(); done.fail(err);
+          unsub(); done.fail(String(err));
         }
       }, 10);
     }, 10);

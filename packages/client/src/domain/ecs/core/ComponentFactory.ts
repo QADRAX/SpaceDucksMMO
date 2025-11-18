@@ -7,7 +7,10 @@ import { CylinderGeometryComponent } from "@client/domain/ecs/components/Cylinde
 import { ConeGeometryComponent } from "@client/domain/ecs/components/ConeGeometryComponent";
 import { TorusGeometryComponent } from "@client/domain/ecs/components/TorusGeometryComponent";
 import { CustomGeometryComponent } from "@client/domain/ecs/components/CustomGeometryComponent";
-import { MaterialComponent } from "@client/domain/ecs/components/MaterialComponent";
+import { StandardMaterialComponent } from "@client/domain/ecs/components/StandardMaterialComponent";
+import { BasicMaterialComponent } from "@client/domain/ecs/components/BasicMaterialComponent";
+import { PhongMaterialComponent } from "@client/domain/ecs/components/PhongMaterialComponent";
+import { LambertMaterialComponent } from "@client/domain/ecs/components/LambertMaterialComponent";
 import { ShaderMaterialComponent } from "@client/domain/ecs/components/ShaderMaterialComponent";
 import { OrbitComponent } from "@client/domain/ecs/components/OrbitComponent";
 import { CameraViewComponent } from "@client/domain/ecs/components/CameraViewComponent";
@@ -22,7 +25,10 @@ export type KnownComponentType =
   | "coneGeometry"
   | "torusGeometry"
   | "customGeometry"
-  | "material"
+  | "standardMaterial"
+  | "basicMaterial"
+  | "phongMaterial"
+  | "lambertMaterial"
   | "shaderMaterial"
   | "orbit"
   | "cameraView"
@@ -64,11 +70,16 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
     }
 
     // material requires any geometry and conflicts with shaderMaterial
-    if (hasAnyGeometry && !has("shaderMaterial"))
-      defs.push({ type: "material", label: "Material" });
+    const hasAnyMaterial = has("standardMaterial") || has("basicMaterial") || has("phongMaterial") || has("lambertMaterial");
+    if (hasAnyGeometry && !hasAnyMaterial && !has("shaderMaterial")) {
+      defs.push({ type: "standardMaterial", label: "Standard Material" });
+      defs.push({ type: "basicMaterial", label: "Basic Material" });
+      defs.push({ type: "phongMaterial", label: "Phong Material" });
+      defs.push({ type: "lambertMaterial", label: "Lambert Material" });
+    }
 
-    // shaderMaterial requires any geometry and conflicts with material
-    if (hasAnyGeometry && !has("material"))
+    // shaderMaterial requires any geometry and conflicts with any concrete material
+    if (hasAnyGeometry && !hasAnyMaterial)
       defs.push({ type: "shaderMaterial", label: "Shader Material" });
 
     // orbit (unique)
@@ -103,8 +114,14 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
         return new TorusGeometryComponent(params ?? { radius: 1, tube: 0.3 });
       case "customGeometry":
         return new CustomGeometryComponent(params ?? { key: "" });
-      case "material":
-        return new MaterialComponent({ type: "standard", color: 0xffffff });
+      case "standardMaterial":
+        return new StandardMaterialComponent({ color: 0xffffff });
+      case "basicMaterial":
+        return new BasicMaterialComponent({ color: 0xffffff });
+      case "phongMaterial":
+        return new PhongMaterialComponent({ color: 0xffffff });
+      case "lambertMaterial":
+        return new LambertMaterialComponent({ color: 0xffffff });
       case "shaderMaterial":
         return new ShaderMaterialComponent({ shaderType: "atmosphere", uniforms: {} });
       case "orbit":

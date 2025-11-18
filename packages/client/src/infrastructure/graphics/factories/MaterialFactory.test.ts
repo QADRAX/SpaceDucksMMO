@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import { MaterialFactory } from './MaterialFactory';
-import { MaterialComponent } from '../../../domain/ecs/components/MaterialComponent';
+import { StandardMaterialComponent } from '../../../domain/ecs/components/StandardMaterialComponent';
+import { BasicMaterialComponent } from '../../../domain/ecs/components/BasicMaterialComponent';
+import { PhongMaterialComponent } from '../../../domain/ecs/components/PhongMaterialComponent';
+import { LambertMaterialComponent } from '../../../domain/ecs/components/LambertMaterialComponent';
 import { TextureCache } from './TextureCache';
 
 // Mock TextureCache
@@ -22,8 +25,7 @@ describe('MaterialFactory', () => {
 
   describe('build', () => {
     it('should create MeshStandardMaterial for standard type', () => {
-      const component = new MaterialComponent({
-        type: 'standard',
+      const component = new StandardMaterialComponent({
         color: '#ff0000',
         metalness: 0.5,
         roughness: 0.3,
@@ -39,8 +41,7 @@ describe('MaterialFactory', () => {
     });
 
     it('should create MeshBasicMaterial for basic type', () => {
-      const component = new MaterialComponent({
-        type: 'basic',
+      const component = new BasicMaterialComponent({
         color: '#00ff00',
         transparent: true,
         opacity: 0.7,
@@ -56,8 +57,7 @@ describe('MaterialFactory', () => {
     });
 
     it('should create MeshPhongMaterial for phong type', () => {
-      const component = new MaterialComponent({
-        type: 'phong',
+      const component = new PhongMaterialComponent({
         color: '#0000ff',
         specular: '#ffffff',
         shininess: 30,
@@ -73,8 +73,7 @@ describe('MaterialFactory', () => {
     });
 
     it('should create MeshLambertMaterial for lambert type', () => {
-      const component = new MaterialComponent({
-        type: 'lambert',
+      const component = new LambertMaterialComponent({
         color: '#ffff00',
         emissive: '#ff0000',
       } as any);
@@ -88,20 +87,18 @@ describe('MaterialFactory', () => {
     });
 
     it('should create default standard material for unknown type', () => {
-      const component = new MaterialComponent({
-        type: 'unknown',
-      } as any);
+      const component = new StandardMaterialComponent({} as any);
 
       const material = MaterialFactory.build(component, mockTextureCache);
 
       expect(material).toBeInstanceOf(THREE.MeshStandardMaterial);
-      expect((material as THREE.MeshStandardMaterial).color.getHex()).toBe(0xcccccc);
+      // StandardMaterialComponent without explicit color will produce
+      // a MeshStandardMaterial with default white color (0xffffff)
+      expect((material as THREE.MeshStandardMaterial).color.getHex()).toBe(0xffffff);
     });
 
     it('should load and apply texture map asynchronously', async () => {
-      const component = new MaterialComponent({
-        type: 'basic',
-      } as any);
+      const component = new BasicMaterialComponent({} as any);
       component.texture = 'path/to/texture.png';
 
       const material = MaterialFactory.build(component, mockTextureCache);
@@ -115,9 +112,7 @@ describe('MaterialFactory', () => {
     });
 
     it('should load and apply normal map asynchronously', async () => {
-      const component = new MaterialComponent({
-        type: 'standard',
-      } as any);
+      const component = new StandardMaterialComponent({} as any);
       component.normalMap = 'path/to/normal.png';
 
       const material = MaterialFactory.build(component, mockTextureCache);
@@ -130,9 +125,7 @@ describe('MaterialFactory', () => {
     });
 
     it('should load and apply environment map asynchronously', async () => {
-      const component = new MaterialComponent({
-        type: 'standard',
-      } as any);
+      const component = new StandardMaterialComponent({} as any);
       component.envMap = 'path/to/env.png';
 
       const material = MaterialFactory.build(component, mockTextureCache);
@@ -145,9 +138,7 @@ describe('MaterialFactory', () => {
     });
 
     it('should load multiple textures', async () => {
-      const component = new MaterialComponent({
-        type: 'standard',
-      } as any);
+      const component = new StandardMaterialComponent({} as any);
       component.texture = 'diffuse.png';
       component.normalMap = 'normal.png';
       component.envMap = 'env.png';
@@ -166,9 +157,7 @@ describe('MaterialFactory', () => {
     });
 
     it('should not load textures if not specified', () => {
-      const component = new MaterialComponent({
-        type: 'basic',
-      } as any);
+      const component = new BasicMaterialComponent({} as any);
 
       MaterialFactory.build(component, mockTextureCache);
 
@@ -176,19 +165,22 @@ describe('MaterialFactory', () => {
     });
 
     it('should handle all material types without throwing', () => {
-      const types = ['standard', 'basic', 'phong', 'lambert', 'unknown'];
+      const components = [
+        new StandardMaterialComponent({} as any),
+        new BasicMaterialComponent({} as any),
+        new PhongMaterialComponent({} as any),
+        new LambertMaterialComponent({} as any),
+      ];
 
-      types.forEach((type) => {
+      components.forEach((component) => {
         expect(() => {
-          const component = new MaterialComponent({ type } as any);
-          MaterialFactory.build(component, mockTextureCache);
+          MaterialFactory.build(component as any, mockTextureCache);
         }).not.toThrow();
       });
     });
 
     it('should preserve wireframe setting for basic material', () => {
-      const component = new MaterialComponent({
-        type: 'basic',
+      const component = new BasicMaterialComponent({
         wireframe: true,
       } as any);
 
@@ -198,8 +190,7 @@ describe('MaterialFactory', () => {
     });
 
     it('should handle emissive properties', () => {
-      const component = new MaterialComponent({
-        type: 'standard',
+      const component = new StandardMaterialComponent({
         emissive: '#ff0000',
         emissiveIntensity: 0.5,
       } as any);
