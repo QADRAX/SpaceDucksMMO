@@ -4,7 +4,7 @@ type IconProps = {
   className?: string;
 };
 
-export default function PlusIcon({ 
+export function PlusIcon({ 
   size = 24, 
   color = "currentColor",
   className = ""

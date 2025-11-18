@@ -45,4 +45,3 @@ export function Panel({ title, collapsible = true, collapsed: collapsedProp, onT
   );
 }
 
-export default Panel;

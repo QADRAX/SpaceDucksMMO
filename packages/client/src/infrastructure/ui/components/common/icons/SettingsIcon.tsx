@@ -4,7 +4,7 @@ type IconProps = {
   className?: string;
 };
 
-export default function SettingsIcon({ 
+export function SettingsIcon({ 
   size = 24, 
   color = "currentColor",
   className = ""

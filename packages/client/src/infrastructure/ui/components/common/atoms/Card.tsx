@@ -24,4 +24,3 @@ export function Card({ as = 'div', className = '', variant = 'default', clickabl
   );
 }
 
-export default Card;

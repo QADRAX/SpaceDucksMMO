@@ -4,7 +4,7 @@ type IconProps = {
   className?: string;
 };
 
-export default function TrashIcon({ 
+export function TrashIcon({ 
   size = 24, 
   color = "currentColor",
   className = ""

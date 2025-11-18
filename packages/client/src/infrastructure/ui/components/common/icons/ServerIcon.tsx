@@ -4,7 +4,7 @@ type IconProps = {
   className?: string;
 };
 
-export default function ServerIcon({ 
+export function ServerIcon({ 
   size = 24, 
   color = "currentColor",
   className = ""

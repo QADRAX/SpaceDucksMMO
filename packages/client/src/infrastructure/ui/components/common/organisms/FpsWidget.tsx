@@ -51,4 +51,3 @@ export function FpsWidget({ controller, updateIntervalMs = 500, style }: Props) 
   );
 }
 
-export default FpsWidget;

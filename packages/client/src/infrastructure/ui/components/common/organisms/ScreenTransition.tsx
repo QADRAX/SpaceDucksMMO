@@ -30,4 +30,3 @@ export function ScreenTransition({ isTransitioning, duration = 300 }: ScreenTran
   );
 }
 
-export default ScreenTransition;
