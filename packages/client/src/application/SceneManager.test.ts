@@ -281,4 +281,71 @@ describe('SceneManager debug passthrough', () => {
       done();
     }, 10);
   });
+
+  it('forwards entity-added on switch to populated scene and entity-removed when switching back', (done) => {
+    const engine: any = { setScene: () => {} };
+    const settingsService: any = {};
+    const manager = new (SceneManager as any)(engine, settingsService);
+
+    const demoListeners: Array<(ev: any) => void> = [];
+    const demoScene: any = {
+      id: 'demo',
+      setup: () => Promise.resolve(),
+      update: (_: number) => {},
+      teardown: () => Promise.resolve(),
+      addEntity: () => {},
+      removeEntity: () => {},
+      setActiveCamera: () => {},
+      getActiveCamera: () => null,
+      getEntities: () => [{ id: 'd1' }, { id: 'd2' }],
+      subscribeChanges: (l: (ev: any) => void) => { demoListeners.push(l); return () => { const i = demoListeners.indexOf(l); if (i>=0) demoListeners.splice(i,1); }; }
+    };
+
+    const mainScene: any = {
+      id: 'main',
+      setup: () => Promise.resolve(),
+      update: (_: number) => {},
+      teardown: () => Promise.resolve(),
+      getEntities: () => [],
+      subscribeChanges: (_: (ev: any) => void) => { return () => {}; }
+    };
+
+    manager.register(mainScene);
+    manager.register(demoScene);
+
+    const events: any[] = [];
+    const unsub = manager.subscribeToSceneChanges((ev: any) => events.push(ev));
+
+    // start on main (empty)
+    manager.switchTo('main');
+
+    // switch to demo (populated) -> should forward entity-added for d1,d2
+    manager.switchTo('demo');
+
+    setTimeout(() => {
+      const added = events.filter((e) => e.kind === 'entity-added').map((e) => e.entity.id);
+      try {
+        expect(added).toContain('d1');
+        expect(added).toContain('d2');
+      } catch (err) {
+        unsub(); done.fail(err);
+        return;
+      }
+
+      // switch back to main -> should emit entity-removed for previous ids
+      manager.switchTo('main');
+      setTimeout(() => {
+        const removed = events.filter((e) => e.kind === 'entity-removed').map((e) => e.entityId);
+        try {
+          expect(removed).toContain('d1');
+          expect(removed).toContain('d2');
+          expect(manager.getEntities().length).toBe(0);
+          unsub();
+          done();
+        } catch (err) {
+          unsub(); done.fail(err);
+        }
+      }, 10);
+    }, 10);
+  });
 });

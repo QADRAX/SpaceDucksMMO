@@ -48,6 +48,16 @@ export default function SceneHierarchyTree({
   );
 
   useEffect(() => {
+    const update = () => {
+      const arr = services.sceneManager?.getEntities
+        ? Array.from(services.sceneManager.getEntities())
+        : [];
+      setEntities(arr);
+    };
+
+    // initial refresh so we reflect the current scene immediately
+    try { update(); } catch {}
+
     const unsub = services.sceneManager?.subscribeToSceneChanges((ev) => {
       // refresh on any hierarchy/entity change
       if (
@@ -55,10 +65,7 @@ export default function SceneHierarchyTree({
           ev.kind
         )
       ) {
-        const arr = services.sceneManager?.getEntities
-          ? Array.from(services.sceneManager.getEntities())
-          : [];
-        setEntities(arr);
+        update();
       }
       if (ev.kind === "error" && onError) onError(ev.message || "");
     });
