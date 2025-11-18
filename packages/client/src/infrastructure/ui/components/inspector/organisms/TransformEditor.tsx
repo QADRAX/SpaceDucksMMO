@@ -6,7 +6,7 @@ import { Vector3Input } from '../../common/molecules/Vector3Input';
 
 type Props = { entity?: Entity };
 
-export default function TransformEditor({ entity }: Props) {
+export function TransformEditor({ entity }: Props) {
   const { t } = useI18n();
   const transform = entity?.transform;
 
@@ -35,14 +35,12 @@ export default function TransformEditor({ entity }: Props) {
 
   if (!entity || !transform)
     return (
-      <div class="small-label">
-        {t("inspector.noEntitySelected", "No entity selected")}
-      </div>
+      <div className="small-label">{t("inspector.noEntitySelected", "No entity selected")}</div>
     );
 
   return (
-    <div class="component-section">
-      <div class="component-header">
+    <div className="component-section">
+      <div className="component-header">
         <strong>{t("inspector.transform", "Transform")}</strong>
       </div>
       <div style={{ paddingTop: 6 }}>

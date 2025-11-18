@@ -7,11 +7,11 @@ type ListItemProps = {
   hover?: boolean;
 };
 
-export default function ListItem({ children, onClick, hover = true }: ListItemProps) {
+export function ListItem({ children, onClick, hover = true }: ListItemProps) {
   return (
     <div
       className={`sd-list-item ${hover ? "sd-list-item--hover" : ""} ${onClick ? "sd-list-item--clickable" : ""}`}
-      onClick={onClick}
+      onClick={() => onClick && onClick()}
     >
       {children}
     </div>

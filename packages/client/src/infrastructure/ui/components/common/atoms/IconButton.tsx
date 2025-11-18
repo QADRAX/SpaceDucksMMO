@@ -3,14 +3,14 @@ import type { ComponentChildren } from "preact";
 
 type IconButtonProps = {
   icon: ComponentChildren;
-  onClick?: (e: MouseEvent) => void;
+  onClick?: (e: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
   title?: string;
   variant?: "primary" | "secondary" | "danger" | "ghost";
   size?: "small" | "medium" | "large";
   disabled?: boolean;
 };
 
-export default function IconButton({
+export function IconButton({
   icon,
   onClick,
   title,
@@ -27,7 +27,7 @@ export default function IconButton({
   return (
     <button
       className={classes}
-      onClick={onClick as any}
+      onClick={onClick}
       title={title}
       disabled={disabled}
     >

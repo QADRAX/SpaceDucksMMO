@@ -6,7 +6,7 @@ type ListProps = {
   emptyMessage?: string;
 };
 
-export default function List({ children, emptyMessage = "No items" }: ListProps) {
+export function List({ children, emptyMessage = "No items" }: ListProps) {
   const hasChildren = children && (Array.isArray(children) ? children.length > 0 : true);
 
   if (!hasChildren && emptyMessage) {

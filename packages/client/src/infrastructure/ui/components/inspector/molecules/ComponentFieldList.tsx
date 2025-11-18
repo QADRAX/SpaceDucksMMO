@@ -1,4 +1,4 @@
-import ComponentFieldRow from './ComponentFieldRow';
+import { ComponentFieldRow } from './ComponentFieldRow';
 import type { InspectorFieldConfig } from '@client/domain/ecs/core/ComponentMetadata';
 
 type Props = {
@@ -6,7 +6,7 @@ type Props = {
   services?: any;
 };
 
-export default function ComponentFieldList({ component, services }: Props) {
+export function ComponentFieldList({ component, services }: Props) {
   const meta = (component as any).metadata as any | undefined;
   let fields: { key: string; cfg?: InspectorFieldConfig }[] = [];
   if (meta?.inspector && Array.isArray(meta.inspector.fields)) {

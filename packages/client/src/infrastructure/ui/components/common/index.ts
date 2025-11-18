@@ -1,21 +1,22 @@
 // Form components
-export { default as FormSection } from "./molecules/FormSection";
-export { default as FormField } from "./molecules/FormField";
-export { default as Select } from "./molecules/Select";
-export { default as Checkbox } from "./atoms/Checkbox";
-export { default as Slider } from "./molecules/Slider";
-export { default as InputRow } from "./molecules/InputRow";
+export { FormSection } from "./molecules/FormSection";
+export { FormField } from "./molecules/FormField";
+export { Select } from "./molecules/Select";
+export { Checkbox } from "./atoms/Checkbox";
+export { Slider } from "./molecules/Slider";
+export { InputRow } from "./molecules/InputRow";
 
 // List components
-export { default as List } from "./molecules/List";
-export { default as ListItem } from "./molecules/ListItem";
-export { default as ServerListItem } from "./molecules/ServerListItem";
+export { List } from "./molecules/List";
+export { ListItem } from "./molecules/ListItem";
+export { ServerListItem } from "./molecules/ServerListItem";
 
 // Utility / atoms / organisms
-export { default as Tooltip } from "./atoms/Tooltip";
-export { default as Popup } from "./organisms/Popup";
-export { default as Button } from "./atoms/Button";
-export { default as IconButton } from "./atoms/IconButton";
+export { Tooltip } from "./atoms/Tooltip";
+export { Button } from "./atoms/Button";
+export { IconButton } from "./atoms/IconButton";
+
+export { Popup } from "./organisms/Popup";
 
 // Property and vector helpers
 export { PropertyCheckbox } from "./atoms/PropertyCheckbox";

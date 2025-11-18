@@ -7,14 +7,14 @@ type CheckboxProps = {
   disabled?: boolean;
 };
 
-export default function Checkbox({ checked, onChange, id, disabled }: CheckboxProps) {
+export function Checkbox({ checked, onChange, id, disabled }: CheckboxProps) {
   return (
     <input
       type="checkbox"
       id={id}
       className="sd-checkbox"
       checked={checked}
-      onChange={(e) => onChange((e.target as HTMLInputElement).checked)}
+      onInput={(e: JSX.TargetedEvent<HTMLInputElement, Event>) => onChange(e.currentTarget.checked)}
       disabled={disabled}
     />
   );

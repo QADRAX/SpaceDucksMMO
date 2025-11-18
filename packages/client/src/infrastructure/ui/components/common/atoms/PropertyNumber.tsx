@@ -1,5 +1,3 @@
-/** @jsxImportSource preact */
-import { h } from 'preact';
 import { useState } from 'preact/hooks';
 import './property-number.css';
 
@@ -22,15 +20,13 @@ export function PropertyNumber({
     Number.isFinite(value) ? String(value) : ''
   );
 
-  const handleRangeChange = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    const newValue = parseFloat(target.value);
+  const handleRangeChange = (e: JSX.TargetedEvent<HTMLInputElement, Event>) => {
+    const newValue = parseFloat(e.currentTarget.value);
     if (!isNaN(newValue)) onChange(newValue);
   };
 
-  const handleNumberInput = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    const raw = target.value;
+  const handleNumberInput = (e: JSX.TargetedEvent<HTMLInputElement, Event>) => {
+    const raw = e.currentTarget.value;
     if (raw === "") {
       setText("");
       return;
@@ -48,24 +44,24 @@ export function PropertyNumber({
   const numberValue = text === undefined || text === null || text === '' ? (Number.isFinite(value) ? String(value) : '') : text;
 
   return (
-    <div class="property-number">
+    <div className="property-number">
       <input
         type="range"
-        value={sliderValue as any}
+        value={sliderValue}
         onInput={handleRangeChange}
         min={min}
         max={max}
         step={step}
-        class="property-slider"
+        className="property-slider"
       />
       <input
         type="number"
-        value={numberValue as any}
+        value={numberValue}
         onInput={handleNumberInput}
         min={min}
         max={max}
         step={step}
-        class="property-number-display"
+        className="property-number-display"
       />
     </div>
   );

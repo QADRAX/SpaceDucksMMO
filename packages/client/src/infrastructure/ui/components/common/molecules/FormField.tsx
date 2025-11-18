@@ -7,7 +7,7 @@ type FormFieldProps = {
   htmlFor?: string;
 };
 
-export default function FormField({ label, children, htmlFor }: FormFieldProps) {
+export function FormField({ label, children, htmlFor }: FormFieldProps) {
   return (
     <div className="sd-form-field">
       <label className="sd-form-field__label" htmlFor={htmlFor}>

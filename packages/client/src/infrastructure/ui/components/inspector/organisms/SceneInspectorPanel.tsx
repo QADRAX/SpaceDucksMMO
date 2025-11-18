@@ -1,14 +1,14 @@
 import { useEffect, useState } from "preact/hooks";
-import SceneHierarchyTree from "./SceneHierarchyTree";
-import ComponentInspector from "./ComponentInspector";
-import TransformEditor from "./TransformEditor";
-import CameraSelector from "../molecules/CameraSelector";
+import { SceneHierarchyTree } from "./SceneHierarchyTree";
+import { ComponentInspector } from "./ComponentInspector";
+import { TransformEditor } from "./TransformEditor";
+import { CameraSelector } from "../molecules/CameraSelector";
 import { useServices } from '../../../hooks/useServices';
 import { useI18n } from '../../../hooks/useI18n';
 import { DraggablePanel } from '../../common/organisms/DraggablePanel';
 import "./inspector.css";
 
-export default function SceneInspectorPanel() {
+export function SceneInspectorPanel() {
   const services = useServices();
   const { t } = useI18n();
   const sceneManager = services.sceneManager;
@@ -66,8 +66,8 @@ export default function SceneInspectorPanel() {
       title={t("inspector.title", "Scene Inspector")}
       theme="gold"
     >
-      <div class="scene-inspector">
-        <div class="inspector-left">
+      <div className="scene-inspector">
+        <div className="inspector-left">
           <div class="small-label">
             {t("inspector.scene", "Scene")}: {sceneManager?.getCurrent()?.id}
           </div>
@@ -86,7 +86,7 @@ export default function SceneInspectorPanel() {
             }}
           />
           {!inspectable && (
-            <div class="error-box">
+            <div className="error-box">
               {t("inspector.notInspectable", "Scene not inspectable")}
             </div>
           )}
@@ -99,8 +99,8 @@ export default function SceneInspectorPanel() {
           />
         </div>
 
-        <div class="inspector-right">
-          <div class="small-label">
+        <div className="inspector-right">
+          <div className="small-label">
             {t("inspector.selected", "Selected")}:{" "}
             {selected || t("inspector.none", "None")}
           </div>

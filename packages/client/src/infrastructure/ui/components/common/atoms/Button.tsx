@@ -1,11 +1,12 @@
 import "./button.css";
+import type { ComponentChildren } from 'preact';
 
 type ButtonVariant = "primary" | "secondary" | "danger" | "ghost" | "success";
 type ButtonSize = "small" | "medium" | "large";
 
 type ButtonProps = {
-  children: preact.ComponentChildren;
-  onClick?: (e: MouseEvent) => void;
+  children: ComponentChildren;
+  onClick?: (e: JSX.TargetedMouseEvent<HTMLButtonElement>) => void;
   className?: string;
   disabled?: boolean;
   variant?: ButtonVariant;
@@ -14,7 +15,7 @@ type ButtonProps = {
   type?: "button" | "submit" | "reset";
 };
 
-export default function Button({
+export function Button({
   children,
   onClick,
   className = "",
@@ -38,7 +39,7 @@ export default function Button({
     <button
       type={type}
       className={classes}
-      onClick={onClick as any}
+      onClick={onClick}
       disabled={disabled}
     >
       {children}

@@ -9,32 +9,19 @@ type Props = {
   className?: string;
 };
 
-export default function ReferenceField({
-  value,
-  onChange,
-  placeholder,
-  className,
-}: Props) {
+export function ReferenceField({ value, onChange, placeholder, className }: Props) {
   const services = useServices();
   const { t } = useI18n();
-  const [entities, setEntities] = useState(() =>
-    Array.from(services.sceneManager?.getEntities() || [])
-  );
+  const [entities, setEntities] = useState(() => Array.from(services.sceneManager?.getEntities() || []));
 
   useEffect(() => {
     const mgr = services.sceneManager;
     if (!mgr) return;
     const update = () => setEntities(Array.from(mgr.getEntities()));
-    // initial
     update();
     const unsub = mgr.subscribeToSceneChanges
       ? mgr.subscribeToSceneChanges((ev: any) => {
-          if (
-            ["entity-added", "entity-removed", "hierarchy-changed"].includes(
-              ev.kind
-            )
-          )
-            update();
+          if (["entity-added", "entity-removed", "hierarchy-changed"].includes(ev.kind)) update();
         })
       : undefined;
     return () => {
@@ -47,26 +34,20 @@ export default function ReferenceField({
   const isValid = !value || entities.find((e: any) => e.id === value);
 
   return (
-    <div class={`reference-field ${className || ""}`}>
+    <div className={`reference-field ${className || ""}`}>
       <select
-        class="select-input"
+        className="select-input"
         value={value || ""}
-        onChange={(e: any) => onChange(e.target.value || null)}
+        onChange={(e: JSX.TargetedEvent<HTMLSelectElement, Event>) => onChange(e.currentTarget.value || null)}
       >
-        <option value="">
-          {placeholder || t("inspector.noParent", "No parent")}
-        </option>
+        <option value="">{placeholder || t("inspector.noParent", "No parent")}</option>
         {entities.map((ent) => (
           <option key={ent.id} value={ent.id}>
             {ent.id}
           </option>
         ))}
       </select>
-      {!isValid && (
-        <div class="small-label invalid-ref">
-          {t("inspector.invalidReference", "Invalid reference")}
-        </div>
-      )}
+      {!isValid && <div className="small-label invalid-ref">{t("inspector.invalidReference", "Invalid reference")}</div>}
     </div>
   );
 }

@@ -8,12 +8,12 @@ type Props = {
   services?: any;
 };
 
-export default function ComponentFieldRow({ component, fieldKey, fieldConfig, services }: Props) {
+export function ComponentFieldRow({ component, fieldKey, fieldConfig, services }: Props) {
   const label = fieldConfig?.label ?? fieldKey;
   return (
-    <div class="prop-row" key={fieldKey}>
-      <div class="prop-key">{label}</div>
-      <div class="prop-value">
+    <div className="prop-row" key={fieldKey}>
+      <div className="prop-key">{label}</div>
+      <div className="prop-value">
         {renderPropertyWithConfig(component, fieldKey, fieldConfig, services)}
       </div>
     </div>

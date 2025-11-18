@@ -17,7 +17,9 @@ export type AnyGeometryComponent =
   | CustomGeometryComponent;
 
 export class GeometryFactory {
-  static build(comp: AnyGeometryComponent): THREE.BufferGeometry {
+  // Accept either a concrete geometry component (classes used in ECS)
+  // or a legacy parameter object (e.g. { type: 'sphere', radius: 1, ... }).
+  static build(comp: AnyGeometryComponent | Record<string, any>): THREE.BufferGeometry {
     // Support both legacy short names (e.g. 'sphere') and new concrete types
     const t = String(comp.type || '').toLowerCase();
     switch (t) {

@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { h } from 'preact';
 import { render, cleanup } from '@testing-library/preact';
-import TextureSelector from './TextureSelector';
+import { TextureSelector } from './TextureSelector';
 
 afterEach(() => cleanup());
 

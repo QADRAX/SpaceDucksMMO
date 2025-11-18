@@ -7,7 +7,7 @@ type TooltipProps = {
   position?: "top" | "bottom" | "left" | "right";
 };
 
-export default function Tooltip({ children, visible, position = "top" }: TooltipProps) {
+export function Tooltip({ children, visible, position = "top" }: TooltipProps) {
   if (!visible) return null;
 
   return (

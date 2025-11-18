@@ -1,5 +1,3 @@
-/** @jsxImportSource preact */
-import { h } from 'preact';
 import { VectorAxisInput } from '../atoms/VectorAxisInput';
 import './vector3-input.css';
 
@@ -23,7 +21,7 @@ export function Vector3Input({
   convertTo
 }: Vector3InputProps) {
   return (
-    <div class="vector3-input">
+    <div className="vector3-input">
       <VectorAxisInput
         label="X"
         value={value.x}

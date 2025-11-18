@@ -1,6 +1,6 @@
 import { useState, useRef } from "preact/hooks";
 import "./slider.css";
-import Tooltip from "../atoms/Tooltip";
+import { Tooltip } from "../atoms";
 
 type SliderProps = {
   value: number;
@@ -14,7 +14,7 @@ type SliderProps = {
   formatValue?: (value: number) => string;
 };
 
-export default function Slider({
+export function Slider({
   value,
   onChange,
   min = 0,
@@ -35,11 +35,11 @@ export default function Slider({
         type="range"
         id={id}
         className="sd-slider"
-        value={value as any}
+        value={value}
         min={min}
         max={max}
         step={step}
-        onChange={(e) => onChange(Number((e.target as HTMLInputElement).value))}
+        onInput={(e: JSX.TargetedEvent<HTMLInputElement, Event>) => onChange(Number(e.currentTarget.value))}
         onMouseEnter={() => setShowValue(true)}
         onMouseLeave={() => setShowValue(false)}
         disabled={disabled}

@@ -6,7 +6,7 @@ type FormSectionProps = {
   children: ComponentChildren;
 };
 
-export default function FormSection({ title, children }: FormSectionProps) {
+export function FormSection({ title, children }: FormSectionProps) {
   return (
     <div className="sd-form-section">
       <h3 className="sd-form-section__title">{title}</h3>

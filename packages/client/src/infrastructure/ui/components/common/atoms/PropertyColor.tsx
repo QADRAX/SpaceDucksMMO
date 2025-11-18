@@ -1,6 +1,5 @@
-/** @jsxImportSource preact */
-import { h } from 'preact';
 import './property-color.css';
+import { useState, useEffect } from 'preact/hooks';
 
 export interface PropertyColorProps {
   value: number; // Hex number (e.g., 0xff69b4)
@@ -8,21 +7,29 @@ export interface PropertyColorProps {
 }
 
 export function PropertyColor({ value, onChange }: PropertyColorProps) {
-  const colorString = `#${value.toString(16).padStart(6, '0')}`;
-  const handleChange = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    const hexNumber = parseInt(target.value.slice(1), 16);
+  const initial = `#${value.toString(16).padStart(6, '0')}`;
+  const [color, setColor] = useState<string>(initial);
+
+  useEffect(() => {
+    setColor(`#${value.toString(16).padStart(6, '0')}`);
+  }, [value]);
+
+  const handleInput = (e: JSX.TargetedEvent<HTMLInputElement, Event>) => {
+    const val = e.currentTarget.value;
+    setColor(val);
+    const hexNumber = parseInt(val.slice(1), 16);
     onChange(hexNumber);
   };
+
   return (
-    <div class="property-color-wrapper">
+    <div className="property-color-wrapper">
       <input
         type="color"
-        value={colorString}
-        onChange={handleChange}
-        class="property-color"
+        value={color}
+        onInput={handleInput}
+        className="property-color"
       />
-      <span class="color-hex">{colorString.toUpperCase()}</span>
+      <span className="color-hex">{color.toUpperCase()}</span>
     </div>
   );
 }

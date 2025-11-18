@@ -4,14 +4,14 @@ type Props = {
   onSetActive: (id: string) => void;
 };
 
-export default function CameraSelector({ entities, activeCamera, onSetActive }: Props) {
+export function CameraSelector({ entities, activeCamera, onSetActive }: Props) {
   return (
     <div style={{ marginTop: 6 }}>
       <select
-        class="select-input"
+        className="select-input"
         value={activeCamera || ''}
-        onChange={(e: any) => {
-          const id = e.target.value || null;
+        onChange={(e: JSX.TargetedEvent<HTMLSelectElement, Event>) => {
+          const id = e.currentTarget.value || null;
           if (!id) return;
           onSetActive(id);
         }}

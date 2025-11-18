@@ -1,5 +1,3 @@
-/** @jsxImportSource preact */
-import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
 import './vector-axis-input.css';
 
@@ -34,9 +32,8 @@ export function VectorAxisInput({
     setText(Number.isFinite(displayValue) ? String(displayValue.toFixed(precision)) : '');
   }, [displayValue, precision]);
 
-  const handleInput = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    const raw = target.value;
+  const handleInput = (e: JSX.TargetedEvent<HTMLInputElement, Event>) => {
+    const raw = e.currentTarget.value;
     setText(raw);
     if (raw === '') return;
     const parsed = parseFloat(raw);
@@ -46,16 +43,15 @@ export function VectorAxisInput({
   };
 
   return (
-    <div class="vector-axis-input">
-      <label class="axis-label">{label}</label>
+    <div className="vector-axis-input">
+      <label className="axis-label">{label}</label>
       <input
         type="number"
-        value={text as any}
+        value={text}
         onInput={handleInput}
-        onChange={handleInput}
         step={step}
         min={min}
-        class="axis-input"
+        className="axis-input"
       />
     </div>
   );

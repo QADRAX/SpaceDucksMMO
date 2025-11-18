@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { h } from "preact";
 import { render, cleanup, fireEvent } from "@testing-library/preact";
-import ComponentInspector from "./ComponentInspector";
+import { ComponentInspector } from "./ComponentInspector";
 import { Entity } from "@client/domain/ecs/core/Entity";
 import { BoxGeometryComponent } from "@client/domain/ecs/components/BoxGeometryComponent";
 import { StandardMaterialComponent } from "@client/domain/ecs/components/StandardMaterialComponent";

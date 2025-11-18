@@ -1,6 +1,5 @@
-/** @jsxImportSource preact */
-import { h } from 'preact';
 import './property-input.css';
+import { useState, useEffect } from 'preact/hooks';
 
 export interface PropertyInputProps {
   value: string;
@@ -9,17 +8,26 @@ export interface PropertyInputProps {
 }
 
 export function PropertyInput({ value, onChange, placeholder }: PropertyInputProps) {
-  const handleChange = (e: Event) => {
-    const target = e.target as HTMLInputElement;
-    onChange(target.value);
+  const [text, setText] = useState<string>(value ?? '');
+
+  useEffect(() => {
+    setText(value ?? '');
+  }, [value]);
+
+  const handleInput = (e: JSX.TargetedEvent<HTMLInputElement, Event>) => {
+    const raw = e.currentTarget.value;
+    setText(raw);
+    // For plain text inputs we accept any string as valid
+    onChange(raw);
   };
+
   return (
     <input
       type="text"
-      value={value}
-      onChange={handleChange}
+      value={text}
+      onInput={handleInput}
       placeholder={placeholder}
-      class="property-input"
+      className="property-input"
     />
   );
 }

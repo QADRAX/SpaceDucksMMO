@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { h } from 'preact';
 import { render, cleanup, fireEvent } from '@testing-library/preact';
-import CameraSelector from './CameraSelector';
+import { CameraSelector } from './CameraSelector';
 
 afterEach(() => cleanup());
 

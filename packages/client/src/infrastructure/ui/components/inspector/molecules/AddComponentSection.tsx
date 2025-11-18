@@ -7,16 +7,16 @@ type Props = {
   t: (k: string, f?: string) => string;
 };
 
-export default function AddComponentSection({ entity, services, onAdded, t }: Props) {
+export function AddComponentSection({ entity, services, onAdded, t }: Props) {
   const factory = services.ecsComponentFactory;
   return (
     <div style={{ marginTop: 8 }}>
-      <div class="small-label">{t('inspector.addComponent','Add Component')}</div>
+      <div className="small-label">{t('inspector.addComponent','Add Component')}</div>
       <div style={{ marginTop: 4 }}>
         <select
-          class="select-input"
-          onChange={(e: any) => {
-            const value = e.target.value as string | '';
+          className="select-input"
+          onChange={(e: JSX.TargetedEvent<HTMLSelectElement, Event>) => {
+            const value = e.currentTarget.value as string | '';
             if (!value) return;
             if (!factory) { alert(t('inspector.addComponentNoFactory','No component factory available')); return; }
             try {
@@ -25,7 +25,7 @@ export default function AddComponentSection({ entity, services, onAdded, t }: Pr
               if (!res.ok) alert(res.error.message);
               else onAdded();
             } catch (err: any) { alert(err?.message || String(err)); }
-            e.target.value = '';
+            e.currentTarget.value = '';
           }}
         >
           <option value="">{t('inspector.selectComponent','Select...')}</option>

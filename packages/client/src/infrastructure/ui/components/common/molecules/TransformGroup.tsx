@@ -1,5 +1,4 @@
-/** @jsxImportSource preact */
-import { h, type ComponentChildren } from 'preact';
+import { type ComponentChildren } from 'preact';
 import './transform-group.css';
 
 export interface TransformGroupProps {
@@ -9,11 +8,9 @@ export interface TransformGroupProps {
 
 export function TransformGroup({ label, children }: TransformGroupProps) {
   return (
-    <div class="transform-group">
-      <span class="transform-label">{label}</span>
-      <div class="transform-inputs">
-        {children}
-      </div>
+    <div className="transform-group">
+      <span className="transform-label">{label}</span>
+      <div className="transform-inputs">{children}</div>
     </div>
   );
 }

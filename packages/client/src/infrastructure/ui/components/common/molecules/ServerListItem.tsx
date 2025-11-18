@@ -12,7 +12,7 @@ type Props = {
   onRemove: (id: string) => void;
 };
 
-export default function ServerListItem({ server, onRemove }: Props) {
+export function ServerListItem({ server, onRemove }: Props) {
   return (
     <div className="sd-server-item">
       <div className="sd-server-main">

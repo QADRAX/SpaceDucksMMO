@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { h } from "preact";
 import { render, cleanup, fireEvent } from "@testing-library/preact";
-import SceneHierarchyTree from "./SceneHierarchyTree";
+import { SceneHierarchyTree } from "./SceneHierarchyTree";
 import { ServicesContext } from "../../../hooks/useServices";
 import { Entity } from "@client/domain/ecs/core/Entity";
 

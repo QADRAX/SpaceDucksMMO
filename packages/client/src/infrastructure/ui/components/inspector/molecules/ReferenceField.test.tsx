@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { h } from 'preact';
 import { render, cleanup, fireEvent } from '@testing-library/preact';
-import ReferenceField from './ReferenceField';
+import { ReferenceField } from './ReferenceField';
 import { ServicesContext } from '@client/infrastructure/ui/hooks/useServices';
 
 afterEach(() => cleanup());

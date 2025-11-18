@@ -10,7 +10,7 @@ type InputRowProps = {
   disabled?: boolean;
 };
 
-export default function InputRow({
+export function InputRow({
   label,
   value,
   onInput,
@@ -26,7 +26,7 @@ export default function InputRow({
         type={type}
         className={`sd-input ${error ? "sd-input--error" : ""}`}
         value={value}
-        onInput={(e: Event) => onInput((e.target as HTMLInputElement).value)}
+        onInput={(e: JSX.TargetedEvent<HTMLInputElement, Event>) => onInput(e.currentTarget.value)}
         placeholder={placeholder}
         disabled={disabled}
       />

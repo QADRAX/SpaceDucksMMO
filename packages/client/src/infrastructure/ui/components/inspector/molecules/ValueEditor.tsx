@@ -1,5 +1,5 @@
-import ReferenceField from './ReferenceField';
-import TextureSelector from './TextureSelector';
+import { ReferenceField } from './ReferenceField';
+import { TextureSelector } from './TextureSelector';
 import { PropertyCheckbox } from '../../common/atoms/PropertyCheckbox';
 import { PropertyInput } from '../../common/atoms/PropertyInput';
 import { PropertyNumber } from '../../common/atoms/PropertyNumber';

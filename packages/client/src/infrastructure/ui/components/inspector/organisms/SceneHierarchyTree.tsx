@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "preact/hooks";
 import type Entity from "@client/domain/ecs/core/Entity";
-import ReferenceField from "../molecules/ReferenceField";
+import { ReferenceField } from "../molecules/ReferenceField";
 import { useServices } from '../../../hooks/useServices';
 import { useI18n } from '../../../hooks/useI18n';
 
@@ -19,13 +19,13 @@ function renderNode(
   return (
     <div key={ent.id}>
       <div
-        class={`entity-item ${selectedId === ent.id ? "selected" : ""}`}
+        className={`entity-item ${selectedId === ent.id ? "selected" : ""}`}
         onClick={() => onSelect(ent.id)}
       >
         {ent.id}
       </div>
       {children.length > 0 && (
-        <div class="entity-children">
+        <div className="entity-children">
           {children.map((c) =>
             renderNode(c, selectedId, onSelect, c.getChildren())
           )}
@@ -35,7 +35,7 @@ function renderNode(
   );
 }
 
-export default function SceneHierarchyTree({
+export function SceneHierarchyTree({
   selectedId,
   onSelect,
   onError,
@@ -95,8 +95,8 @@ export default function SceneHierarchyTree({
 
   return (
     <div>
-      <div class="inspector-toolbar">
-        <div class="small-label">{t("inspector.hierarchy", "Hierarchy")}</div>
+      <div className="inspector-toolbar">
+        <div className="small-label">{t("inspector.hierarchy", "Hierarchy")}</div>
       </div>
 
       <div>
@@ -111,7 +111,7 @@ export default function SceneHierarchyTree({
       </div>
 
       <div style={{ marginTop: 8 }}>
-        <div class="small-label">{t("inspector.reparent", "Reparent")}</div>
+        <div className="small-label">{t("inspector.reparent", "Reparent")}</div>
           <div style={{ marginTop: 4 }}>
             {(() => {
               const selectedEntity = entities.find(e => e.id === selectedId);
@@ -128,7 +128,7 @@ export default function SceneHierarchyTree({
               );
             })()}
           </div>
-        <div class="small-label">
+        <div className="small-label">
           {t(
             "inspector.reparentNote",
             "Select a parent from the dropdown to reparent the selected entity"

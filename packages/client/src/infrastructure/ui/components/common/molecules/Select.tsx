@@ -13,13 +13,13 @@ type SelectProps = {
   disabled?: boolean;
 };
 
-export default function Select({ value, onChange, options, id, disabled }: SelectProps) {
+export function Select({ value, onChange, options, id, disabled }: SelectProps) {
   return (
     <select
       id={id}
       className="sd-select"
       value={value}
-      onChange={(e) => onChange((e.target as HTMLSelectElement).value)}
+      onChange={(e: JSX.TargetedEvent<HTMLSelectElement, Event>) => onChange(e.currentTarget.value)}
       disabled={disabled}
     >
       {options.map((option) => (

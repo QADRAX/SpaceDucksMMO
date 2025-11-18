@@ -11,7 +11,7 @@ type PopupProps = {
   maxWidth?: string;
 };
 
-export default function Popup({
+export function Popup({
   isOpen,
   onClose,
   title,
