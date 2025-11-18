@@ -3,23 +3,30 @@
     display: flex;
     flex-direction: row;
     gap: 8px;
-    font-size: 12px;
+    font-size: 13px;
     color: #eee;
+    height: 100%;
+    min-height: 0; /* allow children to shrink and scroll */
 }
 
 .inspector-left {
-    width: 260px;
-    min-width: 200px;
+    /* left column is flexible but constrained */
+    flex: 0 1 300px;
+    min-width: 220px;
     max-width: 420px;
     overflow: auto;
     border-right: 1px solid rgba(255, 255, 255, 0.06);
-    padding: 8px;
+    padding: 12px;
+    box-sizing: border-box;
+    min-height: 0;
 }
 
 .inspector-right {
-    flex: 1;
+    flex: 1 1 0;
     overflow: auto;
-    padding: 8px;
+    padding: 12px;
+    box-sizing: border-box;
+    min-height: 0; /* important so child scroll works */
 }
 
 .entity-item {
@@ -43,9 +50,10 @@
 
 .component-section {
     border: 1px solid rgba(255, 255, 255, 0.04);
-    margin-bottom: 8px;
-    padding: 6px;
-    border-radius: 4px;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 6px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(0,0,0,0));
 }
 
 .component-header {
@@ -57,6 +65,15 @@
 .component-controls button {
     margin-left: 6px;
 }
+
+.components-list { display: flex; flex-direction: column; gap: 8px; }
+.component-drag-handle { display: inline-block; width: 18px; text-align: center; color: rgba(255,255,255,0.4); cursor: grab; }
+.component-drag-handle:active { cursor: grabbing; }
+
+.component-inspector-header { display:flex; gap:8px; align-items:center; }
+.component-inspector-header .select-input { width: 220px; }
+
+.component-section { box-shadow: inset 0 1px 0 rgba(255,255,255,0.01); }
 
 .transform-row {
     display: flex;
@@ -90,11 +107,138 @@
     color: #ccc;
 }
 
+/* Header improvements */
+.inspector-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+}
+.inspector-scene {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: #e6eef8;
+}
+.inspector-active-camera {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.inspector-scene svg,
+.inspector-active-camera svg {
+    width: 16px;
+    height: 16px;
+    color: #ffd36a;
+}
+
+/* Tree entity icon spacing */
+.tree-node-entity-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+    color: #9fb3d8;
+}
+.tree-node-entity-icon svg { width: 14px; height: 14px; }
+
+/* Responsive layout rules */
+.scene-inspector {
+        flex-direction: row;
+}
+
+@media (max-width: 800px) {
+    .scene-inspector {
+        flex-direction: column;
+    }
+    .inspector-left {
+        width: 100%;
+        max-width: none;
+        border-right: none;
+        border-bottom: 1px solid rgba(255,255,255,0.04);
+    }
+}
+
+/* Default sizing: left column has an initial width but can shrink/grow */
+.inspector-left {
+    flex: 0 1 300px;
+    min-width: 220px;
+    max-width: 420px;
+}
+
+.inspector-right {
+    flex: 1 1 0;
+}
+
+/* Tree node interactions */
+.tree-node {
+    padding: 4px 6px;
+    border-radius: 4px;
+}
+.tree-node:hover {
+    background: rgba(255,255,255,0.02);
+}
+.tree-node--selected {
+    background: rgba(80, 140, 220, 0.12);
+}
+.tree-node--drag-over {
+    outline: 2px dashed rgba(255, 215, 102, 0.9);
+    background: rgba(255, 215, 102, 0.06);
+}
+
+.tree-empty-dropzone {
+    padding: 8px;
+    margin-bottom: 6px;
+    border-radius: 4px;
+    text-align: center;
+    color: #aab7c9;
+    border: 1px dashed rgba(255,255,255,0.04);
+}
+
+.inspector-scene-id {
+    margin-left: 6px;
+    color: #cfe6ff;
+    font-weight: 600;
+}
+
 .select-input,
 .text-input,
 .num-input {
-    width: 100%;
+        width: 100%;
+        font-size: 13px;
+        padding: 6px 8px;
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.06);
+        background: rgba(255,255,255,0.02);
+        color: #e6eef8;
+        box-sizing: border-box;
+        appearance: none;
 }
+
+/* Custom select arrow and wrapper */
+.select-input-wrapper { position: relative; }
+.select-input-wrapper::after {
+    content: '\25BE';
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255,255,255,0.6);
+    pointer-events: none;
+}
+
+.select-input::-ms-expand { display: none; }
+
+.create-entity-container { display: inline-block; }
+.create-entity-btn { padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); background: rgba(255,255,255,0.02); color: #e6eef8; cursor: pointer; }
+.create-entity-btn:hover { background: rgba(255,255,255,0.04); }
+.create-entity-overlay { position: fixed; left: 0; top: 0; right: 0; bottom: 0; display:flex; align-items:center; justify-content:center; background: rgba(0,0,0,0.6); z-index: 9999; }
+.create-entity-popup { background: #0f1720; padding: 16px; border-radius: 8px; width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
+.create-entity-header { font-weight: 700; margin-bottom: 8px; color: #e6eef8; }
 
 .prop-row {
     display: flex;

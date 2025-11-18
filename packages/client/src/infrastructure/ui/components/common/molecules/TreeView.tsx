@@ -144,6 +144,10 @@ export function TreeView({ nodes, selectedId, onSelect, defaultExpandedIds = [],
           <span className={`tree-node-icon ${hasChildren ? 'has-children' : 'leaf'}`}>
             {iconElement}
           </span>
+          {/* entity-specific icon (if provided) */}
+          {node.icon && (
+            <span className="tree-node-entity-icon" aria-hidden="true">{node.icon}</span>
+          )}
           <span
             ref={(el) => { nodeRefs.current[node.id] = el; }}
             tabIndex={0}

@@ -21,9 +21,19 @@ export function ComponentSection({ component, entity, services, onChanged, t }: 
   };
 
   return (
-    <div className="component-section" key={component.type}>
+    <div
+      className="component-section"
+      key={component.type}
+      draggable={true}
+      onDragStart={(e: any) => {
+        try { e.dataTransfer && e.dataTransfer.setData('application/x-component-type', component.type); } catch {}
+      }}
+    >
       <div className="component-header">
-        <div>{component.type}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="component-drag-handle" title="Drag to reorder">≡</span>
+          <div>{component.type}</div>
+        </div>
         <div className="component-controls">
           <label>
             <input type="checkbox" checked={component.enabled} onInput={() => handleToggle()} /> {t('inspector.enabled','Enabled')}

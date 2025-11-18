@@ -3,6 +3,7 @@ import { SceneHierarchyTree } from "./SceneHierarchyTree";
 import { ComponentInspector } from "./ComponentInspector";
 import { TransformEditor } from "./TransformEditor";
 import { CameraSelector } from "../molecules/CameraSelector";
+import { SceneIcon } from '../../common/icons';
 import { useServices } from '../../../hooks/useServices';
 import { useI18n } from '../../../hooks/useI18n';
 import { DraggablePanel } from '../../common/organisms/DraggablePanel';
@@ -67,46 +68,56 @@ export function SceneInspectorPanel() {
       theme="gold"
     >
       <div className="scene-inspector">
-        <div className="inspector-left">
-          <div class="small-label">
-            {t("inspector.scene", "Scene")}: {sceneManager?.getCurrent()?.id}
+        
+          <div className="inspector-header">
+            <div className="small-label inspector-scene">
+              <SceneIcon className="inspector-scene-icon" />
+              {t("inspector.scene", "Scene")}: <span className="inspector-scene-id">{sceneManager?.getCurrent()?.id}</span>
+            </div>
+            <div className="small-label inspector-active-camera">
+              {t("inspector.activeCamera", "Active Camera")}: 
+              <div style={{ marginLeft: 8 }}>
+                <CameraSelector
+                  entities={cameraEntities}
+                  activeCamera={activeCamera}
+                  onSetActive={(id: string) => {
+                    try {
+                      sceneManager?.setActiveCamera?.(id);
+                    } catch {}
+                    setActiveCamera(id);
+                  }}
+                />
+              </div>
+            </div>
           </div>
-          <div class="small-label">
-            {t("inspector.activeCamera", "Active Camera")}: {" "}
-            {activeCamera || t("inspector.none", "None")}
-          </div>
-          <CameraSelector
-            entities={cameraEntities}
-            activeCamera={activeCamera}
-            onSetActive={(id: string) => {
-              try {
-                sceneManager?.setActiveCamera?.(id);
-              } catch {}
-              setActiveCamera(id);
-            }}
-          />
           {!inspectable && (
             <div className="error-box">
               {t("inspector.notInspectable", "Scene not inspectable")}
             </div>
           )}
-          {lastError && <div class="error-box">{lastError}</div>}
+          {lastError && <div className="error-box">{lastError}</div>}
 
           <SceneHierarchyTree
             selectedId={selected}
             onSelect={(id) => setSelected(id)}
             onError={(m) => setLastError(m)}
           />
-        </div>
 
-        <div className="inspector-right">
-          <div className="small-label">
-            {t("inspector.selected", "Selected")}:{" "}
-            {selected || t("inspector.none", "None")}
-          </div>
-          <TransformEditor entity={selectedEntity} />
-          <ComponentInspector entity={selectedEntity} />
-        </div>
+          {selectedEntity ? (
+            <DraggablePanel
+              title={`${t('inspector.components','Components')} - ${selectedEntity.id}`}
+              theme="blue"
+              defaultPosition={{ x: 360, y: 120 }}
+              defaultSize={{ width: 360, height: 420 }}
+              showClose={true}
+              onClose={() => setSelected(null)}
+            >
+              <TransformEditor entity={selectedEntity} />
+              <ComponentInspector entity={selectedEntity} />
+            </DraggablePanel>
+          ) : (
+            <div className="small-label">{t('inspector.none', 'None')}</div>
+          )}
       </div>
     </DraggablePanel>
   );

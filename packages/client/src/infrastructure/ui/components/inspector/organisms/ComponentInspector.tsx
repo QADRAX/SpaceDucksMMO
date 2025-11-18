@@ -25,14 +25,19 @@ export function ComponentInspector({ entity }: Props) {
 
   return (
     <div>
-      <div className="small-label">{t('inspector.components','Components')}</div>
-      <div>
+      <div className="component-inspector-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div className="small-label">{t('inspector.components','Components')}</div>
+        <div>
+          {/* AddComponentSection handles grouped selection */}
+          <AddComponentSection entity={entity} services={services} onAdded={onChanged} t={t} />
+        </div>
+      </div>
+
+      <div className="components-list" style={{ marginTop: 8 }}>
         {components.map((c: any) => (
           <ComponentSection key={c.type} component={c} entity={entity} services={services} onChanged={onChanged} t={t} />
         ))}
       </div>
-
-      <AddComponentSection entity={entity} services={services} onAdded={onChanged} t={t} />
     </div>
   );
 }

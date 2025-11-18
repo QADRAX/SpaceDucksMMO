@@ -8,12 +8,14 @@ export interface PanelProps {
   collapsible?: boolean;
   collapsed?: boolean;
   onToggle?: () => void;
+  onClose?: () => void;
+  showClose?: boolean;
   headerOnMouseDown?: (e: JSX.TargetedMouseEvent<HTMLDivElement>) => void;
   children?: ComponentChildren;
   className?: string;
 }
 
-export function Panel({ title, collapsible = true, collapsed: collapsedProp, onToggle, headerOnMouseDown, children, className = '' }: PanelProps) {
+export function Panel({ title, collapsible = true, collapsed: collapsedProp, onToggle, onClose, showClose, headerOnMouseDown, children, className = '' }: PanelProps) {
   const [internalCollapsed, setInternalCollapsed] = useState(false);
   const isControlled = typeof collapsedProp === 'boolean';
   const collapsed = isControlled ? (collapsedProp as boolean) : internalCollapsed;
@@ -38,6 +40,20 @@ export function Panel({ title, collapsible = true, collapsed: collapsedProp, onT
           {collapsible && (
             <button className="panel-control-btn collapse-btn" onClick={toggle} title={collapsed ? 'Expand' : 'Collapse'}>
               {collapsed ? '▼' : '▲'}
+            </button>
+          )}
+
+          {/* Close button: if provided via props, render it and call onClose (stop event propagation) */}
+          {showClose && onClose && (
+            <button
+              className="panel-control-btn close-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                try { onClose && onClose(); } catch {}
+              }}
+              title="Close"
+            >
+              ✕
             </button>
           )}
         </div>

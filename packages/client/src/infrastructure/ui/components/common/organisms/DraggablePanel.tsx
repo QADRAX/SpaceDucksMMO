@@ -17,6 +17,8 @@ export interface DraggablePanelProps {
   minHeight?: number;
   children: ComponentChildren;
   className?: string;
+  onClose?: () => void;
+  showClose?: boolean;
 }
 
 interface Position { x: number; y: number }
@@ -35,6 +37,8 @@ export function DraggablePanel(props: DraggablePanelProps) {
     minHeight = 150,
     children,
     className = '',
+    onClose,
+    showClose = false,
   } = props;
 
   const [position, setPosition] = useState<Position>(defaultPosition);
@@ -115,6 +119,8 @@ export function DraggablePanel(props: DraggablePanelProps) {
         collapsible={collapsible}
         collapsed={collapsed}
         onToggle={toggleCollapse}
+        onClose={onClose}
+        showClose={showClose}
         headerOnMouseDown={draggable ? handleDragStart : undefined}
       >
         {children}

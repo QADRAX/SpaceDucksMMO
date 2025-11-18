@@ -1,3 +1,6 @@
+import { SelectField, SelectOption } from '../../common/molecules/SelectField';
+import { CameraIcon, EntityIcon } from '../../common/icons';
+
 type Props = {
   entities: any[];
   activeCamera: string | null;
@@ -5,24 +8,18 @@ type Props = {
 };
 
 export function CameraSelector({ entities, activeCamera, onSetActive }: Props) {
+  const options: SelectOption<string>[] = [
+    { value: '', label: 'None' },
+    ...entities.map((ce: any) => ({
+      value: ce.id,
+      label: ce.id,
+      icon: ce.hasComponent && ce.hasComponent('cameraView') ? <CameraIcon /> : <EntityIcon />,
+    })),
+  ];
+
   return (
     <div style={{ marginTop: 6 }}>
-      <select
-        className="select-input"
-        value={activeCamera || ''}
-        onChange={(e: JSX.TargetedEvent<HTMLSelectElement, Event>) => {
-          const id = e.currentTarget.value || null;
-          if (!id) return;
-          onSetActive(id);
-        }}
-      >
-        <option value="">None</option>
-        {entities.map((ce: any) => (
-          <option key={ce.id} value={ce.id}>
-            {ce.id}
-          </option>
-        ))}
-      </select>
+      <SelectField value={activeCamera || ''} options={options} placeholder="None" onChange={(v) => { if (v) onSetActive(v); }} />
     </div>
   );
 }

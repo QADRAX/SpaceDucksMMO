@@ -4,6 +4,8 @@ import { ReferenceField } from "../molecules/ReferenceField";
 import { useServices } from '../../../hooks/useServices';
 import { useI18n } from '../../../hooks/useI18n';
 import { TreeView, TreeNodeData } from '../../common/molecules/TreeView';
+import { CreateEntityButton } from '../molecules/CreateEntityButton';
+import { CameraIcon, LightIcon, GeometryIcon, EntityIcon } from '../../common/icons';
 
 type Props = {
   selectedId?: string | null;
@@ -12,11 +14,25 @@ type Props = {
 };
 
 // Helper: convert Entity graph into TreeNodeData
+function getIconForEntity(ent: Entity) {
+  try {
+    if (ent.hasComponent && ent.hasComponent('cameraView')) return <CameraIcon />;
+    if (ent.hasComponent && ent.hasComponent('light')) return <LightIcon />;
+    // geometry components have type names containing 'geometry'
+    const comps = typeof ent.getAllComponents === 'function' ? ent.getAllComponents() : [];
+    if (comps.some((c: any) => c && c.type && String(c.type).toLowerCase().includes('geometry'))) return <GeometryIcon />;
+    // fallback
+    return <EntityIcon />;
+  } catch {
+    return <EntityIcon />;
+  }
+}
+
 function buildNode(ent: Entity): TreeNodeData {
   return {
     id: ent.id,
     label: ent.id,
-    icon: '🔹',
+    icon: getIconForEntity(ent),
     children: ent.getChildren().map((c: Entity) => buildNode(c)),
   };
 }
@@ -85,6 +101,9 @@ export function SceneHierarchyTree({
     <div>
       <div className="inspector-toolbar">
         <div className="small-label">{t("inspector.hierarchy", "Hierarchy")}</div>
+        <div style={{ marginLeft: 'auto' }}>
+          <CreateEntityButton onCreated={() => { /* no-op: scene updates should arrive via subscription */ }} />
+        </div>
       </div>
 
       <div>
@@ -96,32 +115,7 @@ export function SceneHierarchyTree({
           onDropNode={(childId, newParentId) => handleReparent(childId, newParentId)}
         />
       </div>
-
-      <div style={{ marginTop: 8 }}>
-        <div className="small-label">{t("inspector.reparent", "Reparent")}</div>
-          <div style={{ marginTop: 4 }}>
-            {(() => {
-              const selectedEntity = entities.find(e => e.id === selectedId);
-              const currentParentId = selectedEntity?.parent?.id ?? null;
-              return (
-                <ReferenceField
-                  value={currentParentId}
-                  onChange={(newParent) => {
-                    if (!selectedId) return;
-                    handleReparent(selectedId, newParent);
-                  }}
-                  placeholder={t("inspector.noParent", "No parent")}
-                />
-              );
-            })()}
-          </div>
-        <div className="small-label">
-          {t(
-            "inspector.reparentNote",
-            "Select a parent from the dropdown to reparent the selected entity"
-          )}
-        </div>
-      </div>
+      {/* Removed ReferenceField dropdown — reparent now via drag & drop */}
     </div>
   );
 }
