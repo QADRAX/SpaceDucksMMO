@@ -1,12 +1,18 @@
 import * as THREE from "three";
 import type { Entity } from "../../../domain/ecs/core/Entity";
 import type IComponentObserver from "../../../domain/ecs/core/IComponentObserver";
-import { GeometryComponent } from "../../../domain/ecs/components/GeometryComponent";
 import { MaterialComponent } from "../../../domain/ecs/components/MaterialComponent";
 import { ShaderMaterialComponent } from "../../../domain/ecs/components/ShaderMaterialComponent";
 import { CameraViewComponent } from "../../../domain/ecs/components/CameraViewComponent";
 import { LightComponent } from "../../../domain/ecs/components/LightComponent";
-import { GeometryFactory } from "../factories/GeometryFactory";
+import { GeometryFactory, AnyGeometryComponent } from "../factories/GeometryFactory";
+import { BoxGeometryComponent } from "../../../domain/ecs/components/BoxGeometryComponent";
+import { SphereGeometryComponent } from "../../../domain/ecs/components/SphereGeometryComponent";
+import { PlaneGeometryComponent } from "../../../domain/ecs/components/PlaneGeometryComponent";
+import { CylinderGeometryComponent } from "../../../domain/ecs/components/CylinderGeometryComponent";
+import { ConeGeometryComponent } from "../../../domain/ecs/components/ConeGeometryComponent";
+import { TorusGeometryComponent } from "../../../domain/ecs/components/TorusGeometryComponent";
+import { CustomGeometryComponent } from "../../../domain/ecs/components/CustomGeometryComponent";
 import { MaterialFactory } from "../factories/MaterialFactory";
 import { ShaderMaterialFactory } from "../factories/ShaderMaterialFactory";
 import { CameraFactory } from "../factories/CameraFactory";
@@ -24,6 +30,20 @@ export class RenderSyncSystem implements IComponentObserver {
 
   constructor(scene: THREE.Scene) {
     this.scene = scene;
+  }
+
+  // Helper to obtain whichever geometry component an entity has (only one allowed by design)
+  private getGeometryComponent(entity: Entity): AnyGeometryComponent | null {
+    return (
+      entity.getComponent<BoxGeometryComponent>("boxGeometry") ??
+      entity.getComponent<SphereGeometryComponent>("sphereGeometry") ??
+      entity.getComponent<PlaneGeometryComponent>("planeGeometry") ??
+      entity.getComponent<CylinderGeometryComponent>("cylinderGeometry") ??
+      entity.getComponent<ConeGeometryComponent>("coneGeometry") ??
+      entity.getComponent<TorusGeometryComponent>("torusGeometry") ??
+      entity.getComponent<CustomGeometryComponent>("customGeometry") ??
+      null
+    );
   }
 
   addEntity(entity: Entity): void {
@@ -58,7 +78,13 @@ export class RenderSyncSystem implements IComponentObserver {
     if (componentType.endsWith(':removed')) {
       const base = componentType.split(':')[0];
       switch (base) {
-        case 'geometry':
+        case 'boxGeometry':
+        case 'sphereGeometry':
+        case 'planeGeometry':
+        case 'cylinderGeometry':
+        case 'coneGeometry':
+        case 'torusGeometry':
+        case 'customGeometry':
         case 'shaderMaterial':
         case 'material':
         case 'light':
@@ -72,7 +98,13 @@ export class RenderSyncSystem implements IComponentObserver {
     }
 
     switch (componentType) {
-      case "geometry":
+      case "boxGeometry":
+      case "sphereGeometry":
+      case "planeGeometry":
+      case "cylinderGeometry":
+      case "coneGeometry":
+      case "torusGeometry":
+      case "customGeometry":
       case "shaderMaterial":
         this.recreateMesh(entity);
         break;
@@ -91,7 +123,7 @@ export class RenderSyncSystem implements IComponentObserver {
   }
 
   private processEntity(entity: Entity): void {
-    const geometry = entity.getComponent<GeometryComponent>("geometry");
+    const geometry = this.getGeometryComponent(entity);
     const material = entity.getComponent<MaterialComponent>("material");
     const shaderMaterial =
       entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
@@ -116,11 +148,11 @@ export class RenderSyncSystem implements IComponentObserver {
 
   private createMesh(
     entity: Entity,
-    geometryComp: GeometryComponent,
+    geometryComp: AnyGeometryComponent,
     materialComp?: MaterialComponent,
     shaderMaterialComp?: ShaderMaterialComponent
   ): void {
-    const geometry = GeometryFactory.build(geometryComp.parameters);
+    const geometry = GeometryFactory.build(geometryComp);
     let material: THREE.Material;
     if (shaderMaterialComp)
       material = ShaderMaterialFactory.build(
@@ -150,7 +182,7 @@ export class RenderSyncSystem implements IComponentObserver {
 
   private recreateMesh(entity: Entity): void {
     const rc = this.registry.get(entity.id);
-    const geometry = entity.getComponent<GeometryComponent>("geometry");
+    const geometry = this.getGeometryComponent(entity);
     const material = entity.getComponent<MaterialComponent>("material");
     const shaderMaterial =
       entity.getComponent<ShaderMaterialComponent>("shaderMaterial");

@@ -1,6 +1,12 @@
 import type { Entity } from "@client/domain/ecs/core/Entity";
 import { Component } from "@client/domain/ecs/core/Component";
-import { GeometryComponent } from "@client/domain/ecs/components/GeometryComponent";
+import { BoxGeometryComponent } from "@client/domain/ecs/components/BoxGeometryComponent";
+import { SphereGeometryComponent } from "@client/domain/ecs/components/SphereGeometryComponent";
+import { PlaneGeometryComponent } from "@client/domain/ecs/components/PlaneGeometryComponent";
+import { CylinderGeometryComponent } from "@client/domain/ecs/components/CylinderGeometryComponent";
+import { ConeGeometryComponent } from "@client/domain/ecs/components/ConeGeometryComponent";
+import { TorusGeometryComponent } from "@client/domain/ecs/components/TorusGeometryComponent";
+import { CustomGeometryComponent } from "@client/domain/ecs/components/CustomGeometryComponent";
 import { MaterialComponent } from "@client/domain/ecs/components/MaterialComponent";
 import { ShaderMaterialComponent } from "@client/domain/ecs/components/ShaderMaterialComponent";
 import { OrbitComponent } from "@client/domain/ecs/components/OrbitComponent";
@@ -9,7 +15,13 @@ import { CameraTargetComponent } from "@client/domain/ecs/components/CameraTarge
 import { LightComponent } from "@client/domain/ecs/components/LightComponent";
 
 export type KnownComponentType =
-  | "geometry"
+  | "boxGeometry"
+  | "sphereGeometry"
+  | "planeGeometry"
+  | "cylinderGeometry"
+  | "coneGeometry"
+  | "torusGeometry"
+  | "customGeometry"
   | "material"
   | "shaderMaterial"
   | "orbit"
@@ -32,15 +44,31 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
     const defs: CreatableComponentDef[] = [];
     const has = (t: string) => entity.hasComponent(t);
 
-    // geometry is always creatable
-    if (!has("geometry")) defs.push({ type: "geometry", label: "Geometry" });
+    const hasAnyGeometry =
+      has("boxGeometry") ||
+      has("sphereGeometry") ||
+      has("planeGeometry") ||
+      has("cylinderGeometry") ||
+      has("coneGeometry") ||
+      has("torusGeometry") ||
+      has("customGeometry");
 
-    // material requires geometry and conflicts with shaderMaterial
-    if (has("geometry") && !has("shaderMaterial"))
+    if (!hasAnyGeometry) {
+      defs.push({ type: "boxGeometry", label: "Box Geometry" });
+      defs.push({ type: "sphereGeometry", label: "Sphere Geometry" });
+      defs.push({ type: "planeGeometry", label: "Plane Geometry" });
+      defs.push({ type: "cylinderGeometry", label: "Cylinder Geometry" });
+      defs.push({ type: "coneGeometry", label: "Cone Geometry" });
+      defs.push({ type: "torusGeometry", label: "Torus Geometry" });
+      defs.push({ type: "customGeometry", label: "Custom Geometry" });
+    }
+
+    // material requires any geometry and conflicts with shaderMaterial
+    if (hasAnyGeometry && !has("shaderMaterial"))
       defs.push({ type: "material", label: "Material" });
 
-    // shaderMaterial requires geometry and conflicts with material
-    if (has("geometry") && !has("material"))
+    // shaderMaterial requires any geometry and conflicts with material
+    if (hasAnyGeometry && !has("material"))
       defs.push({ type: "shaderMaterial", label: "Shader Material" });
 
     // orbit (unique)
@@ -61,8 +89,20 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
 
   create(type: KnownComponentType, params?: any): Component {
     switch (type) {
-      case "geometry":
-        return new GeometryComponent({ type: "box", width: 1, height: 1, depth: 1 });
+      case "boxGeometry":
+        return new BoxGeometryComponent(params ?? { width: 1, height: 1, depth: 1 });
+      case "sphereGeometry":
+        return new SphereGeometryComponent(params ?? { radius: 1 });
+      case "planeGeometry":
+        return new PlaneGeometryComponent(params ?? { width: 1, height: 1 });
+      case "cylinderGeometry":
+        return new CylinderGeometryComponent(params ?? { radiusTop: 0.5, radiusBottom: 0.5, height: 1 });
+      case "coneGeometry":
+        return new ConeGeometryComponent(params ?? { radius: 0.5, height: 1 });
+      case "torusGeometry":
+        return new TorusGeometryComponent(params ?? { radius: 1, tube: 0.3 });
+      case "customGeometry":
+        return new CustomGeometryComponent(params ?? { key: "" });
       case "material":
         return new MaterialComponent({ type: "standard", color: 0xffffff });
       case "shaderMaterial":

@@ -1,5 +1,6 @@
 /** @jsxImportSource preact */
 import { h } from 'preact';
+import { useState, useEffect } from 'preact/hooks';
 import './vector-axis-input.css';
 
 export interface VectorAxisInputProps {
@@ -35,27 +36,35 @@ export function VectorAxisInput({
   
   // Display value with conversion if needed
   const displayValue = convertFrom ? convertFrom(value) : value;
-  
-  const handleChange = (e: Event) => {
+
+  const [text, setText] = useState<string>(
+    Number.isFinite(displayValue) ? String(displayValue.toFixed(precision)) : ''
+  );
+
+  useEffect(() => {
+    // keep local text in sync when external value changes
+    setText(Number.isFinite(displayValue) ? String(displayValue.toFixed(precision)) : '');
+  }, [displayValue, precision]);
+
+  const handleInput = (e: Event) => {
     const target = e.target as HTMLInputElement;
-    const rawValue = parseFloat(target.value);
-    
-    if (isNaN(rawValue)) return;
-    
-    // Apply conversion if needed
-    const finalValue = convertTo ? convertTo(rawValue) : rawValue;
+    const raw = target.value;
+    setText(raw);
+    if (raw === '') return;
+    const parsed = parseFloat(raw);
+    if (isNaN(parsed)) return;
+    const finalValue = convertTo ? convertTo(parsed) : parsed;
     onChange(finalValue);
   };
-  
-  const safeValue = Number.isFinite(displayValue) ? displayValue.toFixed(precision) : '';
 
   return (
     <div class="vector-axis-input">
       <label class="axis-label">{label}</label>
       <input
         type="number"
-        value={safeValue}
-        onChange={handleChange}
+        value={text}
+        onInput={handleInput}
+        onChange={handleInput}
         step={step}
         min={min}
         class="axis-input"

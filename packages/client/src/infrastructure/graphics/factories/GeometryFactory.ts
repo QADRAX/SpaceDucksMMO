@@ -1,47 +1,71 @@
 import * as THREE from 'three';
-import type { GeometryComponent } from '../../../domain/ecs/components/GeometryComponent';
+import type { BoxGeometryComponent } from '../../../domain/ecs/components/BoxGeometryComponent';
+import type { SphereGeometryComponent } from '../../../domain/ecs/components/SphereGeometryComponent';
+import type { PlaneGeometryComponent } from '../../../domain/ecs/components/PlaneGeometryComponent';
+import type { CylinderGeometryComponent } from '../../../domain/ecs/components/CylinderGeometryComponent';
+import type { ConeGeometryComponent } from '../../../domain/ecs/components/ConeGeometryComponent';
+import type { TorusGeometryComponent } from '../../../domain/ecs/components/TorusGeometryComponent';
+import type { CustomGeometryComponent } from '../../../domain/ecs/components/CustomGeometryComponent';
+
+export type AnyGeometryComponent =
+  | BoxGeometryComponent
+  | SphereGeometryComponent
+  | PlaneGeometryComponent
+  | CylinderGeometryComponent
+  | ConeGeometryComponent
+  | TorusGeometryComponent
+  | CustomGeometryComponent;
 
 export class GeometryFactory {
-  static build(params: GeometryComponent['parameters']): THREE.BufferGeometry {
-    switch (params.type) {
+  static build(comp: AnyGeometryComponent): THREE.BufferGeometry {
+    // Support both legacy short names (e.g. 'sphere') and new concrete types
+    const t = String(comp.type || '').toLowerCase();
+    switch (t) {
       case 'sphere':
+      case 'spheregeometry':
         return new THREE.SphereGeometry(
-          params.radius,
-          params.widthSegments ?? 32,
-          params.heightSegments ?? 16
+          (comp as any).radius,
+          (comp as any).widthSegments ?? 32,
+          (comp as any).heightSegments ?? 16
         );
       case 'box':
-        return new THREE.BoxGeometry(params.width, params.height, params.depth);
+      case 'boxgeometry':
+        return new THREE.BoxGeometry((comp as any).width, (comp as any).height, (comp as any).depth);
       case 'plane':
+      case 'planegeometry':
         return new THREE.PlaneGeometry(
-          params.width,
-          params.height,
-          params.widthSegments ?? 1,
-          params.heightSegments ?? 1
+          (comp as any).width,
+          (comp as any).height,
+          (comp as any).widthSegments ?? 1,
+          (comp as any).heightSegments ?? 1
         );
       case 'cylinder':
+      case 'cylindergeometry':
         return new THREE.CylinderGeometry(
-          params.radiusTop,
-          params.radiusBottom,
-          params.height,
-          params.radialSegments ?? 16
+          (comp as any).radiusTop,
+          (comp as any).radiusBottom,
+          (comp as any).height,
+          (comp as any).radialSegments ?? 16
         );
       case 'cone':
+      case 'conegeometry':
         return new THREE.ConeGeometry(
-          params.radius,
-          params.height,
-          params.radialSegments ?? 16
+          (comp as any).radius,
+          (comp as any).height,
+          (comp as any).radialSegments ?? 16
         );
       case 'torus':
+      case 'torusgeometry':
         return new THREE.TorusGeometry(
-          params.radius,
-          params.tube,
-          params.radialSegments ?? 16,
-          params.tubularSegments ?? 48
+          (comp as any).radius,
+          (comp as any).tube,
+          (comp as any).radialSegments ?? 16,
+          (comp as any).tubularSegments ?? 48
         );
       case 'custom':
+      case 'customgeometry':
         console.warn(
-          `[GeometryFactory] custom geometry key='${params.key}' not implemented; using unit box`
+          `[GeometryFactory] custom geometry key='${(comp as any).key}' not implemented; using unit box`
         );
         return new THREE.BoxGeometry(1, 1, 1);
       default:

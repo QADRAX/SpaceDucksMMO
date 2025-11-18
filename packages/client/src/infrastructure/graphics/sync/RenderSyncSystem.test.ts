@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RenderSyncSystem } from './RenderSyncSystem';
 import { Entity } from '../../../domain/ecs/core/Entity';
-import { GeometryComponent } from '../../../domain/ecs/components/GeometryComponent';
+import { SphereGeometryComponent } from '../../../domain/ecs/components/SphereGeometryComponent';
 import { MaterialComponent } from '../../../domain/ecs/components/MaterialComponent';
 import { LightComponent } from '../../../domain/ecs/components/LightComponent';
 
@@ -16,7 +16,7 @@ describe('RenderSyncSystem enable/disable handling', () => {
 
   it('hides mesh when geometry is disabled and shows when enabled', () => {
     const e = new Entity('e1');
-    const geom = new GeometryComponent({ type: 'sphere', radius: 1 });
+    const geom = new SphereGeometryComponent({ radius: 1 });
     const mat = new MaterialComponent({ type: 'basic', color: 0xffffff });
     e.addComponent(geom as any);
     e.addComponent(mat as any);
@@ -68,7 +68,7 @@ describe('RenderSyncSystem enable/disable handling', () => {
 
   it('hides mesh when material is disabled and shows when enabled', () => {
     const e = new Entity('m1');
-    const geom = new GeometryComponent({ type: 'sphere', radius: 1 });
+    const geom = new SphereGeometryComponent({ radius: 1 });
     const mat = new MaterialComponent({ type: 'basic', color: 0xffffff });
     e.addComponent(geom as any);
     e.addComponent(mat as any);
@@ -92,7 +92,7 @@ describe('RenderSyncSystem enable/disable handling', () => {
 
   it('hides mesh when shaderMaterial is disabled and shows when enabled', () => {
     const e = new Entity('s1');
-    const geom = new GeometryComponent({ type: 'sphere', radius: 1 });
+    const geom = new SphereGeometryComponent({ radius: 1 });
     const shader = new (require('../../../domain/ecs/components/ShaderMaterialComponent').ShaderMaterialComponent)({ shaderType: 'atmosphere', uniforms: {} });
     e.addComponent(geom as any);
     e.addComponent(shader as any);
@@ -116,7 +116,7 @@ describe('RenderSyncSystem enable/disable handling', () => {
 
   it('removing geometry actually removes registry entry and disposes resources', () => {
     const e = new Entity('rem1');
-    const geom = new GeometryComponent({ type: 'sphere', radius: 1 });
+    const geom = new SphereGeometryComponent({ radius: 1 });
     const mat = new MaterialComponent({ type: 'basic', color: 0xffffff });
     e.addComponent(geom as any);
     e.addComponent(mat as any);

@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { ShaderUniformUpdater } from './ShaderUniformUpdater';
 import { Entity } from '../../../domain/ecs/core/Entity';
 import { ShaderMaterialComponent } from '../../../domain/ecs/components/ShaderMaterialComponent';
-import { GeometryComponent } from '../../../domain/ecs/components/GeometryComponent';
+import { SphereGeometryComponent } from '../../../domain/ecs/components/SphereGeometryComponent';
 import type { RenderComponent } from './RenderObjectRegistry';
 
 describe('ShaderUniformUpdater', () => {
@@ -18,11 +18,10 @@ describe('ShaderUniformUpdater', () => {
     entity = new Entity('test-entity');
 
     // Add required geometry component for ShaderMaterialComponent
-    const geomComp = new GeometryComponent({
-      type: 'sphere',
+    const geomComp = new SphereGeometryComponent({
       radius: 1,
     });
-    entity.addComponent(geomComp);
+    entity.addComponent(geomComp as any);
 
     // Create shader material component
     shaderMatComp = new ShaderMaterialComponent({

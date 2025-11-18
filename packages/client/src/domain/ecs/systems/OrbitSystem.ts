@@ -1,6 +1,6 @@
 import type { Entity } from '../core/Entity';
 import { OrbitComponent } from '../components/OrbitComponent';
-import { GeometryComponent } from '../components/GeometryComponent';
+import BaseGeometryComponent from '../components/BaseGeometryComponent';
 
 export class OrbitSystem {
   constructor(private entities: Map<string, Entity>) {}
@@ -9,13 +9,11 @@ export class OrbitSystem {
       const orbit = entity.getComponent<OrbitComponent>('orbit');
       if (!orbit || (orbit as any).enabled === false) continue;
       const target = this.entities.get(orbit.targetEntityId); if (!target) continue;
-      // Effective radius (simplified: sphere/box only)
-      const geom = target.getComponent<GeometryComponent>('geometry');
+      // Effective radius: ask whichever concrete geometry component the entity has
       let targetRadius = 1;
-      if (geom) {
-        const p = geom.parameters;
-        if (p.type === 'sphere') targetRadius = p.radius * target.transform.worldScale.x;
-        else if (p.type === 'box') targetRadius = Math.sqrt(p.width*p.width + p.height*p.height + p.depth*p.depth)/2 * target.transform.worldScale.x;
+      const geomComp = target.getAllComponents().find((c) => c instanceof BaseGeometryComponent) as BaseGeometryComponent | undefined;
+      if (geomComp) {
+        targetRadius = geomComp.getBoundingRadius(target.transform.worldScale);
       }
       const orbitDistance = targetRadius + orbit.altitudeFromSurface;
       orbit.updateAngle(dt);

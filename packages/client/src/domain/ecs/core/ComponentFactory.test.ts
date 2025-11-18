@@ -1,6 +1,6 @@
 import { Entity } from "@client/domain/ecs/core/Entity";
 import { DefaultEcsComponentFactory } from "./ComponentFactory";
-import { GeometryComponent } from "@client/domain/ecs/components/GeometryComponent";
+import { BoxGeometryComponent } from "@client/domain/ecs/components/BoxGeometryComponent";
 import { ShaderMaterialComponent } from "@client/domain/ecs/components/ShaderMaterialComponent";
 
 describe("DefaultEcsComponentFactory", () => {
@@ -13,13 +13,13 @@ describe("DefaultEcsComponentFactory", () => {
 
   test("listCreatableComponents respects 'unique' and 'requires' and 'conflicts'", () => {
     const e = new Entity("e1");
-    // initially, geometry should be creatable, material should NOT (requires geometry)
+    // initially, geometry types should be creatable, material should NOT (requires geometry)
     const initial = factory.listCreatableComponents(e).map((d) => d.type);
-    expect(initial).toContain("geometry");
+    expect(initial).toContain("boxGeometry");
     expect(initial).not.toContain("material");
 
     // add geometry and verify material becomes creatable
-    e.addComponent(new GeometryComponent({ type: "box", width: 1, height: 1, depth: 1 }));
+    e.addComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 }) as any);
     const afterGeom = factory.listCreatableComponents(e).map((d) => d.type);
     expect(afterGeom).toContain("material");
 

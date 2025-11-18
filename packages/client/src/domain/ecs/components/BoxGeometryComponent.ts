@@ -1,0 +1,39 @@
+import { Component } from "../core/Component";
+import type { ComponentMetadata } from "../core/ComponentMetadata";
+import BaseGeometryComponent, { Vector3Like } from "./BaseGeometryComponent";
+
+export class BoxGeometryComponent extends BaseGeometryComponent {
+  readonly type = "boxGeometry";
+  readonly metadata: ComponentMetadata = {
+    type: "boxGeometry",
+    unique: true,
+    requires: [],
+    conflicts: ["skybox"],
+    inspector: {
+      fields: [
+        { key: "width", label: "Width" },
+        { key: "height", label: "Height" },
+        { key: "depth", label: "Depth" },
+      ],
+    },
+  };
+
+  width: number;
+  height: number;
+  depth: number;
+
+  constructor(params?: { width?: number; height?: number; depth?: number }) {
+    super();
+    this.width = params?.width ?? 1;
+    this.height = params?.height ?? 1;
+    this.depth = params?.depth ?? 1;
+  }
+
+  getBoundingRadius(worldScale: Vector3Like): number {
+    // Diagonal / 2, scaled by X (legacy code used worldScale.x)
+    const diag = Math.sqrt(this.width * this.width + this.height * this.height + this.depth * this.depth) / 2;
+    return diag * (worldScale?.x ?? 1);
+  }
+}
+
+export default BoxGeometryComponent;

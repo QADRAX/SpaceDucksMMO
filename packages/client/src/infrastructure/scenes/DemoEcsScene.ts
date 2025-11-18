@@ -5,7 +5,8 @@ import SceneId from '@client/domain/scene/SceneId';
 
 // ECS
 import { Entity } from '@client/domain/ecs/core/Entity';
-import { GeometryComponent } from '@client/domain/ecs/components/GeometryComponent';
+import { PlaneGeometryComponent } from '@client/domain/ecs/components/PlaneGeometryComponent';
+import { BoxGeometryComponent } from '@client/domain/ecs/components/BoxGeometryComponent';
 import { MaterialComponent } from '@client/domain/ecs/components/MaterialComponent';
 import { CameraViewComponent } from '@client/domain/ecs/components/CameraViewComponent';
 import { CameraTargetComponent } from '@client/domain/ecs/components/CameraTargetComponent';
@@ -43,14 +44,14 @@ export class DemoEcsScene extends BaseScene {
 
     // Plano (suelo)
     const ground = new Entity('ground');
-    ground.addComponent(new GeometryComponent({ type: 'plane', width: 30, height: 30 }));
+    ground.addComponent(new PlaneGeometryComponent({ width: 30, height: 30 }));
     ground.addComponent(new MaterialComponent({ type: 'standard', color: '#808080', roughness: 1.0, metalness: 0.0 }));
     ground.transform.setRotation(-Math.PI / 2, 0, 0); // hacer horizontal
     this.addEntity(ground);
 
     // Caja simple
     const box = new Entity('box');
-    box.addComponent(new GeometryComponent({ type: 'box', width: 1, height: 1, depth: 1 }));
+    box.addComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 }));
     box.addComponent(new MaterialComponent({ type: 'standard', color: '#44aa88', roughness: 0.5, metalness: 0.1 }));
     box.transform.setPosition(0, 0.5, 0);
     this.addEntity(box);

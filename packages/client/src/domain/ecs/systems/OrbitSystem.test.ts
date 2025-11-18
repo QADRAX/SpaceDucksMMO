@@ -1,5 +1,6 @@
 import { Entity } from '../core/Entity';
-import { GeometryComponent } from '../components/GeometryComponent';
+import { SphereGeometryComponent } from '../components/SphereGeometryComponent';
+import { BoxGeometryComponent } from '../components/BoxGeometryComponent';
 import { OrbitComponent } from '../components/OrbitComponent';
 import { OrbitSystem } from './OrbitSystem';
 
@@ -12,7 +13,7 @@ describe('OrbitSystem', () => {
   test('updates position on xz plane around sphere target', () => {
     const entities = makeEntities();
     const target = new Entity('target');
-    target.addComponent(new GeometryComponent({ type: 'sphere', radius: 5 }));
+    target.addComponent(new SphereGeometryComponent({ radius: 5 }));
     entities.set(target.id, target);
     const orbiter = new Entity('orbiter');
     orbiter.addComponent(new OrbitComponent({ targetEntityId: 'target', altitudeFromSurface: 2, speed: Math.PI, orbitPlane: 'xz' }));
@@ -32,7 +33,7 @@ describe('OrbitSystem', () => {
   test('box geometry radius uses diagonal/2', () => {
     const entities = makeEntities();
     const target = new Entity('target');
-    target.addComponent(new GeometryComponent({ type: 'box', width: 4, height: 3, depth: 12 }));
+    target.addComponent(new BoxGeometryComponent({ width: 4, height: 3, depth: 12 }));
     entities.set(target.id, target);
     const orbiter = new Entity('orbiter');
     orbiter.addComponent(new OrbitComponent({ targetEntityId: 'target', altitudeFromSurface: 0, speed: 1, orbitPlane: 'xy' }));

@@ -1,5 +1,6 @@
 import { Transform } from "./Transform";
 import { Component } from "./Component";
+import BaseGeometryComponent from "../components/BaseGeometryComponent";
 import { Result, ok, err } from '@client/domain/errors/EngineError';
 
 type VoidResult = Result<void>;
@@ -71,11 +72,15 @@ export class Entity {
     if (meta.unique && this.components.has(component.type))
       errors.push(`Component '${component.type}' is unique and already exists`);
     if (meta.requires)
-      for (const r of meta.requires)
-        if (!this.components.has(r))
-          errors.push(
-            `Component '${component.type}' requires '${r}' component`
-          );
+      for (const r of meta.requires) {
+        // special-case: 'geometry' requirement is satisfied by any concrete BaseGeometryComponent
+        if (r === 'geometry') {
+          const hasGeom = [...this.components.values()].some((c) => c instanceof BaseGeometryComponent);
+          if (!hasGeom) errors.push(`Component '${component.type}' requires '${r}' component`);
+        } else if (!this.components.has(r)) {
+          errors.push(`Component '${component.type}' requires '${r}' component`);
+        }
+      }
     if (meta.conflicts)
       for (const c of meta.conflicts)
         if (this.components.has(c))
@@ -88,9 +93,20 @@ export class Entity {
   }
   private validateRemoval(type: string): string[] {
     const errors: string[] = [];
-    for (const c of this.components.values())
-      if (c.metadata.requires?.includes(type))
-        errors.push(`Component '${c.type}' requires '${type}'`);
+    for (const c of this.components.values()) {
+      const reqs = c.metadata.requires || [];
+      for (const r of reqs) {
+        // if the other component requires 'geometry' and we're removing a concrete geometry, block
+        if (r === 'geometry') {
+          const removed = this.components.get(type);
+          if (removed && removed instanceof BaseGeometryComponent) {
+            errors.push(`Component '${c.type}' requires '${r}'`);
+          }
+        } else if (r === type) {
+          errors.push(`Component '${c.type}' requires '${type}'`);
+        }
+      }
+    }
     return errors;
   }
   addChild(entity: Entity): void {

@@ -1,0 +1,42 @@
+import { Component } from "../core/Component";
+import type { ComponentMetadata } from "../core/ComponentMetadata";
+import BaseGeometryComponent, { Vector3Like } from "./BaseGeometryComponent";
+
+export class CylinderGeometryComponent extends BaseGeometryComponent {
+  readonly type = "cylinderGeometry";
+  readonly metadata: ComponentMetadata = {
+    type: "cylinderGeometry",
+    unique: true,
+    requires: [],
+    conflicts: ["skybox"],
+    inspector: {
+      fields: [
+        { key: "radiusTop", label: "Radius Top" },
+        { key: "radiusBottom", label: "Radius Bottom" },
+        { key: "height", label: "Height" },
+        { key: "radialSegments", label: "Radial Segments" },
+      ],
+    },
+  };
+
+  radiusTop: number;
+  radiusBottom: number;
+  height: number;
+  radialSegments?: number;
+
+  constructor(params?: { radiusTop?: number; radiusBottom?: number; height?: number; radialSegments?: number }) {
+    super();
+    this.radiusTop = params?.radiusTop ?? 0.5;
+    this.radiusBottom = params?.radiusBottom ?? 0.5;
+    this.height = params?.height ?? 1;
+    this.radialSegments = params?.radialSegments ?? 16;
+  }
+
+  getBoundingRadius(worldScale: Vector3Like): number {
+    const maxRadius = Math.max(this.radiusTop, this.radiusBottom);
+    const diag = Math.sqrt(maxRadius * maxRadius + (this.height / 2) * (this.height / 2));
+    return diag * (worldScale?.x ?? 1);
+  }
+}
+
+export default CylinderGeometryComponent;
