@@ -12,10 +12,7 @@ import { BrowserStorage } from "@client/infrastructure/storage/BrowserStorage";
 import BrowserFileExistenceChecker from "@client/infrastructure/assets/BrowserFileExistenceChecker";
 import DevRegistry from '@client/infrastructure/ui/dev/DevRegistry';
 import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
-import ThreeRenderer from "@client/infrastructure/rendering/ThreeRenderer";
-import ScreenRouter from "@client/application/ui/ScreenRouter";
-import SceneManager from "@client/application/SceneManager";
-import GameScreenManager from "@client/application/ui/GameScreenManager";
+import KeyboardInputService from '@client/application/KeyboardInputService';
 import type { Services} from "./Services";
 import DefaultEcsComponentFactory from '@client/domain/ecs/core/ComponentFactory';
 
@@ -59,16 +56,7 @@ export class ServiceContainer {
     // Debug utilities
     const fpsController = new FpsController();
     const devRegistry = new DevRegistry();
-
-    // Rendering engine - pass fpsController
-    const renderingEngine = new ThreeRenderer(fpsController);
-
-    // Screen and Scene Managers
-    const root = document.getElementById('app-root') || document.body; // Use app root or fallback to body
-    const screenRouter = new ScreenRouter(root);
-    const sceneManager = new SceneManager(renderingEngine, settingsService);
-    const gameScreenManager = new GameScreenManager(screenRouter, sceneManager);
-
+    const keyboard = new KeyboardInputService();
     this.services = {
       settings: settingsService,
       i18n: i18nService,
@@ -78,8 +66,8 @@ export class ServiceContainer {
       textureCatalog: textureCatalog,
       fpsController: fpsController,
       devRegistry: devRegistry,
-      renderingEngine: renderingEngine,
-      navigation: gameScreenManager,
+      keyboard: keyboard,
+      // renderingEngine/navigation/sceneManager are provided later by RendererBootstrap
       ecsComponentFactory: new DefaultEcsComponentFactory(),
     };
 

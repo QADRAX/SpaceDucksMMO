@@ -1,6 +1,7 @@
 import ServiceContainer from "@client/infrastructure/di/ServiceContainer";
 import RenderingBootstrap from "@client/infrastructure/rendering/RenderingBootstrap";
 import UIBootstrap from "./UIBootstrap";
+import DevToolsBootstrap from './dev/DevToolsBootstrap';
 
 /**
  * Renderer Bootstrap - Main Application Orchestrator
@@ -24,9 +25,35 @@ export class RendererBootstrap {
     const renderingBootstrap = new RenderingBootstrap(services.textureResolver, services.settings, services.fpsController);
     renderingBootstrap.initialize(container);
 
+    // Expose single renderer and scene manager instances from RenderingBootstrap into services
+    const sceneManager = renderingBootstrap.getSceneManager();
+    const renderer = renderingBootstrap.getRenderer();
+    services.sceneManager = sceneManager;
+    services.renderingEngine = renderer;
+
     // 4. Initialize UI layer
     const uiBootstrap = new UIBootstrap(root);
-    uiBootstrap.registerScreens(services, renderingBootstrap.getSceneManager());
+    uiBootstrap.registerScreens(services, sceneManager);
+    
+    // Initialize dev tools (overlay + widget registration) in development
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        const devTools = new DevToolsBootstrap(root, services);
+        devTools.initialize();
+
+        // Register dev hotkeys via centralized KeyboardInputService
+        services.keyboard.onKeyDown('F1', () => {
+          const mounted = services.devRegistry.toggleWidget('fps');
+          if (mounted) services.fpsController.start(); else services.fpsController.stop();
+        });
+
+        services.keyboard.onKeyDown('F2', () => {
+          services.devRegistry.toggleWidget('scene-inspector');
+        });
+      } catch (e) {
+        // ignore in test environments without DOM
+      }
+    }
     
     // Show initial screen with transition (async but don't block)
     uiBootstrap.showInitialScreen().catch(err => {

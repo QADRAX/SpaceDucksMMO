@@ -1,5 +1,4 @@
 import { ServiceContainer } from './ServiceContainer';
-import GameScreenManager from '@client/application/ui/GameScreenManager';
 import SettingsService from '@client/application/SettingsService';
 import I18nService from '@client/application/I18nService';
 import ServerBrowserService from '@client/application/ServerBrowserService';
@@ -7,18 +6,6 @@ import WindowService from '@client/application/WindowService';
 import TextureResolverService from '@client/application/TextureResolverService';
 import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
 
-// Mock ThreeRenderer to avoid Three.js ES module issues in Jest
-jest.mock('@client/infrastructure/rendering/ThreeRenderer', () => {
-  return {
-    __esModule: true,
-    default: jest.fn().mockImplementation(() => ({
-      initialize: jest.fn(),
-      render: jest.fn(),
-      resize: jest.fn(),
-      dispose: jest.fn(),
-    })),
-  };
-});
 
 describe('ServiceContainer', () => {
   let container: ServiceContainer;
@@ -38,8 +25,11 @@ describe('ServiceContainer', () => {
       expect(services.window).toBeInstanceOf(WindowService);
       expect(services.textureResolver).toBeInstanceOf(TextureResolverService);
       expect(services.fpsController).toBeInstanceOf(FpsController);
-      expect(services.renderingEngine).toBeDefined();
-      expect(services.navigation).toBeInstanceOf(GameScreenManager);
+      // renderingEngine/navigation/sceneManager are provided later by RendererBootstrap
+      expect(services.renderingEngine).toBeUndefined();
+      expect(services.navigation).toBeUndefined();
+      // keyboard input service should be available
+      expect(services.keyboard).toBeDefined();
     });
 
     it('should return the same services instance on multiple calls', () => {
@@ -50,36 +40,7 @@ describe('ServiceContainer', () => {
     });
   });
 
-  describe('GameScreenManager DI', () => {
-    it('should properly initialize GameScreenManager with dependencies', () => {
-      const services = container.build();
-      const gameScreenManager = services.navigation;
-
-      expect(gameScreenManager).toBeInstanceOf(GameScreenManager);
-      expect(gameScreenManager.getCurrentScreen()).toBeNull();
-    });
-
-    it('should wire GameScreenManager with ScreenRouter', () => {
-      const services = container.build();
-      const gameScreenManager = services.navigation;
-
-      // Verify that GameScreenManager has access to its dependencies
-      // by checking that navigation methods are available
-      expect(typeof gameScreenManager.navigateTo).toBe('function');
-      expect(typeof gameScreenManager.onTransition).toBe('function');
-      expect(typeof gameScreenManager.getCurrentScreen).toBe('function');
-    });
-
-    it('should create unique instances of GameScreenManager dependencies', () => {
-      const services = container.build();
-
-      // GameScreenManager depends on ScreenRouter and SceneManager
-      // These should be properly wired through the container
-      expect(services.navigation).toBeDefined();
-      expect(services.renderingEngine).toBeDefined();
-      expect(services.settings).toBeDefined();
-    });
-  });
+  // GameScreenManager and rendering are provided later by RendererBootstrap
 
   describe('initialize', () => {
     it('should throw error if services are not built before initialization', async () => {

@@ -6,11 +6,7 @@ import MainScreen from "./screens/MainScreen";
 import SandboxScreen from "./screens/SandboxScreen";
 import type SceneManager from "@client/application/SceneManager";
 import EcsDemoScreen from "./screens/EcsDemoScreen";
-import { h, render } from 'preact';
-import DevRegistry from '@client/infrastructure/ui/dev/DevRegistry';
-import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
-import DevOverlay from '@client/infrastructure/ui/components/dev/DevOverlay';
-import { FpsWidget } from '@client/infrastructure/ui/components/common/FpsWidget';
+import { h } from 'preact';
 import type { Services } from "../di/Services";
 
 /**
@@ -46,54 +42,8 @@ export class UIBootstrap {
     // Initialize root app with transition overlay
     this.uiLayer.initializeRootApp(this.gameScreenManager);
 
-    // If in development, mount DevOverlay and register default widgets
-    try {
-      if (process.env.NODE_ENV !== 'production') {
-        // create overlay container inside the UI root
-        const root = this.uiLayer.getRoot();
-        const overlayContainer = document.createElement('div');
-        overlayContainer.className = 'dev-overlay-container';
-        root.appendChild(overlayContainer);
-
-        // Use services-provided registry/controller (created by ServiceContainer)
-        const devRegistry = services.devRegistry;
-        const fpsController = services.fpsController;
-
-        // Render the overlay into the container
-        try {
-          render(h(DevOverlay, { registry: devRegistry }), overlayContainer);
-        } catch (e) {
-          // ignore overlay render errors in non-browser or test envs
-          console.warn('DevOverlay render failed', e);
-        }
-
-        // Register FPS widget using the registry - start/stop controller on mount/unmount
-        devRegistry.register({
-          id: 'fps',
-          render: () => h(FpsWidget, { controller: fpsController }),
-          mount: () => fpsController.start(),
-          unmount: () => fpsController.stop(),
-        });
-
-        // Scene Inspector widget
-        try {
-          // Lazy import to avoid bundling in prod if not present
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          const SceneInspector = require('./components/inspector/SceneInspectorPanel').default;
-          devRegistry.register({
-            id: 'scene-inspector',
-            render: () => h(SceneInspector, {}),
-            mount: () => {},
-            unmount: () => {},
-          });
-        } catch (e) {
-          // ignore if inspector not available in test environment
-        }
-      }
-    } catch (e) {
-      // ignore in environments without DOM
-    }
+    // Dev tooling is initialized separately (DevToolsBootstrap). UIBootstrap
+    // should only be responsible for UI screens and navigation.
 
     const mainScreen = new MainScreen();
     mainScreen.setServices(services);

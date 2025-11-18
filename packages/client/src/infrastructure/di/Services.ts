@@ -10,6 +10,7 @@ import { ThreeRenderer } from "@client/infrastructure/rendering/ThreeRenderer";
 import GameScreenManager from "@client/application/ui/GameScreenManager";
 import type SceneManager from '@client/application/SceneManager';
 import type { IEcsComponentFactory } from '@client/domain/ecs/core/ComponentFactory';
+import KeyboardInputService from "@client/application/KeyboardInputService";
 
 export interface Services {
   settings: SettingsService;
@@ -21,8 +22,10 @@ export interface Services {
   textureCatalog?: TextureCatalogService;
   fpsController: FpsController;
   devRegistry: DevRegistry;
-  renderingEngine: ThreeRenderer;
-  navigation: GameScreenManager;
+  renderingEngine?: ThreeRenderer;
+  navigation?: GameScreenManager;
+  /** Centralized keyboard input for hotkeys and input handling */
+  keyboard: KeyboardInputService;
   /** Reference to the application SceneManager so UI tooling (dev inspector) can access ECS/scene APIs */
   sceneManager?: SceneManager;
   /** Domain ECS component factory for creating components in editor UIs */
