@@ -15,12 +15,19 @@ export function DevOverlay({ registry }: Props) {
   }, [registry]);
 
   return (
-    <div className="dev-overlay" style={{ position: 'fixed', top: 0, left: 0, zIndex: 10000 }}>
+    <div
+      className="dev-overlay"
+      style={{ position: 'fixed', top: 0, left: 0, zIndex: 10000, pointerEvents: 'none' }}
+    >
       {widgets.map((w) => (
         // w.render returns a vnode
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        <div key={w.id} className={`dev-widget dev-widget-${w.id}`}>
+        <div
+          key={w.id}
+          className={`dev-widget dev-widget-${w.id}`}
+          style={{ pointerEvents: 'auto' }}
+        >
           {w.render()}
         </div>
       ))}

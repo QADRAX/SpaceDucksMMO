@@ -3,6 +3,7 @@ import type Entity from "@client/domain/ecs/core/Entity";
 import { ReferenceField } from "../molecules/ReferenceField";
 import { useServices } from '../../../hooks/useServices';
 import { useI18n } from '../../../hooks/useI18n';
+import { TreeView, TreeNodeData } from '../../common/molecules/TreeView';
 
 type Props = {
   selectedId?: string | null;
@@ -10,29 +11,14 @@ type Props = {
   onError?: (msg: string) => void;
 };
 
-function renderNode(
-  ent: Entity,
-  selectedId: string | null,
-  onSelect: (id: string) => void,
-  children: Entity[]
-) {
-  return (
-    <div key={ent.id}>
-      <div
-        className={`entity-item ${selectedId === ent.id ? "selected" : ""}`}
-        onClick={() => onSelect(ent.id)}
-      >
-        {ent.id}
-      </div>
-      {children.length > 0 && (
-        <div className="entity-children">
-          {children.map((c) =>
-            renderNode(c, selectedId, onSelect, c.getChildren())
-          )}
-        </div>
-      )}
-    </div>
-  );
+// Helper: convert Entity graph into TreeNodeData
+function buildNode(ent: Entity): TreeNodeData {
+  return {
+    id: ent.id,
+    label: ent.id,
+    icon: '🔹',
+    children: ent.getChildren().map((c: Entity) => buildNode(c)),
+  };
 }
 
 export function SceneHierarchyTree({
@@ -71,6 +57,8 @@ export function SceneHierarchyTree({
 
   const roots = useMemo(() => entities.filter((e) => !e.parent), [entities]);
 
+  const treeNodes = useMemo<TreeNodeData[]>(() => roots.map((r) => buildNode(r)), [roots]);
+
   const handleReparent = (childId: string, newParentId: string | null) => {
     const mgr = services.sceneManager;
     if (!mgr) return;
@@ -100,14 +88,13 @@ export function SceneHierarchyTree({
       </div>
 
       <div>
-        {roots.map((r) =>
-          renderNode(
-            r,
-            selectedId || null,
-            (id) => onSelect && onSelect(id),
-            r.getChildren()
-          )
-        )}
+        <TreeView
+          nodes={treeNodes}
+          selectedId={selectedId ?? null}
+          onSelect={(id) => onSelect && onSelect(id)}
+          draggable={true}
+          onDropNode={(childId, newParentId) => handleReparent(childId, newParentId)}
+        />
       </div>
 
       <div style={{ marginTop: 8 }}>
