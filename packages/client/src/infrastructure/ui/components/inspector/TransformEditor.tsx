@@ -2,8 +2,8 @@ import { h } from "preact";
 import { useEffect, useState } from "preact/hooks";
 import type Entity from "@client/domain/ecs/core/Entity";
 import { useI18n } from "../../hooks/useI18n";
-import { TransformGroup } from "../common/TransformGroup";
-import { Vector3Input } from "../common/Vector3Input";
+import { TransformGroup } from "../common/molecules/TransformGroup";
+import { Vector3Input } from "../common/molecules/Vector3Input";
 
 type Props = { entity?: Entity };
 

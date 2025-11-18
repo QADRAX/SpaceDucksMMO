@@ -1,6 +1,6 @@
 /** @jsxImportSource preact */
 import { h } from 'preact';
-import { VectorAxisInput } from './VectorAxisInput';
+import { VectorAxisInput } from '../atoms/VectorAxisInput';
 import './vector3-input.css';
 
 export interface Vector3InputProps {
@@ -9,19 +9,10 @@ export interface Vector3InputProps {
   step?: number;
   min?: number;
   precision?: number;
-  convertFrom?: (value: number) => number; // Display conversion
-  convertTo?: (value: number) => number;   // Storage conversion
+  convertFrom?: (value: number) => number;
+  convertTo?: (value: number) => number;
 }
 
-/**
- * Three-axis vector input (X, Y, Z)
- * 
- * Features:
- * - Unified interface for 3D vectors
- * - Optional value conversion per axis
- * - Compact horizontal layout
- * - Consistent styling
- */
 export function Vector3Input({
   value,
   onChange,
@@ -31,7 +22,6 @@ export function Vector3Input({
   convertFrom,
   convertTo
 }: Vector3InputProps) {
-  
   return (
     <div class="vector3-input">
       <VectorAxisInput

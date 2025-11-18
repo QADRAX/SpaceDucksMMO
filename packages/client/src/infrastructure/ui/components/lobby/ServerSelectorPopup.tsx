@@ -1,10 +1,10 @@
 import { useEffect, useState } from "preact/hooks";
 import "./server-selector-popup.css";
-import Popup from "../common/utility/Popup";
-import Button from "../common/utility/Button";
-import InputRow from "../common/form/InputRow";
-import List from "../common/list/List";
-import ListItem from "../common/list/ListItem";
+import Popup from "../common/organisms/Popup";
+import Button from "../common/atoms/Button";
+import InputRow from "../common/molecules/InputRow";
+import List from "../common/molecules/List";
+import ListItem from "../common/molecules/ListItem";
 import useI18n from "../../hooks/useI18n";
 import { useServices } from "../../hooks/useServices";
 import { TrashIcon, PlusIcon } from "../common/icons";

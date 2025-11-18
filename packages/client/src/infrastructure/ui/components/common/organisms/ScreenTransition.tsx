@@ -8,10 +8,6 @@ export interface ScreenTransitionProps {
   duration?: number;
 }
 
-/**
- * Full-screen overlay for smooth transitions between game screens.
- * Fades to black during scene changes to hide loading artifacts.
- */
 export function ScreenTransition({ isTransitioning, duration = 300 }: ScreenTransitionProps) {
   const [isVisible, setIsVisible] = useState(false);
 
@@ -19,7 +15,6 @@ export function ScreenTransition({ isTransitioning, duration = 300 }: ScreenTran
     if (isTransitioning) {
       setIsVisible(true);
     } else {
-      // Keep visible during fade-out
       const timer = setTimeout(() => setIsVisible(false), duration);
       return () => clearTimeout(timer);
     }

@@ -3,8 +3,8 @@ import type { ComponentChild } from 'preact';
 import ScreenId from '@client/domain/ui/ScreenId';
 import BaseScreen from './BaseScreen';
 import { GameScreens } from '@client/domain/ui/GameScreenRegistry';
-import { DraggablePanel } from '../components/common/DraggablePanel';
-import Button from '../components/common/utility/Button';
+import { DraggablePanel } from '../components/common/organisms/DraggablePanel';
+import Button from '../components/common/atoms/Button';
 
 export class EcsDemoScreen extends BaseScreen {
   constructor() {

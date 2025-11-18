@@ -7,11 +7,6 @@ export interface TransformGroupProps {
   children: ComponentChildren;
 }
 
-/**
- * Labeled group container for transform controls
- * 
- * Provides consistent styling and layout for position, rotation, scale
- */
 export function TransformGroup({ label, children }: TransformGroupProps) {
   return (
     <div class="transform-group">

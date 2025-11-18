@@ -16,7 +16,6 @@ export function FpsWidget({ controller, updateIntervalMs = 500, style }: Props) 
   const [visible, setVisible] = useState<boolean>(ctrl.isVisible ? ctrl.isVisible() : true);
 
   useEffect(() => {
-    // Subscribe to generic change events from the controller
     const unsubChange = ctrl.onChange((c: FpsChange) => {
       if (c.visible !== undefined) setVisible(Boolean(c.visible));
       if (c.running !== undefined) setRunning(Boolean(c.running));

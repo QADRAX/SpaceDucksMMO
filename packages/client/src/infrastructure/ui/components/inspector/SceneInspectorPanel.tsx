@@ -7,7 +7,7 @@ import CameraSelector from "./CameraSelector";
 import { useServices } from "../../hooks/useServices";
 import { useI18n } from "../../hooks/useI18n";
 import "./inspector.css";
-import { DraggablePanel } from "../common/DraggablePanel";
+import { DraggablePanel } from "../common/organisms/DraggablePanel";
 
 export default function SceneInspectorPanel() {
   const services = useServices();

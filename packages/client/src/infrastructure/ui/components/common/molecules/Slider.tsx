@@ -1,6 +1,6 @@
 import { useState, useRef } from "preact/hooks";
 import "./slider.css";
-import { Tooltip } from "../utility";
+import Tooltip from "../atoms/Tooltip";
 
 type SliderProps = {
   value: number;
@@ -35,7 +35,7 @@ export default function Slider({
         type="range"
         id={id}
         className="sd-slider"
-        value={value}
+        value={value as any}
         min={min}
         max={max}
         step={step}

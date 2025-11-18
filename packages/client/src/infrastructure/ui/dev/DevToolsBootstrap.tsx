@@ -1,11 +1,11 @@
 import { render } from "preact";
 import DevOverlay from "@client/infrastructure/ui/components/dev/DevOverlay";
-import { FpsWidget } from "@client/infrastructure/ui/components/common/FpsWidget";
 import SceneInspectorPanel from "@client/infrastructure/ui/components/inspector/SceneInspectorPanel";
 import type DevRegistry from "./DevRegistry";
 import type { FpsController } from "./FpsController";
 import type { Services } from "../../di/Services";
 import { ServicesContext } from "@client/infrastructure/ui/hooks/useServices";
+import { FpsWidget } from "../components/common";
 
 /**
  * DevToolsBootstrap

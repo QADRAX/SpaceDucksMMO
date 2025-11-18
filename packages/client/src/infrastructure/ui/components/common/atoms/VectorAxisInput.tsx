@@ -10,19 +10,10 @@ export interface VectorAxisInputProps {
   step?: number;
   min?: number;
   precision?: number;
-  convertFrom?: (value: number) => number; // Display conversion (e.g., radians to degrees)
-  convertTo?: (value: number) => number;   // Storage conversion (e.g., degrees to radians)
+  convertFrom?: (value: number) => number;
+  convertTo?: (value: number) => number;
 }
 
-/**
- * Single axis input for vector values (X, Y, or Z)
- * 
- * Features:
- * - Optional value conversion (e.g., degrees ↔ radians)
- * - Configurable precision
- * - Min/max/step support
- * - Compact design
- */
 export function VectorAxisInput({
   label,
   value,
@@ -33,8 +24,6 @@ export function VectorAxisInput({
   convertFrom,
   convertTo
 }: VectorAxisInputProps) {
-  
-  // Display value with conversion if needed
   const displayValue = convertFrom ? convertFrom(value) : value;
 
   const [text, setText] = useState<string>(
@@ -42,7 +31,6 @@ export function VectorAxisInput({
   );
 
   useEffect(() => {
-    // keep local text in sync when external value changes
     setText(Number.isFinite(displayValue) ? String(displayValue.toFixed(precision)) : '');
   }, [displayValue, precision]);
 
@@ -62,7 +50,7 @@ export function VectorAxisInput({
       <label class="axis-label">{label}</label>
       <input
         type="number"
-        value={text}
+        value={text as any}
         onInput={handleInput}
         onChange={handleInput}
         step={step}

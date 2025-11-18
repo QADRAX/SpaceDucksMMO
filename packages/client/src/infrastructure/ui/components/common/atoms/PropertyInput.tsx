@@ -8,18 +8,11 @@ export interface PropertyInputProps {
   placeholder?: string;
 }
 
-/**
- * Text input for string properties
- * 
- * Simple text input with consistent styling
- */
 export function PropertyInput({ value, onChange, placeholder }: PropertyInputProps) {
-  
   const handleChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
     onChange(target.value);
   };
-  
   return (
     <input
       type="text"

@@ -31,7 +31,7 @@ export default function Popup({
       const timer = setTimeout(() => {
         setIsVisible(false);
         setIsClosing(false);
-      }, 200); // Match animation duration
+      }, 200);
       return () => clearTimeout(timer);
     }
   }, [isOpen, isVisible]);

@@ -8,18 +8,11 @@ export interface PropertyCheckboxProps {
   label?: string;
 }
 
-/**
- * Checkbox input for boolean properties
- * 
- * Styled checkbox with optional label
- */
 export function PropertyCheckbox({ checked, onChange, label }: PropertyCheckboxProps) {
-  
   const handleChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
     onChange(target.checked);
   };
-  
   return (
     <label class="property-checkbox-wrapper">
       <input

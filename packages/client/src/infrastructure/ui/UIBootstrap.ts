@@ -6,7 +6,6 @@ import MainScreen from "./screens/MainScreen";
 import SandboxScreen from "./screens/SandboxScreen";
 import type SceneManager from "@client/application/SceneManager";
 import EcsDemoScreen from "./screens/EcsDemoScreen";
-import { h } from 'preact';
 import type { Services } from "../di/Services";
 
 /**

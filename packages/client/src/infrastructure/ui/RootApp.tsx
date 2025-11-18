@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { h } from 'preact';
 import { useState, useEffect } from 'preact/hooks';
-import ScreenTransition from './components/common/utility/ScreenTransition';
+import ScreenTransition from './components/common/organisms/ScreenTransition';
 import type { GameScreenManager } from '@client/application/ui/GameScreenManager';
 
 export interface RootAppProps {

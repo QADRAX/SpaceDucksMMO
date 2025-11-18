@@ -11,14 +11,6 @@ export interface PropertyNumberProps {
   step?: number;
 }
 
-/**
- * Number input with slider
- * 
- * Features:
- * - Range slider for visual adjustment
- * - Number input for precise values
- * - Synchronized dual controls
- */
 export function PropertyNumber({
   value,
   onChange,
@@ -26,12 +18,10 @@ export function PropertyNumber({
   max = 100,
   step = 0.1
 }: PropertyNumberProps) {
-  // Local string state to allow free typing without the input being clobbered
   const [text, setText] = useState<string>(
     Number.isFinite(value) ? String(value) : ''
   );
 
-  // Note: avoid heavy hooks here to minimize re-renders; implement lightweight handlers
   const handleRangeChange = (e: Event) => {
     const target = e.target as HTMLInputElement;
     const newValue = parseFloat(target.value);
@@ -41,7 +31,6 @@ export function PropertyNumber({
   const handleNumberInput = (e: Event) => {
     const target = e.target as HTMLInputElement;
     const raw = target.value;
-    // allow empty string while typing
     if (raw === "") {
       setText("");
       return;
@@ -51,12 +40,10 @@ export function PropertyNumber({
       setText(String(parsed));
       onChange(parsed);
     } else {
-      // keep the user's input locally
       setText(raw);
     }
   };
 
-  // compute display values
   const sliderValue = Number.isFinite(value) ? value : min;
   const numberValue = text === undefined || text === null || text === '' ? (Number.isFinite(value) ? String(value) : '') : text;
 
@@ -64,7 +51,7 @@ export function PropertyNumber({
     <div class="property-number">
       <input
         type="range"
-        value={sliderValue}
+        value={sliderValue as any}
         onInput={handleRangeChange}
         min={min}
         max={max}
@@ -73,7 +60,7 @@ export function PropertyNumber({
       />
       <input
         type="number"
-        value={numberValue}
+        value={numberValue as any}
         onInput={handleNumberInput}
         min={min}
         max={max}

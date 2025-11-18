@@ -1,10 +1,10 @@
 /** @jsxImportSource preact */
-import Popup from "../common/utility/Popup";
-import FormSection from "../common/form/FormSection";
-import FormField from "../common/form/FormField";
-import Select from "../common/form/Select";
-import Checkbox from "../common/form/Checkbox";
-import Slider from "../common/form/Slider";
+import Popup from "../common/organisms/Popup";
+import FormSection from "../common/molecules/FormSection";
+import FormField from "../common/molecules/FormField";
+import Select from "../common/molecules/Select";
+import Checkbox from "../common/atoms/Checkbox";
+import Slider from "../common/molecules/Slider";
 import useI18n from "../../hooks/useI18n";
 import useSettings from "../../hooks/useSettings";
 import { SUPPORTED_LANGUAGES } from "@client/domain/i18n/Language";

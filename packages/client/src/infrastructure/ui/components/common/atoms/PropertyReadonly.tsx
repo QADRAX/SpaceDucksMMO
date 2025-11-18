@@ -6,11 +6,6 @@ export interface PropertyReadonlyProps {
   value: string | number | boolean;
 }
 
-/**
- * Display-only property value
- * 
- * Shows a value that cannot be edited
- */
 export function PropertyReadonly({ value }: PropertyReadonlyProps) {
   return (
     <span class="property-readonly">

@@ -4,7 +4,6 @@
   align-items: flex-start;
 }
 
-/* Responsive: Stack on very small screens */
 @media (max-width: 280px) {
   .vector3-input {
     flex-direction: column;

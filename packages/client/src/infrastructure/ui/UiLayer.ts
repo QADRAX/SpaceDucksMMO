@@ -1,6 +1,6 @@
 import './styles/base.css';
 import { render, h } from 'preact';
-import ScreenTransition from './components/common/utility/ScreenTransition';
+import ScreenTransition from './components/common/organisms/ScreenTransition';
 import type { GameScreenManager } from '@client/application/ui/GameScreenManager';
 import { useState, useEffect } from 'preact/hooks';
 
