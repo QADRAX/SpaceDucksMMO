@@ -1,23 +1,17 @@
 import './property-checkbox.css';
+import { Checkbox } from './Checkbox';
 
 export interface PropertyCheckboxProps {
   checked: boolean;
   onChange: (checked: boolean) => void;
   label?: string;
+  className?: string;
 }
 
-export function PropertyCheckbox({ checked, onChange, label }: PropertyCheckboxProps) {
-  const handleInput = (e: JSX.TargetedEvent<HTMLInputElement, Event>) => {
-    onChange(e.currentTarget.checked);
-  };
+export function PropertyCheckbox({ checked, onChange, label, className }: PropertyCheckboxProps) {
   return (
-    <label className="property-checkbox-wrapper">
-      <input
-        type="checkbox"
-        checked={checked}
-        onInput={handleInput}
-        className="property-checkbox"
-      />
+    <label className={`property-checkbox-wrapper ${className ?? ''}`}>
+      <Checkbox checked={checked} onChange={onChange} className="property-checkbox" />
       {label && <span className="checkbox-label">{label}</span>}
     </label>
   );

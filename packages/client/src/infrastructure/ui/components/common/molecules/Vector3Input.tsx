@@ -20,38 +20,22 @@ export function Vector3Input({
   convertFrom,
   convertTo
 }: Vector3InputProps) {
+  const axes: Array<['X'|'Y'|'Z', 'x'|'y'|'z']> = [['X','x'], ['Y','y'], ['Z','z']];
   return (
     <div className="vector3-input">
-      <VectorAxisInput
-        label="X"
-        value={value.x}
-        onChange={(v) => onChange('x', v)}
-        step={step}
-        min={min}
-        precision={precision}
-        convertFrom={convertFrom}
-        convertTo={convertTo}
-      />
-      <VectorAxisInput
-        label="Y"
-        value={value.y}
-        onChange={(v) => onChange('y', v)}
-        step={step}
-        min={min}
-        precision={precision}
-        convertFrom={convertFrom}
-        convertTo={convertTo}
-      />
-      <VectorAxisInput
-        label="Z"
-        value={value.z}
-        onChange={(v) => onChange('z', v)}
-        step={step}
-        min={min}
-        precision={precision}
-        convertFrom={convertFrom}
-        convertTo={convertTo}
-      />
+      {axes.map(([label, axis]) => (
+        <VectorAxisInput
+          key={axis}
+          label={label}
+          value={value[axis]}
+          onChange={(v) => onChange(axis, v)}
+          step={step}
+          min={min}
+          precision={precision}
+          convertFrom={convertFrom}
+          convertTo={convertTo}
+        />
+      ))}
     </div>
   );
 }

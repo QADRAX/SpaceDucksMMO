@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import './property-number.css';
+import { Slider } from '../molecules/Slider';
 
 export interface PropertyNumberProps {
   value: number;
@@ -20,11 +21,6 @@ export function PropertyNumber({
     Number.isFinite(value) ? String(value) : ''
   );
 
-  const handleRangeChange = (e: JSX.TargetedEvent<HTMLInputElement, Event>) => {
-    const newValue = parseFloat(e.currentTarget.value);
-    if (!isNaN(newValue)) onChange(newValue);
-  };
-
   const handleNumberInput = (e: JSX.TargetedEvent<HTMLInputElement, Event>) => {
     const raw = e.currentTarget.value;
     if (raw === "") {
@@ -40,20 +36,11 @@ export function PropertyNumber({
     }
   };
 
-  const sliderValue = Number.isFinite(value) ? value : min;
   const numberValue = text === undefined || text === null || text === '' ? (Number.isFinite(value) ? String(value) : '') : text;
 
   return (
     <div className="property-number">
-      <input
-        type="range"
-        value={sliderValue}
-        onInput={handleRangeChange}
-        min={min}
-        max={max}
-        step={step}
-        className="property-slider"
-      />
+      <Slider value={Number.isFinite(value) ? value : min} onChange={onChange} min={min} max={max} step={step} showTooltip={false} />
       <input
         type="number"
         value={numberValue}

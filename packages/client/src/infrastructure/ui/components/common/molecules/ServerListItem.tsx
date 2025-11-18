@@ -12,9 +12,11 @@ type Props = {
   onRemove: (id: string) => void;
 };
 
+import { ListItem } from './ListItem';
+
 export function ServerListItem({ server, onRemove }: Props) {
   return (
-    <div className="sd-server-item">
+    <ListItem className="sd-server-item">
       <div className="sd-server-main">
         <div className="sd-server-name">{server.name}</div>
         <div className="sd-server-region">{server.region ?? "—"}</div>
@@ -25,6 +27,6 @@ export function ServerListItem({ server, onRemove }: Props) {
       <button className="sd-server-remove" onClick={() => onRemove(server.id)}>
         Remove
       </button>
-    </div>
+    </ListItem>
   );
 }

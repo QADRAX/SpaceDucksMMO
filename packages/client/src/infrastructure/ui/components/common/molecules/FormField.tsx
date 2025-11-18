@@ -1,5 +1,4 @@
 import { ComponentChildren } from "preact";
-import "./form-field.css";
 
 type FormFieldProps = {
   label: string;

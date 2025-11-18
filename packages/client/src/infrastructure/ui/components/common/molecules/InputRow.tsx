@@ -1,4 +1,5 @@
 import "./input.css";
+import { PropertyInput } from "../atoms/PropertyInput";
 
 type InputRowProps = {
   label?: string;
@@ -22,14 +23,24 @@ export function InputRow({
   return (
     <div className="sd-input-row">
       {label && <label className="sd-input-label">{label}</label>}
-      <input
-        type={type}
-        className={`sd-input ${error ? "sd-input--error" : ""}`}
-        value={value}
-        onInput={(e: JSX.TargetedEvent<HTMLInputElement, Event>) => onInput(e.currentTarget.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-      />
+      {type === "text" ? (
+        <PropertyInput
+          value={value}
+          onChange={onInput}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`sd-input ${error ? "sd-input--error" : ""}`}
+        />
+      ) : (
+        <input
+          type={type}
+          className={`sd-input ${error ? "sd-input--error" : ""}`}
+          value={value}
+          onInput={(e: JSX.TargetedEvent<HTMLInputElement, Event>) => onInput(e.currentTarget.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+        />
+      )}
       {error && <span className="sd-input-error">{error}</span>}
     </div>
   );

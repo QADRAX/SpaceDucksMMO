@@ -1,6 +1,7 @@
 import { h, ComponentChildren } from 'preact';
 import { useState, useRef, useEffect } from 'preact/hooks';
 import './draggable-panel.css';
+import { Panel } from '../molecules/Panel';
 
 export type PanelTheme = 'blue' | 'pink' | 'green' | 'gold';
 
@@ -107,17 +108,16 @@ export function DraggablePanel(props: DraggablePanelProps) {
       class={`draggable-panel draggable-panel-${theme} ${collapsed ? 'collapsed' : ''} ${isDragging ? 'dragging' : ''} ${isResizing ? 'resizing' : ''}`}
       style={panelStyle}
     >
-      <div class={`panel-header ${draggable ? 'draggable' : ''}`} onMouseDown={draggable ? handleDragStart : undefined}>
-        <span class="panel-title">{title}</span>
-        <div class="panel-controls">
-          {collapsible && (
-            <button class="panel-control-btn collapse-btn" onClick={toggleCollapse} title={collapsed ? 'Expand' : 'Collapse'}>
-              {collapsed ? '▼' : '▲'}
-            </button>
-          )}
-        </div>
-      </div>
-      {!collapsed && <div class="panel-content">{children}</div>}
+      <Panel
+        title={title}
+        collapsible={collapsible}
+        collapsed={collapsed}
+        onToggle={toggleCollapse}
+        headerOnMouseDown={draggable ? handleDragStart : undefined}
+      >
+        {children}
+      </Panel>
+
       {resizable && !collapsed && <div class="resize-handle" onMouseDown={handleResizeStart} title="Drag to resize" />}
     </div>
   );

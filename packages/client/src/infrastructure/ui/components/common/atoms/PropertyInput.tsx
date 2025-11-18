@@ -5,9 +5,11 @@ export interface PropertyInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
+  disabled?: boolean;
+  className?: string;
 }
 
-export function PropertyInput({ value, onChange, placeholder }: PropertyInputProps) {
+export function PropertyInput({ value, onChange, placeholder, disabled = false, className }: PropertyInputProps) {
   const [text, setText] = useState<string>(value ?? '');
 
   useEffect(() => {
@@ -27,7 +29,8 @@ export function PropertyInput({ value, onChange, placeholder }: PropertyInputPro
       value={text}
       onInput={handleInput}
       placeholder={placeholder}
-      className="property-input"
+      className={`property-input ${className ?? ''}`}
+      disabled={disabled}
     />
   );
 }

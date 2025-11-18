@@ -1,6 +1,7 @@
 import { ComponentChildren } from "preact";
 import { useState, useEffect } from "preact/hooks";
 import "./popup.css";
+import { Card } from "../atoms/Card";
 
 type PopupProps = {
   isOpen: boolean;
@@ -43,10 +44,11 @@ export function Popup({
       className={`popup-overlay ${isClosing ? 'popup-overlay--closing' : ''}`} 
       onClick={onClose}
     >
-      <div
+      <Card
+        as="div"
         className={`popup-content ${isClosing ? 'popup-content--closing' : ''}`}
         style={{ maxWidth }}
-        onClick={(e) => e.stopPropagation()}
+        onClick={(e: MouseEvent) => e.stopPropagation()}
       >
         {title && (
           <div className="popup-header">
@@ -60,7 +62,7 @@ export function Popup({
         <div className="popup-body">{children}</div>
 
         {footer && <div className="popup-footer">{footer}</div>}
-      </div>
+      </Card>
     </div>
   );
 }
