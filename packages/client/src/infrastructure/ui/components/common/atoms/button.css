@@ -18,7 +18,7 @@
 
 .sd-button:hover:not(:disabled) {
     border-color: var(--accent);
-    box-shadow: 0 0 0 4px rgba(93, 211, 255, 0.15), var(--shadow);
+    box-shadow: 0 0 0 4px var(--accent-shadow-15), var(--shadow);
     transform: translateY(-1px);
 }
 
@@ -34,11 +34,11 @@
 /* Variants */
 .sd-button--primary {
     border-color: var(--accent);
-    background: rgba(93, 211, 255, 0.1);
+    background: var(--accent-bg);
 }
 
 .sd-button--primary:hover:not(:disabled) {
-    box-shadow: 0 0 0 4px rgba(93, 211, 255, 0.2), 0 4px 12px rgba(93, 211, 255, 0.3);
+    box-shadow: 0 0 0 4px var(--accent-shadow-2-20), 0 4px 12px var(--accent-shadow-2-20);
 }
 
 .sd-button--secondary {
@@ -46,15 +46,15 @@
 }
 
 .sd-button--danger {
-    background: rgba(239, 68, 68, 0.1);
-    border-color: rgba(239, 68, 68, 0.3);
-    color: #ef4444;
+    background: var(--danger-bg);
+    border-color: var(--danger-30);
+    color: var(--danger);
 }
 
 .sd-button--danger:hover:not(:disabled) {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: #ef4444;
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    background: var(--danger-20);
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px var(--danger-15);
 }
 
 .sd-button--ghost {
@@ -63,19 +63,19 @@
 }
 
 .sd-button--ghost:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--ghost-hover-bg);
 }
 
 .sd-button--success {
-    background: rgba(34, 197, 94, 0.1);
-    border-color: rgba(34, 197, 94, 0.3);
-    color: #22c55e;
+    background: var(--success-bg);
+    border-color: var(--success-20);
+    color: var(--success);
 }
 
 .sd-button--success:hover:not(:disabled) {
-    background: rgba(34, 197, 94, 0.2);
-    border-color: #22c55e;
-    box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+    background: var(--success-20);
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px var(--success-15);
 }
 
 /* Sizes */

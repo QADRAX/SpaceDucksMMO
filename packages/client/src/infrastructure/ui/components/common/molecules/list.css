@@ -6,7 +6,7 @@
 
 .sd-list-item--hover:hover {
     border-color: var(--accent);
-    background: rgba(15, 18, 24, 0.8);
+    background: var(--panel);
 }
 
 .sd-list-item--clickable {

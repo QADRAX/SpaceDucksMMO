@@ -16,6 +16,6 @@
 }
 
 .sd-checkbox:focus {
-    outline: 2px solid rgba(93, 211, 255, 0.3);
+    outline: 2px solid var(--accent-shadow-2-20);
     outline-offset: 2px;
 }

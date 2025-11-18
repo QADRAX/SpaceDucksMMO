@@ -1,5 +1,5 @@
 .sd-select {
-    background: #0f1218;
+    background: var(--panel-dark);
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: 6px;
@@ -14,7 +14,7 @@
 .sd-select:focus {
     outline: none;
     border-color: var(--accent);
-    box-shadow: 0 0 0 2px rgba(93, 211, 255, 0.15);
+    box-shadow: 0 0 0 2px var(--accent-shadow-15);
 }
 
 .sd-select:hover:not(:disabled) {
@@ -27,6 +27,6 @@
 }
 
 .sd-select option {
-    background: #0f1218;
+    background: var(--panel-dark);
     color: var(--text);
 }

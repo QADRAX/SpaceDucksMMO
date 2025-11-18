@@ -24,8 +24,8 @@
 
 /* Resize handle (corner grip) */
 .resize-handle { position:absolute; right:0; bottom:0; width:20px; height:20px; cursor:nwse-resize; z-index:10; }
-.resize-handle::before { content:''; position:absolute; right:2px; bottom:2px; width:12px; height:12px; border-right:3px solid rgba(255,255,255,0.4); border-bottom:3px solid rgba(255,255,255,0.4); border-radius:0 0 4px 0; }
-.resize-handle:hover::before { border-color: rgba(255,255,255,0.7); }
+.resize-handle::before { content:''; position:absolute; right:2px; bottom:2px; width:12px; height:12px; border-right:3px solid var(--handle-border); border-bottom:3px solid var(--handle-border); border-radius:0 0 var(--control-radius) 0; }
+.resize-handle:hover::before { border-color: var(--handle-hover-border); }
 
 /* Hide content/resize when parent has collapsed state */
 .draggable-panel.collapsed .resize-handle { display: none; }
@@ -33,3 +33,9 @@
 /* Ensure the Card inside the draggable container fills the container width
   and uses column flex so .panel-content can grow/shrink correctly. */
 .draggable-panel > .sd-card { width: 100%; height: 100%; box-sizing: border-box; }
+
+/* Theme border colors (centralized tokens) */
+.draggable-panel-blue { border-color: var(--theme-blue-50); }
+.draggable-panel-pink { border-color: var(--theme-pink-50); }
+.draggable-panel-green { border-color: var(--theme-green-50); }
+.draggable-panel-gold { border-color: var(--theme-gold-50); }

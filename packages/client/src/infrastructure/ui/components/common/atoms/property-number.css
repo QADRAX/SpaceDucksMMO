@@ -27,7 +27,7 @@
 
 .property-number .property-slider::-webkit-slider-thumb:hover {
   transform: scale(1.2);
-  box-shadow: 0 0 8px rgba(255, 105, 180, 0.5);
+  box-shadow: 0 0 8px var(--accent-shadow-2-20);
 }
 
 .property-number .property-slider::-moz-range-thumb {
@@ -42,7 +42,7 @@
 
 .property-number .property-slider::-moz-range-thumb:hover {
   transform: scale(1.2);
-  box-shadow: 0 0 8px rgba(255, 105, 180, 0.5);
+  box-shadow: 0 0 8px var(--accent-shadow-2-20);
 }
 
 .property-number .property-number-display {
@@ -65,7 +65,7 @@
 
 .property-number .property-number-display:focus {
   border-color: var(--accent, #ff69b4);
-  box-shadow: 0 0 0 2px rgba(255, 105, 180, 0.1);
+  box-shadow: 0 0 0 2px var(--accent-shadow-15);
 }
 
 /* Remove spinner buttons */

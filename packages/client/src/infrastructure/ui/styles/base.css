@@ -8,6 +8,67 @@
     --border: #2a2f3a;
     --shadow: 0 10px 30px rgba(0, 0, 0, .4);
     --radius: 10px;
+    /* Theme palette (used by Panel variants) */
+    --theme-blue: #6496ff;
+    --theme-blue-30: rgba(100,150,255,0.3);
+    --theme-blue-50: rgba(100,150,255,0.5);
+
+    --theme-pink: #e24a90;
+    --theme-pink-30: rgba(226,74,144,0.3);
+    --theme-pink-50: rgba(226,74,144,0.5);
+
+    --theme-green: #4ae290;
+    --theme-green-30: rgba(74,226,144,0.3);
+    --theme-green-50: rgba(74,226,144,0.5);
+
+    --theme-gold: #ffc864;
+    --theme-gold-30: rgba(255,200,100,0.3);
+    --theme-gold-50: rgba(255,200,100,0.5);
+
+    /* Layout tokens for common components */
+    --panel-padding: 16px;
+    --panel-header-padding: 12px 16px;
+    --card-padding: 16px;
+    /* Controls & small tokens */
+    --control-radius: 4px;
+    --control-bg: rgba(255,255,255,0.06);
+    --control-border: rgba(255,255,255,0.12);
+    --control-hover-bg: rgba(255,255,255,0.12);
+    --control-hover-border: rgba(255,255,255,0.2);
+
+    /* Scrollbar thumb tokens */
+    --scrollbar-thumb: rgba(255,255,255,0.3);
+    --scrollbar-thumb-hover: rgba(255,255,255,0.4);
+
+    /* Tooltip */
+    --tooltip-bg: rgba(15, 18, 24, 0.95);
+    --tooltip-padding: 4px 8px;
+
+    /* Resize handle */
+    --handle-border: rgba(255,255,255,0.4);
+    --handle-hover-border: rgba(255,255,255,0.7);
+    /* Overlay / popup tokens */
+    --overlay-bg: rgba(0,0,0,0.7);
+    --popup-shadow-extra: rgba(0,0,0,0.5);
+    --scrollbar-track: rgba(0,0,0,0.2);
+    --panel-translucent: rgba(15,18,24,0.5);
+    --panel-dark: #0f1218;
+    --box-shadow-small: rgba(0,0,0,0.3);
+    /* Accent & semantic shadows */
+    --accent-shadow-15: rgba(93, 211, 255, 0.15);
+    --accent-shadow-2-20: rgba(93, 211, 255, 0.2);
+    --accent-bg: rgba(93, 211, 255, 0.1);
+    --accent-bg-hover: rgba(93, 211, 255, 0.2);
+    --danger-bg: rgba(239, 68, 68, 0.1);
+    --success-bg: rgba(34,197,94,0.1);
+    --success-20: rgba(34,197,94,0.2);
+    --danger: #ef4444;
+    --danger-30: rgba(239, 68, 68, 0.3);
+    --danger-20: rgba(239, 68, 68, 0.2);
+    --danger-15: rgba(239, 68, 68, 0.15);
+    --success: #22c55e;
+    --success-15: rgba(34,197,94,0.15);
+    --ghost-hover-bg: rgba(255,255,255,0.05);
 }
 
 * {

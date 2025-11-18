@@ -1,8 +1,8 @@
 .sd-card {
-    background: rgba(15, 18, 24, 0.6);
+    background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 16px;
+    padding: var(--card-padding);
     transition: all 0.2s ease;
 }
 
