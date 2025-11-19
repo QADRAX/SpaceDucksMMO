@@ -4,8 +4,7 @@ import * as THREE from 'three';
 import type { SettingsService } from '@client/application/SettingsService';
 import type SceneId from '@client/domain/scene/SceneId';
 import { RenderSyncSystem } from '../graphics/sync/RenderSyncSystem';
-import { CameraTargetSystem } from '@client/domain/ecs/systems/CameraTargetSystem';
-import { OrbitSystem } from '@client/domain/ecs/systems/OrbitSystem';
+import { setCurrentEcsWorld } from '@client/domain/ecs/core/EcsWorldContext';
 import type { Entity } from '@client/domain/ecs/core/Entity';
 import { Result, ok, err } from '@client/domain/errors/EngineError';
 
@@ -25,8 +24,6 @@ export abstract class BaseScene implements IScene {
   
   // ECS Systems
   protected renderSyncSystem?: RenderSyncSystem;
-  protected cameraTargetSystem?: CameraTargetSystem;
-  protected orbitSystem?: OrbitSystem;
   
   // Settings service kept for future use (e.g., quality affecting ECS components)
   // Currently unused since legacy texture reload path was removed.
@@ -34,6 +31,23 @@ export abstract class BaseScene implements IScene {
   
   constructor(protected settingsService: SettingsService) {
     // No-op: legacy texture reload path removed in ECS-only mode
+  }
+
+  // EcsWorldContext implementation
+  getEntity(id: string) {
+    return this.entities.get(id);
+  }
+
+  getAllEntities(): Iterable<Entity> {
+    return this.entities.values();
+  }
+
+  onActivate(): void {
+    setCurrentEcsWorld(this);
+  }
+
+  onDeactivate(): void {
+    setCurrentEcsWorld(null);
   }
 
   /**
@@ -123,8 +137,6 @@ export abstract class BaseScene implements IScene {
     
     // Initialize ECS systems
     this.renderSyncSystem = new RenderSyncSystem(renderScene);
-    this.cameraTargetSystem = new CameraTargetSystem(this.renderSyncSystem.getEntities());
-    this.orbitSystem = new OrbitSystem(this.renderSyncSystem.getEntities());
     
     // Add all entities that were already added
     for (const ent of this.entities.values()) {
@@ -140,14 +152,6 @@ export abstract class BaseScene implements IScene {
     // Update ECS entities
     for (const ent of this.entities.values()) {
       ent.update(dt);
-    }
-
-    // Update ECS systems
-    if (this.orbitSystem) {
-      this.orbitSystem.update(dt);
-    }
-    if (this.cameraTargetSystem) {
-      this.cameraTargetSystem.update(dt);
     }
     if (this.renderSyncSystem) {
       this.renderSyncSystem.update(dt);
@@ -287,8 +291,6 @@ export abstract class BaseScene implements IScene {
     
     // Clean up systems
     this.renderSyncSystem = undefined;
-    this.cameraTargetSystem = undefined;
-    this.orbitSystem = undefined;
     
     // Notify engine that camera is gone
     if (engine) {

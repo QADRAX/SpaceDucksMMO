@@ -41,6 +41,9 @@ export abstract class Component implements IComponent {
   setEntityId(id: string): void {
     this.entityId = id;
   }
+  protected getEntityId(): string | undefined {
+    return this.entityId;
+  }
   update(dt: number): void {
     /* optional override */
   }

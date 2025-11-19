@@ -14,7 +14,8 @@ import { LambertMaterialComponent } from "@client/domain/ecs/components/LambertM
 import { ShaderMaterialComponent } from "@client/domain/ecs/components/ShaderMaterialComponent";
 import { OrbitComponent } from "@client/domain/ecs/components/OrbitComponent";
 import { CameraViewComponent } from "@client/domain/ecs/components/CameraViewComponent";
-import { CameraTargetComponent } from "@client/domain/ecs/components/CameraTargetComponent";
+import { LookAtEntityComponent } from '@client/domain/ecs/components/LookAtEntityComponent';
+import { LookAtPointComponent } from '@client/domain/ecs/components/LookAtPointComponent';
 import { LightComponent } from "@client/domain/ecs/components/LightComponent";
 
 export type KnownComponentType =
@@ -32,7 +33,9 @@ export type KnownComponentType =
   | "shaderMaterial"
   | "orbit"
   | "cameraView"
-  | "cameraTarget"
+  
+  | "lookAtEntity"
+  | "lookAtPoint"
   | "light";
 
 export interface CreatableComponentDef {
@@ -88,9 +91,12 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
     // camera view (unique)
     if (!has("cameraView")) defs.push({ type: "cameraView", label: "Camera View" });
 
-    // camera target requires cameraView
-    if (has("cameraView") && !has("cameraTarget"))
-      defs.push({ type: "cameraTarget", label: "Camera Target" });
+    // look-at / follow options
+    if (has("cameraView") && !has("lookAtEntity")) defs.push({ type: "lookAtEntity", label: "Look At Entity" });
+
+    // look-at components
+    if (!has('lookAtEntity')) defs.push({ type: 'lookAtEntity', label: 'Look At Entity' });
+    if (!has('lookAtPoint')) defs.push({ type: 'lookAtPoint', label: 'Look At Point' });
 
     // light
     if (!has("light")) defs.push({ type: "light", label: "Light" });
@@ -128,8 +134,10 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
         return new OrbitComponent({ targetEntityId: "", altitudeFromSurface: 10, speed: 1 });
       case "cameraView":
         return new CameraViewComponent({});
-      case "cameraTarget":
-        return new CameraTargetComponent({ targetEntityId: "" });
+      case "lookAtEntity":
+        return new LookAtEntityComponent({ targetEntityId: "", offset: [0, 0, 0] });
+      case "lookAtPoint":
+        return new LookAtPointComponent({ targetPoint: [0, 0, 0] });
       case "light":
         return new LightComponent({ type: "ambient", intensity: 1 });
       default:

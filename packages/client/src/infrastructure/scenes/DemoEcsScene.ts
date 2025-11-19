@@ -9,7 +9,7 @@ import { PlaneGeometryComponent } from '@client/domain/ecs/components/PlaneGeome
 import { BoxGeometryComponent } from '@client/domain/ecs/components/BoxGeometryComponent';
 import { StandardMaterialComponent } from '@client/domain/ecs/components/StandardMaterialComponent';
 import { CameraViewComponent } from '@client/domain/ecs/components/CameraViewComponent';
-import { CameraTargetComponent } from '@client/domain/ecs/components/CameraTargetComponent';
+import { LookAtEntityComponent } from '@client/domain/ecs/components/LookAtEntityComponent';
 import { LightComponent } from '@client/domain/ecs/components/LightComponent';
 
 /**
@@ -64,7 +64,7 @@ export class DemoEcsScene extends BaseScene {
     const camera = new Entity('main-camera');
     camera.transform.setPosition(4, 3, 8);
     camera.addComponent(new CameraViewComponent({ fov: 60, near: 0.1, far: 1000 }));
-    camera.addComponent(new CameraTargetComponent({ targetEntityId: 'origin' }));
+    camera.addComponent(new LookAtEntityComponent({ targetEntityId: 'origin' }));
     this.addEntity(camera);
     this.setActiveCamera('main-camera');
 
