@@ -1,7 +1,7 @@
 import { Entity } from "@client/domain/ecs/core/Entity";
 import { DefaultEcsComponentFactory } from "./ComponentFactory";
 import { BoxGeometryComponent } from "@client/domain/ecs/components/geometry/BoxGeometryComponent";
-import { ShaderMaterialComponent } from "@client/domain/ecs/components/ShaderMaterialComponent";
+import { ShaderMaterialComponent } from "@client/domain/ecs/components/material/ShaderMaterialComponent";
 
 describe("DefaultEcsComponentFactory", () => {
   const factory = new DefaultEcsComponentFactory();

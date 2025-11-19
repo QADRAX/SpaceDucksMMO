@@ -5,11 +5,11 @@ import type {
   ComponentListener,
 } from "../../../domain/ecs/core/Entity";
 import type IComponentObserver from "../../../domain/ecs/core/IComponentObserver";
-import type { StandardMaterialComponent } from "../../../domain/ecs/components/StandardMaterialComponent";
-import type { BasicMaterialComponent } from "../../../domain/ecs/components/BasicMaterialComponent";
-import type { PhongMaterialComponent } from "../../../domain/ecs/components/PhongMaterialComponent";
-import type { LambertMaterialComponent } from "../../../domain/ecs/components/LambertMaterialComponent";
-import { ShaderMaterialComponent } from "../../../domain/ecs/components/ShaderMaterialComponent";
+import type { StandardMaterialComponent } from "../../../domain/ecs/components/material/StandardMaterialComponent";
+import type { BasicMaterialComponent } from "../../../domain/ecs/components/material/BasicMaterialComponent";
+import type { PhongMaterialComponent } from "../../../domain/ecs/components/material/PhongMaterialComponent";
+import type { LambertMaterialComponent } from "../../../domain/ecs/components/material/LambertMaterialComponent";
+import { ShaderMaterialComponent } from "../../../domain/ecs/components/material/ShaderMaterialComponent";
 import { CameraViewComponent } from "../../../domain/ecs/components/CameraViewComponent";
 import { LightComponent } from "../../../domain/ecs/components/LightComponent";
 import {

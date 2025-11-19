@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ShaderMaterialFactory } from './ShaderMaterialFactory';
-import { ShaderMaterialComponent } from '../../../domain/ecs/components/ShaderMaterialComponent';
+import { ShaderMaterialComponent } from '../../../domain/ecs/components/material/ShaderMaterialComponent';
 import { TextureCache } from './TextureCache';
 
 // Mock TextureCache

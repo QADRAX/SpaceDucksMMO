@@ -7,11 +7,11 @@ import { CylinderGeometryComponent } from "@client/domain/ecs/components/geometr
 import { ConeGeometryComponent } from "@client/domain/ecs/components/geometry/ConeGeometryComponent";
 import { TorusGeometryComponent } from "@client/domain/ecs/components/geometry/TorusGeometryComponent";
 import { CustomGeometryComponent } from "@client/domain/ecs/components/geometry/CustomGeometryComponent";
-import { StandardMaterialComponent } from "@client/domain/ecs/components/StandardMaterialComponent";
-import { BasicMaterialComponent } from "@client/domain/ecs/components/BasicMaterialComponent";
-import { PhongMaterialComponent } from "@client/domain/ecs/components/PhongMaterialComponent";
-import { LambertMaterialComponent } from "@client/domain/ecs/components/LambertMaterialComponent";
-import { ShaderMaterialComponent } from "@client/domain/ecs/components/ShaderMaterialComponent";
+import { StandardMaterialComponent } from "@client/domain/ecs/components/material/StandardMaterialComponent";
+import { BasicMaterialComponent } from "@client/domain/ecs/components/material/BasicMaterialComponent";
+import { PhongMaterialComponent } from "@client/domain/ecs/components/material/PhongMaterialComponent";
+import { LambertMaterialComponent } from "@client/domain/ecs/components/material/LambertMaterialComponent";
+import { ShaderMaterialComponent } from "@client/domain/ecs/components/material/ShaderMaterialComponent";
 import { OrbitComponent } from "@client/domain/ecs/components/OrbitComponent";
 import { CameraViewComponent } from "@client/domain/ecs/components/CameraViewComponent";
 import { LookAtEntityComponent } from '@client/domain/ecs/components/LookAtEntityComponent';

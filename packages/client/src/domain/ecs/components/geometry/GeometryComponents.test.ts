@@ -5,8 +5,8 @@ import { TorusGeometryComponent } from './TorusGeometryComponent';
 import SphereGeometryComponent from './SphereGeometryComponent';
 import PlaneGeometryComponent from './PlaneGeometryComponent';
 import CustomGeometryComponent from './CustomGeometryComponent';
-import BasicMaterialComponent from '../BasicMaterialComponent';
 import Entity from '../../core/Entity';
+import BasicMaterialComponent from '../material/BasicMaterialComponent';
 
 describe('Geometry components bounding radius', () => {
   test('BoxGeometryComponent diagonal/2 scaled', () => {

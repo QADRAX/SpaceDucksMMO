@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { ShaderUniformUpdater } from './ShaderUniformUpdater';
 import { Entity } from '../../../domain/ecs/core/Entity';
-import { ShaderMaterialComponent } from '../../../domain/ecs/components/ShaderMaterialComponent';
+import { ShaderMaterialComponent } from '../../../domain/ecs/components/material/ShaderMaterialComponent';
 import { SphereGeometryComponent } from '../../../domain/ecs/components/geometry/SphereGeometryComponent';
 import type { RenderComponent } from './RenderObjectRegistry';
 

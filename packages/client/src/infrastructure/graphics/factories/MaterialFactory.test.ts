@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import { MaterialFactory } from './MaterialFactory';
-import { StandardMaterialComponent } from '../../../domain/ecs/components/StandardMaterialComponent';
-import { BasicMaterialComponent } from '../../../domain/ecs/components/BasicMaterialComponent';
-import { PhongMaterialComponent } from '../../../domain/ecs/components/PhongMaterialComponent';
-import { LambertMaterialComponent } from '../../../domain/ecs/components/LambertMaterialComponent';
+import { StandardMaterialComponent } from '../../../domain/ecs/components/material/StandardMaterialComponent';
+import { BasicMaterialComponent } from '../../../domain/ecs/components/material/BasicMaterialComponent';
+import { PhongMaterialComponent } from '../../../domain/ecs/components/material/PhongMaterialComponent';
+import { LambertMaterialComponent } from '../../../domain/ecs/components/material/LambertMaterialComponent';
 import { TextureCache } from './TextureCache';
 
 // Mock TextureCache

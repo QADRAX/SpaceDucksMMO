@@ -4,8 +4,9 @@ import { Entity } from "../../../domain/ecs/core/Entity";
 import { SphereGeometryComponent } from "../../../domain/ecs/components/geometry/SphereGeometryComponent";
 import { LightComponent } from "../../../domain/ecs/components/LightComponent";
 import { BoxGeometryComponent } from "../../../domain/ecs/components/geometry/BoxGeometryComponent";
-import { BasicMaterialComponent } from "../../../domain/ecs/components/BasicMaterialComponent";
-import { StandardMaterialComponent } from "../../../domain/ecs/components/StandardMaterialComponent";
+import { BasicMaterialComponent } from "../../../domain/ecs/components/material/BasicMaterialComponent";
+import { StandardMaterialComponent } from "../../../domain/ecs/components/material/StandardMaterialComponent";
+import ShaderMaterialComponent from "@client/domain/ecs/components/material/ShaderMaterialComponent";
 
 describe("RenderSyncSystem enable/disable handling", () => {
   let scene: THREE.Scene;
@@ -95,7 +96,7 @@ describe("RenderSyncSystem enable/disable handling", () => {
     const e = new Entity("s1");
     const geom = new SphereGeometryComponent({ radius: 1 });
     const shader =
-      new (require("../../../domain/ecs/components/ShaderMaterialComponent").ShaderMaterialComponent)(
+      new ShaderMaterialComponent(
         { shaderType: "atmosphere", uniforms: {} }
       );
     e.addComponent(geom as any);

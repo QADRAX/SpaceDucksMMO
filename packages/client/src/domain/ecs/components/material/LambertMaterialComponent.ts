@@ -1,5 +1,5 @@
 import { BaseMaterialComponent } from './BaseMaterialComponent';
-import type { ComponentMetadata } from '../core/ComponentMetadata';
+import type { ComponentMetadata } from '../../core/ComponentMetadata';
 
 export class LambertMaterialComponent extends BaseMaterialComponent {
   readonly type = 'lambertMaterial';

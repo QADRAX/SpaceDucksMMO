@@ -7,7 +7,7 @@ import SceneId from '@client/domain/scene/SceneId';
 import { Entity } from '@client/domain/ecs/core/Entity';
 import { PlaneGeometryComponent } from '@client/domain/ecs/components/geometry/PlaneGeometryComponent';
 import { BoxGeometryComponent } from '@client/domain/ecs/components/geometry/BoxGeometryComponent';
-import { StandardMaterialComponent } from '@client/domain/ecs/components/StandardMaterialComponent';
+import { StandardMaterialComponent } from '@client/domain/ecs/components/material/StandardMaterialComponent';
 import { CameraViewComponent } from '@client/domain/ecs/components/CameraViewComponent';
 import { LookAtEntityComponent } from '@client/domain/ecs/components/LookAtEntityComponent';
 import { LightComponent } from '@client/domain/ecs/components/LightComponent';

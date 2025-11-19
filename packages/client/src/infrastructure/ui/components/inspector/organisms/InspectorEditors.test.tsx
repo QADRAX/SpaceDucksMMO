@@ -4,7 +4,7 @@ import { render, cleanup, fireEvent } from "@testing-library/preact";
 import { ComponentInspector } from "./ComponentInspector";
 import { Entity } from "@client/domain/ecs/core/Entity";
 import { BoxGeometryComponent } from "@client/domain/ecs/components/geometry/BoxGeometryComponent";
-import { StandardMaterialComponent } from "@client/domain/ecs/components/StandardMaterialComponent";
+import { StandardMaterialComponent } from "@client/domain/ecs/components/material/StandardMaterialComponent";
 import { ServicesContext } from "../../../hooks/useServices";
 import DefaultEcsComponentFactory from "@client/domain/ecs/core/ComponentFactory";
 
