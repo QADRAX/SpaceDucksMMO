@@ -1,0 +1,9 @@
+.enum-editor {
+  min-width: 120px;
+  max-width: 220px;
+  display: inline-block;
+}
+
+.enum-editor .select-input {
+  width: 100%;
+}

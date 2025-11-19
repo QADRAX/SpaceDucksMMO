@@ -8,3 +8,5 @@ export { PropertyReadonly } from './PropertyReadonly';
 export { PropertyNumber } from './PropertyNumber';
 export { VectorAxisInput } from './VectorAxisInput';
 export { Tooltip } from './Tooltip';
+
+export { ColorPicker } from './ColorPicker';

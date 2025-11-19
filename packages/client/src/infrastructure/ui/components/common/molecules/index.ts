@@ -9,3 +9,7 @@ export { ServerListItem } from './ServerListItem';
 export { TransformGroup } from './TransformGroup';
 export { FormSection } from './FormSection';
 export { TreeViewNodeRow } from './TreeViewNodeRow';
+
+export { Vector3Editor } from './Vector3Editor';
+
+export { EnumEditor } from './EnumEditor';

@@ -4,7 +4,8 @@ import { PropertyCheckbox } from '../../common/atoms/PropertyCheckbox';
 import { PropertyInput } from '../../common/atoms/PropertyInput';
 import { PropertyNumber } from '../../common/atoms/PropertyNumber';
 import { PropertyReadonly } from '../../common/atoms/PropertyReadonly';
-import { Vector3Input } from '../../common/molecules/Vector3Input';
+import { ColorPicker } from '../../common/atoms/ColorPicker';
+import { Vector3Editor } from '../../common/molecules/Vector3Editor';
 import type { InspectorFieldConfig } from '@client/domain/ecs/core/ComponentMetadata';
 
 function renderValue(
@@ -23,20 +24,10 @@ function renderValue(
   if (typeof value === 'string') {
     return <PropertyInput value={String(value)} onChange={onChange} />;
   }
-  if (Array.isArray(value) && value.every((x) => typeof x === 'number')) {
-    const obj = { x: value[0] || 0, y: value[1] || 0, z: value[2] || 0 };
-    return (
-      <Vector3Input
-        value={obj}
-        onChange={(axis, v) => {
-          const next = [obj.x, obj.y, obj.z];
-          if (axis === 'x') next[0] = v;
-          if (axis === 'y') next[1] = v;
-          if (axis === 'z') next[2] = v;
-          onChange(next);
-        }}
-      />
-    );
+  if (Array.isArray(value) && value.length === 3 && value.every((x) => typeof x === 'number')) {
+    // Cast to [number, number, number] for type safety
+    const vec: [number, number, number] = [value[0] || 0, value[1] || 0, value[2] || 0];
+    return <Vector3Editor value={vec} onChange={onChange} />;
   }
   if (typeof value === 'object' && value !== null) {
     if (visited.has(value)) return <PropertyReadonly value="[Circular]" />;
@@ -90,29 +81,7 @@ export function renderPropertyWithConfig(comp: any, key: string, cfg?: Inspector
   }
 
   if (key === 'color') {
-    const toHex = (v: any) => {
-      if (typeof v === 'number') return '#' + (v >>> 0).toString(16).padStart(6, '0');
-      if (typeof v === 'string') {
-        if (v.startsWith('#')) return v;
-        const parsed = parseInt(v as string, 10);
-        if (!isNaN(parsed)) return '#' + parsed.toString(16).padStart(6, '0');
-        return '#ffffff';
-      }
-      return '#ffffff';
-    };
-    const fromHex = (hex: string) => {
-      if (!hex) return hex;
-      if (hex.startsWith('#')) hex = hex.slice(1);
-      return parseInt(hex, 16);
-    };
-    const colorValue = toHex(value);
-    return (
-      <input
-        type="color"
-        value={colorValue}
-        onInput={(e: any) => { const v = e.target.value as string; const converted = fromHex(v); applyChange(converted); }}
-      />
-    );
+    return <ColorPicker value={value} onChange={applyChange} />;
   }
 
   if (comp && comp.type === 'shaderMaterial' && key === 'uniforms') {
