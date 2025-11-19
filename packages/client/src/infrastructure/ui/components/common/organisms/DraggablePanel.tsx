@@ -15,10 +15,13 @@ export interface DraggablePanelProps {
   defaultSize?: { width: number; height: number };
   minWidth?: number;
   minHeight?: number;
+  maxWidth?: number | null;
+  maxHeight?: number | null;
   children: ComponentChildren;
   className?: string;
   onClose?: () => void;
   showClose?: boolean;
+  onPositionChange?: (pos: { x: number; y: number }) => void;
 }
 
 interface Position { x: number; y: number }
@@ -32,17 +35,23 @@ export function DraggablePanel(props: DraggablePanelProps) {
     resizable = true,
     draggable = true,
     defaultPosition = { x: 20, y: 80 },
-    defaultSize = { width: 280, height: 500 },
+      defaultSize = { width: 280, height: 500 },
     minWidth = 200,
     minHeight = 150,
+      maxWidth = null,
+      maxHeight = null,
     children,
     className = '',
     onClose,
     showClose = false,
+    onPositionChange,
   } = props;
 
   const [position, setPosition] = useState<Position>(defaultPosition);
-  const [size, setSize] = useState<Size>(defaultSize);
+  const [size, setSize] = useState<Size>(() => ({
+    width: Math.min(defaultSize.width, maxWidth ?? defaultSize.width),
+    height: Math.min(defaultSize.height, maxHeight ?? defaultSize.height),
+  }));
   const [collapsed, setCollapsed] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
@@ -62,9 +71,13 @@ export function DraggablePanel(props: DraggablePanelProps) {
     if (!isDragging || !dragStartRef.current) return;
     const newX = e.clientX - dragStartRef.current.x;
     const newY = e.clientY - dragStartRef.current.y;
-    const maxX = window.innerWidth - 100;
-    const maxY = window.innerHeight - 50;
-    setPosition({ x: Math.max(0, Math.min(newX, maxX)), y: Math.max(0, Math.min(newY, maxY)) });
+    const panelWidth = Math.min(size.width, maxWidth ?? size.width);
+    const panelHeight = Math.min(size.height, maxHeight ?? size.height);
+    const maxX = Math.max(0, window.innerWidth - panelWidth - 20);
+    const maxY = Math.max(0, window.innerHeight - panelHeight - 20);
+    const clamped = { x: Math.max(0, Math.min(newX, maxX)), y: Math.max(0, Math.min(newY, maxY)) };
+    setPosition(clamped);
+    onPositionChange && onPositionChange(clamped);
   };
 
   const handleDragEnd = () => { setIsDragging(false); dragStartRef.current = null; };
@@ -81,8 +94,10 @@ export function DraggablePanel(props: DraggablePanelProps) {
     if (!isResizing || !resizeStartRef.current) return;
     const deltaX = e.clientX - resizeStartRef.current.x;
     const deltaY = e.clientY - resizeStartRef.current.y;
-    const newWidth = Math.max(minWidth, resizeStartRef.current.width + deltaX);
-    const newHeight = Math.max(minHeight, resizeStartRef.current.height + deltaY);
+    let newWidth = Math.max(minWidth, resizeStartRef.current.width + deltaX);
+    let newHeight = Math.max(minHeight, resizeStartRef.current.height + deltaY);
+    if (maxWidth != null) newWidth = Math.min(newWidth, maxWidth);
+    if (maxHeight != null) newHeight = Math.min(newHeight, maxHeight);
     setSize({ width: newWidth, height: newHeight });
   };
 
@@ -94,7 +109,7 @@ export function DraggablePanel(props: DraggablePanelProps) {
       window.addEventListener('mouseup', handleDragEnd);
       return () => { window.removeEventListener('mousemove', handleDragMove); window.removeEventListener('mouseup', handleDragEnd); };
     }
-  }, [isDragging, position]);
+  }, [isDragging, position, onPositionChange]);
 
   useEffect(() => {
     if (isResizing) {
@@ -106,7 +121,17 @@ export function DraggablePanel(props: DraggablePanelProps) {
 
   const toggleCollapse = () => setCollapsed(!collapsed);
 
-  const panelStyle = { left: `${position.x}px`, top: `${position.y}px`, width: `${size.width}px`, height: collapsed ? 'auto' : `${size.height}px` };
+  const panelStyle = {
+    left: `${position.x}px`,
+    top: `${position.y}px`,
+    width: `${Math.min(size.width, maxWidth ?? size.width)}px`,
+    height: collapsed ? 'auto' : `${Math.min(size.height, maxHeight ?? size.height)}px`,
+  };
+
+  // Notify parent when position changes (also covers programmatic changes)
+  useEffect(() => {
+    onPositionChange && onPositionChange(position);
+  }, [position, onPositionChange]);
 
   return (
     <div

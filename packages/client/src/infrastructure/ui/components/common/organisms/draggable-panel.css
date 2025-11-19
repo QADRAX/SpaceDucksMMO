@@ -14,6 +14,8 @@
   z-index: 1000;
   transition: box-shadow 0.2s;
   pointer-events: auto;
+  /* Limit maximum width so panels cannot grow indefinitely */
+  max-width: var(--draggable-panel-max-width, 520px);
 }
 
 .draggable-panel.dragging { z-index: 1001; cursor: move; }

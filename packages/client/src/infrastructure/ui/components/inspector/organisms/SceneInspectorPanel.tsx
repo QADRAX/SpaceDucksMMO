@@ -20,6 +20,8 @@ export function SceneInspectorPanel() {
   const [activeCamera, setActiveCamera] = useState<string | null>(
     sceneManager?.getActiveCameraEntityId() || null
   );
+  // Remember panel position so we can restore it
+  const [inspectorPanelPosition, setInspectorPanelPosition] = useState<{ x: number; y: number }>(() => ({ x: 20, y: 80 }));
   const [inspectable, setInspectable] = useState<boolean>(() =>
     !!sceneManager?.checkInspectable
       ? sceneManager!.checkInspectable(sceneManager!.getCurrent()?.id || "")
@@ -66,29 +68,40 @@ export function SceneInspectorPanel() {
     <DraggablePanel
       title={t("inspector.title", "Scene Inspector")}
       theme="gold"
+      defaultPosition={inspectorPanelPosition}
+      onPositionChange={(p) => setInspectorPanelPosition(p)}
+      /* sensible max size so inspector doesn't cover whole screen */
+      maxWidth={520}
+      maxHeight={800}
     >
       <div className="scene-inspector">
           <div className="inspector-header">
-            <div className="small-label inspector-scene">
-              <SceneIcon className="inspector-scene-icon" />
-              {t("inspector.scene", "Scene")}: <span className="inspector-scene-id">{sceneManager?.getCurrent()?.id}</span>
+            <div className="inspector-header__row">
+              <div className="small-label inspector-scene">
+                <SceneIcon className="inspector-scene-icon" />
+                {t("inspector.scene", "Scene")}: <span className="inspector-scene-id">{sceneManager?.getCurrent()?.id}</span>
+              </div>
             </div>
-            <div className="small-label inspector-active-camera">
-              {t("inspector.activeCamera", "Active Camera")}: 
-              <div style={{ marginLeft: 8 }}>
-                <CameraSelector
-                  entities={cameraEntities}
-                  activeCamera={activeCamera}
-                  onSetActive={(id: string) => {
-                    try {
-                      sceneManager?.setActiveCamera?.(id);
-                    } catch {}
-                    setActiveCamera(id);
-                  }}
-                />
+            <div className="inspector-header__row">
+              <div className="small-label inspector-active-camera">
+                {t("inspector.activeCamera", "Active Camera")}:
+                <div style={{ marginLeft: 8, display: 'inline-block' }}>
+                  <CameraSelector
+                    entities={cameraEntities}
+                    activeCamera={activeCamera}
+                    onSetActive={(id: string) => {
+                      try {
+                        sceneManager?.setActiveCamera?.(id);
+                      } catch {}
+                      setActiveCamera(id);
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
+
+          <div className="inspector-divider" />
           {!inspectable && (
             <div className="error-box">
               {t("inspector.notInspectable", "Scene not inspectable")}

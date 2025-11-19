@@ -104,15 +104,15 @@ export function SceneHierarchyTree({ selectedId, onSelect, onError }: Props) {
   return (
     <div>
       <div className="inspector-toolbar">
-        <div className="small-label">
-          {t("inspector.hierarchy", "Hierarchy")}
-        </div>
-        <div style={{ marginLeft: "auto" }}>
-          <CreateEntityButton
-            onCreated={() => {
-              /* no-op: scene updates should arrive via subscription */
-            }}
-          />
+        <div className="small-label" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span>{t("inspector.hierarchy", "Hierarchy")}</span>
+          <span>
+            <CreateEntityButton
+              onCreated={() => {
+                /* no-op: scene updates should arrive via subscription */
+              }}
+            />
+          </span>
         </div>
       </div>
 

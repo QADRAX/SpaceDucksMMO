@@ -1,7 +1,7 @@
 /* Lightweight styles for Scene Inspector */
 .scene-inspector {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: 8px;
     font-size: 13px;
     color: #eee;
@@ -110,9 +110,9 @@
 /* Header improvements */
 .inspector-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
     padding: 6px 0;
 }
 .inspector-scene {
@@ -134,6 +134,15 @@
     color: #ffd36a;
 }
 
+.inspector-header__row { width: 100%; }
+
+.inspector-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.04);
+    margin: 8px 0;
+    width: 100%;
+}
+
 /* Tree entity icon spacing */
 .tree-node-entity-icon {
     display: inline-flex;
@@ -148,7 +157,7 @@
 
 /* Responsive layout rules */
 .scene-inspector {
-        flex-direction: row;
+    flex-direction: column;
 }
 
 @media (max-width: 800px) {
