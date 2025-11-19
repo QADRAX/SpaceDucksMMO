@@ -1,5 +1,5 @@
 import { Entity } from '../core/Entity';
-import { SphereGeometryComponent } from './SphereGeometryComponent';
+import { SphereGeometryComponent } from './geometry/SphereGeometryComponent';
 import { ShaderMaterialComponent } from './ShaderMaterialComponent';
 import { BasicMaterialComponent } from './BasicMaterialComponent';
 

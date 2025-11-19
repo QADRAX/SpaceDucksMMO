@@ -1,5 +1,3 @@
-/** @jsxImportSource preact */
-import { h } from "preact";
 import { render, cleanup, fireEvent } from "@testing-library/preact";
 import { TransformEditor } from "./TransformEditor";
 import { Entity } from "@client/domain/ecs/core/Entity";

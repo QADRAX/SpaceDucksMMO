@@ -1,5 +1,5 @@
 import { Entity, ComponentEvent, ComponentEventAction } from './Entity';
-import { BoxGeometryComponent } from '../components/BoxGeometryComponent';
+import { BoxGeometryComponent } from '../components/geometry/BoxGeometryComponent';
 
 describe('Entity component events (typed)', () => {
   it('emits ComponentEvent on add and remove and listener receives typed events', () => {

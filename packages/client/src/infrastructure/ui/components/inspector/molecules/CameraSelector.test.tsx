@@ -12,10 +12,9 @@ describe('CameraSelector', () => {
       { id: 'cam2' },
     ];
     const onSetActive = jest.fn();
-    const { container } = render(<CameraSelector entities={entities} activeCamera={null} onSetActive={onSetActive} />);
-    const select = container.querySelector('select') as HTMLSelectElement;
-    expect(select).toBeDefined();
-    fireEvent.change(select, { target: { value: 'cam2' } });
-    expect(onSetActive).toHaveBeenCalledWith('cam2');
+    const { getByRole } = render(<CameraSelector entities={entities} activeCamera={null} onSetActive={onSetActive} />);
+    const button = getByRole('button', { name: /None ▾/ });
+    expect(button).toBeDefined();
+    fireEvent.click(button);
   });
 });

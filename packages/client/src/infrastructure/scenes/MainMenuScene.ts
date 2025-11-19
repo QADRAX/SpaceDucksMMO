@@ -4,7 +4,7 @@ import type { SettingsService } from "@client/application/SettingsService";
 import SceneId from "@client/domain/scene/SceneId";
 import LightComponent from "@client/domain/ecs/components/LightComponent";
 import { Entity } from "@client/domain/ecs/core/Entity";
-import SphereGeometryComponent from "@client/domain/ecs/components/SphereGeometryComponent";
+import SphereGeometryComponent from "@client/domain/ecs/components/geometry/SphereGeometryComponent";
 import { StandardMaterialComponent } from "@client/domain/ecs/components/StandardMaterialComponent";
 import CameraViewComponent from "@client/domain/ecs/components/CameraViewComponent";
 import { OrbitComponent } from "@client/domain/ecs/components/OrbitComponent";

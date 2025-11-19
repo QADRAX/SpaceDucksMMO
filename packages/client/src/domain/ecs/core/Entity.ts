@@ -1,6 +1,6 @@
 import { Transform } from "./Transform";
 import { Component } from "./Component";
-import BaseGeometryComponent from "../components/BaseGeometryComponent";
+import BaseGeometryComponent from "../components/geometry/BaseGeometryComponent";
 import { Result, ok, err } from '@client/domain/errors/EngineError';
 
 type VoidResult = Result<void>;

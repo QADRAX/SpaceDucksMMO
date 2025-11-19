@@ -1,5 +1,4 @@
-import { Component } from "../core/Component";
-import type { ComponentMetadata } from "../core/ComponentMetadata";
+import type { ComponentMetadata } from "../../core/ComponentMetadata";
 import BaseGeometryComponent, { Vector3Like } from "./BaseGeometryComponent";
 
 export class ConeGeometryComponent extends BaseGeometryComponent {

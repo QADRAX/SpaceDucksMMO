@@ -5,8 +5,8 @@ import SceneId from '@client/domain/scene/SceneId';
 
 // ECS
 import { Entity } from '@client/domain/ecs/core/Entity';
-import { PlaneGeometryComponent } from '@client/domain/ecs/components/PlaneGeometryComponent';
-import { BoxGeometryComponent } from '@client/domain/ecs/components/BoxGeometryComponent';
+import { PlaneGeometryComponent } from '@client/domain/ecs/components/geometry/PlaneGeometryComponent';
+import { BoxGeometryComponent } from '@client/domain/ecs/components/geometry/BoxGeometryComponent';
 import { StandardMaterialComponent } from '@client/domain/ecs/components/StandardMaterialComponent';
 import { CameraViewComponent } from '@client/domain/ecs/components/CameraViewComponent';
 import { LookAtEntityComponent } from '@client/domain/ecs/components/LookAtEntityComponent';

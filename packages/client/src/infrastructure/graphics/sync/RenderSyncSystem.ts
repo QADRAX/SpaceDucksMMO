@@ -1,23 +1,30 @@
 import * as THREE from "three";
-import type { Entity, ComponentEvent, ComponentListener } from "../../../domain/ecs/core/Entity";
+import type {
+  Entity,
+  ComponentEvent,
+  ComponentListener,
+} from "../../../domain/ecs/core/Entity";
 import type IComponentObserver from "../../../domain/ecs/core/IComponentObserver";
-import type { StandardMaterialComponent } from '../../../domain/ecs/components/StandardMaterialComponent';
-import type { BasicMaterialComponent } from '../../../domain/ecs/components/BasicMaterialComponent';
-import type { PhongMaterialComponent } from '../../../domain/ecs/components/PhongMaterialComponent';
-import type { LambertMaterialComponent } from '../../../domain/ecs/components/LambertMaterialComponent';
+import type { StandardMaterialComponent } from "../../../domain/ecs/components/StandardMaterialComponent";
+import type { BasicMaterialComponent } from "../../../domain/ecs/components/BasicMaterialComponent";
+import type { PhongMaterialComponent } from "../../../domain/ecs/components/PhongMaterialComponent";
+import type { LambertMaterialComponent } from "../../../domain/ecs/components/LambertMaterialComponent";
 import { ShaderMaterialComponent } from "../../../domain/ecs/components/ShaderMaterialComponent";
 import { CameraViewComponent } from "../../../domain/ecs/components/CameraViewComponent";
 import { LightComponent } from "../../../domain/ecs/components/LightComponent";
-import { GeometryFactory, AnyGeometryComponent } from "../factories/GeometryFactory";
-import { BoxGeometryComponent } from "../../../domain/ecs/components/BoxGeometryComponent";
-import { SphereGeometryComponent } from "../../../domain/ecs/components/SphereGeometryComponent";
-import { PlaneGeometryComponent } from "../../../domain/ecs/components/PlaneGeometryComponent";
-import { CylinderGeometryComponent } from "../../../domain/ecs/components/CylinderGeometryComponent";
-import { ConeGeometryComponent } from "../../../domain/ecs/components/ConeGeometryComponent";
-import { TorusGeometryComponent } from "../../../domain/ecs/components/TorusGeometryComponent";
-import { CustomGeometryComponent } from "../../../domain/ecs/components/CustomGeometryComponent";
+import {
+  GeometryFactory,
+  AnyGeometryComponent,
+} from "../factories/GeometryFactory";
+import { BoxGeometryComponent } from "../../../domain/ecs/components/geometry/BoxGeometryComponent";
+import { SphereGeometryComponent } from "../../../domain/ecs/components/geometry/SphereGeometryComponent";
+import { PlaneGeometryComponent } from "../../../domain/ecs/components/geometry/PlaneGeometryComponent";
+import { CylinderGeometryComponent } from "../../../domain/ecs/components/geometry/CylinderGeometryComponent";
+import { ConeGeometryComponent } from "../../../domain/ecs/components/geometry/ConeGeometryComponent";
+import { TorusGeometryComponent } from "../../../domain/ecs/components/geometry/TorusGeometryComponent";
+import { CustomGeometryComponent } from "../../../domain/ecs/components/geometry/CustomGeometryComponent";
 import { MaterialFactory } from "../factories/MaterialFactory";
-import type { AnyMaterialComponent } from '../factories/MaterialFactory';
+import type { AnyMaterialComponent } from "../factories/MaterialFactory";
 import { ShaderMaterialFactory } from "../factories/ShaderMaterialFactory";
 import { CameraFactory } from "../factories/CameraFactory";
 import { LightFactory } from "../factories/LightFactory";
@@ -52,13 +59,12 @@ export class RenderSyncSystem implements IComponentObserver {
   }
 
   // Helper to obtain whichever material component an entity has (only one allowed by design)
-  private getMaterialComponent(entity: Entity):
-    | AnyMaterialComponent | null {
+  private getMaterialComponent(entity: Entity): AnyMaterialComponent | null {
     return (
-      entity.getComponent<StandardMaterialComponent>('standardMaterial') ??
-      entity.getComponent<BasicMaterialComponent>('basicMaterial') ??
-      entity.getComponent<PhongMaterialComponent>('phongMaterial') ??
-      entity.getComponent<LambertMaterialComponent>('lambertMaterial') ??
+      entity.getComponent<StandardMaterialComponent>("standardMaterial") ??
+      entity.getComponent<BasicMaterialComponent>("basicMaterial") ??
+      entity.getComponent<PhongMaterialComponent>("phongMaterial") ??
+      entity.getComponent<LambertMaterialComponent>("lambertMaterial") ??
       null
     );
   }
@@ -71,7 +77,7 @@ export class RenderSyncSystem implements IComponentObserver {
     const listener: ComponentListener = (event: ComponentEvent) => {
       const { entity: e, component, action } = event;
       if (!this.entities.has(e.id)) return;
-      if (action === 'added') {
+      if (action === "added") {
         component.addObserver(this);
         // if there's no existing render object for this entity, a newly added
         // render-relevant component should cause creation
@@ -113,23 +119,23 @@ export class RenderSyncSystem implements IComponentObserver {
     const entity = this.entities.get(entityId);
     if (!entity) return;
     // support removal notifications encoded as 'type:removed'
-    if (componentType.endsWith(':removed')) {
-      const base = componentType.split(':')[0];
+    if (componentType.endsWith(":removed")) {
+      const base = componentType.split(":")[0];
       switch (base) {
-        case 'boxGeometry':
-        case 'sphereGeometry':
-        case 'planeGeometry':
-        case 'cylinderGeometry':
-        case 'coneGeometry':
-        case 'torusGeometry':
-        case 'customGeometry':
-        case 'shaderMaterial':
-        case 'standardMaterial':
-        case 'basicMaterial':
-        case 'phongMaterial':
-        case 'lambertMaterial':
-        case 'light':
-        case 'cameraView':
+        case "boxGeometry":
+        case "sphereGeometry":
+        case "planeGeometry":
+        case "cylinderGeometry":
+        case "coneGeometry":
+        case "torusGeometry":
+        case "customGeometry":
+        case "shaderMaterial":
+        case "standardMaterial":
+        case "basicMaterial":
+        case "phongMaterial":
+        case "lambertMaterial":
+        case "light":
+        case "cameraView":
           this.registry.remove(entityId, this.scene);
           break;
         default:
@@ -168,12 +174,16 @@ export class RenderSyncSystem implements IComponentObserver {
 
   private processEntity(entity: Entity): void {
     const geometry = this.getGeometryComponent(entity);
-    const material = this.getMaterialComponent(entity) as AnyMaterialComponent | null;
+    const material = this.getMaterialComponent(
+      entity
+    ) as AnyMaterialComponent | null;
     const shaderMaterial =
       entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
     if (
-      geometry && geometry.enabled !== false &&
-      ((material && material.enabled !== false) || (shaderMaterial && shaderMaterial.enabled !== false))
+      geometry &&
+      geometry.enabled !== false &&
+      ((material && material.enabled !== false) ||
+        (shaderMaterial && shaderMaterial.enabled !== false))
     ) {
       this.createMesh(entity, geometry, material, shaderMaterial);
       return;
@@ -227,15 +237,19 @@ export class RenderSyncSystem implements IComponentObserver {
   private recreateMesh(entity: Entity): void {
     const rc = this.registry.get(entity.id);
     const geometry = this.getGeometryComponent(entity);
-    const material = this.getMaterialComponent(entity) as AnyMaterialComponent | null;
+    const material = this.getMaterialComponent(
+      entity
+    ) as AnyMaterialComponent | null;
     const shaderMaterial =
       entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
 
     // If we have an existing rendered object and components are disabled, hide it
     if (rc?.object3D) {
       const shouldBeVisible =
-        !!geometry && geometry.enabled !== false &&
-        ((material && material.enabled !== false) || (shaderMaterial && shaderMaterial.enabled !== false));
+        !!geometry &&
+        geometry.enabled !== false &&
+        ((material && material.enabled !== false) ||
+          (shaderMaterial && shaderMaterial.enabled !== false));
       if (!shouldBeVisible) {
         rc.object3D.visible = false;
         return;
@@ -249,8 +263,10 @@ export class RenderSyncSystem implements IComponentObserver {
     }
 
     if (
-      geometry && geometry.enabled !== false &&
-      ((material && material.enabled !== false) || (shaderMaterial && shaderMaterial.enabled !== false))
+      geometry &&
+      geometry.enabled !== false &&
+      ((material && material.enabled !== false) ||
+        (shaderMaterial && shaderMaterial.enabled !== false))
     ) {
       this.createMesh(entity, geometry, material, shaderMaterial);
     }
@@ -259,7 +275,9 @@ export class RenderSyncSystem implements IComponentObserver {
   private syncMaterial(entity: Entity): void {
     const rc = this.registry.get(entity.id);
     if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) return;
-    const materialComp = this.getMaterialComponent(entity) as AnyMaterialComponent | null;
+    const materialComp = this.getMaterialComponent(
+      entity
+    ) as AnyMaterialComponent | null;
     // If material removed or disabled, hide mesh but keep registry/resources
     if (!materialComp || materialComp.enabled === false) {
       rc.object3D.visible = false;
@@ -296,7 +314,8 @@ export class RenderSyncSystem implements IComponentObserver {
       this.scene.remove(rc.object3D);
       if (rc) this.registry.remove(entity.id, this.scene);
     }
-    if (lightComp && lightComp.enabled !== false) this.createLight(entity, lightComp);
+    if (lightComp && lightComp.enabled !== false)
+      this.createLight(entity, lightComp);
   }
 
   private onTransformChanged(entityId: string): void {

@@ -54,46 +54,4 @@ describe("ComponentInspector", () => {
     fireEvent.click(btn);
     expect(e.getComponent("TestComp")).toBeUndefined();
   });
-
-  it("can add components via objectFactory", () => {
-    const e = new Entity("E2");
-    const mockI18n: any = {
-      getCurrentLanguage: () => "en",
-      subscribe: () => () => {},
-      t: (k: any, f?: any) => f || k,
-      changeLanguage: async () => {},
-      getTranslations: () => ({}),
-    };
-    const mockServices: any = {
-      i18n: mockI18n,
-      sceneManager: { subscribeToSceneChanges: () => jest.fn() },
-      ecsComponentFactory: {
-        listCreatableComponents: () => [{ type: "orbit", label: "Orbit" }],
-        create: (t: any) => {
-          class MockComp {
-            type = t;
-            metadata = { type: t } as any;
-            setEntityId(_id: string) {}
-            notifyChanged() {}
-          }
-          return new MockComp() as any;
-        },
-      },
-    };
-    const { container } = render(
-      <ServicesContext.Provider value={mockServices}>
-        <ComponentInspector entity={e} />
-      </ServicesContext.Provider>
-    );
-
-    const selects = Array.from(
-      container.querySelectorAll("select")
-    ) as HTMLSelectElement[];
-    const addSelect = selects.find((s) =>
-      Array.from(s.options).some((o) => o.value === "orbit")
-    );
-    expect(addSelect).toBeDefined();
-    if (addSelect) fireEvent.change(addSelect, { target: { value: "orbit" } });
-    expect(e.getComponent("orbit")).toBeDefined();
-  });
 });

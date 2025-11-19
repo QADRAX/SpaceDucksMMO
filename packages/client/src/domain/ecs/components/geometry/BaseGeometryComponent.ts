@@ -1,5 +1,4 @@
-import { Component } from "../core/Component";
-import type { ComponentMetadata } from "../core/ComponentMetadata";
+import { Component } from "../../core/Component";
 
 export type Vector3Like = { x: number; y: number; z: number };
 

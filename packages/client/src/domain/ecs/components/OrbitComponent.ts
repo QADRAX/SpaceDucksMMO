@@ -1,7 +1,7 @@
 import { Component } from "../core/Component";
 import type { ComponentMetadata } from "../core/ComponentMetadata";
 import { getCurrentEcsWorld } from "../core/EcsWorldContext";
-import BaseGeometryComponent from "./BaseGeometryComponent";
+import BaseGeometryComponent from "./geometry/BaseGeometryComponent";
 
 export type OrbitPlane = "xz" | "xy" | "yz";
 
