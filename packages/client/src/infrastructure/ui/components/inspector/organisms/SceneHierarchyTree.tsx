@@ -95,8 +95,8 @@ export function SceneHierarchyTree({ selectedId, onSelect, onError }: Props) {
   // Convert entities to TreeView nodes
   const nodes = entities.map((ent) => ({
     id: ent.id,
-    parentId: (ent as any).parentId ?? null,
-    label: (ent as any).name ?? ent.id,
+    parentId: ent.parent?.id || null,
+    label: ent.id,
     icon: getIconForEntity(ent),
     data: ent,
   }));

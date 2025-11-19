@@ -68,7 +68,6 @@ export function SceneInspectorPanel() {
       theme="gold"
     >
       <div className="scene-inspector">
-        
           <div className="inspector-header">
             <div className="small-label inspector-scene">
               <SceneIcon className="inspector-scene-icon" />
@@ -103,7 +102,7 @@ export function SceneInspectorPanel() {
             onError={(m) => setLastError(m)}
           />
 
-          {selectedEntity ? (
+          {selectedEntity && (
             <DraggablePanel
               title={`${t('inspector.components','Components')} - ${selectedEntity.id}`}
               theme="blue"
@@ -115,8 +114,6 @@ export function SceneInspectorPanel() {
               <TransformEditor entity={selectedEntity} />
               <ComponentInspector entity={selectedEntity} />
             </DraggablePanel>
-          ) : (
-            <div className="small-label">{t('inspector.none', 'None')}</div>
           )}
       </div>
     </DraggablePanel>
