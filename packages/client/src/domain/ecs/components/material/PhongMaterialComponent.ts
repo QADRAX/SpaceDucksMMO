@@ -10,12 +10,12 @@ export class PhongMaterialComponent extends BaseMaterialComponent {
     conflicts: ['standardMaterial', 'basicMaterial', 'lambertMaterial', 'shaderMaterial'],
     inspector: {
       fields: [
-        { key: 'color', label: 'Color', get: (c: PhongMaterialComponent) => c.color, set: (c, v) => { c.color = v as any; } },
-        { key: 'specular', label: 'Specular', get: (c: PhongMaterialComponent) => c.specular, set: (c, v) => { c.specular = v as any; } },
-        { key: 'shininess', label: 'Shininess', get: (c: PhongMaterialComponent) => c.shininess, set: (c, v) => { c.shininess = Number(v); } },
-        { key: 'emissive', label: 'Emissive', get: (c: PhongMaterialComponent) => c.emissive, set: (c, v) => { c.emissive = v as any; } },
-        { key: 'transparent', label: 'Transparent', get: (c: PhongMaterialComponent) => c.transparent, set: (c, v) => { c.transparent = Boolean(v); } },
-        { key: 'opacity', label: 'Opacity', get: (c: PhongMaterialComponent) => c.opacity, set: (c, v) => { c.opacity = Number(v); } },
+        { key: 'color', label: 'Color', type: 'color', get: (c: PhongMaterialComponent) => c.color, set: (c, v) => { c.color = v as any; } },
+        { key: 'specular', label: 'Specular', type: 'color', get: (c: PhongMaterialComponent) => c.specular, set: (c, v) => { c.specular = v as any; } },
+        { key: 'shininess', label: 'Shininess', type: 'number', nullable: true, default: 30, min: 0, max: 100, step: 1, get: (c: PhongMaterialComponent) => c.shininess, set: (c, v) => { c.shininess = Number(v); } },
+        { key: 'emissive', label: 'Emissive', type: 'color', get: (c: PhongMaterialComponent) => c.emissive, set: (c, v) => { c.emissive = v as any; } },
+        { key: 'transparent', label: 'Transparent', type: 'boolean', get: (c: PhongMaterialComponent) => c.transparent, set: (c, v) => { c.transparent = Boolean(v); } },
+        { key: 'opacity', label: 'Opacity', type: 'number', nullable: true, default: 1, min: 0, max: 1, step: 0.01, get: (c: PhongMaterialComponent) => c.opacity, set: (c, v) => { c.opacity = Number(v); } },
       ],
     },
   };

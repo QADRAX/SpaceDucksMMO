@@ -31,13 +31,119 @@ export class LightComponent extends Component {
     conflicts: [],
     inspector: {
       fields: [
-        { key: "type", label: "Type", get: (c: LightComponent) => c.params.type, set: (c, v) => { c.params = { ...(c.params as any), type: String(v) } as any; c.notifyChanged(); } },
-        { key: "color", label: "Color", get: (c: LightComponent) => (c.params as any).color, set: (c, v) => { c.setColor(v as any); } },
-        { key: "intensity", label: "Intensity", get: (c: LightComponent) => (c.params as any).intensity, set: (c, v) => { c.setIntensity(Number(v)); } },
-        { key: "distance", label: "Distance", get: (c: LightComponent) => (c.params as any).distance, set: (c, v) => { c.params = { ...(c.params as any), distance: v === undefined ? undefined : Number(v) } as any; c.notifyChanged(); } },
-        { key: "decay", label: "Decay", get: (c: LightComponent) => (c.params as any).decay, set: (c, v) => { c.params = { ...(c.params as any), decay: v === undefined ? undefined : Number(v) } as any; c.notifyChanged(); } },
-        { key: "angle", label: "Angle", get: (c: LightComponent) => (c.params as any).angle, set: (c, v) => { c.params = { ...(c.params as any), angle: v === undefined ? undefined : Number(v) } as any; c.notifyChanged(); } },
-        { key: "penumbra", label: "Penumbra", get: (c: LightComponent) => (c.params as any).penumbra, set: (c, v) => { c.params = { ...(c.params as any), penumbra: v === undefined ? undefined : Number(v) } as any; c.notifyChanged(); } },
+        {
+          key: "type",
+          label: "Type",
+          type: "enum",
+          options: [
+            { value: "ambient", label: "Ambient" },
+            { value: "directional", label: "Directional" },
+            { value: "point", label: "Point" },
+            { value: "spot", label: "Spot" },
+          ],
+          get: (c: LightComponent) => c.params.type,
+          set: (c, v) => {
+            c.params = { ...(c.params as any), type: String(v) } as any;
+            c.notifyChanged();
+          },
+        },
+        {
+          key: "color",
+          label: "Color",
+          type: "color",
+          nullable: true,
+          default: "#ffffff",
+          get: (c: LightComponent) => (c.params as any).color,
+          set: (c, v) => {
+            c.setColor(v as any);
+          },
+        },
+        {
+          key: "intensity",
+          label: "Intensity",
+          type: "number",
+          nullable: true,
+          default: 1,
+          min: 0,
+          max: 10,
+          step: 0.01,
+          get: (c: LightComponent) => (c.params as any).intensity,
+          set: (c, v) => {
+            c.setIntensity(Number(v));
+          },
+        },
+        {
+          key: "distance",
+          label: "Distance",
+          type: "number",
+          nullable: true,
+          default: 0,
+          min: 0,
+          max: 1000,
+          step: 1,
+          get: (c: LightComponent) => (c.params as any).distance,
+          set: (c, v) => {
+            c.params = {
+              ...(c.params as any),
+              distance: v === undefined ? undefined : Number(v),
+            } as any;
+            c.notifyChanged();
+          },
+        },
+        {
+          key: "decay",
+          label: "Decay",
+          type: "number",
+          nullable: true,
+          default: 1,
+          min: 0,
+          max: 10,
+          step: 0.01,
+          get: (c: LightComponent) => (c.params as any).decay,
+          set: (c, v) => {
+            c.params = {
+              ...(c.params as any),
+              decay: v === undefined ? undefined : Number(v),
+            } as any;
+            c.notifyChanged();
+          },
+        },
+        {
+          key: "angle",
+          label: "Angle",
+          type: "number",
+          nullable: true,
+          default: 0.5,
+          min: 0,
+          max: Math.PI,
+          step: 0.01,
+          get: (c: LightComponent) => (c.params as any).angle,
+          set: (c, v) => {
+            c.params = {
+              ...(c.params as any),
+              angle: v === undefined ? undefined : Number(v),
+            } as any;
+            c.notifyChanged();
+          },
+        },
+        {
+          key: "penumbra",
+          label: "Penumbra",
+          type: "number",
+          nullable: true,
+          default: 0,
+          min: 0,
+          max: 1,
+          step: 0.01,
+          get: (c: LightComponent) => (c.params as any).penumbra,
+          set: (c, v) => {
+            c.params = {
+              ...(c.params as any),
+              penumbra: v === undefined ? undefined : Number(v),
+            } as any;
+            c.notifyChanged();
+          },
+        },
       ],
     },
   };

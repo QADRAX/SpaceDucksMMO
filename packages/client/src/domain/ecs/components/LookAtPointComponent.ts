@@ -1,18 +1,26 @@
-import { Component } from '../core/Component';
-import type { ComponentMetadata } from '../core/ComponentMetadata';
-import * as THREE from 'three';
-import { getCurrentEcsWorld } from '../core/EcsWorldContext';
+import { Component } from "../core/Component";
+import type { ComponentMetadata } from "../core/ComponentMetadata";
+import * as THREE from "three";
+import { getCurrentEcsWorld } from "../core/EcsWorldContext";
 
 export class LookAtPointComponent extends Component {
-  readonly type = 'lookAtPoint';
+  readonly type = "lookAtPoint";
   readonly metadata: ComponentMetadata = {
-    type: 'lookAtPoint',
+    type: "lookAtPoint",
     unique: true,
     requires: [],
     conflicts: [],
     inspector: {
       fields: [
-        { key: 'targetPoint', label: 'Target Point', get: (c: LookAtPointComponent) => c.targetPoint, set: (c, v) => { c.targetPoint = v as any; c.notifyChanged(); } },
+        {
+          key: "targetPoint",
+          label: "Target Point",
+          get: (c: LookAtPointComponent) => c.targetPoint,
+          set: (c, v) => {
+            c.targetPoint = v as any;
+            c.notifyChanged();
+          },
+        },
       ],
     },
   };

@@ -10,9 +10,33 @@ export class BoxGeometryComponent extends BaseGeometryComponent {
     conflicts: ["skybox"],
     inspector: {
       fields: [
-        { key: "width", label: "Width" },
-        { key: "height", label: "Height" },
-        { key: "depth", label: "Depth" },
+        {
+          key: "width",
+          label: "Width",
+          type: "number",
+          default: 1,
+          min: 0.01,
+          max: 1000,
+          step: 0.01,
+        },
+        {
+          key: "height",
+          label: "Height",
+          type: "number",
+          default: 1,
+          min: 0.01,
+          max: 1000,
+          step: 0.01,
+        },
+        {
+          key: "depth",
+          label: "Depth",
+          type: "number",
+          default: 1,
+          min: 0.01,
+          max: 1000,
+          step: 0.01,
+        },
       ],
     },
   };
@@ -30,7 +54,12 @@ export class BoxGeometryComponent extends BaseGeometryComponent {
 
   getBoundingRadius(worldScale: Vector3Like): number {
     // Diagonal / 2, scaled by X (legacy code used worldScale.x)
-    const diag = Math.sqrt(this.width * this.width + this.height * this.height + this.depth * this.depth) / 2;
+    const diag =
+      Math.sqrt(
+        this.width * this.width +
+          this.height * this.height +
+          this.depth * this.depth
+      ) / 2;
     return diag * (worldScale?.x ?? 1);
   }
 }

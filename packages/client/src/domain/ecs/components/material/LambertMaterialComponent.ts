@@ -10,10 +10,10 @@ export class LambertMaterialComponent extends BaseMaterialComponent {
     conflicts: ['standardMaterial', 'basicMaterial', 'phongMaterial', 'shaderMaterial'],
     inspector: {
       fields: [
-        { key: 'color', label: 'Color', get: (c: LambertMaterialComponent) => c.color, set: (c, v) => { c.color = v as any; } },
-        { key: 'emissive', label: 'Emissive', get: (c: LambertMaterialComponent) => c.emissive, set: (c, v) => { c.emissive = v as any; } },
-        { key: 'transparent', label: 'Transparent', get: (c: LambertMaterialComponent) => c.transparent, set: (c, v) => { c.transparent = Boolean(v); } },
-        { key: 'opacity', label: 'Opacity', get: (c: LambertMaterialComponent) => c.opacity, set: (c, v) => { c.opacity = Number(v); } },
+        { key: 'color', label: 'Color', type: 'color', get: (c: LambertMaterialComponent) => c.color, set: (c, v) => { c.color = v as any; } },
+        { key: 'emissive', label: 'Emissive', type: 'color', get: (c: LambertMaterialComponent) => c.emissive, set: (c, v) => { c.emissive = v as any; } },
+        { key: 'transparent', label: 'Transparent', type: 'boolean', get: (c: LambertMaterialComponent) => c.transparent, set: (c, v) => { c.transparent = Boolean(v); } },
+        { key: 'opacity', label: 'Opacity', type: 'number', nullable: true, default: 1, min: 0, max: 1, step: 0.01, get: (c: LambertMaterialComponent) => c.opacity, set: (c, v) => { c.opacity = Number(v); } },
       ],
     },
   };

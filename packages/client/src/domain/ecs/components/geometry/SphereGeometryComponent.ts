@@ -10,9 +10,36 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
     conflicts: ["skybox"],
     inspector: {
       fields: [
-        { key: "radius", label: "Radius" },
-        { key: "widthSegments", label: "Width Segments" },
-        { key: "heightSegments", label: "Height Segments" },
+        {
+          key: "radius",
+          label: "Radius",
+          type: "number",
+          nullable: true,
+          default: 1,
+          min: 0.01,
+          max: 1000,
+          step: 0.01,
+        },
+        {
+          key: "widthSegments",
+          label: "Width Segments",
+          type: "number",
+          nullable: true,
+          default: 32,
+          min: 3,
+          max: 128,
+          step: 1,
+        },
+        {
+          key: "heightSegments",
+          label: "Height Segments",
+          type: "number",
+          nullable: true,
+          default: 16,
+          min: 2,
+          max: 128,
+          step: 1,
+        },
       ],
     },
   };
@@ -21,7 +48,11 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
   widthSegments?: number;
   heightSegments?: number;
 
-  constructor(params?: { radius?: number; widthSegments?: number; heightSegments?: number }) {
+  constructor(params?: {
+    radius?: number;
+    widthSegments?: number;
+    heightSegments?: number;
+  }) {
     super();
     this.radius = params?.radius ?? 1;
     this.widthSegments = params?.widthSegments ?? 32;

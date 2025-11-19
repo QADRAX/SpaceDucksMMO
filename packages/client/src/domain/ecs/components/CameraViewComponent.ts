@@ -10,10 +10,10 @@ export class CameraViewComponent extends Component {
     conflicts: [],
     inspector: {
       fields: [
-        { key: "fov", label: "FOV", get: (c: CameraViewComponent) => c.fov, set: (c, v) => { c.setFov(Number(v)); } },
-        { key: "near", label: "Near", get: (c: CameraViewComponent) => c.near, set: (c, v) => { c.near = Number(v); c.notifyChanged(); } },
-        { key: "far", label: "Far", get: (c: CameraViewComponent) => c.far, set: (c, v) => { c.far = Number(v); c.notifyChanged(); } },
-        { key: "aspect", label: "Aspect", get: (c: CameraViewComponent) => c.aspect, set: (c, v) => { c.aspect = Number(v); c.notifyChanged(); } },
+        { key: "fov", label: "FOV", type: "number", nullable: true, default: 60, min: 1, max: 180, step: 1, get: (c: CameraViewComponent) => c.fov, set: (c, v) => { c.setFov(Number(v)); } },
+        { key: "near", label: "Near", type: "number", nullable: true, default: 0.1, min: 0.01, max: 10, step: 0.01, get: (c: CameraViewComponent) => c.near, set: (c, v) => { c.near = Number(v); c.notifyChanged(); } },
+        { key: "far", label: "Far", type: "number", nullable: true, default: 1000, min: 1, max: 10000, step: 1, get: (c: CameraViewComponent) => c.far, set: (c, v) => { c.far = Number(v); c.notifyChanged(); } },
+        { key: "aspect", label: "Aspect", type: "number", nullable: true, default: 1, min: 0.1, max: 4, step: 0.01, get: (c: CameraViewComponent) => c.aspect, set: (c, v) => { c.aspect = Number(v); c.notifyChanged(); } },
       ],
     },
   };

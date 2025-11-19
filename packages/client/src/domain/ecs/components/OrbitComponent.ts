@@ -53,6 +53,8 @@ export class OrbitComponent extends Component {
         {
           key: "initialAngle",
           label: "Initial Angle",
+          nullable: true,
+          default: 0,
           get: (c: OrbitComponent) => c.initialAngle,
           set: (c, v) => {
             c.initialAngle = Number(v);
