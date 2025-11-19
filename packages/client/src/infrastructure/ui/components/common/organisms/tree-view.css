@@ -1,0 +1,34 @@
+.tree-view {
+  display: block;
+  color: #eee;
+}
+
+.tree-root-row {
+  display: block;
+}
+
+.tree-root-dropzone {
+  height: 6px;
+  margin: 2px 0;
+}
+
+.tree-root-dropzone--active {
+  background: rgba(80,140,220,0.08);
+  border-radius: 3px;
+}
+
+.tree-node {
+  display: block;
+}
+
+.tree-node-children {
+  margin-left: 0;
+}
+
+.tree-node-row .tree-node-row__content {
+  padding-left: 6px;
+}
+
+.tree-root-dropzone__label {
+  height: 6px;
+}

@@ -1,0 +1,43 @@
+.tree-node-row {
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tree-node-row:hover {
+  background: rgba(80, 140, 220, 0.06);
+}
+
+.tree-node-row.selected {
+  background: rgba(80, 140, 220, 0.14);
+}
+
+.tree-node-row.drop-target {
+  outline: 2px dashed rgba(80,140,220,0.24);
+}
+
+.tree-node-row__indent {
+  flex: 0 0 auto;
+  height: 1px; /* purely spacer */
+}
+
+.tree-node-row__content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tree-node-row__icon {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tree-node-row__label {
+  color: #eee;
+  font-size: 13px;
+}

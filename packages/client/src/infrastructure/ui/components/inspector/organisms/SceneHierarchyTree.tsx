@@ -9,6 +9,7 @@ import {
   GeometryIcon,
   EntityIcon,
 } from "../../common/icons";
+import { TreeView } from "../../common";
 
 type Props = {
   selectedId?: string | null;
@@ -91,6 +92,15 @@ export function SceneHierarchyTree({ selectedId, onSelect, onError }: Props) {
     }
   };
 
+  // Convert entities to TreeView nodes
+  const nodes = entities.map((ent) => ({
+    id: ent.id,
+    parentId: (ent as any).parentId ?? null,
+    label: (ent as any).name ?? ent.id,
+    icon: getIconForEntity(ent),
+    data: ent,
+  }));
+
   return (
     <div>
       <div className="inspector-toolbar">
@@ -105,6 +115,15 @@ export function SceneHierarchyTree({ selectedId, onSelect, onError }: Props) {
           />
         </div>
       </div>
+
+      <TreeView
+        nodes={nodes}
+        selectedId={selectedId}
+        onSelect={(id) => onSelect && onSelect(id)}
+        onReparent={({ draggedId, newParentId }) =>
+          handleReparent(draggedId, newParentId ?? null)
+        }
+      />
 
     </div>
   );

@@ -8,3 +8,4 @@ export { ListItem } from './ListItem';
 export { ServerListItem } from './ServerListItem';
 export { TransformGroup } from './TransformGroup';
 export { FormSection } from './FormSection';
+export { TreeViewNodeRow } from './TreeViewNodeRow';

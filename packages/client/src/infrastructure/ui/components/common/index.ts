@@ -17,6 +17,7 @@ export { Button } from "./atoms/Button";
 export { IconButton } from "./atoms/IconButton";
 
 export { Popup } from "./organisms/Popup";
+export { TreeView } from "./organisms/TreeView";
 
 // Property and vector helpers
 export { PropertyCheckbox } from "./atoms/PropertyCheckbox";
