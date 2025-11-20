@@ -35,7 +35,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           step: 0.01,
           get: (c: StandardMaterialComponent) => c.metalness,
           set: (c, v) => {
-            c.metalness = Number(v);
+            c.metalness = v ? Number(v) : undefined;
           },
         },
         {
@@ -49,13 +49,14 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           step: 0.01,
           get: (c: StandardMaterialComponent) => c.roughness,
           set: (c, v) => {
-            c.roughness = Number(v);
+            c.roughness = v ? Number(v) : undefined;
           },
         },
         {
           key: "emissive",
           label: "Emissive",
           type: "color",
+          default: "#d8d8d8ff",
           nullable: true,
           get: (c: StandardMaterialComponent) => c.emissive,
           set: (c, v) => {
@@ -73,14 +74,14 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           step: 0.01,
           get: (c: StandardMaterialComponent) => c.emissiveIntensity,
           set: (c, v) => {
-            c.emissiveIntensity = Number(v);
+            c.emissiveIntensity = v ? Number(v) : undefined;
           },
         },
         {
           key: "transparent",
           label: "Transparent",
           type: "boolean",
-          nullable: true,
+          nullable: false,
           get: (c: StandardMaterialComponent) => c.transparent,
           set: (c, v) => {
             c.transparent = Boolean(v);
@@ -97,7 +98,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           step: 0.01,
           get: (c: StandardMaterialComponent) => c.opacity,
           set: (c, v) => {
-            c.opacity = Number(v);
+            c.opacity = v ? Number(v) : undefined;
           },
         },
         {

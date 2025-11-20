@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import type { ShaderMaterialComponent } from '../../../domain/ecs/components/ShaderMaterialComponent';
 import type { TextureCache } from './TextureCache';
+import ShaderMaterialComponent from '@client/domain/ecs/components/material/ShaderMaterialComponent';
 
 export class ShaderMaterialFactory {
   static build(comp: ShaderMaterialComponent, textureCache: TextureCache): THREE.ShaderMaterial {

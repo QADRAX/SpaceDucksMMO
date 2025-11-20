@@ -1,4 +1,4 @@
-import { ToggleSwitch } from "../../common/atoms/ToggleSwitch";
+import { PropertyCheckbox } from "../../common/atoms/PropertyCheckbox";
 import { useI18n } from "../../../hooks/useI18n";
 
 export type NullableToggleEditorProps = {
@@ -15,7 +15,7 @@ export function NullableToggleEditor({
   const { t } = useI18n();
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      <ToggleSwitch checked={enabled} onChange={onToggle} />
+      <PropertyCheckbox checked={enabled} onChange={onToggle} />
       {enabled ? (
         <div style={{ flex: 1 }}>{children}</div>
       ) : (

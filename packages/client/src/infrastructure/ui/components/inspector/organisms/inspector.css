@@ -249,6 +249,7 @@
 .create-entity-popup { background: #0f1720; padding: 16px; border-radius: 8px; width: 320px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); }
 .create-entity-header { font-weight: 700; margin-bottom: 8px; color: #e6eef8; }
 
+
 .prop-row {
     display: flex;
     gap: 8px;
@@ -256,9 +257,31 @@
     margin-bottom: 6px;
 }
 
+/* Mejorar responsive para campos numéricos con slider */
+.number-control {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.number-control input[type="range"] {
+    flex: 1 1 0;
+    min-width: 60px;
+    max-width: 200px;
+}
+.number-control input[type="number"] {
+    width: 60px;
+    min-width: 40px;
+    max-width: 80px;
+    box-sizing: border-box;
+}
+
 .prop-key {
     width: 120px;
+    min-width: 120px;
+    max-width: 120px;
+    flex: 0 0 120px;
     color: #cfd8e3;
+    word-break: break-word;
 }
 
 .prop-value {

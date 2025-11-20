@@ -120,7 +120,9 @@ export function SceneInspectorPanel() {
               title={`${t('inspector.components','Components')} - ${selectedEntity.id}`}
               theme="blue"
               defaultPosition={{ x: 360, y: 120 }}
-              defaultSize={{ width: 360, height: 420 }}
+              defaultSize={{ width: 500, height: 420 }}
+              maxWidth={700}
+              minWidth={500}
               showClose={true}
               onClose={() => setSelected(null)}
             >

@@ -17,7 +17,7 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
           nullable: false,
           default: 1,
           min: 0.01,
-          max: 1000,
+          max: 100,
           step: 0.01,
           get: (c: SphereGeometryComponent) => c.radius,
           set: (c, v) => {

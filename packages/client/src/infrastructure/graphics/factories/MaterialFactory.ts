@@ -1,9 +1,9 @@
-import * as THREE from 'three';
-import type { TextureCache } from './TextureCache';
-import type { StandardMaterialComponent } from '../../../domain/ecs/components/StandardMaterialComponent';
-import type { BasicMaterialComponent } from '../../../domain/ecs/components/BasicMaterialComponent';
-import type { PhongMaterialComponent } from '../../../domain/ecs/components/PhongMaterialComponent';
-import type { LambertMaterialComponent } from '../../../domain/ecs/components/LambertMaterialComponent';
+import * as THREE from "three";
+import type { TextureCache } from "./TextureCache";
+import StandardMaterialComponent from "@client/domain/ecs/components/material/StandardMaterialComponent";
+import BasicMaterialComponent from "@client/domain/ecs/components/material/BasicMaterialComponent";
+import PhongMaterialComponent from "@client/domain/ecs/components/material/PhongMaterialComponent";
+import LambertMaterialComponent from "@client/domain/ecs/components/material/LambertMaterialComponent";
 
 export type AnyMaterialComponent =
   | StandardMaterialComponent
@@ -12,48 +12,58 @@ export type AnyMaterialComponent =
   | LambertMaterialComponent;
 
 export class MaterialFactory {
-  static build(comp: AnyMaterialComponent, textureCache: TextureCache): THREE.Material {
+  static build(
+    comp: AnyMaterialComponent,
+    textureCache: TextureCache
+  ): THREE.Material {
     let material: THREE.Material;
 
     switch (comp.type) {
-      case 'standardMaterial': {
-        const opts: Partial<THREE.MeshStandardMaterialParameters> = {};
-        if ((comp as any).color !== undefined) opts.color = (comp as any).color as any;
-        if ((comp as any).metalness !== undefined) opts.metalness = (comp as any).metalness;
-        if ((comp as any).roughness !== undefined) opts.roughness = (comp as any).roughness;
-        if ((comp as any).emissive !== undefined) opts.emissive = (comp as any).emissive as any;
-        if ((comp as any).emissiveIntensity !== undefined) opts.emissiveIntensity = (comp as any).emissiveIntensity;
-        if ((comp as any).transparent !== undefined) opts.transparent = (comp as any).transparent;
-        if ((comp as any).opacity !== undefined) opts.opacity = (comp as any).opacity;
+      case "standardMaterial": {
+        const opts: THREE.MeshStandardMaterialParameters = {
+          color: comp.color ?? 0xffffff,
+          metalness: comp.metalness,
+          roughness: comp.roughness,
+          emissive: comp.emissive,
+          emissiveIntensity: comp.emissiveIntensity,
+          transparent: comp.transparent,
+          opacity: comp.opacity,
+        };
         material = new THREE.MeshStandardMaterial(opts);
         break;
       }
-      case 'basicMaterial': {
-        const opts: Partial<THREE.MeshBasicMaterialParameters> = {};
-        if ((comp as any).color !== undefined) opts.color = (comp as any).color as any;
-        if ((comp as any).transparent !== undefined) opts.transparent = (comp as any).transparent;
-        if ((comp as any).opacity !== undefined) opts.opacity = (comp as any).opacity;
-        if ((comp as any).wireframe !== undefined) opts.wireframe = (comp as any).wireframe;
+      case "basicMaterial": {
+        const basic = comp as BasicMaterialComponent;
+        const opts: THREE.MeshBasicMaterialParameters = {
+          color: basic.color ?? 0xffffff,
+          transparent: basic.transparent,
+          opacity: basic.opacity,
+          wireframe: basic.wireframe,
+        };
         material = new THREE.MeshBasicMaterial(opts);
         break;
       }
-      case 'phongMaterial': {
-        const opts: Partial<THREE.MeshPhongMaterialParameters> = {};
-        if ((comp as any).color !== undefined) opts.color = (comp as any).color as any;
-        if ((comp as any).specular !== undefined) opts.specular = (comp as any).specular as any;
-        if ((comp as any).shininess !== undefined) opts.shininess = (comp as any).shininess;
-        if ((comp as any).emissive !== undefined) opts.emissive = (comp as any).emissive as any;
-        if ((comp as any).transparent !== undefined) opts.transparent = (comp as any).transparent;
-        if ((comp as any).opacity !== undefined) opts.opacity = (comp as any).opacity;
+      case "phongMaterial": {
+        const phong = comp as PhongMaterialComponent;
+        const opts: THREE.MeshPhongMaterialParameters = {
+          color: phong.color ?? 0xffffff,
+          specular: phong.specular,
+          shininess: phong.shininess,
+          emissive: phong.emissive,
+          transparent: phong.transparent,
+          opacity: phong.opacity,
+        };
         material = new THREE.MeshPhongMaterial(opts);
         break;
       }
-      case 'lambertMaterial': {
-        const opts: Partial<THREE.MeshLambertMaterialParameters> = {};
-        if ((comp as any).color !== undefined) opts.color = (comp as any).color as any;
-        if ((comp as any).emissive !== undefined) opts.emissive = (comp as any).emissive as any;
-        if ((comp as any).transparent !== undefined) opts.transparent = (comp as any).transparent;
-        if ((comp as any).opacity !== undefined) opts.opacity = (comp as any).opacity;
+      case "lambertMaterial": {
+        const lambert = comp as LambertMaterialComponent;
+        const opts: THREE.MeshLambertMaterialParameters = {
+          color: lambert.color ?? 0xffffff,
+          emissive: lambert.emissive,
+          transparent: lambert.transparent,
+          opacity: lambert.opacity,
+        };
         material = new THREE.MeshLambertMaterial(opts);
         break;
       }
@@ -63,25 +73,29 @@ export class MaterialFactory {
     }
 
     // Apply textures asynchronously if supported
-    const texKey = (comp as any).texture;
-    const normalKey = (comp as any).normalMap;
-    const envKey = (comp as any).envMap;
-    if (texKey) {
-      textureCache.load(texKey).then((tex) => {
-        (material as any).map = tex;
-        material.needsUpdate = true;
+    // Usamos type guards para evitar any
+    if ('texture' in comp && comp.texture) {
+      textureCache.load(comp.texture).then((tex) => {
+        if ('map' in material) {
+          (material as THREE.MeshStandardMaterial | THREE.MeshBasicMaterial | THREE.MeshPhongMaterial | THREE.MeshLambertMaterial).map = tex;
+          material.needsUpdate = true;
+        }
       });
     }
-    if (normalKey) {
-      textureCache.load(normalKey).then((tex) => {
-        (material as any).normalMap = tex;
-        material.needsUpdate = true;
+    if ('normalMap' in comp && comp.normalMap) {
+      textureCache.load(comp.normalMap).then((tex) => {
+        if ('normalMap' in material) {
+          (material as THREE.MeshStandardMaterial | THREE.MeshPhongMaterial | THREE.MeshLambertMaterial).normalMap = tex;
+          material.needsUpdate = true;
+        }
       });
     }
-    if (envKey) {
-      textureCache.load(envKey).then((tex) => {
-        (material as any).envMap = tex;
-        material.needsUpdate = true;
+    if ('envMap' in comp && comp.envMap) {
+      textureCache.load(comp.envMap).then((tex) => {
+        if ('envMap' in material) {
+          (material as THREE.MeshStandardMaterial | THREE.MeshPhongMaterial | THREE.MeshLambertMaterial).envMap = tex;
+          material.needsUpdate = true;
+        }
       });
     }
 

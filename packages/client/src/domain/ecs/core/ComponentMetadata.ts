@@ -12,7 +12,9 @@ export interface InspectorFieldConfig<TComponent = any> {
     | "texture"
     | "enum"
     | "vector"
-    | "object";
+    | "object"
+    | "reference"
+    | "uniforms";
   nullable?: boolean;
   default?: unknown;
   min?: number;
