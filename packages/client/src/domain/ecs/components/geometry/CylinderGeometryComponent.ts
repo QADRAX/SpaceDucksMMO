@@ -10,10 +10,10 @@ export class CylinderGeometryComponent extends BaseGeometryComponent {
     conflicts: ["skybox"],
     inspector: {
       fields: [
-        { key: "radiusTop", label: "Radius Top" },
-        { key: "radiusBottom", label: "Radius Bottom" },
-        { key: "height", label: "Height" },
-        { key: "radialSegments", label: "Radial Segments" },
+        { key: "radiusTop", label: "Radius Top", max: 1000, min: 0.01, step: 0.01, default: 0.5 },
+        { key: "radiusBottom", label: "Radius Bottom", max: 1000, min: 0.01, step: 0.01, default: 0.5 },
+        { key: "height", label: "Height", max: 1000, min: 0.01, step: 0.01, default: 1 },
+        { key: "radialSegments", label: "Radial Segments", default: 16 },
       ],
     },
   };

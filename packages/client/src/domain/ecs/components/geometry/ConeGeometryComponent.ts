@@ -10,9 +10,23 @@ export class ConeGeometryComponent extends BaseGeometryComponent {
     conflicts: ["skybox"],
     inspector: {
       fields: [
-        { key: "radius", label: "Radius" },
-        { key: "height", label: "Height" },
-        { key: "radialSegments", label: "Radial Segments" },
+        {
+          key: "radius",
+          label: "Radius",
+          min: 0.01,
+          max: 1000,
+          step: 0.01,
+          default: 0.5,
+        },
+        {
+          key: "height",
+          label: "Height",
+          min: 0.01,
+          max: 1000,
+          step: 0.01,
+          default: 1,
+        },
+        { key: "radialSegments", label: "Radial Segments", default: 16 },
       ],
     },
   };
@@ -21,7 +35,11 @@ export class ConeGeometryComponent extends BaseGeometryComponent {
   height: number;
   radialSegments?: number;
 
-  constructor(params?: { radius?: number; height?: number; radialSegments?: number }) {
+  constructor(params?: {
+    radius?: number;
+    height?: number;
+    radialSegments?: number;
+  }) {
     super();
     this.radius = params?.radius ?? 0.5;
     this.height = params?.height ?? 1;

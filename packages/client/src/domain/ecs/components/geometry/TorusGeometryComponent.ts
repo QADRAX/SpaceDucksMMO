@@ -10,10 +10,10 @@ export class TorusGeometryComponent extends BaseGeometryComponent {
     conflicts: ["skybox"],
     inspector: {
       fields: [
-        { key: "radius", label: "Radius" },
-        { key: "tube", label: "Tube" },
-        { key: "radialSegments", label: "Radial Segments" },
-        { key: "tubularSegments", label: "Tubular Segments" },
+        { key: "radius", label: "Radius", min: 0.01, max: 1000, step: 0.01, default: 1 },
+        { key: "tube", label: "Tube", min: 0.01, max: 1000, step: 0.01, default: 0.3 },
+        { key: "radialSegments", label: "Radial Segments", default: 16 },
+        { key: "tubularSegments", label: "Tubular Segments", default: 48 },
       ],
     },
   };
@@ -23,7 +23,12 @@ export class TorusGeometryComponent extends BaseGeometryComponent {
   radialSegments?: number;
   tubularSegments?: number;
 
-  constructor(params?: { radius?: number; tube?: number; radialSegments?: number; tubularSegments?: number }) {
+  constructor(params?: {
+    radius?: number;
+    tube?: number;
+    radialSegments?: number;
+    tubularSegments?: number;
+  }) {
     super();
     this.radius = params?.radius ?? 1;
     this.tube = params?.tube ?? 0.3;

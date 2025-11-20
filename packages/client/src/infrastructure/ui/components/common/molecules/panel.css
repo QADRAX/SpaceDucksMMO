@@ -25,6 +25,7 @@
 .panel-control-btn.close-btn:hover { background: rgba(211,51,51,0.06); border-color: rgba(211,51,51,0.32); transform: none; }
 
 .panel-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px; pointer-events: auto; min-height: 0; }
+  user-select: auto; }
 .panel-content::-webkit-scrollbar { width: 8px; }
 .panel-content::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: var(--control-radius); }
 .panel-content::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: var(--control-radius); }

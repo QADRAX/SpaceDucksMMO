@@ -18,14 +18,42 @@ export class ShaderMaterialComponent extends Component {
     type: "shaderMaterial",
     unique: true,
     requires: ["geometry"],
-    conflicts: ["standardMaterial", "basicMaterial", "phongMaterial", "lambertMaterial"],
+    conflicts: [
+      "standardMaterial",
+      "basicMaterial",
+      "phongMaterial",
+      "lambertMaterial",
+    ],
     inspector: {
       fields: [
-        { key: "shaderType", label: "Shader", get: (c: ShaderMaterialComponent) => c.shaderType },
-        { key: "transparent", label: "Transparent", get: (c: ShaderMaterialComponent) => c.transparent, set: (c, v) => { c.transparent = Boolean(v); } },
-        { key: "depthWrite", label: "Depth Write", get: (c: ShaderMaterialComponent) => c.depthWrite },
-        { key: "blending", label: "Blending", get: (c: ShaderMaterialComponent) => c.blending },
-        { key: "uniformKeys", label: "Uniforms", get: (c: ShaderMaterialComponent) => Object.keys(c.uniforms || {}) },
+        {
+          key: "shaderType",
+          label: "Shader",
+          get: (c: ShaderMaterialComponent) => c.shaderType,
+        },
+        {
+          key: "transparent",
+          label: "Transparent",
+          get: (c: ShaderMaterialComponent) => c.transparent,
+          set: (c, v) => {
+            c.transparent = Boolean(v);
+          },
+        },
+        {
+          key: "depthWrite",
+          label: "Depth Write",
+          get: (c: ShaderMaterialComponent) => c.depthWrite,
+        },
+        {
+          key: "blending",
+          label: "Blending",
+          get: (c: ShaderMaterialComponent) => c.blending,
+        },
+        {
+          key: "uniformKeys",
+          label: "Uniforms",
+          get: (c: ShaderMaterialComponent) => Object.keys(c.uniforms || {}),
+        },
       ],
     },
   };

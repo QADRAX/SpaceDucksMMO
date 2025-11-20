@@ -10,9 +10,7 @@ export class CustomGeometryComponent extends BaseGeometryComponent {
     requires: [],
     conflicts: ["skybox"],
     inspector: {
-      fields: [
-        { key: "key", label: "Key" },
-      ],
+      fields: [{ key: "key", label: "Key" }],
     },
   };
 
