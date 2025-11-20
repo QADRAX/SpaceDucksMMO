@@ -1,9 +1,11 @@
+import Component from '@client/domain/ecs/core/Component';
 import { ComponentFieldRow } from './ComponentFieldRow';
 import type { InspectorFieldConfig } from '@client/domain/ecs/core/ComponentMetadata';
+import Services from '@client/infrastructure/di/Services';
 
 type Props = {
-  component: any;
-  services?: any;
+  component: Component;
+  services?: Services;
 };
 
 export function ComponentFieldList({ component, services }: Props) {

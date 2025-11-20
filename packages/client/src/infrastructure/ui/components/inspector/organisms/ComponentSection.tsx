@@ -1,10 +1,12 @@
+import Component from "@client/domain/ecs/core/Component";
 import { ComponentFieldList } from "../molecules/ComponentFieldList";
 import type Entity from "@client/domain/ecs/core/Entity";
+import Services from "@client/infrastructure/di/Services";
 
 type Props = {
-  component: any;
+  component: Component;
   entity: Entity;
-  services: any;
+  services: Services;
   onChanged: () => void;
   t: (k: string, f?: string) => string;
 };
