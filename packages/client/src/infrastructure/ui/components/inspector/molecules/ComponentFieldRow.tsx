@@ -5,6 +5,7 @@ import { NullableToggleEditor } from "./NullableToggleEditor";
 import { ReferenceField } from "./ReferenceField";
 import { TextureSelector } from "./TextureSelector";
 import { UniformsValueEditor } from "./UniformsValueEditor";
+type UniformsObject = { [key: string]: { value: any } };
 import { PropertyCheckbox } from "../../common/atoms/PropertyCheckbox";
 import { PropertyInput } from "../../common/atoms/PropertyInput";
 import { PropertyNumber } from "../../common/atoms/PropertyNumber";
@@ -19,15 +20,16 @@ type Props = {
 
 export function ComponentFieldRow({ component, fieldKey, fieldConfig }: Props) {
   const label = fieldConfig?.label ?? fieldKey;
+  // If no get, do not render anything
+  if (!fieldConfig || typeof fieldConfig.get !== "function") return null;
+
   // Get value using metadata get or direct
-  const value = fieldConfig?.get
-    ? fieldConfig.get(component)
-    : (component as any)[fieldKey];
+  const value = fieldConfig.get(component);
 
   // Set value using metadata set or direct
+  const isMutable = !!fieldConfig.set;
   const applyChange = (nv: any) => {
-    debugger;
-    if (fieldConfig?.set) {
+    if (isMutable && fieldConfig.set) {
       fieldConfig.set(component, nv);
     }
   };
@@ -61,17 +63,18 @@ export function ComponentFieldRow({ component, fieldKey, fieldConfig }: Props) {
       fieldConfig?.default !== undefined
         ? fieldConfig.default
         : getDefaultForType(fieldKey, fieldConfig?.type);
-    return (
-      <NullableToggleEditor
-        enabled={enabled}
-        onToggle={(checked) => {
+    // Always provide a valid onToggle (no-op if not mutable)
+    const handleToggle = isMutable
+      ? (checked: boolean) => {
           if (checked) {
             applyChange(defaultValue);
           } else {
             applyChange(undefined);
           }
-        }}
-      >
+        }
+      : () => {};
+    return (
+      <NullableToggleEditor enabled={enabled} onToggle={handleToggle}>
         {children}
       </NullableToggleEditor>
     );
@@ -79,22 +82,141 @@ export function ComponentFieldRow({ component, fieldKey, fieldConfig }: Props) {
 
   // Select editor by type/key
   let editor: preact.ComponentChildren = null;
+  // If not mutable, always use PropertyReadonly
+  const readonly = !isMutable;
+  // Helper for readonly fallback
+  const readonlyValue = (v: any) => {
+    if (v === undefined || v === null) return "-";
+    if (
+      typeof v === "string" ||
+      typeof v === "number" ||
+      typeof v === "boolean"
+    )
+      return v;
+    return JSON.stringify(v);
+  };
   if (fieldConfig?.nullable) {
     editor = (
       <NullableFieldWrapper>
         {fieldKey === "targetEntityId" ? (
+          readonly ? (
+            <PropertyReadonly value={readonlyValue(value)} />
+          ) : (
+            <ReferenceField
+              value={typeof value === "string" ? value : null}
+              onChange={(id) => applyChange(id || "")}
+            />
+          )
+        ) : ["texture", "normalMap", "envMap"].includes(fieldKey) ? (
+          readonly ? (
+            <PropertyReadonly value={readonlyValue(value)} />
+          ) : (
+            <TextureSelector
+              value={typeof value === "string" ? value : null}
+              onChange={(tx) => applyChange(tx || undefined)}
+            />
+          )
+        ) : fieldKey === "color" ? (
+          readonly ? (
+            <PropertyReadonly value={readonlyValue(value)} />
+          ) : (
+            <PropertyColor
+              value={typeof value === "string" ? parseInt(value.replace('#',''), 16) : 0xffffff}
+              onChange={(v: number) => applyChange('#' + v.toString(16).padStart(6, '0'))}
+            />
+          )
+        ) : fieldConfig.type === "vector" ? (
+          readonly ? (
+            <PropertyReadonly value={readonlyValue(value)} />
+          ) : (
+            <Vector3Editor
+              value={
+                Array.isArray(value) && value.length === 3
+                  ? (value as [number, number, number])
+                  : [0, 0, 0]
+              }
+              onChange={applyChange}
+            />
+          )
+        ) : fieldConfig.type === "number" ? (
+          readonly ? (
+            <PropertyReadonly value={readonlyValue(value)} />
+          ) : (
+            <PropertyNumber
+              value={typeof value === "number" ? value : 0}
+              onChange={applyChange}
+              min={fieldConfig.min}
+              max={fieldConfig.max}
+              step={fieldConfig.step}
+            />
+          )
+        ) : fieldConfig.type === "boolean" ? (
+          readonly ? (
+            <PropertyReadonly value={readonlyValue(value)} />
+          ) : (
+            <PropertyCheckbox checked={!!value} onChange={applyChange} />
+          )
+        ) : fieldConfig.type === "string" ? (
+          readonly ? (
+            <PropertyReadonly value={readonlyValue(value)} />
+          ) : (
+            <PropertyInput
+              value={typeof value === "string" ? value : ""}
+              onChange={applyChange}
+            />
+          )
+        ) : fieldKey === "uniforms" ? (
+          readonly ? (
+            <PropertyReadonly value={readonlyValue(value)} />
+          ) : (
+            <UniformsValueEditor
+              uniforms={typeof value === "object" && value !== null ? (value as UniformsObject) : {}}
+              onChange={(uname: string, nv: any) => {
+                if (value && typeof value === "object" && (value as UniformsObject)[uname]) {
+                  (value as UniformsObject)[uname].value = nv;
+                }
+                applyChange(value);
+              }}
+            />
+          )
+        ) : (
+          <PropertyReadonly value={readonlyValue(value)} />
+        )}
+      </NullableFieldWrapper>
+    );
+  } else {
+    editor =
+      fieldKey === "targetEntityId" ? (
+        readonly ? (
+          <PropertyReadonly value={readonlyValue(value)} />
+        ) : (
           <ReferenceField
-            value={value || null}
+            value={typeof value === "string" ? value : null}
             onChange={(id) => applyChange(id || "")}
           />
-        ) : ["texture", "normalMap", "envMap"].includes(fieldKey) ? (
+        )
+      ) : ["texture", "normalMap", "envMap"].includes(fieldKey) ? (
+        readonly ? (
+          <PropertyReadonly value={readonlyValue(value)} />
+        ) : (
           <TextureSelector
-            value={value || null}
+            value={typeof value === "string" ? value : null}
             onChange={(tx) => applyChange(tx || undefined)}
           />
-        ) : fieldKey === "color" ? (
-          <PropertyColor value={value} onChange={applyChange} />
-        ) : fieldConfig.type === "vector" ? (
+        )
+      ) : fieldKey === "color" ? (
+        readonly ? (
+          <PropertyReadonly value={readonlyValue(value)} />
+        ) : (
+          <PropertyColor
+            value={typeof value === "string" ? parseInt(value.replace('#',''), 16) : 0xffffff}
+            onChange={(v: number) => applyChange('#' + v.toString(16).padStart(6, '0'))}
+          />
+        )
+      ) : fieldConfig?.type === "vector" ? (
+        readonly ? (
+          <PropertyReadonly value={readonlyValue(value)} />
+        ) : (
           <Vector3Editor
             value={
               Array.isArray(value) && value.length === 3
@@ -103,76 +225,50 @@ export function ComponentFieldRow({ component, fieldKey, fieldConfig }: Props) {
             }
             onChange={applyChange}
           />
-        ) : fieldConfig.type === "number" ? (
+        )
+      ) : fieldConfig?.type === "number" ? (
+        readonly ? (
+          <PropertyReadonly value={readonlyValue(value)} />
+        ) : (
           <PropertyNumber
-            value={value as number}
+            value={typeof value === "number" ? value : 0}
             onChange={applyChange}
-            min={fieldConfig.min}
-            max={fieldConfig.max}
-            step={fieldConfig.step}
+            min={fieldConfig?.min}
+            max={fieldConfig?.max}
+            step={fieldConfig?.step}
           />
-        ) : fieldConfig.type === "boolean" ? (
+        )
+      ) : fieldConfig?.type === "boolean" ? (
+        readonly ? (
+          <PropertyReadonly value={readonlyValue(value)} />
+        ) : (
           <PropertyCheckbox checked={!!value} onChange={applyChange} />
-        ) : fieldConfig.type === "string" ? (
-          <PropertyInput value={String(value)} onChange={applyChange} />
-        ) : fieldKey === "uniforms" ? (
+        )
+      ) : fieldConfig?.type === "string" ? (
+        readonly ? (
+          <PropertyReadonly value={readonlyValue(value)} />
+        ) : (
+          <PropertyInput
+            value={typeof value === "string" ? value : ""}
+            onChange={applyChange}
+          />
+        )
+      ) : fieldKey === "uniforms" ? (
+        readonly ? (
+          <PropertyReadonly value={readonlyValue(value)} />
+        ) : (
           <UniformsValueEditor
-            uniforms={value || {}}
-            onChange={(uname, nv) => {
-              if (value && value[uname]) value[uname].value = nv;
+            uniforms={typeof value === "object" && value !== null ? (value as UniformsObject) : {}}
+            onChange={(uname: string, nv: any) => {
+              if (value && typeof value === "object" && (value as UniformsObject)[uname]) {
+                (value as UniformsObject)[uname].value = nv;
+              }
               applyChange(value);
             }}
           />
-        ) : (
-          <PropertyReadonly value={value === undefined ? "-" : value} />
-        )}
-      </NullableFieldWrapper>
-    );
-  } else {
-    editor =
-      fieldKey === "targetEntityId" ? (
-        <ReferenceField
-          value={value || null}
-          onChange={(id) => applyChange(id || "")}
-        />
-      ) : ["texture", "normalMap", "envMap"].includes(fieldKey) ? (
-        <TextureSelector
-          value={value || null}
-          onChange={(tx) => applyChange(tx || undefined)}
-        />
-      ) : fieldKey === "color" ? (
-        <PropertyColor value={value} onChange={applyChange} />
-      ) : fieldConfig?.type === "vector" ? (
-        <Vector3Editor
-          value={
-            Array.isArray(value) && value.length === 3
-              ? (value as [number, number, number])
-              : [0, 0, 0]
-          }
-          onChange={applyChange}
-        />
-      ) : fieldConfig?.type === "number" ? (
-        <PropertyNumber
-          value={value as number}
-          onChange={applyChange}
-          min={fieldConfig?.min}
-          max={fieldConfig?.max}
-          step={fieldConfig?.step}
-        />
-      ) : fieldConfig?.type === "boolean" ? (
-        <PropertyCheckbox checked={!!value} onChange={applyChange} />
-      ) : fieldConfig?.type === "string" ? (
-        <PropertyInput value={String(value)} onChange={applyChange} />
-      ) : fieldKey === "uniforms" ? (
-        <UniformsValueEditor
-          uniforms={value || {}}
-          onChange={(uname, nv) => {
-            if (value && value[uname]) value[uname].value = nv;
-            applyChange(value);
-          }}
-        />
+        )
       ) : (
-        <PropertyReadonly value={value === undefined ? "-" : value} />
+        <PropertyReadonly value={readonlyValue(value)} />
       );
   }
 
