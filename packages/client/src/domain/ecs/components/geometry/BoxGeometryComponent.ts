@@ -18,6 +18,11 @@ export class BoxGeometryComponent extends BaseGeometryComponent {
           min: 0.01,
           max: 1000,
           step: 0.01,
+          get: (c: BoxGeometryComponent) => c.width,
+          set: (c, v) => {
+            c.width = Number(v);
+            c.notifyChanged();
+          },
         },
         {
           key: "height",
@@ -27,6 +32,11 @@ export class BoxGeometryComponent extends BaseGeometryComponent {
           min: 0.01,
           max: 1000,
           step: 0.01,
+          get: (c: BoxGeometryComponent) => c.height,
+          set: (c, v) => {
+            c.height = Number(v);
+            c.notifyChanged();
+          }
         },
         {
           key: "depth",
@@ -36,6 +46,11 @@ export class BoxGeometryComponent extends BaseGeometryComponent {
           min: 0.01,
           max: 1000,
           step: 0.01,
+          get: (c: BoxGeometryComponent) => c.depth,
+          set: (c, v) => {
+            c.depth = Number(v);
+            c.notifyChanged();
+          }
         },
       ],
     },

@@ -34,7 +34,7 @@ export function ComponentInspector({ entity }: Props) {
 
       <div className="components-list" style={{ marginTop: 8 }}>
         {components.map((c) => (
-          <ComponentSection key={c.type} component={c} entity={entity} services={services} onChanged={onChanged} t={t} />
+          <ComponentSection key={c.type} component={c} entity={entity} onChanged={onChanged} t={t} />
         ))}
       </div>
     </div>

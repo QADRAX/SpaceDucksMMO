@@ -10,10 +10,52 @@ export class TorusGeometryComponent extends BaseGeometryComponent {
     conflicts: ["skybox"],
     inspector: {
       fields: [
-        { key: "radius", label: "Radius", min: 0.01, max: 1000, step: 0.01, default: 1 },
-        { key: "tube", label: "Tube", min: 0.01, max: 1000, step: 0.01, default: 0.3 },
-        { key: "radialSegments", label: "Radial Segments", default: 16 },
-        { key: "tubularSegments", label: "Tubular Segments", default: 48 },
+        {
+          key: "radius",
+          label: "Radius",
+          min: 0.01,
+          max: 1000,
+          step: 0.01,
+          default: 1,
+          get: (c: TorusGeometryComponent) => c.radius,
+          set: (c, v) => {
+            c.radius = Number(v);
+            c.notifyChanged();
+          }
+        },
+        {
+          key: "tube",
+          label: "Tube",
+          min: 0.01,
+          max: 1000,
+          step: 0.01,
+          default: 0.3,
+          get: (c: TorusGeometryComponent) => c.tube,
+          set: (c, v) => {
+            c.tube = Number(v);
+            c.notifyChanged();
+          }
+        },
+        {
+          key: "radialSegments",
+          label: "Radial Segments",
+          default: 16,
+          get: (c: TorusGeometryComponent) => c.radialSegments,
+          set: (c, v) => {
+            c.radialSegments = Number(v);
+            c.notifyChanged();
+          }
+        },
+        {
+          key: "tubularSegments",
+          label: "Tubular Segments",
+          default: 48,
+          get: (c: TorusGeometryComponent) => c.tubularSegments,
+          set: (c, v) => {
+            c.tubularSegments = Number(v);
+            c.notifyChanged();
+          }
+        },
       ],
     },
   };

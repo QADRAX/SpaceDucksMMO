@@ -1,12 +1,10 @@
 import Component from "@client/domain/ecs/core/Component";
 import { ComponentFieldList } from "../molecules/ComponentFieldList";
 import type Entity from "@client/domain/ecs/core/Entity";
-import Services from "@client/infrastructure/di/Services";
 
 type Props = {
   component: Component;
   entity: Entity;
-  services: Services;
   onChanged: () => void;
   t: (k: string, f?: string) => string;
 };
@@ -14,7 +12,6 @@ type Props = {
 export function ComponentSection({
   component,
   entity,
-  services,
   onChanged,
   t,
 }: Props) {
@@ -50,7 +47,7 @@ export function ComponentSection({
           </button>
         </div>
       </div>
-      <ComponentFieldList component={component} services={services} />
+      <ComponentFieldList component={component}/>
     </div>
   );
 }

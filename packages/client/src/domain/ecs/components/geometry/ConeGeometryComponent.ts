@@ -17,6 +17,11 @@ export class ConeGeometryComponent extends BaseGeometryComponent {
           max: 1000,
           step: 0.01,
           default: 0.5,
+          get: (c: ConeGeometryComponent) => c.radius,
+          set: (c, v) => {
+            c.radius = Number(v);
+            c.notifyChanged();
+          }
         },
         {
           key: "height",
@@ -25,8 +30,22 @@ export class ConeGeometryComponent extends BaseGeometryComponent {
           max: 1000,
           step: 0.01,
           default: 1,
+          get: (c: ConeGeometryComponent) => c.height,
+          set: (c, v) => {
+            c.height = Number(v);
+            c.notifyChanged();
+          }
         },
-        { key: "radialSegments", label: "Radial Segments", default: 16 },
+        { 
+          key: "radialSegments", 
+          label: "Radial Segments",
+          default: 16,
+          get: (c: ConeGeometryComponent) => c.radialSegments,
+          set: (c, v) => {
+            c.radialSegments = Number(v);
+            c.notifyChanged();
+          }
+        },
       ],
     },
   };

@@ -18,6 +18,11 @@ export class PlaneGeometryComponent extends BaseGeometryComponent {
           min: 0.01,
           max: 1000,
           step: 0.01,
+          get: (c: PlaneGeometryComponent) => c.width,
+          set: (c, v) => {
+            c.width = Number(v);
+            c.notifyChanged();
+          }
         },
         {
           key: "height",
@@ -27,6 +32,11 @@ export class PlaneGeometryComponent extends BaseGeometryComponent {
           min: 0.01,
           max: 1000,
           step: 0.01,
+          get: (c: PlaneGeometryComponent) => c.height,
+          set: (c, v) => {
+            c.height = Number(v);
+            c.notifyChanged();
+          }
         },
         {
           key: "widthSegments",
@@ -36,6 +46,11 @@ export class PlaneGeometryComponent extends BaseGeometryComponent {
           min: 1,
           max: 128,
           step: 1,
+          get: (c: PlaneGeometryComponent) => c.widthSegments,
+          set: (c, v) => {
+            c.widthSegments = Number(v);
+            c.notifyChanged();
+          }
         },
         {
           key: "heightSegments",
@@ -44,7 +59,12 @@ export class PlaneGeometryComponent extends BaseGeometryComponent {
           default: 1,
           min: 1,
           max: 128,
-          step: 1,
+          step: 1,  
+          get: (c: PlaneGeometryComponent) => c.heightSegments,
+          set: (c, v) => {
+            c.heightSegments = Number(v);
+            c.notifyChanged();
+          }
         },
       ],
     },

@@ -1,21 +1,84 @@
-import { BaseMaterialComponent } from './BaseMaterialComponent';
-import type { ComponentMetadata } from '../../core/ComponentMetadata';
+import { BaseMaterialComponent } from "./BaseMaterialComponent";
+import type { ComponentMetadata } from "../../core/ComponentMetadata";
 
 export class PhongMaterialComponent extends BaseMaterialComponent {
-  readonly type = 'phongMaterial';
+  readonly type = "phongMaterial";
   readonly metadata: ComponentMetadata = {
-    type: 'phongMaterial',
+    type: "phongMaterial",
     unique: true,
-    requires: ['geometry'],
-    conflicts: ['standardMaterial', 'basicMaterial', 'lambertMaterial', 'shaderMaterial'],
+    requires: ["geometry"],
+    conflicts: [
+      "standardMaterial",
+      "basicMaterial",
+      "lambertMaterial",
+      "shaderMaterial",
+    ],
     inspector: {
       fields: [
-        { key: 'color', label: 'Color', type: 'color', get: (c: PhongMaterialComponent) => c.color, set: (c, v) => { c.color = v as any; } },
-        { key: 'specular', label: 'Specular', type: 'color', get: (c: PhongMaterialComponent) => c.specular, set: (c, v) => { c.specular = v as any; } },
-        { key: 'shininess', label: 'Shininess', type: 'number', nullable: true, default: 30, min: 0, max: 100, step: 1, get: (c: PhongMaterialComponent) => c.shininess, set: (c, v) => { c.shininess = Number(v); } },
-        { key: 'emissive', label: 'Emissive', type: 'color', get: (c: PhongMaterialComponent) => c.emissive, set: (c, v) => { c.emissive = v as any; } },
-        { key: 'transparent', label: 'Transparent', type: 'boolean', get: (c: PhongMaterialComponent) => c.transparent, set: (c, v) => { c.transparent = Boolean(v); } },
-        { key: 'opacity', label: 'Opacity', type: 'number', nullable: true, default: 1, min: 0, max: 1, step: 0.01, get: (c: PhongMaterialComponent) => c.opacity, set: (c, v) => { c.opacity = Number(v); } },
+        {
+          key: "color",
+          label: "Color",
+          type: "color",
+          get: (c: PhongMaterialComponent) => c.color,
+          set: (c, v) => {
+            c.color = v as any;
+          },
+        },
+        {
+          key: "specular",
+          label: "Specular",
+          type: "color",
+          get: (c: PhongMaterialComponent) => c.specular,
+          set: (c, v) => {
+            c.specular = v as any;
+          },
+        },
+        {
+          key: "shininess",
+          label: "Shininess",
+          type: "number",
+          nullable: true,
+          default: 30,
+          min: 0,
+          max: 100,
+          step: 1,
+          get: (c: PhongMaterialComponent) => c.shininess,
+          set: (c, v) => {
+            c.shininess = Number(v);
+          },
+        },
+        {
+          key: "emissive",
+          label: "Emissive",
+          type: "color",
+          get: (c: PhongMaterialComponent) => c.emissive,
+          set: (c, v) => {
+            c.emissive = v as any;
+          },
+        },
+        {
+          key: "transparent",
+          label: "Transparent",
+          type: "boolean",
+          get: (c: PhongMaterialComponent) => c.transparent,
+          set: (c, v) => {
+            c.transparent = Boolean(v);
+          },
+        },
+        {
+          key: "opacity",
+          label: "Opacity",
+          type: "number",
+          nullable: true,
+          default: 1,
+          min: 0,
+          max: 1,
+          step: 0.01,
+          get: (c: PhongMaterialComponent) => c.opacity,
+          set: (c, v) => {
+            c.opacity = Number(v);
+          },
+        },
       ],
     },
   };
@@ -37,18 +100,48 @@ export class PhongMaterialComponent extends BaseMaterialComponent {
     this._opacity = (params as any).opacity;
   }
 
-  get color() { return this._color; }
-  set color(v: string | number | undefined) { this._color = v; this.notifyChanged(); }
-  get specular() { return this._specular; }
-  set specular(v: string | number | undefined) { this._specular = v; this.notifyChanged(); }
-  get shininess() { return this._shininess; }
-  set shininess(v: number | undefined) { this._shininess = v; this.notifyChanged(); }
-  get emissive() { return this._emissive; }
-  set emissive(v: string | number | undefined) { this._emissive = v; this.notifyChanged(); }
-  get transparent() { return this._transparent; }
-  set transparent(v: boolean | undefined) { this._transparent = v; this.notifyChanged(); }
-  get opacity() { return this._opacity; }
-  set opacity(v: number | undefined) { this._opacity = v; this.notifyChanged(); }
+  get color() {
+    return this._color;
+  }
+  set color(v: string | number | undefined) {
+    this._color = v;
+    this.notifyChanged();
+  }
+  get specular() {
+    return this._specular;
+  }
+  set specular(v: string | number | undefined) {
+    this._specular = v;
+    this.notifyChanged();
+  }
+  get shininess() {
+    return this._shininess;
+  }
+  set shininess(v: number | undefined) {
+    this._shininess = v;
+    this.notifyChanged();
+  }
+  get emissive() {
+    return this._emissive;
+  }
+  set emissive(v: string | number | undefined) {
+    this._emissive = v;
+    this.notifyChanged();
+  }
+  get transparent() {
+    return this._transparent;
+  }
+  set transparent(v: boolean | undefined) {
+    this._transparent = v;
+    this.notifyChanged();
+  }
+  get opacity() {
+    return this._opacity;
+  }
+  set opacity(v: number | undefined) {
+    this._opacity = v;
+    this.notifyChanged();
+  }
 }
 
 export default PhongMaterialComponent;

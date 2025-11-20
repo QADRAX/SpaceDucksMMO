@@ -43,16 +43,26 @@ export class ShaderMaterialComponent extends Component {
           key: "depthWrite",
           label: "Depth Write",
           get: (c: ShaderMaterialComponent) => c.depthWrite,
+          set: (c, v) => {
+            c._depthWrite = Boolean(v);
+            c.notifyChanged();
+          }
         },
         {
           key: "blending",
           label: "Blending",
           get: (c: ShaderMaterialComponent) => c.blending,
+          set: (c, v) => {
+            c._blending = String(v);
+            c.notifyChanged();
+          }
         },
         {
           key: "uniformKeys",
           label: "Uniforms",
           get: (c: ShaderMaterialComponent) => Object.keys(c.uniforms || {}),
+          set: () => { /** read only */ },
+
         },
       ],
     },

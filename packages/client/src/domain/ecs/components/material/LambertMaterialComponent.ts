@@ -1,19 +1,61 @@
-import { BaseMaterialComponent } from './BaseMaterialComponent';
-import type { ComponentMetadata } from '../../core/ComponentMetadata';
+import { BaseMaterialComponent } from "./BaseMaterialComponent";
+import type { ComponentMetadata } from "../../core/ComponentMetadata";
 
 export class LambertMaterialComponent extends BaseMaterialComponent {
-  readonly type = 'lambertMaterial';
+  readonly type = "lambertMaterial";
   readonly metadata: ComponentMetadata = {
-    type: 'lambertMaterial',
+    type: "lambertMaterial",
     unique: true,
-    requires: ['geometry'],
-    conflicts: ['standardMaterial', 'basicMaterial', 'phongMaterial', 'shaderMaterial'],
+    requires: ["geometry"],
+    conflicts: [
+      "standardMaterial",
+      "basicMaterial",
+      "phongMaterial",
+      "shaderMaterial",
+    ],
     inspector: {
       fields: [
-        { key: 'color', label: 'Color', type: 'color', get: (c: LambertMaterialComponent) => c.color, set: (c, v) => { c.color = v as any; } },
-        { key: 'emissive', label: 'Emissive', type: 'color', get: (c: LambertMaterialComponent) => c.emissive, set: (c, v) => { c.emissive = v as any; } },
-        { key: 'transparent', label: 'Transparent', type: 'boolean', get: (c: LambertMaterialComponent) => c.transparent, set: (c, v) => { c.transparent = Boolean(v); } },
-        { key: 'opacity', label: 'Opacity', type: 'number', nullable: true, default: 1, min: 0, max: 1, step: 0.01, get: (c: LambertMaterialComponent) => c.opacity, set: (c, v) => { c.opacity = Number(v); } },
+        {
+          key: "color",
+          label: "Color",
+          type: "color",
+          get: (c: LambertMaterialComponent) => c.color,
+          set: (c, v) => {
+            c.color = v as any;
+          },
+        },
+        {
+          key: "emissive",
+          label: "Emissive",
+          type: "color",
+          get: (c: LambertMaterialComponent) => c.emissive,
+          set: (c, v) => {
+            c.emissive = v as any;
+          },
+        },
+        {
+          key: "transparent",
+          label: "Transparent",
+          type: "boolean",
+          get: (c: LambertMaterialComponent) => c.transparent,
+          set: (c, v) => {
+            c.transparent = Boolean(v);
+          },
+        },
+        {
+          key: "opacity",
+          label: "Opacity",
+          type: "number",
+          nullable: true,
+          default: 1,
+          min: 0,
+          max: 1,
+          step: 0.01,
+          get: (c: LambertMaterialComponent) => c.opacity,
+          set: (c, v) => {
+            c.opacity = Number(v);
+          },
+        },
       ],
     },
   };
@@ -31,14 +73,34 @@ export class LambertMaterialComponent extends BaseMaterialComponent {
     this._opacity = (params as any).opacity;
   }
 
-  get color() { return this._color; }
-  set color(v: string | number | undefined) { this._color = v; this.notifyChanged(); }
-  get emissive() { return this._emissive; }
-  set emissive(v: string | number | undefined) { this._emissive = v; this.notifyChanged(); }
-  get transparent() { return this._transparent; }
-  set transparent(v: boolean | undefined) { this._transparent = v; this.notifyChanged(); }
-  get opacity() { return this._opacity; }
-  set opacity(v: number | undefined) { this._opacity = v; this.notifyChanged(); }
+  get color() {
+    return this._color;
+  }
+  set color(v: string | number | undefined) {
+    this._color = v;
+    this.notifyChanged();
+  }
+  get emissive() {
+    return this._emissive;
+  }
+  set emissive(v: string | number | undefined) {
+    this._emissive = v;
+    this.notifyChanged();
+  }
+  get transparent() {
+    return this._transparent;
+  }
+  set transparent(v: boolean | undefined) {
+    this._transparent = v;
+    this.notifyChanged();
+  }
+  get opacity() {
+    return this._opacity;
+  }
+  set opacity(v: number | undefined) {
+    this._opacity = v;
+    this.notifyChanged();
+  }
 }
 
 export default LambertMaterialComponent;

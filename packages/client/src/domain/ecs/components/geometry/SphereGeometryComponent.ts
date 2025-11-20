@@ -19,6 +19,11 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
           min: 0.01,
           max: 1000,
           step: 0.01,
+          get: (c: SphereGeometryComponent) => c.radius,
+          set: (c, v) => {
+            c.radius = Number(v);
+            c.notifyChanged();
+          }
         },
         {
           key: "widthSegments",
@@ -29,6 +34,11 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
           min: 3,
           max: 128,
           step: 1,
+          get: (c: SphereGeometryComponent) => c.widthSegments,
+          set: (c, v) => {
+            c.widthSegments = Number(v);
+            c.notifyChanged();
+          }
         },
         {
           key: "heightSegments",
@@ -39,6 +49,11 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
           min: 2,
           max: 128,
           step: 1,
+          get: (c: SphereGeometryComponent) => c.heightSegments,
+          set: (c, v) => {
+            c.heightSegments = Number(v);
+            c.notifyChanged();
+          }
         },
       ],
     },
