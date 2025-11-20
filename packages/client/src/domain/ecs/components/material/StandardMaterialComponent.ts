@@ -5,6 +5,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
   readonly type = "standardMaterial";
   readonly metadata: ComponentMetadata = {
     type: "standardMaterial",
+    description: "Material físico PBR estándar de Three.js. Permite simular superficies realistas con parámetros como color, metalicidad, rugosidad, emisión, transparencia y texturas. Se mapea directamente a THREE.MeshStandardMaterial.",
     unique: true,
     requires: ["geometry"],
     conflicts: [
@@ -19,6 +20,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           key: "color",
           label: "Color",
           type: "color",
+          description: "Color base del material. Es el color principal que ves en el objeto si no hay textura. Se asigna a THREE.MeshStandardMaterial.color.",
           get: (c: StandardMaterialComponent) => c.color,
           set: (c, v) => {
             c.color = v as any;
@@ -33,6 +35,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           min: 0,
           max: 1,
           step: 0.01,
+          description: "¿Cuánto parece metal la superficie? 0 = plástico/madera, 1 = metal puro. Se asigna a THREE.MeshStandardMaterial.metalness.",
           get: (c: StandardMaterialComponent) => c.metalness,
           set: (c, v) => {
             c.metalness = v ? Number(v) : undefined;
@@ -47,6 +50,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           min: 0,
           max: 1,
           step: 0.01,
+          description: "¿La superficie es lisa o rugosa? 0 = espejo, 1 = muy rugoso. Se asigna a THREE.MeshStandardMaterial.roughness.",
           get: (c: StandardMaterialComponent) => c.roughness,
           set: (c, v) => {
             c.roughness = v ? Number(v) : undefined;
@@ -58,6 +62,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           type: "color",
           default: "#d8d8d8ff",
           nullable: true,
+          description: "Color de luz que el material emite por sí mismo, como si brillara en la oscuridad. No ilumina otros objetos. Se asigna a THREE.MeshStandardMaterial.emissive.",
           get: (c: StandardMaterialComponent) => c.emissive,
           set: (c, v) => {
             c.emissive = v as any;
@@ -72,6 +77,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           min: 0,
           max: 10,
           step: 0.01,
+          description: "Multiplica el color de emisión. 0 = no emite luz, 1 = emite el color tal cual, >1 = más brillante. Se asigna a THREE.MeshStandardMaterial.emissiveIntensity.",
           get: (c: StandardMaterialComponent) => c.emissiveIntensity,
           set: (c, v) => {
             c.emissiveIntensity = v ? Number(v) : undefined;
@@ -82,6 +88,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           label: "Transparent",
           type: "boolean",
           nullable: false,
+          description: "Permite que el material sea transparente. Si está activado, la opacidad afecta la visibilidad. Se asigna a THREE.MeshStandardMaterial.transparent.",
           get: (c: StandardMaterialComponent) => c.transparent,
           set: (c, v) => {
             c.transparent = Boolean(v);
@@ -92,10 +99,11 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           label: "Opacity",
           type: "number",
           nullable: true,
-          default: 1,
+          default: 0.3,
           min: 0,
           max: 1,
           step: 0.01,
+          description: "Controla cuán transparente es el material. 1 = opaco, 0 = invisible. Solo funciona si 'Transparent' está activado. Se asigna a THREE.MeshStandardMaterial.opacity.",
           get: (c: StandardMaterialComponent) => c.opacity,
           set: (c, v) => {
             c.opacity = v ? Number(v) : undefined;
@@ -106,6 +114,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           label: "Texture",
           type: "texture",
           nullable: true,
+          description: "Imagen que se 'pega' sobre el objeto, como una pegatina. Reemplaza el color base y añade detalles visuales. Se asigna a THREE.MeshStandardMaterial.map.",
           get: (c: StandardMaterialComponent) => c.texture,
           set: (c, v) => {
             c.texture = v as any;
@@ -116,6 +125,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           label: "Normal Map",
           type: "texture",
           nullable: true,
+          description: "Imagen especial que simula bultos y detalles en la superficie sin cambiar la geometría. Hace que la luz reaccione como si hubiera relieves. Se asigna a THREE.MeshStandardMaterial.normalMap.",
           get: (c: StandardMaterialComponent) => c.normalMap,
           set: (c, v) => {
             c.normalMap = v as any;
@@ -126,6 +136,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           label: "Env Map",
           type: "texture",
           nullable: true,
+          description: "Imagen que simula reflejos del entorno, como si el objeto fuera brillante o reflectante. Permite que el objeto refleje el cielo, el entorno, etc. Se asigna a THREE.MeshStandardMaterial.envMap.",
           get: (c: StandardMaterialComponent) => c.envMap,
           set: (c, v) => {
             c.envMap = v as any;

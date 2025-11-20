@@ -15,6 +15,7 @@ export interface InspectorFieldConfig<TComponent = any> {
     | "object"
     | "reference"
     | "uniforms";
+  description?: string;
   nullable?: boolean;
   default?: unknown;
   min?: number;
@@ -33,4 +34,5 @@ export interface ComponentMetadata<TComponent = any> {
   requires?: string[];
   conflicts?: string[];
   inspector?: InspectorMetadata<TComponent>;
+  description?: string;
 }
