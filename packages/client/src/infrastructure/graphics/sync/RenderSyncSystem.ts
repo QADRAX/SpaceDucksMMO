@@ -10,6 +10,7 @@ import type { BasicMaterialComponent } from "../../../domain/ecs/components/mate
 import type { PhongMaterialComponent } from "../../../domain/ecs/components/material/PhongMaterialComponent";
 import type { LambertMaterialComponent } from "../../../domain/ecs/components/material/LambertMaterialComponent";
 import { ShaderMaterialComponent } from "../../../domain/ecs/components/material/ShaderMaterialComponent";
+import { LensFlareComponent } from "../../../domain/ecs/components/LensFlareComponent";
 import { CameraViewComponent } from "../../../domain/ecs/components/CameraViewComponent";
 import { LightComponent } from "../../../domain/ecs/components/LightComponent";
 import {
@@ -31,6 +32,7 @@ import { LightFactory } from "../factories/LightFactory";
 import { TextureCache } from "../factories/TextureCache";
 import { RenderObjectRegistry } from "./RenderObjectRegistry";
 import { ShaderUniformUpdater } from "./ShaderUniformUpdater";
+import LensFlareFactory from "../factories/LensFlareFactory";
 
 export class RenderSyncSystem implements IComponentObserver {
   private scene: THREE.Scene;
@@ -167,6 +169,9 @@ export class RenderSyncSystem implements IComponentObserver {
       case "light":
         this.recreateLight(entity);
         break;
+      case "lensFlare":
+        this.recreateLensFlare(entity);
+        break;
       default:
         break;
     }
@@ -179,6 +184,11 @@ export class RenderSyncSystem implements IComponentObserver {
     ) as AnyMaterialComponent | null;
     const shaderMaterial =
       entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
+    const cameraView = entity.getComponent<CameraViewComponent>("cameraView");
+    const lightComp = entity.getComponent<LightComponent>("light");
+    const lensComp = entity.getComponent<LensFlareComponent>("lensFlare");
+
+    // 1) Mesh (geometry + material/shader)
     if (
       geometry &&
       geometry.enabled !== false &&
@@ -186,16 +196,34 @@ export class RenderSyncSystem implements IComponentObserver {
         (shaderMaterial && shaderMaterial.enabled !== false))
     ) {
       this.createMesh(entity, geometry, material, shaderMaterial);
+      // If the same entity also has a lens flare, attach it as a child
+      if (lensComp && lensComp.enabled !== false) {
+        this.createLensFlare(entity, lensComp);
+      }
       return;
     }
-    const cameraView = entity.getComponent<CameraViewComponent>("cameraView");
+
+    // 2) Camera
     if (cameraView && cameraView.enabled !== false) {
       this.createCamera(entity, cameraView);
+      if (lensComp && lensComp.enabled !== false) {
+        this.createLensFlare(entity, lensComp);
+      }
       return;
     }
-    const lightComp = entity.getComponent<LightComponent>("light");
+
+    // 3) Light
     if (lightComp && lightComp.enabled !== false) {
       this.createLight(entity, lightComp);
+      if (lensComp && lensComp.enabled !== false) {
+        this.createLensFlare(entity, lensComp);
+      }
+      return;
+    }
+
+    // 4) Standalone lens flare entity (no mesh/camera/light)
+    if (lensComp && lensComp.enabled !== false) {
+      this.createLensFlare(entity, lensComp);
       return;
     }
   }
@@ -348,6 +376,188 @@ export class RenderSyncSystem implements IComponentObserver {
       if (!entity) continue;
       this.uniformUpdater.update(dt, entity, rc);
     }
+    // Sync simple lens flare visuals (if present)
+    // Find an active camera (first camera present in registry)
+    let activeCamera: THREE.Camera | undefined;
+    for (const rcCam of this.registry.getAll().values()) {
+      if (rcCam.object3D instanceof THREE.Camera) {
+        activeCamera = rcCam.object3D as THREE.Camera;
+        break;
+      }
+    }
+
+    for (const [id, rc] of this.registry.getAll()) {
+      const entity = this.entities.get(id);
+      if (!entity) continue;
+      const lensComp = entity.getComponent<LensFlareComponent>("lensFlare");
+      if (!lensComp) continue;
+      if (!rc?.object3D) continue;
+
+      // locate the lens-flare group (may be the object3D itself or a child)
+      let group: THREE.Object3D | undefined;
+      if (rc.object3D instanceof THREE.Group) group = rc.object3D;
+      else if (rc.object3D.getObjectByName)
+        group = rc.object3D.getObjectByName(`lensflare-${lensComp.type}`) as
+          | THREE.Object3D
+          | undefined;
+      if (!group) continue;
+
+      // If there is no camera, just apply base opacities/scales
+      if (!activeCamera) {
+        group.children.forEach((child, idx) => {
+          if (!(child instanceof THREE.Sprite)) return;
+          const sprite = child as THREE.Sprite;
+          if (idx === 0) {
+            sprite.material.opacity = Math.max(0, Math.min(1, lensComp.intensity ?? 1));
+          } else {
+            const meta = (sprite as any).userData || lensComp.flareElements?.[idx - 1];
+            if (meta) {
+              const baseOpacity = meta.opacity ?? (sprite.material.opacity as number);
+              sprite.material.opacity = Math.max(0, Math.min(1, baseOpacity * (lensComp.intensity ?? 1)));
+              const scale = meta.size ?? (sprite.scale.x || 0.5);
+              sprite.scale.set(scale, scale, 1);
+            }
+          }
+        });
+        continue;
+      }
+
+      // Use the entity's transform as the flare source position
+      const worldPos = entity.transform.worldPosition.clone();
+
+      // Compute camera vectors and alignment
+      const camPos = new THREE.Vector3();
+      activeCamera.getWorldPosition(camPos);
+      const camForward = new THREE.Vector3();
+      activeCamera.getWorldDirection(camForward);
+
+      const toLight = worldPos.clone().sub(camPos);
+      const distToLight = toLight.length();
+      const alignment = toLight.length() > 0 ? camForward.dot(toLight.clone().normalize()) : -1;
+
+      // Alignment-based visibility (0..1)
+      let alignFactor = 0;
+      if (alignment <= (lensComp.viewDotMin ?? -1)) alignFactor = 0;
+      else if (alignment >= (lensComp.viewDotMax ?? 1)) alignFactor = 1;
+      else {
+        const min = lensComp.viewDotMin ?? -1;
+        const max = lensComp.viewDotMax ?? 1;
+        alignFactor = (alignment - min) / (max - min);
+      }
+
+      // Project to NDC and apply screen offsets
+      const ndc = worldPos.clone().project(activeCamera);
+      ndc.x += lensComp.screenOffsetX ?? 0;
+      ndc.y += lensComp.screenOffsetY ?? 0;
+
+      // If source projects outside NDC cube, hide
+      if (ndc.x < -1 || ndc.x > 1 || ndc.y < -1 || ndc.y > 1 || ndc.z < -1 || ndc.z > 1) {
+        group.visible = false;
+        continue;
+      }
+      group.visible = true;
+
+      // Center-based fade
+      const ndcDist = Math.sqrt(ndc.x * ndc.x + ndc.y * ndc.y);
+      const cfStart = lensComp.centerFadeStart ?? 0;
+      const cfEnd = lensComp.centerFadeEnd ?? 1.4;
+      let centerFactor = 1;
+      if (ndcDist <= cfStart) centerFactor = 1;
+      else if (ndcDist >= cfEnd) centerFactor = 0;
+      else centerFactor = 1 - (ndcDist - cfStart) / (cfEnd - cfStart);
+
+      // Combine into base visibility
+      let baseVisibility = alignFactor * centerFactor;
+
+      // Occlusion test: if occluded, visibility -> 0
+      if (lensComp.occlusionEnabled) {
+        if (distToLight > 0.001) {
+          const ray = new THREE.Raycaster(camPos, toLight.clone().normalize());
+          (ray as any).camera = activeCamera;
+          const intersects = ray.intersectObjects(this.scene.children, true);
+          const srcRender = this.registry.get(entity.id);
+          for (const it of intersects) {
+            if (it.object instanceof THREE.Sprite) continue;
+
+            // If the intersect belongs to the same entity (its render object), ignore it
+            let belongsToSource = false;
+            if (srcRender && srcRender.object3D) {
+              let p: THREE.Object3D | null = it.object as THREE.Object3D | null;
+              while (p) {
+                if (p === srcRender.object3D) {
+                  belongsToSource = true;
+                  break;
+                }
+                p = p.parent as THREE.Object3D | null;
+              }
+            }
+            if (belongsToSource) continue;
+
+            if (it.distance < distToLight - 0.01) {
+              baseVisibility = 0;
+              break;
+            }
+          }
+        }
+      }
+
+      const visibility = Math.max(0, Math.min(1, baseVisibility));
+      const intensity = (lensComp.intensity ?? 1) * visibility;
+
+      if (intensity <= 1e-4) {
+        group.visible = false;
+        continue;
+      }
+
+      // Direction from light to screen center in NDC
+      let dirToCenter = new THREE.Vector2(-ndc.x, -ndc.y);
+      if (dirToCenter.lengthSq() < 1e-6) dirToCenter.set(1, 0);
+      // Rotate axis by axisAngleDeg
+      const angleRad = ((lensComp.axisAngleDeg ?? 0) * Math.PI) / 180;
+      if (Math.abs(angleRad) > 1e-6) {
+        const c = Math.cos(angleRad);
+        const s = Math.sin(angleRad);
+        dirToCenter = new THREE.Vector2(
+          dirToCenter.x * c - dirToCenter.y * s,
+          dirToCenter.x * s + dirToCenter.y * c
+        );
+      }
+
+      // Place sprites: child[0] is main glow, others correspond to element entries
+      group.children.forEach((child, idx) => {
+        if (!(child instanceof THREE.Sprite)) return;
+        const sprite = child as THREE.Sprite;
+        if (idx === 0) {
+          // main sprite at the light's NDC
+          const probe = new THREE.Vector3(ndc.x, ndc.y, 0).unproject(activeCamera);
+          const dir = probe.sub(camPos).normalize();
+          const fixedDist = Math.min(50, Math.max(5, distToLight * 0.5));
+          const worldSpritePos = camPos.clone().add(dir.multiplyScalar(fixedDist));
+          sprite.position.copy(worldSpritePos);
+          sprite.quaternion.copy(activeCamera.quaternion);
+          sprite.material.opacity = Math.max(0, Math.min(1, intensity));
+        } else {
+          const meta = (sprite as any).userData || lensComp.flareElements?.[idx - 1];
+          if (!meta) return;
+          const distance = meta.distance ?? 0;
+          const ex = ndc.x + dirToCenter.x * distance;
+          const ey = ndc.y + dirToCenter.y * distance;
+          const probe = new THREE.Vector3(ex, ey, 0).unproject(activeCamera);
+          const dir = probe.sub(camPos).normalize();
+          const fixedDist = Math.min(50, Math.max(5, distToLight * 0.5));
+          const worldSpritePos = camPos.clone().add(dir.multiplyScalar(fixedDist));
+          sprite.position.copy(worldSpritePos);
+          sprite.quaternion.copy(activeCamera.quaternion);
+          // Scale influenced by visibility
+          const baseSize = meta.size ?? (sprite.scale.x || 0.5);
+          const scaleByVis = lensComp.scaleByVisibility ?? 0.5;
+          const finalScale = baseSize * (1 + visibility * scaleByVis);
+          sprite.scale.set(finalScale, finalScale, 1);
+          const baseOpacity = meta.opacity ?? (sprite.material.opacity as number);
+          sprite.material.opacity = Math.max(0, Math.min(1, baseOpacity * intensity));
+        }
+      });
+    }
   }
 
   private createLight(entity: Entity, lightComp: LightComponent): void {
@@ -357,6 +567,53 @@ export class RenderSyncSystem implements IComponentObserver {
       entityId: entity.id,
       object3D: light,
     });
+  }
+
+  private createLensFlare(entity: Entity, lensComp: LensFlareComponent): void {
+    const flareGroup = LensFlareFactory.build(lensComp);
+    const rc = this.registry.get(entity.id);
+    // If there's an existing render object for this entity (mesh/light/camera),
+    // attach the flare as a child so we keep a single registry entry per entity.
+    if (rc && rc.object3D) {
+      rc.object3D.add(flareGroup);
+    } else {
+      // No base render object: the flare group becomes the main object for this entity
+      this.syncTransformToObject3D(entity, flareGroup);
+      this.scene.add(flareGroup);
+      this.registry.add(entity.id, {
+        entityId: entity.id,
+        object3D: flareGroup,
+      });
+    }
+  }
+
+  private recreateLensFlare(entity: Entity): void {
+    const rc = this.registry.get(entity.id);
+    const lensComp = entity.getComponent<LensFlareComponent>("lensFlare");
+
+    // If there's no base render object for this entity, treat the flare as the main object
+    if (!rc || !rc.object3D) {
+      if (lensComp && lensComp.enabled !== false) this.createLensFlare(entity, lensComp);
+      return;
+    }
+
+    // There is a base render object (mesh/light/camera). Manage the flare as a child.
+    const baseObject = rc.object3D;
+    const groupName = `lensflare-${lensComp?.type ?? 'lensFlare'}`;
+    const existingGroup = baseObject.getObjectByName(groupName) as
+      | THREE.Object3D
+      | undefined;
+
+    // If component removed or disabled: remove flare child but keep base object
+    if (!lensComp || lensComp.enabled === false) {
+      if (existingGroup) baseObject.remove(existingGroup);
+      return;
+    }
+
+    // Component enabled: replace existing child with a rebuilt group
+    if (existingGroup) baseObject.remove(existingGroup);
+    const newGroup = LensFlareFactory.build(lensComp);
+    baseObject.add(newGroup);
   }
 }
 

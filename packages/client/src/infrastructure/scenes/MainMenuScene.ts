@@ -6,6 +6,7 @@ import LightComponent from "@client/domain/ecs/components/LightComponent";
 import { Entity } from "@client/domain/ecs/core/Entity";
 import SphereGeometryComponent from "@client/domain/ecs/components/geometry/SphereGeometryComponent";
 import { StandardMaterialComponent } from "@client/domain/ecs/components/material/StandardMaterialComponent";
+import { LensFlareComponent } from "@client/domain/ecs/components/LensFlareComponent";
 import CameraViewComponent from "@client/domain/ecs/components/CameraViewComponent";
 import { OrbitComponent } from "@client/domain/ecs/components/OrbitComponent";
 import { LookAtEntityComponent } from '@client/domain/ecs/components/LookAtEntityComponent';
@@ -42,6 +43,17 @@ export class MainMenuScene extends BaseScene {
     const sun = new Entity('sun');
     sun.addComponent(new SphereGeometryComponent({ radius: 5, widthSegments: 32, heightSegments: 16 }));
     sun.addComponent(new StandardMaterialComponent({ color: '#ffff66', roughness: 0.5, metalness: 0.1 }));
+    // Attach lens flare directly to the sun entity
+    sun.addComponent(
+      new LensFlareComponent({
+        intensity: 0.9,
+        color: "#ffff66",
+        occlusionEnabled: true,
+        elementCount: 3,
+        baseElementSize: 0.6,
+        distanceSpread: 0.6,
+      })
+    );
     sun.transform.setPosition(0, 0, 0);
     this.addEntity(sun);
 
@@ -53,8 +65,9 @@ export class MainMenuScene extends BaseScene {
     this.addEntity(planet);
 
     const camera = new Entity('main-camera');
-    camera.transform.setPosition(0, 10, 20);
     camera.addComponent(new CameraViewComponent({ fov: 60, near: 0.1, far: 1000 }));
+    // Orbit the camera around the sun and always look at it
+    camera.addComponent(new OrbitComponent({ targetEntityId: 'sun', altitudeFromSurface: 20, speed: 0.25, orbitPlane: 'xz', initialAngle: 0 }));
     camera.addComponent(new LookAtEntityComponent({ targetEntityId: 'sun', offset: [0, 0, 0] }));
     this.addEntity(camera);
     this.setActiveCamera('main-camera');
