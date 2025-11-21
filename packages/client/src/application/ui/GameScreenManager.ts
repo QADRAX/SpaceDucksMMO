@@ -44,7 +44,7 @@ export class GameScreenManager implements IGameScreenNavigator {
   private mapSceneId(sceneId: SceneId): string {
     const sceneMapping: Record<SceneId, string> = {
       [SceneId.MainMenu]: 'main-menu',
-      [SceneId.Sandbox]: 'sandbox-scene',
+      [SceneId.Sandbox]: 'sandbox',
       [SceneId.GameWorld]: 'game-world',
       [SceneId.ServerBrowser]: 'server-browser',
       [SceneId.EcsDemo]: 'ecs-demo',

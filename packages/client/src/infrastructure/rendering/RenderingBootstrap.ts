@@ -46,8 +46,19 @@ export class RenderingBootstrap {
     // Initialize Three.js renderer, camera, scene
     this.sceneService.init(container);
 
-    // Switch to initial scene
-    this.sceneManager.switchTo(SceneId.MainMenu);
+    // Switch to initial scene. In dev mode start directly in Sandbox for faster iteration.
+    // Detect dev environment safely (Vite exposes `import.meta.env.DEV`, Node exposes `process.env.NODE_ENV`)
+    let isDev = false;
+    try {
+      isDev = !!((import.meta as any).env?.DEV);
+    } catch (e) {
+      // ignore - import.meta may not be available in some environments
+    }
+    if (!isDev && typeof process !== 'undefined' && process.env) {
+      isDev = process.env.NODE_ENV === 'development';
+    }
+
+    this.sceneManager.switchTo(isDev ? SceneId.Sandbox : SceneId.MainMenu);
     
   }
 

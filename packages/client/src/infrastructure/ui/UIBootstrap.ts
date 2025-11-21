@@ -68,7 +68,16 @@ export class UIBootstrap {
    * Show initial screen with transition
    */
   async showInitialScreen(): Promise<void> {
-    await this.gameScreenManager.navigateTo(GameScreens.MainMenu);
+    // In development start in Sandbox for faster iteration. Use import.meta.env.DEV when available.
+    let isDev = false;
+    try {
+      isDev = !!((import.meta as any).env?.DEV);
+    } catch (e) {}
+    if (!isDev && typeof process !== 'undefined' && process.env) {
+      isDev = process.env.NODE_ENV === 'development';
+    }
+
+    await this.gameScreenManager.navigateTo(isDev ? GameScreens.Sandbox : GameScreens.MainMenu);
   }
 
   /**
