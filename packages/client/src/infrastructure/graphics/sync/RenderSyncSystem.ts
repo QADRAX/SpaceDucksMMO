@@ -365,9 +365,12 @@ export class RenderSyncSystem implements IComponentObserver {
     object3D: THREE.Object3D
   ): void {
     const t = entity.transform;
-    object3D.position.copy(t.worldPosition);
-    object3D.rotation.copy(t.worldRotation);
-    object3D.scale.copy(t.worldScale);
+    const wp = t.worldPosition;
+    const wr = t.worldRotation;
+    const ws = t.worldScale;
+    object3D.position.set(wp.x, wp.y, wp.z);
+    object3D.rotation.set(wr.x, wr.y, wr.z);
+    object3D.scale.set(ws.x, ws.y, ws.z);
   }
 
   update(dt: number): void {
@@ -431,7 +434,8 @@ export class RenderSyncSystem implements IComponentObserver {
       }
 
       // Use the entity's transform as the flare source position
-      const worldPos = entity.transform.worldPosition.clone();
+      const wp = entity.transform.worldPosition;
+      const worldPos = new THREE.Vector3(wp.x, wp.y, wp.z);
 
       // Compute camera vectors and alignment
       const camPos = new THREE.Vector3();

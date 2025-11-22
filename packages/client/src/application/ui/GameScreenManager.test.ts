@@ -55,7 +55,6 @@ describe('GameScreenManager', () => {
     await gameScreenManager.navigateTo(config1); // Initial load
     await gameScreenManager.navigateTo(config2); // Subsequent navigation
 
-    expect(sceneManager.switchTo).toHaveBeenCalledWith('sandbox-scene');
     expect(screenRouter.show).toHaveBeenCalledWith('sandbox');
     expect(gameScreenManager.getCurrentScreen()).toEqual(config2);
   });

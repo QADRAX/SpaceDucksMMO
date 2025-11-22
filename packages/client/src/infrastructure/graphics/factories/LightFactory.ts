@@ -21,10 +21,11 @@ export class LightFactory {
           p.intensity ?? 1.0
         );
         const forward = entity.transform.getForward();
-        const targetPos = new THREE.Vector3()
-          .copy(entity.transform.worldPosition)
-          .add(forward.multiplyScalar(10));
-        dir.position.copy(entity.transform.worldPosition);
+        const wp = entity.transform.worldPosition;
+        const targetPos = new THREE.Vector3(wp.x, wp.y, wp.z).add(
+          new THREE.Vector3(forward.x, forward.y, forward.z).multiplyScalar(10)
+        );
+        dir.position.set(wp.x, wp.y, wp.z);
         dir.target.position.copy(targetPos);
         scene.add(dir.target);
         light = dir;
@@ -38,7 +39,8 @@ export class LightFactory {
           (p as any).distance ?? 0,
           (p as any).decay ?? 1
         );
-        point.position.copy(entity.transform.worldPosition);
+        const pwp = entity.transform.worldPosition;
+        point.position.set(pwp.x, pwp.y, pwp.z);
         light = point;
         break;
       }
@@ -52,11 +54,12 @@ export class LightFactory {
           (p as any).penumbra ?? 0.0,
           (p as any).decay ?? 1
         );
-        spot.position.copy(entity.transform.worldPosition);
+        const swp = entity.transform.worldPosition;
+        spot.position.set(swp.x, swp.y, swp.z);
         const forward = entity.transform.getForward();
-        const targetPos = new THREE.Vector3()
-          .copy(entity.transform.worldPosition)
-          .add(forward.multiplyScalar(10));
+        const targetPos = new THREE.Vector3(swp.x, swp.y, swp.z).add(
+          new THREE.Vector3(forward.x, forward.y, forward.z).multiplyScalar(10)
+        );
         spot.target.position.copy(targetPos);
         scene.add(spot.target);
         light = spot;
@@ -73,9 +76,10 @@ export class LightFactory {
 
   static updateDirectionalTarget(light: THREE.DirectionalLight | THREE.SpotLight, entity: Entity): void {
     const forward = entity.transform.getForward();
-    const targetPos = new THREE.Vector3()
-      .copy(entity.transform.worldPosition)
-      .add(forward.multiplyScalar(10));
+    const wp = entity.transform.worldPosition;
+    const targetPos = new THREE.Vector3(wp.x, wp.y, wp.z).add(
+      new THREE.Vector3(forward.x, forward.y, forward.z).multiplyScalar(10)
+    );
     light.target.position.copy(targetPos);
   }
 }

@@ -1,7 +1,7 @@
 import { Component } from "../core/Component";
 import type { ComponentMetadata } from "../core/ComponentMetadata";
-import * as THREE from "three";
 import { getCurrentEcsWorld } from "../core/EcsWorldContext";
+import type { Vec3Like } from "../core/MathTypes";
 
 export class LookAtPointComponent extends Component {
   readonly type = "lookAtPoint";
@@ -43,7 +43,8 @@ export class LookAtPointComponent extends Component {
     const self = world.getEntity(selfId);
     if (!self) return;
 
-    const v = new THREE.Vector3(...this.targetPoint);
+    const [x, y, z] = this.targetPoint;
+    const v: Vec3Like = { x, y, z };
     self.transform.lookAt(v);
   }
 }

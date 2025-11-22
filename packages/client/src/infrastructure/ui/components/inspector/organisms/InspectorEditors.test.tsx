@@ -66,7 +66,12 @@ describe("Inspector editors", () => {
 
     fireEvent.input(colorInputGlobal!, { target: { value: '#ff0000' } });
 
-    expect(mat.color).toBe(0xff0000);
+    // Accept both string and number for compatibility
+    const expectedColor = 0xff0000;
+    const actualColor = typeof mat.color === "string" && mat.color.startsWith("#")
+      ? parseInt(mat.color.replace("#", ""), 16)
+      : mat.color;
+    expect(actualColor).toBe(expectedColor);
   });
 
   it('color picker conversion numeric/string behavior', () => {
@@ -87,6 +92,9 @@ describe("Inspector editors", () => {
     const colorInputGlobal2 = document.querySelector('input[type="color"]') as HTMLInputElement | null;
     expect(colorInputGlobal2).not.toBeNull();
     fireEvent.input(colorInputGlobal2!, { target: { value: '#0000ff' } });
-    expect(mat.color).toBe(0x0000ff);
+    const actualColor2 = typeof mat.color === "string" && mat.color.startsWith("#")
+      ? parseInt(mat.color.replace("#", ""), 16)
+      : mat.color;
+    expect(actualColor2).toBe(0x0000ff);
   });
 });

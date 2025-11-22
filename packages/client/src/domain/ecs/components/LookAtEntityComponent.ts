@@ -1,7 +1,7 @@
 import { Component } from "../core/Component";
 import type { ComponentMetadata } from "../core/ComponentMetadata";
 import { getCurrentEcsWorld } from "../core/EcsWorldContext";
-import * as THREE from "three";
+import type { Vec3Like } from "../core/MathTypes";
 
 export class LookAtEntityComponent extends Component {
   readonly type = "lookAtEntity";
@@ -84,17 +84,28 @@ export class LookAtEntityComponent extends Component {
     if (!self) return;
 
     // compute lookAt position (with optional lookAtOffset)
-    const targetPos = target.transform.worldPosition.clone();
-    if (this.lookAtOffset)
-      targetPos.add(new THREE.Vector3(...this.lookAtOffset));
+    const tp = target.transform.worldPosition;
+    const targetPos: Vec3Like = {
+      x: tp.x + (this.lookAtOffset?.[0] ?? 0),
+      y: tp.y + (this.lookAtOffset?.[1] ?? 0),
+      z: tp.z + (this.lookAtOffset?.[2] ?? 0),
+    };
 
     // optional follow with offset (offset is applied relative to lookAt position)
     if (this.followSpeed !== undefined && this.offset) {
-      const desired = targetPos.clone().add(new THREE.Vector3(...this.offset));
-      const cur = self.transform.worldPosition.clone();
+      const desired = {
+        x: targetPos.x + this.offset[0],
+        y: targetPos.y + this.offset[1],
+        z: targetPos.z + this.offset[2],
+      };
+      const cur = self.transform.worldPosition;
       const secs = dt / 1000;
       const t = Math.min(1, this.followSpeed * secs);
-      const next = cur.lerp(desired, t);
+      const next = {
+        x: cur.x + (desired.x - cur.x) * t,
+        y: cur.y + (desired.y - cur.y) * t,
+        z: cur.z + (desired.z - cur.z) * t,
+      };
       self.transform.setPosition(next.x, next.y, next.z);
     }
 

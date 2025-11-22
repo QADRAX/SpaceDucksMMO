@@ -1,21 +1,20 @@
 import { Transform } from './Transform';
-import * as THREE from 'three';
 
 describe('Transform', () => {
   test('world equals local without parent', () => {
     const t = new Transform([1,2,3]);
-    expect(t.worldPosition.toArray()).toEqual([1,2,3]);
+    expect([t.worldPosition.x, t.worldPosition.y, t.worldPosition.z]).toEqual([1,2,3]);
     expect(t.worldRotation.x).toBeCloseTo(0);
-    expect(t.worldScale.toArray()).toEqual([1,1,1]);
+    expect([t.worldScale.x, t.worldScale.y, t.worldScale.z]).toEqual([1,1,1]);
   });
 
   test('parent translation affects child world position', () => {
     const parent = new Transform([5,0,0]);
     const child = new Transform([1,0,0]);
     child.setParent(parent);
-    expect(child.worldPosition.toArray()).toEqual([6,0,0]);
+    expect([child.worldPosition.x, child.worldPosition.y, child.worldPosition.z]).toEqual([6,0,0]);
     parent.setPosition(6,0,0); // mark dirty
-    expect(child.worldPosition.toArray()).toEqual([7,0,0]);
+    expect([child.worldPosition.x, child.worldPosition.y, child.worldPosition.z]).toEqual([7,0,0]);
   });
 
   test('parent rotation and scale applied to child', () => {

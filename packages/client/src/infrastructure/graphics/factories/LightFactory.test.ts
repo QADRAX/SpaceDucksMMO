@@ -144,7 +144,8 @@ describe('LightFactory', () => {
       const dirLight = light as THREE.DirectionalLight;
 
       // Target should be positioned forward from the entity
-      const distance = dirLight.target.position.distanceTo(entity.transform.worldPosition);
+      const wp = entity.transform.worldPosition;
+      const distance = dirLight.target.position.distanceTo(new THREE.Vector3(wp.x, wp.y, wp.z));
       expect(distance).toBeCloseTo(10, 0);
     });
 
@@ -155,7 +156,8 @@ describe('LightFactory', () => {
       const light = LightFactory.build(entity, lightComp, scene);
       const spotLight = light as THREE.SpotLight;
 
-      const distance = spotLight.target.position.distanceTo(entity.transform.worldPosition);
+      const swp = entity.transform.worldPosition;
+      const distance = spotLight.target.position.distanceTo(new THREE.Vector3(swp.x, swp.y, swp.z));
       expect(distance).toBeCloseTo(10, 0);
     });
   });
@@ -172,7 +174,8 @@ describe('LightFactory', () => {
       LightFactory.updateDirectionalTarget(light, entity);
 
       expect(light.target.position).not.toEqual(initialTargetPos);
-      const distance = light.target.position.distanceTo(entity.transform.worldPosition);
+      const twp = entity.transform.worldPosition;
+      const distance = light.target.position.distanceTo(new THREE.Vector3(twp.x, twp.y, twp.z));
       expect(distance).toBeCloseTo(10, 0);
     });
 
@@ -198,13 +201,13 @@ describe('LightFactory', () => {
       LightFactory.updateDirectionalTarget(light, entity);
 
       const direction = new THREE.Vector3()
-        .subVectors(light.target.position, entity.transform.worldPosition)
+        .subVectors(light.target.position, new THREE.Vector3(entity.transform.worldPosition.x, entity.transform.worldPosition.y, entity.transform.worldPosition.z))
         .normalize();
       
       const forward = entity.transform.getForward();
       
       // Direction should align with forward
-      expect(direction.dot(forward)).toBeCloseTo(1, 1);
+      expect(direction.dot(new THREE.Vector3(forward.x, forward.y, forward.z))).toBeCloseTo(1, 1);
     });
 
     it('should maintain fixed distance from entity', () => {
@@ -222,7 +225,8 @@ describe('LightFactory', () => {
         entity.transform.setPosition(x, y, z);
         LightFactory.updateDirectionalTarget(light, entity);
         
-        const distance = light.target.position.distanceTo(entity.transform.worldPosition);
+        const swp2 = entity.transform.worldPosition;
+        const distance = light.target.position.distanceTo(new THREE.Vector3(swp2.x, swp2.y, swp2.z));
         expect(distance).toBeCloseTo(10, 0);
       });
     });
