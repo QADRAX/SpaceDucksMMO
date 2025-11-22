@@ -15,6 +15,8 @@ export class LookAtPointComponent extends Component {
         {
           key: "targetPoint",
           label: "Target Point",
+          type: "vector",
+          description: "Point in space to look at",
           get: (c: LookAtPointComponent) => c.targetPoint,
           set: (c, v) => {
             c.targetPoint = v as any;

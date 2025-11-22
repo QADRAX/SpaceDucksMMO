@@ -42,14 +42,6 @@ export abstract class BaseScene implements IScene {
     return this.entities.values();
   }
 
-  onActivate(): void {
-    setCurrentEcsWorld(this);
-  }
-
-  onDeactivate(): void {
-    setCurrentEcsWorld(null);
-  }
-
   /**
    * Add an ECS Entity directly, without any adapter.
    */
@@ -135,6 +127,9 @@ export abstract class BaseScene implements IScene {
     this.engine = engine;
     this.renderScene = renderScene;
     
+    // Set current ECS world context
+    setCurrentEcsWorld(this);
+
     // Initialize ECS systems
     this.renderSyncSystem = new RenderSyncSystem(renderScene);
     

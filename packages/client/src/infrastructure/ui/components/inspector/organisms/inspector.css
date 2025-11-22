@@ -71,7 +71,7 @@
 .component-drag-handle:active { cursor: grabbing; }
 
 .component-inspector-header { display:flex; gap:8px; align-items:center; }
-.component-inspector-header .select-input { width: 220px; }
+.component-inspector-header .sd-selectfield  { width: 300px; }
 
 .component-section { box-shadow: inset 0 1px 0 rgba(255,255,255,0.01); }
 

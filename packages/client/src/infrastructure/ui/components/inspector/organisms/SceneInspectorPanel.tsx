@@ -37,13 +37,20 @@ export function SceneInspectorPanel() {
           "entity-removed",
           "hierarchy-changed",
           "component-changed",
+          "active-camera-changed",
         ].includes(ev.kind)
       ) {
         setEntities(sceneManager.getEntities());
       }
       if (ev.kind === "error") setLastError(ev.message || null);
       if (ev.kind === "active-camera-changed")
-        setActiveCamera((ev as any).entityId || null);
+        setActiveCamera((ev).entityId || null);
+      // Also refresh active camera on entity add/remove (scene switch paths)
+      if (ev.kind === "entity-added" || ev.kind === "entity-removed") {
+        try {
+          setActiveCamera(sceneManager.getActiveCameraEntityId() || null);
+        } catch {}
+      }
     });
     return () => {
       try {
@@ -59,8 +66,8 @@ export function SceneInspectorPanel() {
     setInspectable(res?.ok ?? true);
   }, [sceneManager]);
 
-  const selectedEntity = entities.find((e: any) => e.id === selected);
-  const cameraEntities = entities.filter((e: any) =>
+  const selectedEntity = entities.find((e) => e.id === selected);
+  const cameraEntities = entities.filter((e) =>
     typeof e.hasComponent === "function" ? e.hasComponent("cameraView") : false
   );
 

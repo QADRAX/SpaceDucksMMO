@@ -17,6 +17,8 @@ export class OrbitComponent extends Component {
         {
           key: "targetEntityId",
           label: "Target",
+          type: "reference",
+          description: "Entity to orbit around",
           get: (c: OrbitComponent) => c.targetEntityId,
           set: (c, v) => {
             c.targetEntityId = String(v || "");
@@ -26,6 +28,8 @@ export class OrbitComponent extends Component {
         {
           key: "altitudeFromSurface",
           label: "Altitude",
+          description: "Altitude from the target entity's surface",
+          type: "number",
           get: (c: OrbitComponent) => c.altitudeFromSurface,
           set: (c, v) => {
             c.altitudeFromSurface = Number(v);
@@ -35,6 +39,11 @@ export class OrbitComponent extends Component {
         {
           key: "speed",
           label: "Speed",
+          description: "Orbit speed in radians per second",
+          type: "number",
+          min: 0,
+          step: 0.01,
+          default: 0.5,
           get: (c: OrbitComponent) => c.speed,
           set: (c, v) => {
             c.speed = Number(v);
@@ -44,6 +53,13 @@ export class OrbitComponent extends Component {
         {
           key: "orbitPlane",
           label: "Plane",
+          description: "Plane in which to orbit",
+          type: "enum",
+          options: [
+            { value: "xz", label: "XZ" },
+            { value: "xy", label: "XY" },
+          ],
+          default: "xz",
           get: (c: OrbitComponent) => c.orbitPlane,
           set: (c, v) => {
             c.orbitPlane = String(v) as any;
@@ -53,8 +69,13 @@ export class OrbitComponent extends Component {
         {
           key: "initialAngle",
           label: "Initial Angle",
+          description: "Initial angle in radians at start",
+          type: "number",
           nullable: true,
           default: 0,
+          min: 0,
+          step: 0.01,
+          max: Math.PI * 2,
           get: (c: OrbitComponent) => c.initialAngle,
           set: (c, v) => {
             c.initialAngle = Number(v);

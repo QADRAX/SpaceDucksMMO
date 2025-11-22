@@ -14,6 +14,7 @@ export class LookAtEntityComponent extends Component {
       fields: [
         {
           key: "targetEntityId",
+          type: "reference",
           label: "Target",
           get: (c: LookAtEntityComponent) => c.targetEntityId,
           set: (c, v) => {
@@ -34,6 +35,7 @@ export class LookAtEntityComponent extends Component {
         {
           key: "offset",
           label: "Offset",
+          type: "vector",
           nullable: true,
           get: (c: LookAtEntityComponent) => c.offset,
           set: (c, v) => {
@@ -44,6 +46,7 @@ export class LookAtEntityComponent extends Component {
         {
           key: "lookAtOffset",
           label: "LookAt Offset",
+          type: "vector",
           nullable: true,
           get: (c: LookAtEntityComponent) => c.lookAtOffset,
           set: (c, v) => {

@@ -1,4 +1,5 @@
 import Vector3Editor from "../../common/molecules/Vector3Editor";
+import SelectField from "../../common/molecules/SelectField";
 import { ReferenceField } from "./ReferenceField";
 import { TextureSelector } from "./TextureSelector";
 import { UniformsValueEditor } from "./UniformsValueEditor";
@@ -142,9 +143,22 @@ export function renderFieldEditor({
       );
 
     case "enum":
-      // aquí podrías meter un <select> usando fieldConfig.options
-      // de momento lo dejamos readonly para no inventar UI
-      return <PropertyReadonly value={readonlyValue(value)} />;
+      return readonly ? (
+        <PropertyReadonly value={readonlyValue(value)} />
+      ) : (
+        <SelectField
+          value={
+            typeof value === "string" || typeof value === "number" ? (value as any) : null
+          }
+          options={(fieldConfig.options || []).map((o) => ({
+            value: o.value,
+            label: o.label,
+            icon: o.icon,
+          }))}
+          placeholder={fieldConfig.description || "Select..."}
+          onChange={(v) => onChange(v as unknown)}
+        />
+      );
 
     case "object":
       // sin editor específico: se ve como JSON

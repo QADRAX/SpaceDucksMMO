@@ -25,9 +25,6 @@ export class MainMenuScene extends BaseScene {
   setup(engine: IRenderingEngine, renderScene: any): void {
     super.setup(engine, renderScene);
 
-    // register this scene as the current ECS world
-    if ((this as any).onActivate) (this as any).onActivate();
-
     const dir = new Entity("light-directional");
     dir.transform.setPosition(5, 5, 5);
     dir.addComponent(
