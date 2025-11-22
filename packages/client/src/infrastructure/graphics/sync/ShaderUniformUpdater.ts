@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { Entity } from '../../../domain/ecs/core/Entity';
-import { ShaderMaterialComponent } from '../../../domain/ecs/components/ShaderMaterialComponent';
+import { ShaderMaterialComponent } from '../../../domain/ecs/components/material/ShaderMaterialComponent';
 import type { RenderComponent } from './RenderObjectRegistry';
 
 export class ShaderUniformUpdater {

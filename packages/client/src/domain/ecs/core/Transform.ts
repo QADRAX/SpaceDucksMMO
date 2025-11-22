@@ -65,7 +65,7 @@ export class Transform {
     const m = new THREE.Matrix4();
     m.lookAt(this.worldPosition, target, new THREE.Vector3(0, 1, 0));
     const q = new THREE.Quaternion().setFromRotationMatrix(m);
-    this._localRotation.setFromQuaternion(q);
+    this._worldRotation.setFromQuaternion(q);
     this.markDirty();
   }
   setParent(parent: Transform | undefined): void {

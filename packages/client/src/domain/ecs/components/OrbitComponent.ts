@@ -58,6 +58,7 @@ export class OrbitComponent extends Component {
           options: [
             { value: "xz", label: "XZ" },
             { value: "xy", label: "XY" },
+            { value: "yz", label: "YZ" },
           ],
           default: "xz",
           get: (c: OrbitComponent) => c.orbitPlane,

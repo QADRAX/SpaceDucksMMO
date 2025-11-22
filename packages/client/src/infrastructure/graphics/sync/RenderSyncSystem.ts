@@ -408,12 +408,20 @@ export class RenderSyncSystem implements IComponentObserver {
           if (!(child instanceof THREE.Sprite)) return;
           const sprite = child as THREE.Sprite;
           if (idx === 0) {
-            sprite.material.opacity = Math.max(0, Math.min(1, lensComp.intensity ?? 1));
+            sprite.material.opacity = Math.max(
+              0,
+              Math.min(1, lensComp.intensity ?? 1)
+            );
           } else {
-            const meta = (sprite as any).userData || lensComp.flareElements?.[idx - 1];
+            const meta =
+              (sprite as any).userData || lensComp.flareElements?.[idx - 1];
             if (meta) {
-              const baseOpacity = meta.opacity ?? (sprite.material.opacity as number);
-              sprite.material.opacity = Math.max(0, Math.min(1, baseOpacity * (lensComp.intensity ?? 1)));
+              const baseOpacity =
+                meta.opacity ?? (sprite.material.opacity as number);
+              sprite.material.opacity = Math.max(
+                0,
+                Math.min(1, baseOpacity * (lensComp.intensity ?? 1))
+              );
               const scale = meta.size ?? (sprite.scale.x || 0.5);
               sprite.scale.set(scale, scale, 1);
             }
@@ -433,7 +441,8 @@ export class RenderSyncSystem implements IComponentObserver {
 
       const toLight = worldPos.clone().sub(camPos);
       const distToLight = toLight.length();
-      const alignment = toLight.length() > 0 ? camForward.dot(toLight.clone().normalize()) : -1;
+      const alignment =
+        toLight.length() > 0 ? camForward.dot(toLight.clone().normalize()) : -1;
 
       // Alignment-based visibility (0..1)
       let alignFactor = 0;
@@ -451,7 +460,14 @@ export class RenderSyncSystem implements IComponentObserver {
       ndc.y += lensComp.screenOffsetY ?? 0;
 
       // If source projects outside NDC cube, hide
-      if (ndc.x < -1 || ndc.x > 1 || ndc.y < -1 || ndc.y > 1 || ndc.z < -1 || ndc.z > 1) {
+      if (
+        ndc.x < -1 ||
+        ndc.x > 1 ||
+        ndc.y < -1 ||
+        ndc.y > 1 ||
+        ndc.z < -1 ||
+        ndc.z > 1
+      ) {
         group.visible = false;
         continue;
       }
@@ -529,15 +545,20 @@ export class RenderSyncSystem implements IComponentObserver {
         const sprite = child as THREE.Sprite;
         if (idx === 0) {
           // main sprite at the light's NDC
-          const probe = new THREE.Vector3(ndc.x, ndc.y, 0).unproject(activeCamera);
+          const probe = new THREE.Vector3(ndc.x, ndc.y, 0).unproject(
+            activeCamera
+          );
           const dir = probe.sub(camPos).normalize();
           const fixedDist = Math.min(50, Math.max(5, distToLight * 0.5));
-          const worldSpritePos = camPos.clone().add(dir.multiplyScalar(fixedDist));
+          const worldSpritePos = camPos
+            .clone()
+            .add(dir.multiplyScalar(fixedDist));
           sprite.position.copy(worldSpritePos);
           sprite.quaternion.copy(activeCamera.quaternion);
           sprite.material.opacity = Math.max(0, Math.min(1, intensity));
         } else {
-          const meta = (sprite as any).userData || lensComp.flareElements?.[idx - 1];
+          const meta =
+            (sprite as any).userData || lensComp.flareElements?.[idx - 1];
           if (!meta) return;
           const distance = meta.distance ?? 0;
           const ex = ndc.x + dirToCenter.x * distance;
@@ -545,7 +566,9 @@ export class RenderSyncSystem implements IComponentObserver {
           const probe = new THREE.Vector3(ex, ey, 0).unproject(activeCamera);
           const dir = probe.sub(camPos).normalize();
           const fixedDist = Math.min(50, Math.max(5, distToLight * 0.5));
-          const worldSpritePos = camPos.clone().add(dir.multiplyScalar(fixedDist));
+          const worldSpritePos = camPos
+            .clone()
+            .add(dir.multiplyScalar(fixedDist));
           sprite.position.copy(worldSpritePos);
           sprite.quaternion.copy(activeCamera.quaternion);
           // Scale influenced by visibility
@@ -553,8 +576,12 @@ export class RenderSyncSystem implements IComponentObserver {
           const scaleByVis = lensComp.scaleByVisibility ?? 0.5;
           const finalScale = baseSize * (1 + visibility * scaleByVis);
           sprite.scale.set(finalScale, finalScale, 1);
-          const baseOpacity = meta.opacity ?? (sprite.material.opacity as number);
-          sprite.material.opacity = Math.max(0, Math.min(1, baseOpacity * intensity));
+          const baseOpacity =
+            meta.opacity ?? (sprite.material.opacity as number);
+          sprite.material.opacity = Math.max(
+            0,
+            Math.min(1, baseOpacity * intensity)
+          );
         }
       });
     }
@@ -593,13 +620,14 @@ export class RenderSyncSystem implements IComponentObserver {
 
     // If there's no base render object for this entity, treat the flare as the main object
     if (!rc || !rc.object3D) {
-      if (lensComp && lensComp.enabled !== false) this.createLensFlare(entity, lensComp);
+      if (lensComp && lensComp.enabled !== false)
+        this.createLensFlare(entity, lensComp);
       return;
     }
 
     // There is a base render object (mesh/light/camera). Manage the flare as a child.
     const baseObject = rc.object3D;
-    const groupName = `lensflare-${lensComp?.type ?? 'lensFlare'}`;
+    const groupName = `lensflare-${lensComp?.type ?? "lensFlare"}`;
     const existingGroup = baseObject.getObjectByName(groupName) as
       | THREE.Object3D
       | undefined;

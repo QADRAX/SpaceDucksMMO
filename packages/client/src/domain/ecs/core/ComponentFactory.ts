@@ -91,9 +91,6 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
     // camera view (unique)
     if (!has("cameraView")) defs.push({ type: "cameraView", label: "Camera View" });
 
-    // look-at / follow options
-    if (has("cameraView") && !has("lookAtEntity")) defs.push({ type: "lookAtEntity", label: "Look At Entity" });
-
     // look-at components
     if (!has('lookAtEntity')) defs.push({ type: 'lookAtEntity', label: 'Look At Entity' });
     if (!has('lookAtPoint')) defs.push({ type: 'lookAtPoint', label: 'Look At Point' });
