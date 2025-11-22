@@ -43,10 +43,28 @@ export class ThreeRenderer implements IRenderingEngine {
   public getActiveCamera(): THREE.Camera | null {
     if (this.activeIScene?.getActiveCamera) {
       try {
-        return this.activeIScene.getActiveCamera() || null;
+        const ent = this.activeIScene.getActiveCamera();
+        if (!ent) return null;
+        // Find the corresponding Three.Object3D that was tagged with entityId by the RenderSyncSystem
+        const obj = this.findObjectByEntityId(ent.id);
+        if (obj && (obj as any) instanceof THREE.Camera) return obj as THREE.Camera;
+        return null;
       } catch (err) {
-        console.warn("[ThreeRenderer] Error calling scene.getActiveCamera():", err);
+        console.warn('[ThreeRenderer] Error calling scene.getActiveCamera():', err);
       }
+    }
+    return null;
+  }
+
+  private findObjectByEntityId(entityId: string): THREE.Object3D | null {
+    if (!this.scene) return null;
+    const stack: THREE.Object3D[] = [this.scene];
+    while (stack.length) {
+      const obj = stack.pop()!;
+      try {
+        if (obj.userData && (obj.userData as any).entityId === entityId) return obj;
+      } catch {}
+      for (const c of obj.children) stack.push(c);
     }
     return null;
   }

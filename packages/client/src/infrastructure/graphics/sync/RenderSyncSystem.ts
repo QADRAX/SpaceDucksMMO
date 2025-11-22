@@ -243,6 +243,9 @@ export class RenderSyncSystem implements IComponentObserver {
       );
     else material = MaterialFactory.build(materialComp!, this.textureCache);
     const mesh = new THREE.Mesh(geometry, material);
+    // tag object with entity id so engine can find render objects by entity
+    mesh.userData = mesh.userData || {};
+    (mesh.userData as any).entityId = entity.id;
     this.syncTransformToObject3D(entity, mesh);
     this.scene.add(mesh);
     this.registry.add(entity.id, {
@@ -255,7 +258,11 @@ export class RenderSyncSystem implements IComponentObserver {
 
   private createCamera(entity: Entity, cameraView: CameraViewComponent): void {
     const camera = CameraFactory.build(cameraView);
+    camera.userData = camera.userData || {};
+    (camera.userData as any).entityId = entity.id;
     this.syncTransformToObject3D(entity, camera);
+    // Add camera to the scene graph so it can be discovered by renderer search
+    this.scene.add(camera);
     this.registry.add(entity.id, {
       entityId: entity.id,
       object3D: camera,
@@ -593,6 +600,10 @@ export class RenderSyncSystem implements IComponentObserver {
 
   private createLight(entity: Entity, lightComp: LightComponent): void {
     const light = LightFactory.build(entity, lightComp, this.scene);
+    if (light) {
+      light.userData = light.userData || {};
+      (light.userData as any).entityId = entity.id;
+    }
     this.scene.add(light);
     this.registry.add(entity.id, {
       entityId: entity.id,
@@ -602,6 +613,8 @@ export class RenderSyncSystem implements IComponentObserver {
 
   private createLensFlare(entity: Entity, lensComp: LensFlareComponent): void {
     const flareGroup = LensFlareFactory.build(lensComp);
+    flareGroup.userData = flareGroup.userData || {};
+    (flareGroup.userData as any).entityId = entity.id;
     const rc = this.registry.get(entity.id);
     // If there's an existing render object for this entity (mesh/light/camera),
     // attach the flare as a child so we keep a single registry entry per entity.

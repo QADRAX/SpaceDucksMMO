@@ -1,5 +1,4 @@
 import type IRenderingEngine from './IRenderingEngine';
-import * as THREE from 'three';
 import type { Entity } from '../ecs/core/Entity';
 import type SceneChangeEvent from '../scene/SceneChangeEvent';
 
@@ -57,11 +56,16 @@ export interface IScene {
   setActiveCamera(id: string): void;
 
   /**
-   * Return the active THREE.Camera for this scene, or null if none is active.
-   * The engine calls this to determine which camera to use for rendering.
-   * @returns The active THREE.Camera instance, or null
+   * Return the active camera for this scene, or null if none is active.
+   * The camera object is intentionally untyped here to avoid coupling the
+   * domain `IScene` port to a concrete rendering library (e.g. Three.js).
+   * Infrastructure rendering code (engine/adapters) may treat the returned
+   * value as the concrete camera type it expects (for example a
+   * `THREE.Camera`).
+   * @returns The active camera instance in engine-specific form, or null
    */
-  getActiveCamera(): THREE.Camera | null;
+  /** Return the active camera entity (the Entity that owns the CameraViewComponent), or null if none. */
+  getActiveCamera(): Entity | null;
 
   // Debug / inspector helpers (optional to keep backward compatibility)
   getEntities?(): ReadonlyArray<Entity>;

@@ -111,13 +111,9 @@ export abstract class BaseScene implements IScene {
   /**
    * IScene API: Return the active THREE.Camera or null.
    */
-  getActiveCamera(): THREE.Camera | null {
+  getActiveCamera(): Entity | null {
     if (!this.activeCameraId) return null;
-
-    if (this.renderSyncSystem && this.entities.has(this.activeCameraId)) {
-      return this.renderSyncSystem.getCamera(this.activeCameraId) || null;
-    }
-    return null;
+    return this.entities.get(this.activeCameraId) || null;
   }
 
   /**
