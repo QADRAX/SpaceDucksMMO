@@ -28,6 +28,8 @@ export class RenderingBootstrap {
     private fpsController: FpsController // Add fpsController as a dependency
   ) {
     this.engine = new ThreeRenderer(fpsController); // Pass fpsController to ThreeRenderer
+    // Wire texture resolver into renderer so scenes/systems can resolve ids -> paths
+    this.engine.setTextureResolver(this.textureResolver);
     this.sceneManager = new SceneManager(this.engine, this.settingsService);
     this.sceneService = new SceneService(this.engine, this.sceneManager);
     this.graphicsController = new GraphicsController(this.engine);

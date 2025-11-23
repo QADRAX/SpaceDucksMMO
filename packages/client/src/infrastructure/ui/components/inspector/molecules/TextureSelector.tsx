@@ -72,15 +72,17 @@ export function TextureSelector({ value, onChange }: Props) {
       u.id.toLowerCase().includes(query.toLowerCase())
   );
 
+  // Use the resolved path as the selectable value so downstream systems receive a usable URL
   const options = filteredUnique.map((v) => ({
-    value: v.id,
+    value: v.path,
     label: v.label ?? v.id,
     // prefer a provided thumbnail if available, otherwise the original path (will be downscaled lazily)
     thumbnail: (v as any).thumbnail ?? v.path,
     group: v.id.includes("/") ? v.id.split("/")[0] : "others",
   }));
 
-  const selectedVariant = unique.find((u) => u.id === value) ?? null;
+  // The stored `value` is expected to be the texture path (not the catalog id)
+  const selectedVariant = unique.find((u) => u.path === value) ?? null;
 
   // click outside to close overlay
   useEffect(() => {

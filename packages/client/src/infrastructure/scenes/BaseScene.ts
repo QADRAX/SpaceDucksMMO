@@ -4,6 +4,9 @@ import * as THREE from 'three';
 import type { SettingsService } from '@client/application/SettingsService';
 import type SceneId from '@client/domain/scene/SceneId';
 import { RenderSyncSystem } from '../graphics/sync/RenderSyncSystem';
+import { ThreeRenderer } from '@client/infrastructure/rendering/ThreeRenderer';
+import type { TextureResolverService } from '@client/application/TextureResolverService';
+import type { TextureCatalogService } from '@client/application/TextureCatalog';
 import { setCurrentEcsWorld } from '@client/domain/ecs/core/EcsWorldContext';
 import type { Entity } from '@client/domain/ecs/core/Entity';
 import { Result, ok, err } from '@client/domain/errors/EngineError';
@@ -127,7 +130,14 @@ export abstract class BaseScene implements IScene {
     setCurrentEcsWorld(this);
 
     // Initialize ECS systems
-    this.renderSyncSystem = new RenderSyncSystem(renderScene);
+    // If the engine is the ThreeRenderer we can obtain the resolver/catalog directly
+    let resolver: TextureResolverService | undefined = undefined;
+    let catalog: TextureCatalogService | undefined = undefined;
+    if (this.engine && this.engine instanceof ThreeRenderer) {
+      resolver = this.engine.getTextureResolver();
+      catalog = this.engine.getTextureCatalog();
+    }
+    this.renderSyncSystem = new RenderSyncSystem(renderScene, catalog, resolver);
     
     // Add all entities that were already added
     for (const ent of this.entities.values()) {

@@ -23,6 +23,8 @@ export class RendererBootstrap {
 
     // 3. Initialize 3D rendering engine
     const renderingBootstrap = new RenderingBootstrap(services.textureResolver, services.settings, services.fpsController);
+    // Texture catalog is required in Services; wire it into renderer unconditionally
+    renderingBootstrap.getRenderer().setTextureCatalog(services.textureCatalog);
     renderingBootstrap.initialize(container);
 
     // Expose single renderer and scene manager instances from RenderingBootstrap into services

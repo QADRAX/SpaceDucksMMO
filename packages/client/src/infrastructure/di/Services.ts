@@ -19,7 +19,7 @@ export interface Services {
   window: WindowService;
   textureResolver: TextureResolverService;
   /** Generic texture catalog (discovered from assets/textures) */
-  textureCatalog?: TextureCatalogService;
+  textureCatalog: TextureCatalogService;
   fpsController: FpsController;
   devRegistry: DevRegistry;
   renderingEngine?: ThreeRenderer;

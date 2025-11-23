@@ -33,6 +33,8 @@ import { TextureCache } from "../factories/TextureCache";
 import { RenderObjectRegistry } from "./RenderObjectRegistry";
 import { ShaderUniformUpdater } from "./ShaderUniformUpdater";
 import LensFlareFactory from "../factories/LensFlareFactory";
+import type { TextureCatalogService } from '@client/application/TextureCatalog';
+import type { TextureResolverService } from '@client/application/TextureResolverService';
 
 export class RenderSyncSystem implements IComponentObserver {
   private scene: THREE.Scene;
@@ -41,9 +43,13 @@ export class RenderSyncSystem implements IComponentObserver {
   private componentListeners = new Map<string, ComponentListener>();
   private textureCache = new TextureCache();
   private uniformUpdater = new ShaderUniformUpdater();
+  private textureCatalog?: TextureCatalogService;
+  private textureResolver?: TextureResolverService;
 
-  constructor(scene: THREE.Scene) {
+  constructor(scene: THREE.Scene, textureCatalog?: TextureCatalogService, textureResolver?: TextureResolverService) {
     this.scene = scene;
+    this.textureCatalog = textureCatalog;
+    this.textureResolver = textureResolver;
   }
 
   // Helper to obtain whichever geometry component an entity has (only one allowed by design)
@@ -241,7 +247,12 @@ export class RenderSyncSystem implements IComponentObserver {
         shaderMaterialComp,
         this.textureCache
       );
-    else material = MaterialFactory.build(materialComp!, this.textureCache);
+    else {
+      // Build material immediately from the domain component to avoid blank materials.
+      // We'll asynchronously resolve any catalog ids and apply textures afterwards.
+      const compToUse = (materialComp as AnyMaterialComponent) as AnyMaterialComponent;
+      material = MaterialFactory.build(compToUse, this.textureCache);
+    }
     const mesh = new THREE.Mesh(geometry, material);
     // tag object with entity id so engine can find render objects by entity
     mesh.userData = mesh.userData || {};
@@ -254,6 +265,10 @@ export class RenderSyncSystem implements IComponentObserver {
       geometry,
       material,
     });
+    // After creating the mesh, attempt async resolution of catalog ids (if any)
+    if (materialComp) {
+      this.resolveAndApplyTextures(entity.id, material, materialComp).catch(() => {});
+    }
   }
 
   private createCamera(entity: Entity, cameraView: CameraViewComponent): void {
@@ -319,10 +334,71 @@ export class RenderSyncSystem implements IComponentObserver {
       return;
     }
     if (rc.material) rc.material.dispose();
-    const newMat = MaterialFactory.build(materialComp, this.textureCache);
+    const compToUse = (materialComp as AnyMaterialComponent) as AnyMaterialComponent;
+    const newMat = MaterialFactory.build(compToUse, this.textureCache);
     rc.object3D.material = newMat;
     rc.material = newMat;
     rc.object3D.visible = true;
+    // Async resolve and apply textures for material updates
+    if (materialComp) {
+      this.resolveAndApplyTextures(entity.id, newMat, materialComp).catch(() => {});
+    }
+  }
+
+  /**
+   * Asynchronously resolve catalog ids found in the material component and apply
+   * the resulting texture files to the provided THREE.Material via the TextureCache.
+   */
+  private async resolveAndApplyTextures(entityId: string, material: THREE.Material, comp: AnyMaterialComponent): Promise<void> {
+    if (!this.textureCatalog) {
+      // No catalog available; nothing to resolve.
+      return;
+    }
+
+    const applyIfLoaded = async (field: 'texture' | 'normalMap' | 'envMap', setter: (tex: THREE.Texture) => void) => {
+      const val = (comp as any)[field];
+      if (!val || typeof val !== 'string') return;
+
+      // If value already looks like a path, skip (MaterialFactory already attempted to load it)
+      if (val.startsWith('assets/') || val.startsWith('/') || val.startsWith('http') || val.indexOf('.') !== -1) return;
+
+      try {
+        if (!this.textureCatalog) return;
+        const variants = await this.textureCatalog.getVariantsById(val);
+        if (!variants || variants.length === 0) {
+          // No variants in catalog for this id; nothing to do
+          return;
+        }
+        // Choose best quality available (ultra > high > medium > low)
+        const rank: Record<string, number> = { ultra: 4, high: 3, medium: 2, low: 1 };
+        variants.sort((a, b) => (rank[b.quality] || 0) - (rank[a.quality] || 0));
+        const chosen = variants[0];
+        if (!chosen || !chosen.path) return;
+        const tex = await this.textureCache.load(chosen.path);
+        // Apply to material safely
+        try {
+          setter(tex);
+          material.needsUpdate = true;
+        } catch (e) {
+          // ignore setter failures
+        }
+      } catch (e) {
+        // ignore resolution/load failures
+      }
+    };
+
+    // Apply diffuse/base texture
+    await applyIfLoaded('texture', (t) => {
+      if ('map' in material) (material as any).map = t;
+    });
+    // Apply normal map
+    await applyIfLoaded('normalMap', (t) => {
+      if ('normalMap' in material) (material as any).normalMap = t;
+    });
+    // Apply environment map
+    await applyIfLoaded('envMap', (t) => {
+      if ('envMap' in material) (material as any).envMap = t;
+    });
   }
 
   private syncCamera(entity: Entity): void {

@@ -80,6 +80,9 @@ export class MaterialFactory {
           (material as THREE.MeshStandardMaterial | THREE.MeshBasicMaterial | THREE.MeshPhongMaterial | THREE.MeshLambertMaterial).map = tex;
           material.needsUpdate = true;
         }
+      }).catch((err) => {
+        // Avoid unhandled promise rejection and provide useful debug info
+        console.warn('[MaterialFactory] Failed to load texture', comp.texture, err);
       });
     }
     if ('normalMap' in comp && comp.normalMap) {
@@ -88,6 +91,8 @@ export class MaterialFactory {
           (material as THREE.MeshStandardMaterial | THREE.MeshPhongMaterial | THREE.MeshLambertMaterial).normalMap = tex;
           material.needsUpdate = true;
         }
+      }).catch((err) => {
+        console.warn('[MaterialFactory] Failed to load normalMap', comp.normalMap, err);
       });
     }
     if ('envMap' in comp && comp.envMap) {
@@ -96,6 +101,8 @@ export class MaterialFactory {
           (material as THREE.MeshStandardMaterial | THREE.MeshPhongMaterial | THREE.MeshLambertMaterial).envMap = tex;
           material.needsUpdate = true;
         }
+      }).catch((err) => {
+        console.warn('[MaterialFactory] Failed to load envMap', comp.envMap, err);
       });
     }
 

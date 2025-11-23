@@ -4,6 +4,8 @@ import type IScene from "@client/domain/ports/IScene";
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import type { FpsController } from "@client/infrastructure/ui/dev/FpsController";
+import type { TextureResolverService } from '@client/application/TextureResolverService';
+import type { TextureCatalogService } from '@client/application/TextureCatalog';
 
 export class ThreeRenderer implements IRenderingEngine {
   private scene!: THREE.Scene;
@@ -20,9 +22,27 @@ export class ThreeRenderer implements IRenderingEngine {
   private shadows = true;
   private missingCameraWarned = false;
   private fpsController: FpsController;
+  private textureResolver?: TextureResolverService;
+  private textureCatalog?: TextureCatalogService;
 
   constructor(fpsController: FpsController) {
     this.fpsController = fpsController;
+  }
+
+  setTextureResolver(resolver: TextureResolverService): void {
+    this.textureResolver = resolver;
+  }
+
+  getTextureResolver(): TextureResolverService | undefined {
+    return this.textureResolver;
+  }
+
+  setTextureCatalog(catalog: TextureCatalogService): void {
+    this.textureCatalog = catalog;
+  }
+
+  getTextureCatalog(): TextureCatalogService | undefined {
+    return this.textureCatalog;
   }
 
   init(container: HTMLElement): void {

@@ -14,7 +14,7 @@ describe("RenderSyncSystem enable/disable handling", () => {
 
   beforeEach(() => {
     scene = new THREE.Scene();
-    rss = new RenderSyncSystem(scene);
+    rss = new RenderSyncSystem(scene, undefined, undefined);
   });
 
   it("hides mesh when geometry is disabled and shows when enabled", () => {
