@@ -99,7 +99,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           label: "Opacity",
           type: "number",
           nullable: true,
-          default: 0.3,
+          default: 1,
           min: 0,
           max: 1,
           step: 0.01,
@@ -114,7 +114,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           label: "Texture",
           type: "texture",
           nullable: true,
-          description: "Imagen que se 'pega' sobre el objeto, como una pegatina. Reemplaza el color base y añade detalles visuales. Se asigna a THREE.MeshStandardMaterial.map.",
+          description: "ID del catálogo de texturas (ej. 'planets/moon'). Si se asigna, reemplaza el color base. El renderer resuelve el id a una ruta de asset.",
           get: (c: StandardMaterialComponent) => c.texture,
           set: (c, v) => {
             c.texture = v as any;
@@ -125,7 +125,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           label: "Normal Map",
           type: "texture",
           nullable: true,
-          description: "Imagen especial que simula bultos y detalles en la superficie sin cambiar la geometría. Hace que la luz reaccione como si hubiera relieves. Se asigna a THREE.MeshStandardMaterial.normalMap.",
+          description: "ID del catálogo para un mapa normal. Mejora el relieve visual sin cambiar la geometría. El renderer resolverá el id.",
           get: (c: StandardMaterialComponent) => c.normalMap,
           set: (c, v) => {
             c.normalMap = v as any;
@@ -136,7 +136,7 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
           label: "Env Map",
           type: "texture",
           nullable: true,
-          description: "Imagen que simula reflejos del entorno, como si el objeto fuera brillante o reflectante. Permite que el objeto refleje el cielo, el entorno, etc. Se asigna a THREE.MeshStandardMaterial.envMap.",
+          description: "ID del catálogo para environment map (reflejos). Usado para simular reflejos del entorno. El renderer elegirá el asset apropiado.",
           get: (c: StandardMaterialComponent) => c.envMap,
           set: (c, v) => {
             c.envMap = v as any;

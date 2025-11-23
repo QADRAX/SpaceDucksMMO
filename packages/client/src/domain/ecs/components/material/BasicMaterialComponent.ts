@@ -5,6 +5,8 @@ export class BasicMaterialComponent extends BaseMaterialComponent {
   readonly type = "basicMaterial";
   readonly metadata: ComponentMetadata = {
     type: "basicMaterial",
+    description:
+      "Material simple (color + textura) mapeado a THREE.MeshBasicMaterial. Útil para objetos no afectados por iluminación.",
     unique: true,
     requires: ["geometry"],
     conflicts: [
@@ -19,6 +21,8 @@ export class BasicMaterialComponent extends BaseMaterialComponent {
           key: "color",
           label: "Color",
           type: "color",
+          description:
+            "Color base del material. Formato CSS hex (#rrggbb) o número. Si se asigna una textura, ésta sustituirá el color base.",
           get: (c: BasicMaterialComponent) => c.color,
           set: (c, v) => {
             c.color = v as any;
@@ -28,6 +32,7 @@ export class BasicMaterialComponent extends BaseMaterialComponent {
           key: "transparent",
           label: "Transparent",
           type: "boolean",
+          description: "Activa la transparencia; habilita el uso de 'Opacity'.",
           get: (c: BasicMaterialComponent) => c.transparent,
           set: (c, v) => {
             c.transparent = Boolean(v);
@@ -42,6 +47,8 @@ export class BasicMaterialComponent extends BaseMaterialComponent {
           min: 0,
           max: 1,
           step: 0.01,
+          description:
+            "Controla la opacidad cuando 'Transparent' está activado. 1 = opaco, 0 = transparente.",
           get: (c: BasicMaterialComponent) => c.opacity,
           set: (c, v) => {
             c.opacity = Number(v);
@@ -51,6 +58,7 @@ export class BasicMaterialComponent extends BaseMaterialComponent {
           key: "wireframe",
           label: "Wireframe",
           type: "boolean",
+          description: "Dibuja sólo aristas en lugar de caras rellenas.",
           get: (c: BasicMaterialComponent) => c.wireframe,
           set: (c, v) => {
             c.wireframe = Boolean(v);
@@ -61,6 +69,8 @@ export class BasicMaterialComponent extends BaseMaterialComponent {
           label: "Texture",
           type: "texture",
           nullable: true,
+          description:
+            "ID del catálogo de texturas (ej. 'planets/moon'). El renderer resolverá el id a la ruta del asset en tiempo de renderizado.",
           get: (c: BasicMaterialComponent) => c.texture,
           set: (c, v) => {
             c.texture = v as any;
@@ -71,6 +81,8 @@ export class BasicMaterialComponent extends BaseMaterialComponent {
           label: "Normal Map",
           type: "texture",
           nullable: true,
+          description:
+            "ID de catálogo para mapa normal. Mejora el relieve visual sin cambiar la geometría.",
           get: (c: BasicMaterialComponent) => c.normalMap,
           set: (c, v) => {
             c.normalMap = v as any;
@@ -81,6 +93,8 @@ export class BasicMaterialComponent extends BaseMaterialComponent {
           label: "Env Map",
           type: "texture",
           nullable: true,
+          description:
+            "ID de catálogo para environment map (reflejos). Ideal para materiales reflectantes.",
           get: (c: BasicMaterialComponent) => c.envMap,
           set: (c, v) => {
             c.envMap = v as any;
