@@ -355,27 +355,56 @@ export class RenderSyncSystem implements IComponentObserver {
       return;
     }
 
-    const applyIfLoaded = async (field: 'texture' | 'normalMap' | 'envMap', setter: (tex: THREE.Texture) => void) => {
-      const val = (comp as any)[field];
-      if (!val || typeof val !== 'string') return;
+    const isCatalogId = (val: unknown): val is string => {
+      if (typeof val !== 'string') return false;
+      if (
+        val.startsWith('/') ||
+        val.startsWith('http://') ||
+        val.startsWith('https://') ||
+        val.startsWith('assets/') ||
+        val.includes('.') // assume path if it has a dot/extension
+      ) {
+        return false;
+      }
+      return true;
+    };
 
-      // If value already looks like a path, skip (MaterialFactory already attempted to load it)
-      if (val.startsWith('assets/') || val.startsWith('/') || val.startsWith('http') || val.indexOf('.') !== -1) return;
+    const applyIfLoaded = async (
+      field:
+        | 'texture'
+        | 'normalMap'
+        | 'envMap'
+        | 'aoMap'
+        | 'roughnessMap'
+        | 'metalnessMap'
+        | 'bumpMap'
+        | 'specularMap',
+      setter: (tex: THREE.Texture) => void
+    ) => {
+      const val = (comp as any)[field];
+      if (!isCatalogId(val)) return;
 
       try {
         if (!this.textureCatalog) return;
         const variants = await this.textureCatalog.getVariantsById(val);
-        if (!variants || variants.length === 0) {
-          // No variants in catalog for this id; nothing to do
-          return;
-        }
-        // Choose best quality available (ultra > high > medium > low)
-        const rank: Record<string, number> = { ultra: 4, high: 3, medium: 2, low: 1 };
-        variants.sort((a, b) => (rank[(b.quality ?? 'low') as string] || 0) - (rank[(a.quality ?? 'low') as string] || 0));
+        if (!variants || variants.length === 0) return;
+
+        const rank: Record<string, number> = {
+          ultra: 4,
+          high: 3,
+          medium: 2,
+          low: 1,
+        };
+
+        variants.sort(
+          (a, b) =>
+            (rank[(b.quality ?? 'low') as string] || 0) -
+            (rank[(a.quality ?? 'low') as string] || 0)
+        );
         const chosen = variants[0];
         if (!chosen || !chosen.path) return;
+
         const tex = await this.textureCache.load(chosen.path);
-        // Apply to material safely
         try {
           setter(tex);
           material.needsUpdate = true;
@@ -387,17 +416,44 @@ export class RenderSyncSystem implements IComponentObserver {
       }
     };
 
-    // Apply diffuse/base texture
+    // Base color / albedo
     await applyIfLoaded('texture', (t) => {
       if ('map' in material) (material as any).map = t;
     });
-    // Apply normal map
+
+    // Normal
     await applyIfLoaded('normalMap', (t) => {
       if ('normalMap' in material) (material as any).normalMap = t;
     });
-    // Apply environment map
+
+    // Env map
     await applyIfLoaded('envMap', (t) => {
       if ('envMap' in material) (material as any).envMap = t;
+    });
+
+    // AO map
+    await applyIfLoaded('aoMap', (t) => {
+      if ('aoMap' in material) (material as any).aoMap = t;
+    });
+
+    // Roughness map
+    await applyIfLoaded('roughnessMap', (t) => {
+      if ('roughnessMap' in material) (material as any).roughnessMap = t;
+    });
+
+    // Metalness map
+    await applyIfLoaded('metalnessMap', (t) => {
+      if ('metalnessMap' in material) (material as any).metalnessMap = t;
+    });
+
+    // Bump map (Phong / Lambert / Standard)
+    await applyIfLoaded('bumpMap', (t) => {
+      if ('bumpMap' in material) (material as any).bumpMap = t;
+    });
+
+    // Specular map (Phong)
+    await applyIfLoaded('specularMap', (t) => {
+      if ('specularMap' in material) (material as any).specularMap = t;
     });
   }
 

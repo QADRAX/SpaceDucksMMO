@@ -18,6 +18,45 @@ export class MaterialFactory {
   ): THREE.Material {
     let material: THREE.Material;
 
+    // Remove undefined keys to avoid THREE warnings about undefined params
+    function cleanParams<T extends object>(params: T): T {
+      Object.keys(params).forEach((key) => {
+        if ((params as any)[key] === undefined) {
+          delete (params as any)[key];
+        }
+      });
+      return params;
+    }
+
+    // Heuristic to detect direct file paths/URLs vs catalog ids
+    function looksLikeDirectPath(url: string | undefined): boolean {
+      if (!url) return false;
+      return (
+        url.startsWith("/") ||
+        url.startsWith("http://") ||
+        url.startsWith("https://") ||
+        url.startsWith("assets/") ||
+        url.includes(".") // anything with a dot is assumed to be a file path
+      );
+    }
+
+    const tryLoad = (
+      url: string | undefined,
+      apply: (tex: THREE.Texture) => void,
+      label: string
+    ) => {
+      if (!url || !looksLikeDirectPath(url)) return; // skip catalog ids
+      textureCache
+        .load(url)
+        .then((tex) => {
+          apply(tex);
+          material.needsUpdate = true;
+        })
+        .catch((err) => {
+          console.warn(`[MaterialFactory] Failed to load ${label}`, url, err);
+        });
+    };
+
     switch (comp.type) {
       case "standardMaterial": {
         const opts: THREE.MeshStandardMaterialParameters = {
@@ -29,7 +68,7 @@ export class MaterialFactory {
           transparent: comp.transparent,
           opacity: comp.opacity,
         };
-        material = new THREE.MeshStandardMaterial(opts);
+        material = new THREE.MeshStandardMaterial(cleanParams(opts));
         break;
       }
       case "basicMaterial": {
@@ -40,7 +79,7 @@ export class MaterialFactory {
           opacity: basic.opacity,
           wireframe: basic.wireframe,
         };
-        material = new THREE.MeshBasicMaterial(opts);
+        material = new THREE.MeshBasicMaterial(cleanParams(opts));
         break;
       }
       case "phongMaterial": {
@@ -53,7 +92,7 @@ export class MaterialFactory {
           transparent: phong.transparent,
           opacity: phong.opacity,
         };
-        material = new THREE.MeshPhongMaterial(opts);
+        material = new THREE.MeshPhongMaterial(cleanParams(opts));
         break;
       }
       case "lambertMaterial": {
@@ -64,7 +103,7 @@ export class MaterialFactory {
           transparent: lambert.transparent,
           opacity: lambert.opacity,
         };
-        material = new THREE.MeshLambertMaterial(opts);
+        material = new THREE.MeshLambertMaterial(cleanParams(opts));
         break;
       }
       default:
@@ -72,68 +111,36 @@ export class MaterialFactory {
         break;
     }
 
-    // Apply textures asynchronously if supported
-    // Usamos type guards para evitar any
-    if ('texture' in comp && comp.texture) {
-      textureCache.load(comp.texture).then((tex) => {
-        if ('map' in material) {
-          (material as THREE.MeshStandardMaterial | THREE.MeshBasicMaterial | THREE.MeshPhongMaterial | THREE.MeshLambertMaterial).map = tex;
-          material.needsUpdate = true;
-        }
-      }).catch((err) => {
-        // Avoid unhandled promise rejection and provide useful debug info
-        console.warn('[MaterialFactory] Failed to load texture', comp.texture, err);
-      });
+    // Apply textures asynchronously for direct file paths only (catalog ids are resolved elsewhere)
+    if ('texture' in comp) {
+      tryLoad((comp as any).texture, (tex) => {
+        if ('map' in material) (material as any).map = tex;
+      }, 'texture');
     }
-    if ('normalMap' in comp && comp.normalMap) {
-      textureCache.load(comp.normalMap).then((tex) => {
-        if ('normalMap' in material) {
-          (material as THREE.MeshStandardMaterial | THREE.MeshPhongMaterial | THREE.MeshLambertMaterial).normalMap = tex;
-          material.needsUpdate = true;
-        }
-      }).catch((err) => {
-        console.warn('[MaterialFactory] Failed to load normalMap', comp.normalMap, err);
-      });
+    if ('normalMap' in comp) {
+      tryLoad((comp as any).normalMap, (tex) => {
+        if ('normalMap' in material) (material as any).normalMap = tex;
+      }, 'normalMap');
     }
-    if ('envMap' in comp && comp.envMap) {
-      textureCache.load(comp.envMap).then((tex) => {
-        if ('envMap' in material) {
-          (material as THREE.MeshStandardMaterial | THREE.MeshPhongMaterial | THREE.MeshLambertMaterial).envMap = tex;
-          material.needsUpdate = true;
-        }
-      }).catch((err) => {
-        console.warn('[MaterialFactory] Failed to load envMap', comp.envMap, err);
-      });
+    if ('envMap' in comp) {
+      tryLoad((comp as any).envMap, (tex) => {
+        if ('envMap' in material) (material as any).envMap = tex;
+      }, 'envMap');
     }
-    if ('aoMap' in comp && comp.aoMap) {
-      textureCache.load(comp.aoMap).then((tex) => {
-        if ('aoMap' in material) {
-          (material as THREE.MeshStandardMaterial).aoMap = tex;
-          material.needsUpdate = true;
-        }
-      }).catch((err) => {
-        console.warn('[MaterialFactory] Failed to load aoMap', comp.aoMap, err);
-      });
+    if ('aoMap' in comp) {
+      tryLoad((comp as any).aoMap, (tex) => {
+        if ('aoMap' in material) (material as any).aoMap = tex;
+      }, 'aoMap');
     }
-    if ('roughnessMap' in comp && comp.roughnessMap) {
-      textureCache.load(comp.roughnessMap).then((tex) => {
-        if ('roughnessMap' in material) {
-          (material as THREE.MeshStandardMaterial).roughnessMap = tex;
-          material.needsUpdate = true;
-        }
-      }).catch((err) => {
-        console.warn('[MaterialFactory] Failed to load roughnessMap', comp.roughnessMap, err);
-      });
+    if ('roughnessMap' in comp) {
+      tryLoad((comp as any).roughnessMap, (tex) => {
+        if ('roughnessMap' in material) (material as any).roughnessMap = tex;
+      }, 'roughnessMap');
     }
-    if ('metalnessMap' in comp && comp.metalnessMap) {
-      textureCache.load(comp.metalnessMap).then((tex) => {
-        if ('metalnessMap' in material) {
-          (material as THREE.MeshStandardMaterial).metalnessMap = tex;
-          material.needsUpdate = true;
-        }
-      }).catch((err) => {
-        console.warn('[MaterialFactory] Failed to load metalnessMap', comp.metalnessMap, err);
-      });
+    if ('metalnessMap' in comp) {
+      tryLoad((comp as any).metalnessMap, (tex) => {
+        if ('metalnessMap' in material) (material as any).metalnessMap = tex;
+      }, 'metalnessMap');
     }
 
     return material;
