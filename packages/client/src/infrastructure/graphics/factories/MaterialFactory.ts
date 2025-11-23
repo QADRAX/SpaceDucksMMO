@@ -105,6 +105,36 @@ export class MaterialFactory {
         console.warn('[MaterialFactory] Failed to load envMap', comp.envMap, err);
       });
     }
+    if ('aoMap' in comp && comp.aoMap) {
+      textureCache.load(comp.aoMap).then((tex) => {
+        if ('aoMap' in material) {
+          (material as THREE.MeshStandardMaterial).aoMap = tex;
+          material.needsUpdate = true;
+        }
+      }).catch((err) => {
+        console.warn('[MaterialFactory] Failed to load aoMap', comp.aoMap, err);
+      });
+    }
+    if ('roughnessMap' in comp && comp.roughnessMap) {
+      textureCache.load(comp.roughnessMap).then((tex) => {
+        if ('roughnessMap' in material) {
+          (material as THREE.MeshStandardMaterial).roughnessMap = tex;
+          material.needsUpdate = true;
+        }
+      }).catch((err) => {
+        console.warn('[MaterialFactory] Failed to load roughnessMap', comp.roughnessMap, err);
+      });
+    }
+    if ('metalnessMap' in comp && comp.metalnessMap) {
+      textureCache.load(comp.metalnessMap).then((tex) => {
+        if ('metalnessMap' in material) {
+          (material as THREE.MeshStandardMaterial).metalnessMap = tex;
+          material.needsUpdate = true;
+        }
+      }).catch((err) => {
+        console.warn('[MaterialFactory] Failed to load metalnessMap', comp.metalnessMap, err);
+      });
+    }
 
     return material;
   }
