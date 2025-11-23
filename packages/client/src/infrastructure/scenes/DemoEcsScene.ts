@@ -8,6 +8,7 @@ import { Entity } from '@client/domain/ecs/core/Entity';
 import { PlaneGeometryComponent } from '@client/domain/ecs/components/geometry/PlaneGeometryComponent';
 import { BoxGeometryComponent } from '@client/domain/ecs/components/geometry/BoxGeometryComponent';
 import { StandardMaterialComponent } from '@client/domain/ecs/components/material/StandardMaterialComponent';
+import { TextureTilingComponent } from '@client/domain/ecs/components/material/TextureTilingComponent';
 import { CameraViewComponent } from '@client/domain/ecs/components/CameraViewComponent';
 import { LookAtEntityComponent } from '@client/domain/ecs/components/LookAtEntityComponent';
 import { LightComponent } from '@client/domain/ecs/components/LightComponent';
@@ -45,7 +46,25 @@ export class DemoEcsScene extends BaseScene {
     // Plano (suelo)
     const ground = new Entity('ground');
     ground.addComponent(new PlaneGeometryComponent({ width: 30, height: 30 }));
-    ground.addComponent(new StandardMaterialComponent({ color: '#808080', roughness: 1.0, metalness: 0.0 }));
+    ground.addComponent(
+      new StandardMaterialComponent({
+        color: '#808080',
+        roughness: 1.0,
+        metalness: 0.0,
+        texture: 'materials/concrete-muddy/basecolor',
+        normalMap: 'materials/concrete-muddy/normal',
+        aoMap: 'materials/concrete-muddy/ambientOcclusion',
+        roughnessMap: 'materials/concrete-muddy/roughness',
+      })
+    );
+    ground.addComponent(
+      new TextureTilingComponent({
+        repeatU: 10,
+        repeatV: 10,
+        offsetU: 0,
+        offsetV: 0,
+      })
+    );
     ground.transform.setRotation(-Math.PI / 2, 0, 0); // hacer horizontal
     this.addEntity(ground);
 

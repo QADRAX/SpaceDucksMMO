@@ -169,6 +169,32 @@ export class RenderSyncSystem implements IComponentObserver {
       case "lambertMaterial":
         this.syncMaterial(entity);
         break;
+      case "textureTiling":
+        // Re-apply tiling to any already-loaded textures on this entity's material
+        {
+          const rc = this.registry.get(entityId);
+          const ent = this.entities.get(entityId);
+          if (rc && ent && rc.object3D instanceof THREE.Mesh) {
+            const mats = Array.isArray(rc.object3D.material)
+              ? (rc.object3D.material as THREE.Material[])
+              : [rc.object3D.material as THREE.Material];
+            for (const m of mats) {
+              if (!m) continue;
+              const mm = m as any;
+              if (mm.map) this.applyTextureTiling(ent, mm.map as THREE.Texture);
+              if (mm.normalMap) this.applyTextureTiling(ent, mm.normalMap as THREE.Texture);
+              if (mm.aoMap) this.applyTextureTiling(ent, mm.aoMap as THREE.Texture);
+              if (mm.roughnessMap) this.applyTextureTiling(ent, mm.roughnessMap as THREE.Texture);
+              if (mm.metalnessMap) this.applyTextureTiling(ent, mm.metalnessMap as THREE.Texture);
+              if (mm.bumpMap) this.applyTextureTiling(ent, mm.bumpMap as THREE.Texture);
+              if (mm.specularMap) this.applyTextureTiling(ent, mm.specularMap as THREE.Texture);
+              if (mm.envMap) this.applyTextureTiling(ent, mm.envMap as THREE.Texture);
+            }
+            // mark material(s) need update
+            for (const m of mats) if (m) (m as any).needsUpdate = true;
+          }
+        }
+        break;
       case "cameraView":
         this.syncCamera(entity);
         break;
@@ -251,7 +277,10 @@ export class RenderSyncSystem implements IComponentObserver {
       // Build material immediately from the domain component to avoid blank materials.
       // We'll asynchronously resolve any catalog ids and apply textures afterwards.
       const compToUse = (materialComp as AnyMaterialComponent) as AnyMaterialComponent;
-      material = MaterialFactory.build(compToUse, this.textureCache);
+      material = MaterialFactory.build(compToUse, this.textureCache, (tex) => {
+        const ent = this.entities.get(entity.id);
+        if (ent) this.applyTextureTiling(ent, tex);
+      });
     }
     const mesh = new THREE.Mesh(geometry, material);
     // tag object with entity id so engine can find render objects by entity
@@ -335,7 +364,10 @@ export class RenderSyncSystem implements IComponentObserver {
     }
     if (rc.material) rc.material.dispose();
     const compToUse = (materialComp as AnyMaterialComponent) as AnyMaterialComponent;
-    const newMat = MaterialFactory.build(compToUse, this.textureCache);
+    const newMat = MaterialFactory.build(compToUse, this.textureCache, (tex) => {
+      const ent = this.entities.get(entity.id);
+      if (ent) this.applyTextureTiling(ent, tex);
+    });
     rc.object3D.material = newMat;
     rc.material = newMat;
     rc.object3D.visible = true;
@@ -407,6 +439,8 @@ export class RenderSyncSystem implements IComponentObserver {
         const tex = await this.textureCache.load(chosen.path);
         try {
           setter(tex);
+          const entity = this.entities.get(entityId);
+          if (entity) this.applyTextureTiling(entity, tex);
           material.needsUpdate = true;
         } catch (e) {
           // ignore setter failures
@@ -455,6 +489,23 @@ export class RenderSyncSystem implements IComponentObserver {
     await applyIfLoaded('specularMap', (t) => {
       if ('specularMap' in material) (material as any).specularMap = t;
     });
+  }
+
+  private applyTextureTiling(entity: Entity, texture: THREE.Texture): void {
+    // Lazy import of component type to avoid cyclic deps in type-only imports
+    const tiling = entity.getComponent<any>('textureTiling');
+    if (!tiling) return;
+
+    const repeatU = tiling.repeatU ?? 1;
+    const repeatV = tiling.repeatV ?? 1;
+    const offsetU = tiling.offsetU ?? 0;
+    const offsetV = tiling.offsetV ?? 0;
+
+    texture.wrapS = THREE.RepeatWrapping;
+    texture.wrapT = THREE.RepeatWrapping;
+    texture.repeat.set(repeatU, repeatV);
+    texture.offset.set(offsetU, offsetV);
+    texture.needsUpdate = true;
   }
 
   private syncCamera(entity: Entity): void {

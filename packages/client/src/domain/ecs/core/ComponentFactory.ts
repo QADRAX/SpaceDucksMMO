@@ -12,6 +12,7 @@ import { BasicMaterialComponent } from "@client/domain/ecs/components/material/B
 import { PhongMaterialComponent } from "@client/domain/ecs/components/material/PhongMaterialComponent";
 import { LambertMaterialComponent } from "@client/domain/ecs/components/material/LambertMaterialComponent";
 import { ShaderMaterialComponent } from "@client/domain/ecs/components/material/ShaderMaterialComponent";
+import { TextureTilingComponent } from '@client/domain/ecs/components/material/TextureTilingComponent';
 import { OrbitComponent } from "@client/domain/ecs/components/OrbitComponent";
 import { CameraViewComponent } from "@client/domain/ecs/components/CameraViewComponent";
 import { LookAtEntityComponent } from '@client/domain/ecs/components/LookAtEntityComponent';
@@ -33,6 +34,7 @@ export type KnownComponentType =
   | "shaderMaterial"
   | "orbit"
   | "cameraView"
+  | "textureTiling"
   
   | "lookAtEntity"
   | "lookAtPoint"
@@ -81,6 +83,11 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       defs.push({ type: "lambertMaterial", label: "Lambert Material" });
     }
 
+    // texture tiling: optional component when geometry present
+    if (hasAnyGeometry && !has('textureTiling')) {
+      defs.push({ type: 'textureTiling' as KnownComponentType, label: 'Texture Tiling' });
+    }
+
     // shaderMaterial requires any geometry and conflicts with any concrete material
     if (hasAnyGeometry && !hasAnyMaterial)
       defs.push({ type: "shaderMaterial", label: "Shader Material" });
@@ -127,6 +134,8 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
         return new LambertMaterialComponent({ color: 0xffffff });
       case "shaderMaterial":
         return new ShaderMaterialComponent({ shaderType: "atmosphere", uniforms: {} });
+      case "textureTiling":
+        return new TextureTilingComponent({ repeatU: 1, repeatV: 1, offsetU: 0, offsetV: 0 });
       case "orbit":
         return new OrbitComponent({ targetEntityId: "", altitudeFromSurface: 10, speed: 1 });
       case "cameraView":

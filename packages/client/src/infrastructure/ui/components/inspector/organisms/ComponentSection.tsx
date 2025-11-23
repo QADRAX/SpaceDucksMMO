@@ -1,6 +1,8 @@
 import Component from "@client/domain/ecs/core/Component";
 import { ComponentFieldList } from "../molecules/ComponentFieldList";
 import type Entity from "@client/domain/ecs/core/Entity";
+import { PropertyCheckbox } from "../../common/atoms/PropertyCheckbox";
+import { Button } from "../../common/atoms/Button";
 
 type Props = {
   component: Component;
@@ -34,17 +36,14 @@ export function ComponentSection({
           <div>{component.type}</div>
         </div>
         <div className="component-controls">
-          <label>
-            <input
-              type="checkbox"
-              checked={component.enabled}
-              onInput={() => handleToggle()}
-            />{" "}
-            {t("inspector.enabled", "Enabled")}
-          </label>
-          <button onClick={() => handleRemove()}>
+          <PropertyCheckbox
+            checked={component.enabled}
+            onChange={() => handleToggle()}
+            label={t("inspector.enabled", "Enabled")}
+          />
+          <Button variant="ghost" size="small" onClick={() => handleRemove()}>
             {t("inspector.remove", "Remove")}
-          </button>
+          </Button>
         </div>
       </div>
       <ComponentFieldList component={component}/>

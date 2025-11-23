@@ -14,7 +14,8 @@ export type AnyMaterialComponent =
 export class MaterialFactory {
   static build(
     comp: AnyMaterialComponent,
-    textureCache: TextureCache
+    textureCache: TextureCache,
+    applyTiling?: (tex: THREE.Texture) => void
   ): THREE.Material {
     let material: THREE.Material;
 
@@ -50,6 +51,7 @@ export class MaterialFactory {
         .load(url)
         .then((tex) => {
           apply(tex);
+          if (applyTiling) applyTiling(tex);
           material.needsUpdate = true;
         })
         .catch((err) => {
