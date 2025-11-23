@@ -69,12 +69,14 @@ function renderValue(
 }
 
 
-export function renderPropertyWithConfig(
-  comp: any,
+export function renderPropertyWithConfig<
+  T extends { notifyChanged?: () => void; type?: string } = any
+>(
+  comp: T,
   key: string,
-  cfg?: InspectorFieldConfig,
+  cfg?: InspectorFieldConfig<T>,
   services?: any
-) {
+): preact.ComponentChildren {
   const value = cfg && cfg.get ? cfg.get(comp) : (comp as any)[key];
 
   /**
@@ -104,20 +106,26 @@ export function renderPropertyWithConfig(
    * Returns a reasonable default value for a given key and type.
    * Uses key for special cases, otherwise falls back to type.
    */
-  function getDefaultForType(key: string, type?: string): any {
-    // Key-based defaults (override type-based)
-    if (key === "color") return "#ffffff";
-    if (["texture", "normalMap", "envMap"].includes(key)) return undefined;
-    if (key === "targetEntityId") return "";
-    if (key === "uniforms") return {};
-    // Type-based defaults
+  function getDefaultForType(type?: InspectorFieldConfig<T>['type']): any {
     switch (type) {
-      case "number": return 0;
-      case "boolean": return false;
-      case "string": return "";
-      case "vector": return [0, 0, 0];
-      case "color": return "#ffffff";
-      default: return null;
+      case 'number':
+        return 0;
+      case 'boolean':
+        return false;
+      case 'string':
+        return '';
+      case 'vector':
+        return [0, 0, 0];
+      case 'color':
+        return '#ffffff';
+      case 'texture':
+        return null;
+      case 'object':
+        return {};
+      case 'uniforms':
+        return {};
+      default:
+        return null;
     }
   }
 
@@ -126,9 +134,10 @@ export function renderPropertyWithConfig(
    * Ensures hooks are used only in components.
    */
   function NullableFieldWrapper({ children }: { children: any }) {
-    const enabled = value !== undefined && value !== null;
+    // Semantics: undefined => disabled; null or any other value => enabled
+    const enabled = value !== undefined;
     // Prefer cfg.default, else type-based default
-    const defaultValue = cfg?.default !== undefined ? cfg.default : getDefaultForType(key, cfg?.type);
+    const defaultValue = cfg?.default !== undefined ? cfg.default : getDefaultForType(cfg?.type);
 
     return (
       <NullableToggleEditor

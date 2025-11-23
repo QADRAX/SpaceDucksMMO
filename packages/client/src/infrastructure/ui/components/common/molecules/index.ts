@@ -12,4 +12,5 @@ export { TreeViewNodeRow } from './TreeViewNodeRow';
 
 export { Vector3Editor } from './Vector3Editor';
 
-export { EnumEditor } from './EnumEditor';
+export { default as FilterableSelect } from './FilterableSelect';
+export { default as OverlayPopup } from './OverlayPopup';

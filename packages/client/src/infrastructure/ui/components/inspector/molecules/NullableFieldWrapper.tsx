@@ -27,7 +27,7 @@ export function NullableFieldWrapper({
 
   function getDefaultForType(key: string, type?: string): any {
     if (key === "color") return "#ffffff";
-    if (["texture", "normalMap", "envMap"].includes(key)) return undefined;
+    if (["texture", "normalMap", "envMap"].includes(key)) return null;
     if (key === "targetEntityId") return "";
     if (key === "uniforms") return {};
     switch (type) {
