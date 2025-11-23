@@ -34,7 +34,7 @@ import { RenderObjectRegistry } from "./RenderObjectRegistry";
 import { ShaderUniformUpdater } from "./ShaderUniformUpdater";
 import LensFlareFactory from "../factories/LensFlareFactory";
 import type { TextureCatalogService } from '@client/application/TextureCatalog';
-import type { TextureResolverService } from '@client/application/TextureResolverService';
+import type TextureResolverService from '@client/application/TextureResolverService';
 
 export class RenderSyncSystem implements IComponentObserver {
   private scene: THREE.Scene;
@@ -371,7 +371,7 @@ export class RenderSyncSystem implements IComponentObserver {
         }
         // Choose best quality available (ultra > high > medium > low)
         const rank: Record<string, number> = { ultra: 4, high: 3, medium: 2, low: 1 };
-        variants.sort((a, b) => (rank[b.quality] || 0) - (rank[a.quality] || 0));
+        variants.sort((a, b) => (rank[(b.quality ?? 'low') as string] || 0) - (rank[(a.quality ?? 'low') as string] || 0));
         const chosen = variants[0];
         if (!chosen || !chosen.path) return;
         const tex = await this.textureCache.load(chosen.path);

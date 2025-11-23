@@ -4,7 +4,7 @@ import SceneManager from "@client/application/SceneManager";
 import SceneId from "@client/domain/scene/SceneId";
 import GraphicsController from "../ui/GraphicsController";
 import type { GameSettings } from "@client/domain/settings/GameSettings";
-import type { TextureResolverService } from "@client/application/TextureResolverService";
+import type TextureResolverService from "@client/application/TextureResolverService";
 import type { SettingsService } from "@client/application/SettingsService";
 import { DemoEcsScene } from '@client/infrastructure/scenes/DemoEcsScene';
 import { MainMenuScene } from '@client/infrastructure/scenes/MainMenuScene';

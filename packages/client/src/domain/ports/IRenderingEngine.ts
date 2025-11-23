@@ -1,4 +1,6 @@
 import type IScene from './IScene';
+import type TextureResolverService from '@client/application/TextureResolverService';
+import type { TextureCatalogService } from '@client/application/TextureCatalog';
 
 /**
  * Port abstraction for a rendering engine.
@@ -52,6 +54,15 @@ export interface IRenderingEngine {
   enablePostProcessing(): any;
   disablePostProcessing(): void;
   getComposer(): any | undefined;
+
+  /**
+   * Optional: expose texture services to scenes so they can wire ECS sync systems.
+   * Engines that support asset discovery/resolution (e.g., ThreeRenderer) should
+   * implement these. These methods are intentionally allowed to return
+   * `undefined` for lightweight engine implementations.
+   */
+  getTextureResolver(): TextureResolverService | undefined;
+  getTextureCatalog(): TextureCatalogService | undefined;
 }
 
 export default IRenderingEngine;

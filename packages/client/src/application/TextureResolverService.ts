@@ -1,13 +1,15 @@
 import type { ITextureResolver } from '@client/domain/ports/ITextureResolver';
-import type { IFileExistenceChecker } from '@client/domain/ports/IFileExistenceChecker';
 import type { SettingsService } from '@client/application/SettingsService';
-import type { 
-  TextureRequest, 
-  TextureResource, 
+import type {
+  TextureRequest,
+  TextureResource,
   TextureQuality,
-  CelestialBodyId,
-  TextureType 
 } from '@client/domain/assets/TextureTypes';
+import type {
+  TextureCatalogService,
+  TextureCatalog,
+  TextureVariant,
+} from '@client/application/TextureCatalog';
 
 /**
  * Application service for resolving texture paths with quality fallback strategy.
@@ -24,25 +26,45 @@ import type {
  * - assets/textures/planets/8k/venus_surface.jpg
  */
 export class TextureResolverService implements ITextureResolver {
-  private readonly basePath = 'assets/textures/planets';
-  
+  private catalog?: TextureCatalog;
+
   constructor(
-    private settingsService: SettingsService,
-    private fileChecker: IFileExistenceChecker
-  ) {}
+    private readonly settingsService: SettingsService,
+    private readonly textureCatalog: TextureCatalogService
+  ) {
+    // Keep a cached copy of the catalog for fast sync resolution
+    this.textureCatalog.subscribe(c => {
+      this.catalog = c;
+    });
+  }
 
   resolve(request: TextureRequest): TextureResource {
-    const requestedQuality = request.quality ?? this.getQualityFromSettings();
-    const filename = this.buildFilename(request.bodyId, request.type);
-    
-    // Synchronous version: use fallback chain without file checking
-    // This is fast but may return non-existent files
-    const { quality, path } = this.resolveWithFallbackSync(requestedQuality, filename);
-    
+    const preferred = request.quality ?? this.getQualityFromSettings();
+
+    if (this.catalog) {
+      const variant = this.pickBestVariantSync(request.id, preferred, this.catalog);
+      if (variant) {
+        return {
+          id: request.id,
+          path: variant.path,
+          quality: variant.quality ?? preferred,
+        };
+      }
+    }
+
+    // Fallback: build a deterministic path assuming a quality folder and jpg extension.
+    const folder = this.qualityToFolder(preferred);
+    const path = `assets/textures/${request.id}/${folder}.jpg`;
+
+    console.warn(
+      `[TextureResolver] Catalog not ready or id not found: ${request.id}. ` +
+        `Using best-effort path: ${path}`
+    );
+
     return {
+      id: request.id,
       path,
-      quality,
-      type: request.type
+      quality: preferred,
     };
   }
 
@@ -51,30 +73,45 @@ export class TextureResolverService implements ITextureResolver {
    * Use this when you need guaranteed valid paths.
    */
   async resolveAsync(request: TextureRequest): Promise<TextureResource> {
-    const requestedQuality = request.quality ?? this.getQualityFromSettings();
-    const filename = this.buildFilename(request.bodyId, request.type);
-    
-    const { quality, path } = await this.resolveWithFallbackAsync(requestedQuality, filename);
-    
+    const preferred = request.quality ?? this.getQualityFromSettings();
+    const catalog = await this.textureCatalog.getCatalog();
+    const variant = this.pickBestVariantSync(request.id, preferred, catalog);
+
+    if (variant) {
+      return {
+        id: request.id,
+        path: variant.path,
+        quality: variant.quality ?? preferred,
+      };
+    }
+
+    const folder = this.qualityToFolder(preferred);
+    const path = `assets/textures/${request.id}/${folder}.jpg`;
+
+    console.warn(
+      `[TextureResolver] No catalog entry found for id "${request.id}". ` +
+        `Using best-effort path: ${path}`
+    );
+
     return {
+      id: request.id,
       path,
-      quality,
-      type: request.type
+      quality: preferred,
     };
   }
 
   resolveMany(requests: TextureRequest[]): TextureResource[] {
-    return requests.map(req => this.resolve(req));
+    return requests.map(r => this.resolve(r));
   }
 
   /**
    * Async version of resolveMany with file existence checking
    */
   async resolveManyAsync(requests: TextureRequest[]): Promise<TextureResource[]> {
-    return Promise.all(requests.map(req => this.resolveAsync(req)));
+    return Promise.all(requests.map(r => this.resolveAsync(r)));
   }
 
-  getCurrentQuality(): string {
+  getCurrentQuality(): TextureQuality {
     return this.getQualityFromSettings();
   }
 
@@ -82,116 +119,63 @@ export class TextureResolverService implements ITextureResolver {
    * Synchronous fallback resolution based on quality hierarchy.
    * Returns best-guess path without checking file existence.
    */
-  private resolveWithFallbackSync(
-    requestedQuality: TextureQuality,
-    filename: string
-  ): { quality: TextureQuality; path: string } {
-    // For sync resolution, just return the requested quality path
-    // Let Three.js handle the 404 if it doesn't exist
-    const folder = this.qualityToFolder(requestedQuality);
-    return {
-      quality: requestedQuality,
-      path: `${this.basePath}/${folder}/${filename}`
-    };
+  /**
+   * Pick the best variant for an id and preferred quality using a simple fallback chain.
+   */
+  private pickBestVariantSync(
+    id: string,
+    preferred: TextureQuality,
+    catalog: TextureCatalog
+  ): TextureVariant | undefined {
+    const candidates = catalog.variants.filter(v => v.id === id);
+    if (!candidates.length) return undefined;
+
+    const chain = this.getFallbackChain(preferred);
+
+    for (const q of chain) {
+      const v = candidates.find(c => (c.quality ?? 'low') === q);
+      if (v) return v;
+    }
+
+    // Fallback: first candidate
+    return candidates[0];
   }
 
   /**
    * Async resolve texture path with quality fallback strategy.
    * Checks file existence and tries: requested -> lower quality -> lowest quality (2k)
    */
-  private async resolveWithFallbackAsync(
-    requestedQuality: TextureQuality,
-    filename: string
-  ): Promise<{ quality: TextureQuality; path: string }> {
-    const fallbackChain = this.getFallbackChain(requestedQuality);
-    
-    console.log(`[TextureResolver] Fallback chain for ${filename}:`, fallbackChain);
-    
-    for (const quality of fallbackChain) {
-      const folder = this.qualityToFolder(quality);
-      const path = `${this.basePath}/${folder}/${filename}`;
-      
-      console.log(`[TextureResolver] Checking if exists: ${path}`);
-      
-      // Check if file exists
-      const exists = await this.fileChecker.exists(path);
-      
-      console.log(`[TextureResolver] ${path} exists: ${exists}`);
-      
-      if (exists) {
-        console.log(`[TextureResolver] Found texture at: ${path} (quality: ${quality})`);
-        return { quality, path };
-      }
-    }
-    
-    console.warn(`[TextureResolver] No texture found in any quality for ${filename}`);
-    
-    // Nothing found, return the lowest quality path as last resort
-    const folder = this.qualityToFolder('low');
-    return {
-      quality: 'low',
-      path: `${this.basePath}/${folder}/${filename}`
-    };
+  /**
+   * Get fallback chain for a quality level.
+   * Example: 'ultra' -> ['ultra', 'high', 'medium', 'low']
+   */
+  private getFallbackChain(quality: TextureQuality): TextureQuality[] {
+    const all: TextureQuality[] = ['ultra', 'high', 'medium', 'low'];
+    const idx = all.indexOf(quality);
+    if (idx === -1) return ['low'];
+    return all.slice(idx);
   }
 
   /**
    * Get fallback chain for a quality level.
    * Example: 'ultra' -> ['ultra', 'high', 'medium', 'low']
    */
-  private getFallbackChain(quality: TextureQuality): TextureQuality[] {
-    const allQualities: TextureQuality[] = ['ultra', 'high', 'medium', 'low'];
-    const startIndex = allQualities.indexOf(quality);
-    
-    if (startIndex === -1) {
-      return ['low']; // Safety fallback
-    }
-    
-    return allQualities.slice(startIndex);
-  }
-
   /**
-   * Map quality setting to folder name
+   * Map quality setting to folder name when we need to build a best-effort path.
+   * This is only used when the catalog does not contain the id.
    */
   private qualityToFolder(quality: TextureQuality): string {
     const mapping: Record<TextureQuality, string> = {
-      'low': '2k',
-      'medium': '4k',
-      'high': '8k',
-      'ultra': '8k' // Ultra uses same 8k textures with enhanced settings
+      low: '2k',
+      medium: '4k',
+      high: '8k',
+      ultra: '8k',
     };
     return mapping[quality];
   }
 
   /**
-   * Build filename from body ID and texture type
-   * Examples:
-   * - venus + diffuse = venus_surface.jpg
-   * - venus + surface = venus_surface.jpg
-   * - venus + atmosphere = venus_atmosphere.jpg
-   * - earth + normal = earth_normal.jpg
-   * - stars + surface = stars.jpg
-   * - stars_milky_way + surface = stars_milky_way.jpg
-   */
-  private buildFilename(bodyId: CelestialBodyId, type: TextureType): string {
-    // Special case for skybox textures (stars)
-    if (bodyId === 'stars' || bodyId === 'stars_milky_way') {
-      return `${bodyId}.jpg`;
-    }
-    
-    const typeMap: Record<TextureType, string> = {
-      'surface': 'surface',
-      'diffuse': 'surface',
-      'normal': 'normal',
-      'specular': 'specular',
-      'emissive': 'emissive',
-      'atmosphere': 'atmosphere'
-    };
-    
-    return `${bodyId}_${typeMap[type]}.jpg`;
-  }
-
-  /**
-   * Get texture quality from current settings
+   * Get texture quality from current settings.
    */
   private getQualityFromSettings(): TextureQuality {
     const settings = this.settingsService.getSettings();

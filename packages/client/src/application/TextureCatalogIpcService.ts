@@ -1,21 +1,27 @@
-import type { TextureCatalog, TextureVariant } from './TextureCatalog';
+import type {
+  TextureCatalog,
+  TextureVariant,
+  TextureQuality,
+  TextureCatalogService,
+} from './TextureCatalog';
 
 type Fetcher = () => Promise<TextureCatalog>;
 
-export class TextureCatalogIpcService {
+export class TextureCatalogIpcService implements TextureCatalogService {
   private fetcher: Fetcher;
   private cache?: TextureCatalog;
   private listeners: Array<(catalog: TextureCatalog) => void> = [];
 
   constructor(fetcher?: Fetcher) {
-    this.fetcher = fetcher ?? (async () => {
-      // Use optional window bridge exposed by preload
-      const anywin = window as any;
-      if (!anywin.spaceducks || !anywin.spaceducks.textures || !anywin.spaceducks.textures.list) {
-        return { variants: [] };
-      }
-      return anywin.spaceducks.textures.list();
-    });
+    this.fetcher =
+      fetcher ??
+      (async () => {
+        const anywin = window as any;
+        if (!anywin.spaceducks || !anywin.spaceducks.textures || !anywin.spaceducks.textures.list) {
+          return { variants: [] };
+        }
+        return anywin.spaceducks.textures.list();
+      });
   }
 
   async getCatalog(): Promise<TextureCatalog> {
@@ -29,16 +35,46 @@ export class TextureCatalogIpcService {
     return catalog.variants.filter(v => v.id === id);
   }
 
+  async getBestVariant(
+    id: string,
+    preferred?: TextureQuality
+  ): Promise<TextureVariant | undefined> {
+    const catalog = await this.getCatalog();
+    const candidates = catalog.variants.filter(v => v.id === id);
+    if (!candidates.length) return undefined;
+
+    const qualities: TextureQuality[] = ['ultra', 'high', 'medium', 'low'];
+    const preferredQuality = preferred ?? 'high';
+
+    const startIndex = qualities.indexOf(preferredQuality);
+    const chain = startIndex === -1 ? qualities : qualities.slice(startIndex);
+
+    for (const q of chain) {
+      const v = candidates.find(vr => (vr.quality ?? 'low') === q);
+      if (v) return v;
+    }
+
+    // Fallback: first variant
+    return candidates[0];
+  }
+
   subscribe(listener: (catalog: TextureCatalog) => void): () => void {
     this.listeners.push(listener);
-    // If we already have a cached catalog, call synchronously per API contract.
+
     if (this.cache) {
-      try { listener(this.cache); } catch (e) { /* noop */ }
+      try {
+        listener(this.cache);
+      } catch {
+        // noop
+      }
     } else {
-      // Fire asynchronously with fetched catalog
       (async () => {
         const cat = await this.getCatalog();
-        try { listener(cat); } catch (e) { /* noop */ }
+        try {
+          listener(cat);
+        } catch {
+          // noop
+        }
       })();
     }
 
@@ -48,11 +84,15 @@ export class TextureCatalogIpcService {
     };
   }
 
-  /** Force refresh from source and notify listeners (useful for tests) */
+  /** Force refresh from source and notify listeners (useful for tests). */
   async refresh(): Promise<void> {
     this.cache = await this.fetcher();
     for (const l of this.listeners) {
-      try { l(this.cache); } catch (e) { /* noop */ }
+      try {
+        l(this.cache);
+      } catch {
+        // noop
+      }
     }
   }
 }

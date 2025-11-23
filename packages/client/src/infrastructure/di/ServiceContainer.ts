@@ -45,13 +45,15 @@ export class ServiceContainer {
     const serverBrowser = new ServerBrowserService(serverDirectory);
     const windowService = new WindowService();
     
-    // File system utilities
+    // File system utilities (kept for potential future use)
     const fileChecker = new BrowserFileExistenceChecker();
-    
-    // Asset services
-    const textureResolver = new TextureResolverService(settingsService, fileChecker);
+
     // Texture catalog: use IPC-backed service that fetches from main process.
     const textureCatalog = new TextureCatalogIpcService();
+
+    // Asset services
+    // TextureResolverService now depends on SettingsService + TextureCatalogService
+    const textureResolver = new TextureResolverService(settingsService, textureCatalog);
 
     // Debug utilities
     const fpsController = new FpsController();

@@ -2,7 +2,6 @@ import { SettingsService } from "@client/application/SettingsService";
 import { I18nService } from "@client/application/I18nService";
 import { ServerBrowserService } from "@client/application/ServerBrowserService";
 import { WindowService } from "@client/application/WindowService";
-import { TextureResolverService } from "@client/application/TextureResolverService";
 import DevRegistry from "@client/infrastructure/ui/dev/DevRegistry";
 import { FpsController } from "@client/infrastructure/ui/dev/FpsController";
 import { ThreeRenderer } from "@client/infrastructure/rendering/ThreeRenderer";

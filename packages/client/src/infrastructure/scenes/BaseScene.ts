@@ -1,37 +1,35 @@
-import type IScene from '@client/domain/ports/IScene';
-import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
-import * as THREE from 'three';
-import type { SettingsService } from '@client/application/SettingsService';
-import type SceneId from '@client/domain/scene/SceneId';
-import { RenderSyncSystem } from '../graphics/sync/RenderSyncSystem';
-import { ThreeRenderer } from '@client/infrastructure/rendering/ThreeRenderer';
-import type { TextureResolverService } from '@client/application/TextureResolverService';
-import type { TextureCatalogService } from '@client/application/TextureCatalog';
-import { setCurrentEcsWorld } from '@client/domain/ecs/core/EcsWorldContext';
-import type { Entity } from '@client/domain/ecs/core/Entity';
-import { Result, ok, err } from '@client/domain/errors/EngineError';
+import type IScene from "@client/domain/ports/IScene";
+import type IRenderingEngine from "@client/domain/ports/IRenderingEngine";
+import type { SettingsService } from "@client/application/SettingsService";
+import type SceneId from "@client/domain/scene/SceneId";
+import { RenderSyncSystem } from "../graphics/sync/RenderSyncSystem";
+import type TextureResolverService from "@client/application/TextureResolverService";
+import type { TextureCatalogService } from "@client/application/TextureCatalog";
+import { setCurrentEcsWorld } from "@client/domain/ecs/core/EcsWorldContext";
+import type { Entity } from "@client/domain/ecs/core/Entity";
+import { Result, ok, err } from "@client/domain/errors/EngineError";
 
 type VoidResult = Result<void>;
-import type SceneChangeEvent from '@client/domain/scene/SceneChangeEvent';
-import type { IComponentObserver } from '@client/domain/ecs/core/IComponentObserver';
+import type SceneChangeEvent from "@client/domain/scene/SceneChangeEvent";
+import type { IComponentObserver } from "@client/domain/ecs/core/IComponentObserver";
 
 export abstract class BaseScene implements IScene {
   abstract readonly id: SceneId;
-  
+
   protected entities: Map<string, Entity> = new Map();
   private _changeListeners: Set<(ev: SceneChangeEvent) => void> = new Set();
   private entitySubscriptions: Map<string, () => void> = new Map();
   protected activeCameraId: string | null = null;
   protected engine?: IRenderingEngine;
   protected renderScene?: any; // THREE.Scene injected by engine
-  
+
   // ECS Systems
   protected renderSyncSystem?: RenderSyncSystem;
-  
+
   // Settings service kept for future use (e.g., quality affecting ECS components)
   // Currently unused since legacy texture reload path was removed.
   private settingsUnsubscribe?: () => void;
-  
+
   constructor(protected settingsService: SettingsService) {
     // No-op: legacy texture reload path removed in ECS-only mode
   }
@@ -50,7 +48,9 @@ export abstract class BaseScene implements IScene {
    */
   addEntity(entity: Entity): void {
     if (this.entities.has(entity.id)) {
-      console.warn(`[${this.id}] addEntity: entity '${entity.id}' already added`);
+      console.warn(
+        `[${this.id}] addEntity: entity '${entity.id}' already added`
+      );
       return;
     }
     this.entities.set(entity.id, entity);
@@ -59,7 +59,7 @@ export abstract class BaseScene implements IScene {
     }
     // subscribe to entity-level events for inspector/debug
     this.attachEntityObservers(entity);
-    this.emitChange({ kind: 'entity-added', entity });
+    this.emitChange({ kind: "entity-added", entity });
   }
 
   /** Remove an ECS Entity by ID */
@@ -75,12 +75,14 @@ export abstract class BaseScene implements IScene {
     if (this.activeCameraId === id) {
       this.activeCameraId = null;
       if (this.engine) {
-        try { this.engine.onActiveCameraChanged(); } catch {}
+        try {
+          this.engine.onActiveCameraChanged();
+        } catch {}
       }
     }
     this.detachEntityObservers(id);
     this.entities.delete(id);
-    this.emitChange({ kind: 'entity-removed', entityId: id });
+    this.emitChange({ kind: "entity-removed", entityId: id });
   }
 
   /**
@@ -95,7 +97,9 @@ export abstract class BaseScene implements IScene {
     }
     const camera = this.renderSyncSystem.getCamera(id);
     if (!camera) {
-      console.warn(`[${this.id}] setActiveCamera: entity '${id}' has no CameraViewComponent`);
+      console.warn(
+        `[${this.id}] setActiveCamera: entity '${id}' has no CameraViewComponent`
+      );
       return;
     }
     this.activeCameraId = id;
@@ -108,7 +112,10 @@ export abstract class BaseScene implements IScene {
       }
     }
     // Notify subscribers that active camera changed
-    this.emitChange({ kind: 'active-camera-changed', entityId: this.activeCameraId });
+    this.emitChange({
+      kind: "active-camera-changed",
+      entityId: this.activeCameraId,
+    });
   }
 
   /**
@@ -125,20 +132,25 @@ export abstract class BaseScene implements IScene {
   setup(engine: IRenderingEngine, renderScene: any): void {
     this.engine = engine;
     this.renderScene = renderScene;
-    
+
     // Set current ECS world context
     setCurrentEcsWorld(this);
 
     // Initialize ECS systems
-    // If the engine is the ThreeRenderer we can obtain the resolver/catalog directly
+    // Obtain resolver/catalog from the engine (typed accessors on IRenderingEngine).
+    // These methods may return undefined on engines that don't implement them.
     let resolver: TextureResolverService | undefined = undefined;
     let catalog: TextureCatalogService | undefined = undefined;
-    if (this.engine && this.engine instanceof ThreeRenderer) {
-      resolver = this.engine.getTextureResolver();
-      catalog = this.engine.getTextureCatalog();
+    if (this.engine) {
+      resolver = this.engine.getTextureResolver?.();
+      catalog = this.engine.getTextureCatalog?.();
     }
-    this.renderSyncSystem = new RenderSyncSystem(renderScene, catalog, resolver);
-    
+    this.renderSyncSystem = new RenderSyncSystem(
+      renderScene,
+      catalog,
+      resolver
+    );
+
     // Add all entities that were already added
     for (const ent of this.entities.values()) {
       this.renderSyncSystem.addEntity(ent);
@@ -168,7 +180,9 @@ export abstract class BaseScene implements IScene {
     return this.activeCameraId;
   }
 
-  public subscribeChanges(listener: (ev: SceneChangeEvent) => void): () => void {
+  public subscribeChanges(
+    listener: (ev: SceneChangeEvent) => void
+  ): () => void {
     this._changeListeners.add(listener);
     return () => this._changeListeners.delete(listener);
   }
@@ -177,16 +191,23 @@ export abstract class BaseScene implements IScene {
     const res = this.reparentEntityResult(childId, newParentId);
     if (!res.ok) {
       // emit error for backward-compatible behavior and for debug/inspector
-      this.emitChange({ kind: 'error', message: res.error.message });
+      this.emitChange({ kind: "error", message: res.error.message });
     }
   }
 
   /**
    * Result-based reparent operation. Returns structured error on failure.
    */
-  public reparentEntityResult(childId: string, newParentId: string | null): VoidResult {
+  public reparentEntityResult(
+    childId: string,
+    newParentId: string | null
+  ): VoidResult {
     const child = this.entities.get(childId);
-    if (!child) return err('invalid-reparent', `Child '${childId}' not found`, { childId, newParentId });
+    if (!child)
+      return err("invalid-reparent", `Child '${childId}' not found`, {
+        childId,
+        newParentId,
+      });
     const oldParent = child.parent;
 
     // no-op when parent unchanged
@@ -196,11 +217,19 @@ export abstract class BaseScene implements IScene {
     let newParent: Entity | undefined;
     if (newParentId) {
       newParent = this.entities.get(newParentId);
-      if (!newParent) return err('invalid-reparent', `Parent '${newParentId}' not found`, { childId, newParentId });
+      if (!newParent)
+        return err("invalid-reparent", `Parent '${newParentId}' not found`, {
+          childId,
+          newParentId,
+        });
 
       // Prevent cycles: if the new parent is a descendant of the child, attaching would create a cycle
       if (this.wouldCreateCycle(child, newParent)) {
-        return err('invalid-reparent', `Invalid reparent: '${newParentId}' is a descendant of '${childId}'`, { childId, newParentId });
+        return err(
+          "invalid-reparent",
+          `Invalid reparent: '${newParentId}' is a descendant of '${childId}'`,
+          { childId, newParentId }
+        );
       }
     }
 
@@ -211,7 +240,7 @@ export abstract class BaseScene implements IScene {
       newParent.addChild(child);
     }
 
-    this.emitChange({ kind: 'hierarchy-changed', childId, newParentId });
+    this.emitChange({ kind: "hierarchy-changed", childId, newParentId });
     return ok(undefined);
   }
 
@@ -227,7 +256,11 @@ export abstract class BaseScene implements IScene {
 
   private emitChange(ev: SceneChangeEvent) {
     for (const l of this._changeListeners) {
-      try { l(ev); } catch (e) { /* swallow listener errors */ }
+      try {
+        l(ev);
+      } catch (e) {
+        /* swallow listener errors */
+      }
     }
   }
 
@@ -235,20 +268,32 @@ export abstract class BaseScene implements IScene {
     const componentObserver: IComponentObserver = {
       onComponentChanged: (_entityId: string, componentType: string) => {
         // forward both normal change and removal notifications
-        this.emitChange({ kind: 'component-changed', entityId: entity.id, componentType });
+        this.emitChange({
+          kind: "component-changed",
+          entityId: entity.id,
+          componentType,
+        });
       },
     };
 
-    const transformListener = () => this.emitChange({ kind: 'transform-changed', entityId: entity.id });
+    const transformListener = () =>
+      this.emitChange({ kind: "transform-changed", entityId: entity.id });
 
-    for (const comp of entity.getAllComponents()) comp.addObserver(componentObserver);
-    try { entity.transform.onChange(transformListener); } catch {}
+    for (const comp of entity.getAllComponents())
+      comp.addObserver(componentObserver);
+    try {
+      entity.transform.onChange(transformListener);
+    } catch {}
 
     const cleanup = () => {
       for (const comp of entity.getAllComponents()) {
-        try { comp.removeObserver(componentObserver); } catch {}
+        try {
+          comp.removeObserver(componentObserver);
+        } catch {}
       }
-      try { entity.transform.removeOnChange(transformListener); } catch {}
+      try {
+        entity.transform.removeOnChange(transformListener);
+      } catch {}
     };
 
     this.entitySubscriptions.set(entity.id, cleanup);
@@ -257,11 +302,12 @@ export abstract class BaseScene implements IScene {
   private detachEntityObservers(entityId: string) {
     const cleanup = this.entitySubscriptions.get(entityId);
     if (cleanup) {
-      try { cleanup(); } catch {}
+      try {
+        cleanup();
+      } catch {}
       this.entitySubscriptions.delete(entityId);
     }
   }
-
 
   /**
    * Teardown the scene. Call super.teardown(engine, renderScene) if overriding.
@@ -271,33 +317,41 @@ export abstract class BaseScene implements IScene {
       this.settingsUnsubscribe();
       this.settingsUnsubscribe = undefined;
     }
-    
+
     // Remove and dispose all entities
     if (this.renderSyncSystem) {
       for (const ent of this.entities.values()) {
         this.renderSyncSystem.removeEntity(ent.id);
         // detach any observers attached for inspector/debug
-        try { this.detachEntityObservers(ent.id); } catch {}
+        try {
+          this.detachEntityObservers(ent.id);
+        } catch {}
       }
     }
     // ensure cleanup of any remaining subscriptions
     for (const id of Array.from(this.entitySubscriptions.keys())) {
-      try { this.detachEntityObservers(id); } catch {}
+      try {
+        this.detachEntityObservers(id);
+      } catch {}
     }
     this.entities.clear();
 
     this.activeCameraId = null;
     // notify listeners that active camera is now null
-    this.emitChange({ kind: 'active-camera-changed', entityId: null });
-    
+    this.emitChange({ kind: "active-camera-changed", entityId: null });
+
     // Clean up systems
     this.renderSyncSystem = undefined;
-    
+
     // Notify engine that camera is gone
     if (engine) {
-      try { engine.onActiveCameraChanged(); } catch (e) { /* ignore */ }
+      try {
+        engine.onActiveCameraChanged();
+      } catch (e) {
+        /* ignore */
+      }
     }
-    
+
     this.renderScene = undefined;
   }
 }

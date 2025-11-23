@@ -2,7 +2,7 @@ import { h, VNode } from 'preact';
 import { JSX } from 'preact/jsx-runtime';
 import './tree-view-node-row.css';
 
-import type { TreeNode, TreeNodeId } from '../../organisms/TreeView';
+import type { TreeNode, TreeNodeId } from '../organisms/TreeView';
 
 type Props<TExtra = unknown> = {
   node: TreeNode<TExtra>;

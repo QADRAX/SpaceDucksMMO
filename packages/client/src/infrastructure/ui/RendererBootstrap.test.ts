@@ -7,7 +7,7 @@ jest.mock('@client/infrastructure/rendering/RenderingBootstrap', () => {
   return jest.fn().mockImplementation(() => ({
     initialize: jest.fn(),
     getSceneManager: jest.fn(() => ({ id: 'scene-manager' })),
-    getRenderer: jest.fn(() => ({ id: 'renderer' })),
+    getRenderer: jest.fn(() => ({ id: 'renderer', setTextureCatalog: jest.fn() })),
     getGraphicsController: jest.fn(() => ({ setAntialias: jest.fn(), setShadows: jest.fn(), setResolutionAuto: jest.fn() })),
     applySettings: jest.fn(),
     start: jest.fn(),

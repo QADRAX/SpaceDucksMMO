@@ -2,57 +2,145 @@ import { app, ipcMain } from 'electron';
 import * as fs from 'fs';
 import * as path from 'path';
 
-export type TextureQuality = 'low' | 'medium' | 'high' | 'ultra';
+import type {
+  TextureCatalog,
+  TextureVariant,
+  TextureQuality,
+} from '@client/application/TextureCatalog';
 
-export interface TextureVariant {
-  id: string;
-  quality: TextureQuality;
-  path: string; // relative public URL like 'assets/textures/planets/8k/jupiter.jpg'
-  label: string;
-}
+/**
+ * Map folder names to TextureQuality.
+ * Supports both semantic names (low/high) and numeric resolutions (2k/4k/8k/16k...).
+ */
+function folderToQuality(folder: string): TextureQuality | undefined {
+  const normalized = folder.toLowerCase();
 
-export interface TextureCatalog {
-  variants: TextureVariant[];
-}
-
-function folderToQuality(folder: string): TextureQuality {
-  const mapping: Record<string, TextureQuality> = {
-    '2k': 'low',
-    '4k': 'medium',
-    '8k': 'high',
+  const direct: Record<string, TextureQuality> = {
+    low: 'low',
+    medium: 'medium',
+    high: 'high',
+    ultra: 'ultra',
   };
-  if (mapping[folder]) return mapping[folder];
-  const m = folder.match(/^(\d+)k$/);
-  if (m) {
-    const val = parseInt(m[1], 10);
-    if (val > 8) return 'ultra';
-    if (val >= 4) return 'medium';
-    return 'low';
+
+  if (direct[normalized]) {
+    return direct[normalized];
   }
-  return 'low';
+
+  const m = normalized.match(/^(\d+)k$/);
+  if (!m) return undefined;
+
+  const val = parseInt(m[1], 10);
+  if (Number.isNaN(val)) return undefined;
+
+  // Tune thresholds as needed
+  if (val <= 2) return 'low';
+  if (val <= 4) return 'medium';
+  if (val <= 8) return 'high';
+  return 'ultra';
 }
 
-function isImageFile(name: string) {
+function isImageFile(name: string): boolean {
   return /\.(jpe?g|png|webp|bmp|gif)$/i.test(name);
 }
 
 function scanDirectoryRecursive(root: string): string[] {
   const results: string[] = [];
+
   function walk(dir: string) {
     const entries = fs.readdirSync(dir, { withFileTypes: true });
-    for (const e of entries) {
-      const full = path.join(dir, e.name);
-      if (e.isDirectory()) {
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
         walk(full);
-      } else if (e.isFile() && isImageFile(e.name)) {
+      } else if (entry.isFile() && isImageFile(entry.name)) {
         results.push(full);
       }
     }
   }
+
   if (fs.existsSync(root)) {
     walk(root);
   }
+
   return results;
+}
+
+/**
+ * Parse a public-relative texture path into a TextureVariant.
+ *
+ * Supported patterns:
+ * 1) assets/textures/<collection>/<entity>/<quality>/<variant>.<ext>
+ * 2) assets/textures/<collection>/<quality>/<variant>.<ext>          (legacy)
+ * 3) assets/textures/<collection>/<entity>/<variant>.<ext>           (no quality)
+ * 4) assets/textures/<collection>/<variant>.<ext>                    (no quality, legacy)
+ */
+function parseTexturePath(rel: string): TextureVariant | undefined {
+  const parts = rel.replace(/\\/g, '/').split('/');
+
+  // Expect "assets/textures/..."
+  if (parts.length < 4) return undefined;
+  if (parts[0] !== 'assets' || parts[1] !== 'textures') return undefined;
+
+  // Strip "assets/textures"
+  const rest = parts.slice(2); // e.g. ['planets', 'jupiter', '8k', 'albedo.jpg']
+  if (rest.length < 2) return undefined;
+
+  const filename = rest[rest.length - 1];
+  const withoutExt = filename.replace(/\.[^.]+$/, '');
+
+  const maybeQualityFolder = rest[rest.length - 2];
+  const q = folderToQuality(maybeQualityFolder);
+
+  let quality: TextureQuality | undefined;
+  let collection: string;
+  let entity: string;
+  let variant: string;
+
+  if (q) {
+    // We have an explicit quality folder
+    quality = q;
+
+    if (rest.length >= 3) {
+      // assets/textures/<collection>/<entity>/<quality>/<variant>
+      collection = rest[0];
+      entity = rest[rest.length - 3];
+      variant = withoutExt;
+    } else {
+      // Legacy: assets/textures/<collection>/<quality>/<filename>
+      // Treat collection as both collection and entity for id stability.
+      collection = rest[0];
+      entity = collection;
+      variant = withoutExt;
+    }
+  } else {
+    // No explicit quality folder
+    quality = undefined;
+
+    if (rest.length >= 3) {
+      // assets/textures/<collection>/<entity>/<variant>
+      collection = rest[0];
+      entity = rest[rest.length - 2];
+      variant = withoutExt;
+    } else {
+      // assets/textures/<collection>/<filename>
+      collection = rest[0];
+      entity = collection;
+      variant = withoutExt;
+    }
+  }
+
+  const id = [collection, entity, variant].filter(Boolean).join('/');
+  const tags = [collection, entity];
+
+  const variantObj: TextureVariant = {
+    id,
+    quality,
+    path: rel,
+    label: id,
+    tags,
+  };
+
+  return variantObj;
 }
 
 function buildCatalogFromDisk(texturesRootAbs: string, publicRootAbs: string): TextureCatalog {
@@ -62,51 +150,37 @@ function buildCatalogFromDisk(texturesRootAbs: string, publicRootAbs: string): T
   for (const abs of files) {
     // Compute public-relative path. publicRootAbs is the absolute path to 'public'
     let rel = path.relative(publicRootAbs, abs).replace(/\\/g, '/');
-    // Ensure it starts with 'assets/textures/'
-    if (!rel.startsWith('assets/textures/')) {
-      // If texturesRootAbs pointed directly to assets/textures, ensure prefix
-      rel = `assets/textures/${rel}`;
+
+    // Ensure it starts with "assets/"
+    if (!rel.startsWith('assets/')) {
+      rel = `assets/${rel}`;
     }
 
-    const parts = rel.split('/');
-    // parts: ['assets','textures', category, quality, ...filename]
-    if (parts.length < 5) continue; // need at least category + quality + file
-
-    const category = parts[2];
-    const qualityFolder = parts[3];
-    const rest = parts.slice(4).join('/');
-    const dot = rest.lastIndexOf('.');
-    const nameNoExt = dot === -1 ? rest : rest.slice(0, dot);
-    const id = `${category}/${nameNoExt}`;
-    const quality = folderToQuality(qualityFolder);
-
-    variants.push({
-      id,
-      quality,
-      path: rel,
-      label: id,
-    });
+    const variant = parseTexturePath(rel);
+    if (variant) {
+      variants.push(variant);
+    }
   }
 
   return { variants };
 }
 
-export function registerTextureCatalogIpc() {
+export function registerTextureCatalogIpc(): void {
   ipcMain.handle('spaceducks:textures:list', () => {
-    // Determine public/assets/textures absolute path.
-    // In dev, app.getAppPath() points to project (packages/client)
     const appPath = app.getAppPath();
 
-    // Try dev path: <appPath>/public/assets/textures
+    // Dev path: <appPath>/public/assets/textures
     const devPublic = path.join(appPath, 'public');
     const devTextures = path.join(devPublic, 'assets', 'textures');
 
-    // Packaged path: resources/app.asar.unpacked or resources/app
-    const resourcesPublic = path.join(process.resourcesPath || appPath, 'public');
+    // Packaged path
+    const resourcesBase = process.resourcesPath || appPath;
+    const resourcesPublic = path.join(resourcesBase, 'public');
     const packagedTextures = path.join(resourcesPublic, 'assets', 'textures');
 
     let texturesRoot = devTextures;
     let publicRoot = devPublic;
+
     if (!fs.existsSync(texturesRoot)) {
       texturesRoot = packagedTextures;
       publicRoot = resourcesPublic;
