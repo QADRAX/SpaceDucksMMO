@@ -160,6 +160,10 @@ export class RenderSyncSystem implements IComponentObserver {
         case "spotLight":
         case "cameraView":
           this.registry.remove(entityId, this.scene);
+          try {
+            // ensure debug wireframe is refreshed (removed) when geometry/material/light/camera is removed
+            this.debugSystem.refreshWireframeForEntity(entityId);
+          } catch {}
           break;
         case "lensFlare":
           this.lensFlareSystem.recreateLensFlare(entity);
@@ -178,6 +182,10 @@ export class RenderSyncSystem implements IComponentObserver {
       case "customGeometry":
       case "shaderMaterial":
         this.meshSystem.recreateMesh(entity);
+        try {
+          // mesh/geometry changed: refresh wireframe if a helper exists
+          this.debugSystem.refreshWireframeForEntity(entity.id);
+        } catch {}
         break;
       case "standardMaterial":
       case "basicMaterial":

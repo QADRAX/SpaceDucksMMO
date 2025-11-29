@@ -229,6 +229,44 @@ export class DebugTransformSystem {
     return lines;
   }
 
+  /** Refresh (rebuild/remove) the wireframe child for a given entity id. */
+  refreshWireframeForEntity(entityId: string): void {
+    const h = this.helpers.get(entityId);
+    if (!h) return;
+    const wireframeGroup = h.getObjectByName("wireframeGroup") as THREE.Object3D | undefined;
+    if (!wireframeGroup) return;
+    // Remove existing children and dispose their geometries/materials
+    const toRemove = wireframeGroup.children.slice();
+    for (const c of toRemove) {
+      wireframeGroup.remove(c);
+      c.traverse((o) => {
+        const geom = (o as any).geometry as THREE.BufferGeometry | undefined;
+        if (geom) {
+          try {
+            geom.dispose();
+          } catch {}
+        }
+        const mat = (o as any).material as THREE.Material | THREE.Material[] | undefined;
+        if (mat) {
+          try {
+            if (Array.isArray(mat)) (mat as THREE.Material[]).forEach((m) => m.dispose());
+            else (mat as THREE.Material).dispose();
+          } catch {}
+        }
+      });
+    }
+
+    // Try to find geometry from registry
+    try {
+      const rc = this.registry.get(entityId);
+      const geometry = rc?.geometry ?? (rc?.object3D && (rc.object3D as any).geometry);
+      if (geometry && geometry instanceof THREE.BufferGeometry) {
+        const wf = this.createWireframeFromGeometry(geometry);
+        wireframeGroup.add(wf);
+      }
+    } catch {}
+  }
+
   recreateForEntityIfNeeded(entity: Entity): void {
     const exists = this.helpers.has(entity.id);
     if (this.forbidden.has(entity.id)) {

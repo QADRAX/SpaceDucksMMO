@@ -50,8 +50,11 @@ export class MaterialFactory {
       textureCache
         .load(url)
         .then((tex) => {
-          apply(tex);
-          if (applyTiling) applyTiling(tex);
+          // Clone the texture before modifying it so we don't mutate
+          // a shared cached texture instance used by other materials/entities.
+          const t = tex.clone();
+          apply(t);
+          if (applyTiling) applyTiling(t);
           material.needsUpdate = true;
         })
         .catch((err) => {
