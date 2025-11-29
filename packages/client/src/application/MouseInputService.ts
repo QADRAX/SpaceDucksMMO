@@ -34,14 +34,21 @@ export class MouseInputService {
   private pointerLockChangeListener = () => this.onPointerLockChange();
 
   constructor() {
-    if (typeof document !== 'undefined' && document.addEventListener) {
+    if (typeof document !== "undefined" && document.addEventListener) {
       // Use document listeners for mouse events; more robust for pointer lock
-      document.addEventListener('mousemove', this.mouseMoveListener);
-      document.addEventListener('mousedown', this.mouseDownListener);
-      document.addEventListener('mouseup', this.mouseUpListener);
-      document.addEventListener('wheel', this.wheelListener as any, { passive: true } as any);
+      document.addEventListener("mousemove", this.mouseMoveListener);
+      document.addEventListener("mousedown", this.mouseDownListener);
+      document.addEventListener("mouseup", this.mouseUpListener);
+      document.addEventListener(
+        "wheel",
+        this.wheelListener as any,
+        { passive: true } as any
+      );
 
-      document.addEventListener('pointerlockchange', this.pointerLockChangeListener);
+      document.addEventListener(
+        "pointerlockchange",
+        this.pointerLockChangeListener
+      );
     }
   }
 
@@ -53,9 +60,14 @@ export class MouseInputService {
       const my = (e as any).movementY ?? 0;
       this.state.deltaX += mx;
       this.state.deltaY += my;
-      if (process.env.NODE_ENV === 'development') {
+      if (process.env.NODE_ENV === "development") {
         // eslint-disable-next-line no-console
-        console.debug('[MouseInputService] deltaX:', this.state.deltaX, 'deltaY:', this.state.deltaY);
+        console.debug(
+          "[MouseInputService] deltaX:",
+          this.state.deltaX,
+          "deltaY:",
+          this.state.deltaY
+        );
       }
     } else {
       this.state.screenX = e.screenX;
@@ -63,10 +75,10 @@ export class MouseInputService {
     }
   }
 
-  private mapButton(b: number): 'left' | 'middle' | 'right' | null {
-    if (b === 0) return 'left';
-    if (b === 1) return 'middle';
-    if (b === 2) return 'right';
+  private mapButton(b: number): "left" | "middle" | "right" | null {
+    if (b === 0) return "left";
+    if (b === 1) return "middle";
+    if (b === 2) return "right";
     return null;
   }
 
@@ -91,9 +103,12 @@ export class MouseInputService {
       // or if the target element reference changes.
       const prev = this.state.locked;
       this.state.locked = !!(document && (document as any).pointerLockElement);
-      if (process.env.NODE_ENV === 'development' && prev !== this.state.locked) {
+      if (
+        process.env.NODE_ENV === "development" &&
+        prev !== this.state.locked
+      ) {
         // eslint-disable-next-line no-console
-        console.debug('[MouseInputService] locked changed:', this.state.locked);
+        console.debug("[MouseInputService] locked changed:", this.state.locked);
       }
     } catch {
       // ignore in non-browser environments
@@ -146,12 +161,15 @@ export class MouseInputService {
   }
 
   dispose(): void {
-    if (typeof document !== 'undefined' && document.removeEventListener) {
-      document.removeEventListener('mousemove', this.mouseMoveListener);
-      document.removeEventListener('mousedown', this.mouseDownListener);
-      document.removeEventListener('mouseup', this.mouseUpListener);
-      document.removeEventListener('wheel', this.wheelListener as any);
-      document.removeEventListener('pointerlockchange', this.pointerLockChangeListener);
+    if (typeof document !== "undefined" && document.removeEventListener) {
+      document.removeEventListener("mousemove", this.mouseMoveListener);
+      document.removeEventListener("mousedown", this.mouseDownListener);
+      document.removeEventListener("mouseup", this.mouseUpListener);
+      document.removeEventListener("wheel", this.wheelListener as any);
+      document.removeEventListener(
+        "pointerlockchange",
+        this.pointerLockChangeListener
+      );
     }
   }
 }

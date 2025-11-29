@@ -1,21 +1,23 @@
-import { BaseScene } from './BaseScene';
-import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
-import type { SettingsService } from '@client/application/SettingsService';
-import SceneId from '@client/domain/scene/SceneId';
+import { BaseScene } from "./BaseScene";
+import type IRenderingEngine from "@client/domain/ports/IRenderingEngine";
+import type { SettingsService } from "@client/application/SettingsService";
+import SceneId from "@client/domain/scene/SceneId";
 
-import { Entity } from '@client/domain/ecs/core/Entity';
-import { PlaneGeometryComponent } from '@client/domain/ecs/components/geometry/PlaneGeometryComponent';
-import SphereGeometryComponent from '@client/domain/ecs/components/geometry/SphereGeometryComponent';
-import { LightComponent } from '@client/domain/ecs/components/LightComponent';
-import { CameraViewComponent } from '@client/domain/ecs/components/CameraViewComponent';
-import { MouseLookComponent } from '@client/domain/ecs/components/MouseLookComponent';
-import { FirstPersonMoveComponent } from '@client/domain/ecs/components/FirstPersonMoveComponent';
+import { Entity } from "@client/domain/ecs/core/Entity";
+import { PlaneGeometryComponent } from "@client/domain/ecs/components/geometry/PlaneGeometryComponent";
+import SphereGeometryComponent from "@client/domain/ecs/components/geometry/SphereGeometryComponent";
+import { CameraViewComponent } from "@client/domain/ecs/components/CameraViewComponent";
+import { MouseLookComponent } from "@client/domain/ecs/components/MouseLookComponent";
+import { FirstPersonMoveComponent } from "@client/domain/ecs/components/FirstPersonMoveComponent";
 
-import { BasicMaterialComponent } from '@client/domain/ecs/components/material/BasicMaterialComponent';
-import { LambertMaterialComponent } from '@client/domain/ecs/components/material/LambertMaterialComponent';
-import { PhongMaterialComponent } from '@client/domain/ecs/components/material/PhongMaterialComponent';
-import { StandardMaterialComponent } from '@client/domain/ecs/components/material/StandardMaterialComponent';
-import BaseMaterialComponent from '@client/domain/ecs/components/material/BaseMaterialComponent';
+import { BasicMaterialComponent } from "@client/domain/ecs/components/material/BasicMaterialComponent";
+import { LambertMaterialComponent } from "@client/domain/ecs/components/material/LambertMaterialComponent";
+import { PhongMaterialComponent } from "@client/domain/ecs/components/material/PhongMaterialComponent";
+import { StandardMaterialComponent } from "@client/domain/ecs/components/material/StandardMaterialComponent";
+import BaseMaterialComponent from "@client/domain/ecs/components/material/BaseMaterialComponent";
+
+import AmbientLightComponent from "@client/domain/ecs/components/light/AmbientLightComponent";
+import DirectionalLightComponent from "@client/domain/ecs/components/light/DirectionalLightComponent";
 
 /**
  * Sandbox scene: material gallery showcasing Basic, Lambert, Phong and Standard materials
@@ -43,43 +45,41 @@ export class SandboxScene extends BaseScene {
     // --- Lights ----------------------------------------------------------------
 
     // Soft ambient light
-    const ambient = new Entity('light-ambient')
-      .addComponent(
-        new LightComponent({
-          type: 'ambient',
-          color: 0xffffff,
-          intensity: 0.4,
-        })
-      );
+    const ambient = new Entity("light-ambient").addComponent(
+      new AmbientLightComponent({
+        color: 0xffffff,
+        intensity: 0.4,
+      })
+    );
     this.addEntity(ambient);
 
     // Main directional light for clear highlights
-    const dir = new Entity('light-directional');
+    const dir = new Entity("light-directional");
     dir.transform.setPosition(8, 10, 6);
     dir.addComponent(
-      new LightComponent({
-        type: 'directional',
+      new DirectionalLightComponent({
         color: 0xffffff,
         intensity: 1.2,
+        castShadow: false,
       })
     );
     this.addEntity(dir);
 
     // Secondary directional to fill shadows a bit
-    const dir2 = new Entity('light-directional-2');
+    const dir2 = new Entity("light-directional-2");
     dir2.transform.setPosition(-6, 4, -8);
     dir2.addComponent(
-      new LightComponent({
-        type: 'directional',
+      new DirectionalLightComponent({
         color: 0xfff0e0,
         intensity: 0.5,
+        castShadow: false,
       })
     );
     this.addEntity(dir2);
 
     // --- Ground plane ---------------------------------------------------------
 
-    const ground = new Entity('ground');
+    const ground = new Entity("ground");
     ground.addComponent(
       new PlaneGeometryComponent({
         width: 40,
@@ -90,13 +90,13 @@ export class SandboxScene extends BaseScene {
     // Use GroundDirt as floor
     ground.addComponent(
       new StandardMaterialComponent({
-        color: '#ffffff',
+        color: "#ffffff",
         metalness: 0,
         roughness: 1,
-        texture: 'materials/GroundDirt009/basecolor',
-        normalMap: 'materials/GroundDirt009/normal',
-        aoMap: 'materials/GroundDirt009/ambientOcclusion',
-        roughnessMap: 'materials/GroundDirt009/roughness',
+        texture: "materials/GroundDirt009/basecolor",
+        normalMap: "materials/GroundDirt009/normal",
+        aoMap: "materials/GroundDirt009/ambientOcclusion",
+        roughnessMap: "materials/GroundDirt009/roughness",
       })
     );
 
@@ -106,7 +106,7 @@ export class SandboxScene extends BaseScene {
 
     // --- Origin (center of gallery & camera target) ---------------------------
 
-    const origin = new Entity('origin');
+    const origin = new Entity("origin");
     origin.transform.setPosition(0, 1, 0);
     this.addEntity(origin);
 
@@ -140,201 +140,179 @@ export class SandboxScene extends BaseScene {
     const rowMetalZ = 0;
     const rowGlassPlasticZ = 4;
 
-    // -------------------------------------------------------------------------
-    // ROW 1: concrete-muddy (good diffuse, AO, roughness)
-    // -------------------------------------------------------------------------
-
-    // Basic (unlit) concrete
+    // ROW 1: concrete-muddy
     createSphere(
-      'concrete-basic',
+      "concrete-basic",
       colBasicX,
       rowConcreteZ,
       new BasicMaterialComponent({
-        color: '#ffffff',
-        texture: 'materials/concrete-muddy/basecolor',
-        // normalMap ignored by MeshBasicMaterial in Three.js, but kept for consistency
-        normalMap: 'materials/concrete-muddy/normal',
+        color: "#ffffff",
+        texture: "materials/concrete-muddy/basecolor",
+        normalMap: "materials/concrete-muddy/normal",
       })
     );
 
-    // Lambert concrete (matte, diffuse, AO + bump)
     createSphere(
-      'concrete-lambert',
+      "concrete-lambert",
       colLambertX,
       rowConcreteZ,
       new LambertMaterialComponent({
-        color: '#ffffff',
-        texture: 'materials/concrete-muddy/basecolor',
-        normalMap: 'materials/concrete-muddy/normal',
-        aoMap: 'materials/concrete-muddy/ambientOcclusion',
-        bumpMap: 'materials/concrete-muddy/height',
+        color: "#ffffff",
+        texture: "materials/concrete-muddy/basecolor",
+        normalMap: "materials/concrete-muddy/normal",
+        aoMap: "materials/concrete-muddy/ambientOcclusion",
+        bumpMap: "materials/concrete-muddy/height",
       })
     );
 
-    // Phong concrete (adds some specular highlights)
     createSphere(
-      'concrete-phong',
+      "concrete-phong",
       colPhongX,
       rowConcreteZ,
       new PhongMaterialComponent({
-        color: '#cccccc',
-        specular: '#222222',
+        color: "#cccccc",
+        specular: "#222222",
         shininess: 20,
-        texture: 'materials/concrete-muddy/basecolor',
-        normalMap: 'materials/concrete-muddy/normal',
-        aoMap: 'materials/concrete-muddy/ambientOcclusion',
-        bumpMap: 'materials/concrete-muddy/height',
+        texture: "materials/concrete-muddy/basecolor",
+        normalMap: "materials/concrete-muddy/normal",
+        aoMap: "materials/concrete-muddy/ambientOcclusion",
+        bumpMap: "materials/concrete-muddy/height",
       })
     );
 
-    // Standard (PBR) concrete
     createSphere(
-      'concrete-standard',
+      "concrete-standard",
       colStandardX,
       rowConcreteZ,
       new StandardMaterialComponent({
-        color: '#ffffff',
+        color: "#ffffff",
         metalness: 0,
         roughness: 1,
-        texture: 'materials/concrete-muddy/basecolor',
-        normalMap: 'materials/concrete-muddy/normal',
-        aoMap: 'materials/concrete-muddy/ambientOcclusion',
-        roughnessMap: 'materials/concrete-muddy/roughness',
+        texture: "materials/concrete-muddy/basecolor",
+        normalMap: "materials/concrete-muddy/normal",
+        aoMap: "materials/concrete-muddy/ambientOcclusion",
+        roughnessMap: "materials/concrete-muddy/roughness",
       })
     );
 
-    // -------------------------------------------------------------------------
-    // ROW 2: Metal006 (classic metal PBR)
-    // -------------------------------------------------------------------------
-
-    // Basic metal (unlit, only texture)
+    // ROW 2: Metal006
     createSphere(
-      'metal006-basic',
+      "metal006-basic",
       colBasicX,
       rowMetalZ,
       new BasicMaterialComponent({
-        color: '#ffffff',
-        texture: 'materials/Metal006/basecolor',
+        color: "#ffffff",
+        texture: "materials/Metal006/basecolor",
       })
     );
 
-    // Lambert metal (diffuse only, no proper metalness, so appears matte)
     createSphere(
-      'metal006-lambert',
+      "metal006-lambert",
       colLambertX,
       rowMetalZ,
       new LambertMaterialComponent({
-        color: '#aaaaaa',
-        texture: 'materials/Metal006/basecolor',
-        normalMap: 'materials/Metal006/normal',
-        aoMap: 'materials/Metal006/ambientOcclusion',
-        bumpMap: 'materials/Metal006/height',
+        color: "#aaaaaa",
+        texture: "materials/Metal006/basecolor",
+        normalMap: "materials/Metal006/normal",
+        aoMap: "materials/Metal006/ambientOcclusion",
+        bumpMap: "materials/Metal006/height",
       })
     );
 
-    // Phong metal (specular highlights, non-PBR)
     createSphere(
-      'metal006-phong',
+      "metal006-phong",
       colPhongX,
       rowMetalZ,
       new PhongMaterialComponent({
-        color: '#888888',
-        specular: '#ffffff',
+        color: "#888888",
+        specular: "#ffffff",
         shininess: 60,
-        texture: 'materials/Metal006/basecolor',
-        normalMap: 'materials/Metal006/normal',
-        aoMap: 'materials/Metal006/ambientOcclusion',
-        bumpMap: 'materials/Metal006/height',
+        texture: "materials/Metal006/basecolor",
+        normalMap: "materials/Metal006/normal",
+        aoMap: "materials/Metal006/ambientOcclusion",
+        bumpMap: "materials/Metal006/height",
       })
     );
 
-    // Standard metal (PBR with metalnessMap + roughnessMap)
     createSphere(
-      'metal006-standard',
+      "metal006-standard",
       colStandardX,
       rowMetalZ,
       new StandardMaterialComponent({
-        color: '#ffffff',
+        color: "#ffffff",
         metalness: 1,
         roughness: 0.3,
-        texture: 'materials/Metal006/basecolor',
-        normalMap: 'materials/Metal006/normal',
-        aoMap: 'materials/Metal006/ambientOcclusion',
-        roughnessMap: 'materials/Metal006/roughness',
-        metalnessMap: 'materials/Metal006/metallic',
+        texture: "materials/Metal006/basecolor",
+        normalMap: "materials/Metal006/normal",
+        aoMap: "materials/Metal006/ambientOcclusion",
+        roughnessMap: "materials/Metal006/roughness",
+        metalnessMap: "materials/Metal006/metallic",
       })
     );
 
-    // -------------------------------------------------------------------------
-    // ROW 3: Glass / Plastic (transparency and glossy surfaces)
-    // -------------------------------------------------------------------------
-
-    // Basic frosted glass panel (unlit, transparent)
+    // ROW 3: Glass / Plastic / Water
     createSphere(
-      'glass-basic',
+      "glass-basic",
       colBasicX,
       rowGlassPlasticZ,
       new BasicMaterialComponent({
-        color: '#ffffff',
-        texture: 'materials/GlassFrosted001/basecolor',
+        color: "#ffffff",
+        texture: "materials/GlassFrosted001/basecolor",
         transparent: true,
         opacity: 0.6,
       })
     );
 
-    // Lambert frosted glass (will look like matte glass, no real reflection)
     createSphere(
-      'glass-lambert',
+      "glass-lambert",
       colLambertX,
       rowGlassPlasticZ,
       new LambertMaterialComponent({
-        color: '#ffffff',
-        texture: 'materials/GlassFrosted001/basecolor',
-        normalMap: 'materials/GlassFrosted001/normal',
-        aoMap: 'materials/GlassFrosted001/ambientOcclusion',
-        bumpMap: 'materials/GlassFrosted001/height',
+        color: "#ffffff",
+        texture: "materials/GlassFrosted001/basecolor",
+        normalMap: "materials/GlassFrosted001/normal",
+        aoMap: "materials/GlassFrosted001/ambientOcclusion",
+        bumpMap: "materials/GlassFrosted001/height",
         transparent: true,
         opacity: 0.7,
       })
     );
 
-    // Phong plastic (Plastic004) for strong specular highlights
     createSphere(
-      'plastic-phong',
+      "plastic-phong",
       colPhongX,
       rowGlassPlasticZ,
       new PhongMaterialComponent({
-        color: '#ffffff',
-        specular: '#ffffff',
+        color: "#ffffff",
+        specular: "#ffffff",
         shininess: 80,
-        texture: 'materials/Plastic004/basecolor',
-        normalMap: 'materials/Plastic004/normal',
-        aoMap: 'materials/Plastic004/ambientOcclusion',
-        bumpMap: 'materials/Plastic004/height',
+        texture: "materials/Plastic004/basecolor",
+        normalMap: "materials/Plastic004/normal",
+        aoMap: "materials/Plastic004/ambientOcclusion",
+        bumpMap: "materials/Plastic004/height",
       })
     );
 
-    // Standard water-like material (using Water002)
     createSphere(
-      'water-standard',
+      "water-standard",
       colStandardX,
       rowGlassPlasticZ,
       new StandardMaterialComponent({
-        color: '#ffffff',
+        color: "#ffffff",
         metalness: 0,
         roughness: 0.1,
         transparent: true,
         opacity: 0.8,
-        texture: 'materials/Water002/COLOR',
-        normalMap: 'materials/Water002/NORM',
-        aoMap: 'materials/Water002/OCC',
-        roughnessMap: 'materials/Water002/ROUGH',
+        texture: "materials/Water002/COLOR",
+        normalMap: "materials/Water002/NORM",
+        aoMap: "materials/Water002/OCC",
+        roughnessMap: "materials/Water002/ROUGH",
       })
     );
 
-    // --- Camera with orbit ----------------------------------------------------
+    // --- Camera with controls --------------------------------------------------
 
-    const camera = new Entity('main-camera');
+    const camera = new Entity("main-camera");
     camera.addComponent(
       new CameraViewComponent({
         fov: 60,
@@ -343,22 +321,24 @@ export class SandboxScene extends BaseScene {
       })
     );
 
-    // Use interactive first-person controls by default
-    // Mouse look: rotates camera when pointer locked
-    // First person move: WASD + Space/C to move; Shift to sprint
-    // These components cooperate with MouseInputService to request pointer lock
-    camera.addComponent(new MouseLookComponent({
-      
-    }));
-    camera.addComponent(new FirstPersonMoveComponent({
-      flyMode: true,
-    }));
+    camera.addComponent(
+      new MouseLookComponent({
+        // default params
+      })
+    );
+    camera.addComponent(
+      new FirstPersonMoveComponent({
+        flyMode: true,
+      })
+    );
 
     camera.transform.setPosition(0, 10, 24);
     this.addEntity(camera);
-    this.setActiveCamera('main-camera');
+    this.setActiveCamera("main-camera");
 
-    console.log('[SandboxScene] Material gallery (Basic/Lambert/Phong/Standard) ready');
+    console.log(
+      "[SandboxScene] Material gallery (Basic/Lambert/Phong/Standard) ready"
+    );
   }
 
   teardown(engine: IRenderingEngine, renderScene: any): void {

@@ -1,17 +1,19 @@
-import { BaseScene } from './BaseScene';
-import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
-import type { SettingsService } from '@client/application/SettingsService';
-import SceneId from '@client/domain/scene/SceneId';
+import { BaseScene } from "./BaseScene";
+import type IRenderingEngine from "@client/domain/ports/IRenderingEngine";
+import type { SettingsService } from "@client/application/SettingsService";
+import SceneId from "@client/domain/scene/SceneId";
 
 // ECS
-import { Entity } from '@client/domain/ecs/core/Entity';
-import { PlaneGeometryComponent } from '@client/domain/ecs/components/geometry/PlaneGeometryComponent';
-import { BoxGeometryComponent } from '@client/domain/ecs/components/geometry/BoxGeometryComponent';
-import { StandardMaterialComponent } from '@client/domain/ecs/components/material/StandardMaterialComponent';
-import { TextureTilingComponent } from '@client/domain/ecs/components/material/TextureTilingComponent';
-import { CameraViewComponent } from '@client/domain/ecs/components/CameraViewComponent';
-import { LookAtEntityComponent } from '@client/domain/ecs/components/LookAtEntityComponent';
-import { LightComponent } from '@client/domain/ecs/components/LightComponent';
+import { Entity } from "@client/domain/ecs/core/Entity";
+import { PlaneGeometryComponent } from "@client/domain/ecs/components/geometry/PlaneGeometryComponent";
+import { BoxGeometryComponent } from "@client/domain/ecs/components/geometry/BoxGeometryComponent";
+import { StandardMaterialComponent } from "@client/domain/ecs/components/material/StandardMaterialComponent";
+import { TextureTilingComponent } from "@client/domain/ecs/components/material/TextureTilingComponent";
+import { CameraViewComponent } from "@client/domain/ecs/components/CameraViewComponent";
+import { LookAtEntityComponent } from "@client/domain/ecs/components/LookAtEntityComponent";
+
+import AmbientLightComponent from "@client/domain/ecs/components/light/AmbientLightComponent";
+import DirectionalLightComponent from "@client/domain/ecs/components/light/DirectionalLightComponent";
 
 /**
  * Demo scene showcasing the new ECS architecture with:
@@ -34,27 +36,39 @@ export class DemoEcsScene extends BaseScene {
     super.setup(engine, renderScene);
 
     // Luces
-    const ambient = new Entity('light-ambient')
-      .addComponent(new LightComponent({ type: 'ambient', color: 0xffffff, intensity: 0.4 }));
+    const ambient = new Entity("light-ambient").addComponent(
+      new AmbientLightComponent({
+        color: 0xffffff,
+        intensity: 0.4,
+      })
+    );
     this.addEntity(ambient);
 
-    const dir = new Entity('light-directional');
+    const dir = new Entity("light-directional");
     dir.transform.setPosition(5, 5, 5);
-    dir.addComponent(new LightComponent({ type: 'directional', color: 0xffffff, intensity: 1.0 }));
+    dir.addComponent(
+      new DirectionalLightComponent({
+        color: 0xffffff,
+        intensity: 1.0,
+        castShadow: false,
+      })
+    );
     this.addEntity(dir);
 
     // Plano (suelo)
-    const ground = new Entity('ground');
-    ground.addComponent(new PlaneGeometryComponent({ width: 30, height: 30 }));
+    const ground = new Entity("ground");
+    ground.addComponent(
+      new PlaneGeometryComponent({ width: 30, height: 30 })
+    );
     ground.addComponent(
       new StandardMaterialComponent({
-        color: '#808080',
+        color: "#808080",
         roughness: 1.0,
         metalness: 0.0,
-        texture: 'materials/concrete-muddy/basecolor',
-        normalMap: 'materials/concrete-muddy/normal',
-        aoMap: 'materials/concrete-muddy/ambientOcclusion',
-        roughnessMap: 'materials/concrete-muddy/roughness',
+        texture: "materials/concrete-muddy/basecolor",
+        normalMap: "materials/concrete-muddy/normal",
+        aoMap: "materials/concrete-muddy/ambientOcclusion",
+        roughnessMap: "materials/concrete-muddy/roughness",
       })
     );
     ground.addComponent(
@@ -69,25 +83,37 @@ export class DemoEcsScene extends BaseScene {
     this.addEntity(ground);
 
     // Caja simple
-    const box = new Entity('box');
-    box.addComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 }));
-    box.addComponent(new StandardMaterialComponent({ color: '#44aa88', roughness: 0.5, metalness: 0.1 }));
+    const box = new Entity("box");
+    box.addComponent(
+      new BoxGeometryComponent({ width: 1, height: 1, depth: 1 })
+    );
+    box.addComponent(
+      new StandardMaterialComponent({
+        color: "#44aa88",
+        roughness: 0.5,
+        metalness: 0.1,
+      })
+    );
     box.transform.setPosition(0, 0.5, 0);
     this.addEntity(box);
 
     // Punto de mira (origen)
-    const origin = new Entity('origin');
+    const origin = new Entity("origin");
     this.addEntity(origin);
 
     // Cámara
-    const camera = new Entity('main-camera');
+    const camera = new Entity("main-camera");
     camera.transform.setPosition(4, 3, 8);
-    camera.addComponent(new CameraViewComponent({ fov: 60, near: 0.1, far: 1000 }));
-    camera.addComponent(new LookAtEntityComponent({ targetEntityId: 'origin' }));
+    camera.addComponent(
+      new CameraViewComponent({ fov: 60, near: 0.1, far: 1000 })
+    );
+    camera.addComponent(
+      new LookAtEntityComponent({ targetEntityId: "origin" })
+    );
     this.addEntity(camera);
-    this.setActiveCamera('main-camera');
+    this.setActiveCamera("main-camera");
 
-    console.log('[DemoEcsScene] Basic ECS scene ready (box + ground + lights)');
+    console.log("[DemoEcsScene] Basic ECS scene ready (box + ground + lights)");
   }
 }
 
