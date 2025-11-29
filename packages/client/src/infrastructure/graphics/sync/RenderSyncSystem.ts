@@ -17,6 +17,7 @@ import { MeshSyncSystem } from "./MeshSyncSystem";
 import { CameraSyncSystem } from "./CameraSyncSystem";
 import { LightSyncSystem } from "./LightSyncSystem";
 import { LensFlareSystem } from "./LensFlareSystem";
+import DebugTransformSystem from "../debug/DebugTransformSystem";
 import { TextureCache } from "../factories/TextureCache";
 import type { TextureCatalogService } from "@client/application/TextureCatalog";
 import type TextureResolverService from "@client/application/TextureResolverService";
@@ -33,8 +34,12 @@ export class RenderSyncSystem implements IComponentObserver {
   private readonly cameraSystem: CameraSyncSystem;
   private readonly lightSystem: LightSyncSystem;
   private readonly lensFlareSystem: LensFlareSystem;
+  private readonly debugSystem: DebugTransformSystem;
   private readonly textureCatalog?: TextureCatalogService;
   private readonly textureResolver?: TextureResolverService;
+  private sceneDebugMaster = false;
+  private readonly debugFlagListeners = new Map<string, (enabled: boolean) => void>();
+  private activeCameraEntityId: string | null = null;
 
   constructor(
     scene: THREE.Scene,
@@ -54,6 +59,7 @@ export class RenderSyncSystem implements IComponentObserver {
     this.cameraSystem = new CameraSyncSystem(this.scene, this.registry);
     this.lightSystem = new LightSyncSystem(this.scene, this.registry);
     this.lensFlareSystem = new LensFlareSystem(this.scene, this.registry);
+    this.debugSystem = new DebugTransformSystem(this.scene, this.registry);
   }
 
   addEntity(entity: Entity): void {
@@ -74,7 +80,19 @@ export class RenderSyncSystem implements IComponentObserver {
     entity.addComponentListener(listener);
     entity.transform.onChange(() => this.onTransformChanged(entity.id));
 
+    // Listen to per-entity debug flag changes
+    const dbgListener = (enabled: boolean) => this.onEntityDebugFlagChanged(entity, enabled);
+    this.debugFlagListeners.set(entity.id, dbgListener);
+    try {
+      entity.addDebugTransformListener(dbgListener);
+    } catch {}
+
     this.processEntity(entity);
+    // If scene master and entity flag are enabled, let DebugTransformSystem
+    // decide whether to create a helper (it checks forbidden set internally).
+    if (this.sceneDebugMaster && entity.isDebugTransformEnabled()) {
+      this.debugSystem.recreateForEntityIfNeeded(entity);
+    }
     for (const child of entity.getChildren()) this.addEntity(child);
   }
 
@@ -90,7 +108,23 @@ export class RenderSyncSystem implements IComponentObserver {
     }
 
     this.registry.remove(entityId, this.scene);
+    // Remove debug helper if present
+    try {
+      this.debugSystem.removeHelper(entityId);
+    } catch {}
     this.entities.delete(entityId);
+
+    const dbg = this.debugFlagListeners.get(entityId);
+    if (dbg && entity) {
+      try {
+        entity.removeDebugTransformListener(dbg);
+      } catch {}
+    }
+    this.debugFlagListeners.delete(entityId);
+    // ensure forbidden list cleanup
+    try {
+      this.debugSystem.removeForbiddenEntity(entityId);
+    } catch {}
   }
 
   getCamera(entityId: string): THREE.Camera | undefined {
@@ -126,6 +160,10 @@ export class RenderSyncSystem implements IComponentObserver {
         case "spotLight":
         case "cameraView":
           this.registry.remove(entityId, this.scene);
+          try {
+            // ensure debug wireframe is refreshed (removed) when geometry/material/light/camera is removed
+            this.debugSystem.refreshWireframeForEntity(entityId);
+          } catch {}
           break;
         case "lensFlare":
           this.lensFlareSystem.recreateLensFlare(entity);
@@ -144,6 +182,10 @@ export class RenderSyncSystem implements IComponentObserver {
       case "customGeometry":
       case "shaderMaterial":
         this.meshSystem.recreateMesh(entity);
+        try {
+          // mesh/geometry changed: refresh wireframe if a helper exists
+          this.debugSystem.refreshWireframeForEntity(entity.id);
+        } catch {}
         break;
       case "standardMaterial":
       case "basicMaterial":
@@ -228,6 +270,66 @@ export class RenderSyncSystem implements IComponentObserver {
     this.cameraSystem.syncTransform(entity);
     this.lightSystem.syncTransform(entity);
     // Lens flares attached as children move with their parent.
+    // Update debug helper transform if present. DebugTransformSystem will
+    // have no helper for forbidden entities (e.g., active camera), so no
+    // special-casing is required here.
+    try {
+      this.debugSystem.updateHelperTransform(entity);
+    } catch {}
+  }
+
+  /**
+   * Set scene-level master switch for rendering debug transform helpers.
+   * When disabled, no helpers will be visible regardless of entity flags.
+   */
+  setSceneDebugEnabled(enabled: boolean): void {
+    this.sceneDebugMaster = !!enabled;
+    this.debugSystem.setMasterEnabled(this.sceneDebugMaster);
+    if (this.sceneDebugMaster) {
+      // ensure helpers exist (or are removed) according to each entity's
+      // debug flag and the forbidden set maintained by DebugTransformSystem.
+      for (const ent of this.entities.values()) {
+        this.debugSystem.recreateForEntityIfNeeded(ent);
+      }
+    } else {
+      // master disabled: let DebugTransformSystem hide/remove helpers via
+      // setMasterEnabled(false). Optionally calling recreateForEntityIfNeeded
+      // will also ensure helpers are removed.
+      for (const ent of this.entities.values()) this.debugSystem.recreateForEntityIfNeeded(ent);
+    }
+  }
+
+  private onEntityDebugFlagChanged(entity: Entity, enabled: boolean): void {
+    // If master disabled, helpers must remain hidden; do nothing
+    if (!this.sceneDebugMaster) return;
+    // Let DebugTransformSystem recreate/remove helper according to entity
+    // flag and forbidden set.
+    this.debugSystem.recreateForEntityIfNeeded(entity);
+  }
+
+  /**
+   * Inform the sync system which entity id is the active camera. Active camera
+   * must never display a debug helper. Passing `null` clears the active camera.
+   */
+  public setActiveCameraEntityId(id: string | null): void {
+    const prev = this.activeCameraEntityId;
+    if (prev === id) return;
+    this.activeCameraEntityId = id;
+    try {
+      if (prev) {
+        // previous camera is no longer forbidden
+        this.debugSystem.removeForbiddenEntity(prev);
+        const pEnt = this.entities.get(prev);
+        if (pEnt) this.debugSystem.recreateForEntityIfNeeded(pEnt);
+      }
+    } catch {}
+    try {
+      if (id) {
+        // new active camera: forbid helpers. removal of any existing helper
+        // will be handled by addForbiddenEntity.
+        this.debugSystem.addForbiddenEntity(id);
+      }
+    } catch {}
   }
 
   update(dt: number): void {
@@ -238,6 +340,15 @@ export class RenderSyncSystem implements IComponentObserver {
     }
 
     this.lensFlareSystem.update(dt, this.entities);
+    // New: update debug labels orientation (billboard towards active camera)
+    try {
+      if (this.activeCameraEntityId) {
+        const rc = this.registry.get(this.activeCameraEntityId);
+        if (rc && rc.object3D instanceof THREE.Camera) {
+          this.debugSystem.updateLabels(rc.object3D as THREE.Camera);
+        }
+      }
+    } catch {}
   }
 }
 

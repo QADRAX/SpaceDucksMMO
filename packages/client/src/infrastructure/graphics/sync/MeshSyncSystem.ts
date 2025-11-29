@@ -130,7 +130,7 @@ export class MeshSyncSystem {
     rc.object3D.visible = true;
 
     if (materialComp) {
-      this.resolveAndApplyTextures(entity.id, newMat, materialComp).catch(
+      this.resolveAndApplyTextures(entity, newMat, materialComp).catch(
         () => {}
       );
     }
@@ -239,7 +239,7 @@ export class MeshSyncSystem {
     });
 
     if (materialComp) {
-      this.resolveAndApplyTextures(entity.id, material, materialComp).catch(
+      this.resolveAndApplyTextures(entity, material, materialComp).catch(
         () => {}
       );
     }
@@ -266,7 +266,7 @@ export class MeshSyncSystem {
    * This is basically tu resolveAndApplyTextures actual, copiado aquí.
    */
   private async resolveAndApplyTextures(
-    entityId: string,
+    entity: Entity,
     material: THREE.Material,
     comp: AnyMaterialComponent
   ): Promise<void> {
@@ -322,11 +322,15 @@ export class MeshSyncSystem {
         if (!chosen || !chosen.path) return;
 
         const tex = await this.textureCache.load(chosen.path);
-        setter(tex);
-        const entity = null as any as Entity; // not needed, tiling is already applied via callback
-        const e = entity; // placeholder just to show structure
-        // En realidad, aquí puedes copiar tal cual tu código original,
-        // usando this.applyTextureTiling(this.entities.get(entityId)!, tex) si se la quieres inyectar desde fuera.
+        // Clone the texture so modifications (repeat/offset) won't affect other users
+        const clone = tex.clone();
+        setter(clone);
+        // Apply tiling for this specific entity (if it has a TextureTilingComponent)
+        try {
+          this.applyTextureTiling(entity, clone);
+        } catch {
+          // ignore errors applying tiling
+        }
         material.needsUpdate = true;
       } catch {
         // ignore

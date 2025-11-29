@@ -3,6 +3,7 @@ import type Entity from "@client/domain/ecs/core/Entity";
 import { useI18n } from '../../../hooks/useI18n';
 import { TransformGroup } from '../../common/molecules/TransformGroup';
 import { Vector3Input } from '../../common/molecules/Vector3Input';
+import { ToggleSwitch } from '../../common/atoms/ToggleSwitch';
 
 type Props = { entity?: Entity };
 
@@ -13,6 +14,7 @@ export function TransformEditor({ entity }: Props) {
   const [pos, setPos] = useState({ x: 0, y: 0, z: 0 });
   const [rot, setRot] = useState({ x: 0, y: 0, z: 0 });
   const [scale, setScale] = useState({ x: 1, y: 1, z: 1 });
+  const [debugEnabled, setDebugEnabled] = useState<boolean>(() => !!entity?.isDebugTransformEnabled());
 
   useEffect(() => {
     if (!transform) return;
@@ -33,6 +35,20 @@ export function TransformEditor({ entity }: Props) {
     };
   }, [transform]);
 
+  useEffect(() => {
+    if (!entity) return;
+    const listener = (enabled: boolean) => setDebugEnabled(!!enabled);
+    try {
+      entity.addDebugTransformListener(listener);
+      setDebugEnabled(!!entity.isDebugTransformEnabled());
+    } catch {}
+    return () => {
+      try {
+        entity.removeDebugTransformListener(listener);
+      } catch {}
+    };
+  }, [entity]);
+
   if (!entity || !transform)
     return (
       <div className="small-label">{t("inspector.noEntitySelected", "No entity selected")}</div>
@@ -42,6 +58,18 @@ export function TransformEditor({ entity }: Props) {
     <div className="component-section">
       <div className="component-header">
         <strong>{t("inspector.transform", "Transform")}</strong>
+      </div>
+      <div style={{ padding: '6px 8px' }}>
+        <ToggleSwitch
+          checked={debugEnabled}
+          onChange={(v) => {
+            try {
+              entity?.setDebugTransformEnabled(v);
+            } catch {}
+            setDebugEnabled(v);
+          }}
+          label={t('inspector.entityDebug', 'Show Debug')}
+        />
       </div>
       <div style={{ paddingTop: 6 }}>
         <TransformGroup label={t("inspector.position", "Position")}>

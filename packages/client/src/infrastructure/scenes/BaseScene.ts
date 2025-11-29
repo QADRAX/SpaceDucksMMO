@@ -25,6 +25,16 @@ export abstract class BaseScene implements IScene {
 
   // ECS Systems
   protected renderSyncSystem?: RenderSyncSystem;
+  /**
+   * Scene-level master switch for debug transform helpers.
+   * When false (default), no debug helpers are rendered even if
+   * individual entities have their debug flag enabled. When true,
+   * helpers are rendered only for entities whose `isDebugTransformEnabled()`
+   * returns true.
+   *
+   * Public so the scene inspector can read/write the value generically.
+   */
+  public debugTransformsEnabled: boolean = false;
 
   // Settings service kept for future use (e.g., quality affecting ECS components)
   // Currently unused since legacy texture reload path was removed.
@@ -62,6 +72,26 @@ export abstract class BaseScene implements IScene {
     this.emitChange({ kind: "entity-added", entity });
   }
 
+  /**
+   * Enable or disable debug transform helpers for all entities in this scene.
+   * Design: scene-level flag is a master switch. If set to false, no debug
+   * helpers are visible even if entities have their personal flag enabled.
+   * If set to true, helpers will be created/shown for entities that have
+   * `entity.isDebugTransformEnabled() === true`.
+   */
+  public setDebugTransformsEnabled(enabled: boolean): void {
+    if (this.debugTransformsEnabled === enabled) return;
+    this.debugTransformsEnabled = enabled;
+    // Notify render/debug systems so helpers are created/removed accordingly.
+    if (this.renderSyncSystem) {
+      this.renderSyncSystem.setSceneDebugEnabled(enabled);
+    }
+    // Notify subscribers (inspector/UI) about the change so they can react.
+    try {
+      this.emitChange({ kind: 'scene-debug-changed', enabled: !!enabled });
+    } catch {}
+  }
+
   /** Remove an ECS Entity by ID */
   removeEntity(id: string): void {
     const ent = this.entities.get(id);
@@ -74,6 +104,8 @@ export abstract class BaseScene implements IScene {
     }
     if (this.activeCameraId === id) {
       this.activeCameraId = null;
+      // inform render sync system that there is no active camera now
+      if (this.renderSyncSystem) this.renderSyncSystem.setActiveCameraEntityId(null);
       if (this.engine) {
         try {
           this.engine.onActiveCameraChanged();
@@ -103,6 +135,9 @@ export abstract class BaseScene implements IScene {
       return;
     }
     this.activeCameraId = id;
+
+    // inform render sync system about new active camera so it can hide helpers
+    if (this.renderSyncSystem) this.renderSyncSystem.setActiveCameraEntityId(this.activeCameraId);
 
     if (this.engine) {
       try {
@@ -150,6 +185,11 @@ export abstract class BaseScene implements IScene {
       catalog,
       resolver
     );
+
+    // Ensure render sync is aware of current scene-level debug master flag
+    try {
+      this.renderSyncSystem.setSceneDebugEnabled(this.debugTransformsEnabled);
+    } catch {}
 
     // Add all entities that were already added
     for (const ent of this.entities.values()) {
@@ -307,6 +347,10 @@ export abstract class BaseScene implements IScene {
       } catch {}
       this.entitySubscriptions.delete(entityId);
     }
+  }
+
+  public getDebugTransformsEnabled(): boolean {
+    return this.debugTransformsEnabled;
   }
 
   /**

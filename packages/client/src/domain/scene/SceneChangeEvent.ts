@@ -6,7 +6,8 @@ export type SceneChangeEvent =
   | { kind: 'hierarchy-changed'; childId: string; newParentId: string | null }
   | { kind: 'active-camera-changed'; entityId: string | null }
   | { kind: 'transform-changed'; entityId: string }
-  | { kind: 'component-changed'; entityId: string; componentType: string };
+  | { kind: 'component-changed'; entityId: string; componentType: string }
+  | { kind: 'scene-debug-changed'; enabled: boolean };
 
 // Generic error event to notify UI/inspector about invalid operations or problems
 export type SceneChangeErrorEvent = { kind: 'error'; message: string };

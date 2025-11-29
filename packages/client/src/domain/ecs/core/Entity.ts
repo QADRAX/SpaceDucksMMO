@@ -22,6 +22,13 @@ export class Entity {
   private _parent?: Entity;
   private children: Entity[] = [];
   private componentListeners: ComponentListener[] = [];
+  /**
+   * Per-entity flag to indicate whether debug transform helpers should be
+   * rendered for this entity. Default: false (disabled).
+   * Scene-level master switch may override this (see BaseScene).
+   */
+  private _debugTransformEnabled = false;
+  private debugTransformListeners: Array<(enabled: boolean) => void> = [];
 
   constructor(id: string, position?: [number, number, number]) {
     this.id = id;
@@ -169,6 +176,39 @@ export class Entity {
       comp.update(dt);
     }
     for (const child of this.children) child.update(dt);
+  }
+
+  /**
+   * Enable or disable debug transform helpers for this entity.
+   * Calling this will notify any listeners (e.g., the debug system) so
+   * they can create/destroy or show/hide helpers accordingly.
+   */
+  setDebugTransformEnabled(enabled: boolean): void {
+    if (this._debugTransformEnabled === enabled) return;
+    this._debugTransformEnabled = enabled;
+    for (const l of this.debugTransformListeners) {
+      try {
+        l(enabled);
+      } catch (e) {
+        /* swallow listener errors */
+      }
+    }
+  }
+
+  /** Returns whether debug transform helpers are enabled for this entity. */
+  isDebugTransformEnabled(): boolean {
+    return this._debugTransformEnabled;
+  }
+
+  /** Register a listener for debug flag changes. */
+  addDebugTransformListener(listener: (enabled: boolean) => void): void {
+    if (!this.debugTransformListeners.includes(listener)) this.debugTransformListeners.push(listener);
+  }
+
+  /** Remove a previously registered debug flag listener. */
+  removeDebugTransformListener(listener: (enabled: boolean) => void): void {
+    const i = this.debugTransformListeners.indexOf(listener);
+    if (i >= 0) this.debugTransformListeners.splice(i, 1);
   }
 }
 

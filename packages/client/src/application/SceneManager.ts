@@ -213,6 +213,27 @@ export class SceneManager {
   }
 
   /**
+   * Convenience: set the scene-level debug flag on the current scene if supported.
+   */
+  setSceneDebugEnabled(enabled: boolean): void {
+    try {
+      this.currentScene?.setDebugTransformsEnabled?.(enabled);
+    } catch {}
+  }
+
+  /**
+   * Convenience: read the current scene-level debug flag if the scene exposes it.
+   * Returns `null` when the current scene does not expose the debug flag.
+   */
+  getCurrentSceneDebugEnabled(): boolean | null {
+    try {
+      const v = this.currentScene?.getDebugTransformsEnabled?.();
+      return typeof v === 'boolean' ? v : null;
+    } catch {}
+    return null;
+  }
+
+  /**
    * Reparent an entity and return a Result describing success or failure.
    * Prefer scene-level Result API when available; otherwise call the
    * legacy void API and convert to Result.

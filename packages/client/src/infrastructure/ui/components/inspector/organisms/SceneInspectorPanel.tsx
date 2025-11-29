@@ -4,6 +4,7 @@ import { ComponentInspector } from "./ComponentInspector";
 import { TransformEditor } from "./TransformEditor";
 import { CameraSelector } from "../molecules/CameraSelector";
 import { SceneIcon } from '../../common/icons';
+import { ToggleSwitch } from '../../common/atoms/ToggleSwitch';
 import { useServices } from '../../../hooks/useServices';
 import { useI18n } from '../../../hooks/useI18n';
 import { DraggablePanel } from '../../common/organisms/DraggablePanel';
@@ -31,6 +32,7 @@ export function SceneInspectorPanel() {
 
   useEffect(() => {
     const unsub = sceneManager?.subscribeToSceneChanges((ev) => {
+      const k = (ev as any).kind;
       if (
         [
           "entity-added",
@@ -38,9 +40,14 @@ export function SceneInspectorPanel() {
           "hierarchy-changed",
           "component-changed",
           "active-camera-changed",
-        ].includes(ev.kind)
+          "scene-debug-changed",
+        ].includes(k)
       ) {
         setEntities(sceneManager.getEntities());
+      }
+      if (k === 'scene-debug-changed') {
+        // forward new value to local state
+        setSceneDebugEnabledLocal(!!(ev as any).enabled);
       }
       if (ev.kind === "error") setLastError(ev.message || null);
       if (ev.kind === "active-camera-changed")
@@ -66,6 +73,18 @@ export function SceneInspectorPanel() {
     setInspectable(res?.ok ?? true);
   }, [sceneManager]);
 
+  const [sceneDebugEnabledLocal, setSceneDebugEnabledLocal] = useState<boolean>(
+    () => sceneManager?.getCurrentSceneDebugEnabled() ?? false
+  );
+
+  const onToggleSceneDebug = (enabled: boolean) => {
+    try {
+      sceneManager?.setSceneDebugEnabled(enabled);
+    } catch {}
+    setSceneDebugEnabledLocal(enabled);
+    // also ensure renderSyncSystem reacts by re-evaluating helpers via SceneManager events
+  };
+
   const selectedEntity = entities.find((e) => e.id === selected);
   const cameraEntities = entities.filter((e) =>
     typeof e.hasComponent === "function" ? e.hasComponent("cameraView") : false
@@ -90,7 +109,7 @@ export function SceneInspectorPanel() {
               </div>
             </div>
             <div className="inspector-header__row">
-              <div className="small-label inspector-active-camera">
+                <div className="small-label inspector-active-camera">
                 {t("inspector.activeCamera", "Active Camera")}:
                 <div style={{ marginLeft: 8, display: 'inline-block' }}>
                   <CameraSelector
@@ -105,6 +124,13 @@ export function SceneInspectorPanel() {
                   />
                 </div>
               </div>
+                <div style={{ marginLeft: 12 }}>
+                  <ToggleSwitch
+                    checked={sceneDebugEnabledLocal}
+                    onChange={onToggleSceneDebug}
+                    label={t('inspector.sceneDebug', 'Scene Debug')}
+                  />
+                </div>
             </div>
           </div>
 
