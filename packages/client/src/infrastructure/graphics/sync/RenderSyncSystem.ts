@@ -559,6 +559,7 @@ export class RenderSyncSystem implements IComponentObserver {
     const wr = t.worldRotation;
     const ws = t.worldScale;
     object3D.position.set(wp.x, wp.y, wp.z);
+    object3D.rotation.order = 'YXZ';
     object3D.rotation.set(wr.x, wr.y, wr.z);
     object3D.scale.set(ws.x, ws.y, ws.z);
   }
