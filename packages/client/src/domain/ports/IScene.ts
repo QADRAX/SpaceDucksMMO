@@ -73,6 +73,9 @@ export interface IScene {
   reparentEntity?(childId: string, newParentId: string | null): void;
   /** Return id of active camera entity in the scene, or null if none */
   getActiveCameraEntityId?(): string | null;
+  /** Optional: read/write scene-level debug master flag for inspector tools */
+  getDebugTransformsEnabled?(): boolean;
+  setDebugTransformsEnabled?(enabled: boolean): void;
 }
 
 export default IScene;
