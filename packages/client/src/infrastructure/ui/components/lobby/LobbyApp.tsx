@@ -2,8 +2,7 @@ import { useState } from "preact/hooks";
 import "./lobby.css";
 import ServerSelectorPopup from "./ServerSelectorPopup";
 import SettingsPopup from "../settings/SettingsPopup";
-import IconButton from "../common/utility/IconButton";
-import Button from "../common/utility/Button";
+import { IconButton, Button } from "../common/atoms";
 import useI18n from "../../hooks/useI18n";
 import { useNavigation } from "../../hooks/useServices";
 import { SettingsIcon } from "../common/icons";
@@ -17,6 +16,10 @@ export default function LobbyApp() {
 
   const handleSandboxClick = async () => {
     await navigateTo(GameScreens.Sandbox);
+  };
+
+  const handleEcsDemoClick = async () => {
+    await navigateTo(GameScreens.EcsDemo);
   };
 
   return (
@@ -49,6 +52,13 @@ export default function LobbyApp() {
             onClick={handleSandboxClick}
           >
             🧪 Sandbox
+          </Button>
+          <Button
+            variant="secondary"
+            size="medium"
+            onClick={handleEcsDemoClick}
+          >
+            ⚙️ ECS Demo
           </Button>
         </div>
       </div>

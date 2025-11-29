@@ -1,6 +1,6 @@
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
-import type { ISceneObject } from '@client/domain/scene/ISceneObject';
 import type SceneManager from './SceneManager';
+import { getInputServices } from '@client/domain/ecs/core/InputContext';
 
 /**
  * Application service that orchestrates the render loop.
@@ -34,11 +34,14 @@ export class SceneService {
       const dt = now - this.lastTime;
       this.lastTime = now;
       
-      // Delegate scene update to SceneManager
-      // (SceneManager calls update on current scene, which updates its objects)
       this.sceneManager.update(dt);
-      
       this.engine.renderFrame();
+      try {
+        const input = getInputServices();
+        if (input && input.mouse && input.mouse.beginFrame) input.mouse.beginFrame();
+      } catch (e) {
+        // ignore: input services might not be set in tests
+      }
       this.frameHandle = requestAnimationFrame(loop);
     };
     loop();

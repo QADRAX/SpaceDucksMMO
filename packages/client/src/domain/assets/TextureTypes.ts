@@ -1,59 +1,48 @@
 /**
- * Texture quality levels mapping to resolution
- * - low: 2k textures (2048x1024)
- * - medium: 4k textures (4096x2048)
- * - high: 8k textures (8192x4096)
- * - ultra: 8k textures with additional detail maps
+ * Texture quality levels mapping to resolution (logical, independent of exact pixels).
+ * - low: 2k or similar
+ * - medium: 4k or similar
+ * - high: 8k or similar
+ * - ultra: 8k+ or enhanced detail maps
  */
 export type TextureQuality = 'low' | 'medium' | 'high' | 'ultra';
 
 /**
- * Types of textures used for celestial bodies
+ * Logical identifier for a texture variant, derived from folder structure:
+ * assets/textures/<collection>/<entity>/<quality?>/<variant>.<ext>
+ *
+ * Examples:
+ * - "planets/jupiter/albedo"
+ * - "planets/saturn/ring-alpha"
+ * - "ui/main-menu/background"
+ * - "tiles/space-station/floor-metal-01"
  */
-export type TextureType = 
-  | 'surface'      // Generic surface texture (used for most objects)
-  | 'diffuse'      // Base color map
-  | 'normal'       // Normal/bump map for surface detail
-  | 'specular'     // Specular/roughness map
-  | 'emissive'     // Glow/emission map (e.g., city lights)
-  | 'atmosphere';  // Atmosphere/cloud layer
+export type TextureId = string;
 
 /**
- * Identifier for a celestial body texture set
- */
-export type CelestialBodyId = 
-  | 'venus'
-  | 'earth'
-  | 'mars'
-  | 'jupiter'
-  | 'saturn'
-  | 'mercury'
-  | 'moon'
-  | 'sun'
-  | 'rocky-planet'
-  | 'stars'
-  | 'stars_milky_way';
-
-/**
- * Request for a specific texture
+ * Request for a specific texture by logical id.
  */
 export interface TextureRequest {
-  /** Which celestial body */
-  bodyId: CelestialBodyId;
-  /** Type of texture (diffuse, normal, etc.) */
-  type: TextureType;
-  /** Optional: override quality (uses settings if not provided) */
+  /** Logical texture id, matching TextureVariant.id from the catalog. */
+  id: TextureId;
+
+  /**
+   * Optional: preferred quality (uses settings if not provided).
+   * The resolver will try this quality and fall back to lower ones.
+   */
   quality?: TextureQuality;
 }
 
 /**
- * Result of texture resolution
+ * Result of texture resolution.
  */
 export interface TextureResource {
-  /** Full path to the texture file */
+  /** Logical texture id. */
+  id: TextureId;
+
+  /** Full path to the texture file. */
   path: string;
-  /** Actual quality level used */
+
+  /** Actual quality level used. */
   quality: TextureQuality;
-  /** Texture type */
-  type: TextureType;
 }

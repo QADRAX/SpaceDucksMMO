@@ -1,4 +1,4 @@
-import type { TextureRequest, TextureResource } from '@client/domain/assets/TextureTypes';
+import type { TextureRequest, TextureResource, TextureQuality } from '@client/domain/assets/TextureTypes';
 
 /**
  * Port for resolving texture paths based on configuration.
@@ -24,5 +24,5 @@ export interface ITextureResolver {
    * Get the current texture quality setting
    * @returns Current quality level
    */
-  getCurrentQuality(): string;
+  getCurrentQuality(): TextureQuality;
 }

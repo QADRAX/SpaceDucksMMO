@@ -1,6 +1,8 @@
 import ServiceContainer from "@client/infrastructure/di/ServiceContainer";
 import RenderingBootstrap from "@client/infrastructure/rendering/RenderingBootstrap";
 import UIBootstrap from "./UIBootstrap";
+import DevToolsBootstrap from './dev/DevToolsBootstrap';
+import { setInputServices } from "@client/domain/ecs/core/InputContext";
 
 /**
  * Renderer Bootstrap - Main Application Orchestrator
@@ -20,42 +22,81 @@ export class RendererBootstrap {
     const serviceContainer = new ServiceContainer();
     const services = serviceContainer.build();
 
+    // Expose input services to ECS components (only when available)
+    // Use explicit existence checks instead of try/catch so failures are deterministic.
+    if (services) {
+      setInputServices({ mouse: services.mouse, keyboard: services.keyboard });
+    }
+
     // 3. Initialize 3D rendering engine
-    const renderingBootstrap = new RenderingBootstrap(services.textureResolver, services.settings);
+    const renderingBootstrap = new RenderingBootstrap(services.textureResolver, services.settings, services.fpsController);
+    // Texture catalog is required in Services; wire it into renderer unconditionally
+    renderingBootstrap.getRenderer().setTextureCatalog(services.textureCatalog);
     renderingBootstrap.initialize(container);
+
+    // Expose single renderer and scene manager instances from RenderingBootstrap into services
+    const sceneManager = renderingBootstrap.getSceneManager();
+    const renderer = renderingBootstrap.getRenderer();
+    services.sceneManager = sceneManager;
+    services.renderingEngine = renderer;
+
+    // Wire canvas element into mouse service when available
+    const canvas = container.querySelector('canvas') as HTMLCanvasElement | null;
+    if (canvas) {
+      services.mouse.setTargetElement(canvas);
+      canvas.addEventListener('click', () => services.mouse.requestPointerLock());
+    }
+
+    // Always allow Escape to exit pointer lock
+    services.keyboard.onKeyDown('escape', () => {
+      services.mouse.exitPointerLock();
+    });
 
     // 4. Initialize UI layer
     const uiBootstrap = new UIBootstrap(root);
-    uiBootstrap.registerScreens(services, renderingBootstrap.getSceneManager());
+    uiBootstrap.registerScreens(services, sceneManager);
+    
+    // Initialize dev tools (overlay + widget registration) in development
+    if (process.env.NODE_ENV !== 'production') {
+      // Initialize dev tools only when required services are present (no try/catch)
+      if (root && services.devRegistry && services.keyboard && typeof services.keyboard.onKeyDown === 'function') {
+        const devTools = new DevToolsBootstrap(root, services);
+        devTools.initialize();
+
+        // Register dev hotkeys via centralized KeyboardInputService
+        services.keyboard.onKeyDown('f1', () => {
+          const mounted = services.devRegistry.toggleWidget('fps');
+          if (mounted) services.fpsController.start(); else services.fpsController.stop();
+        });
+
+        services.keyboard.onKeyDown('f2', () => {
+          services.devRegistry.toggleWidget('scene-inspector');
+        });
+      }
+    }
     
     // Show initial screen with transition (async but don't block)
     uiBootstrap.showInitialScreen().catch(err => {
       console.error('Failed to show initial screen:', err);
     });
 
-    // 5. Initialize services asynchronously
-    try {
-      await serviceContainer.initialize();
-      
-      // Apply initial graphics settings
-      const settings = services.settings.getSettings();
-      renderingBootstrap.applySettings(settings);
+    // 5. Initialize services asynchronously and apply initial settings
+    await serviceContainer.initialize();
+    // Apply initial graphics settings
+    const settings = services.settings.getSettings();
+    renderingBootstrap.applySettings(settings);
 
-      // Apply initial fullscreen state
-      await services.window.setFullscreen(settings.graphics.fullscreen);
+    // Apply initial fullscreen state
+    await services.window.setFullscreen(settings.graphics.fullscreen);
 
-      // Subscribe to settings changes for real-time updates
-      const gfxController = renderingBootstrap.getGraphicsController();
-      services.settings.subscribe((newSettings) => {
-        gfxController.setAntialias(newSettings.graphics.antialias);
-        gfxController.setShadows(newSettings.graphics.shadows);
-        
-        // Apply fullscreen changes immediately
-        services.window.setFullscreen(newSettings.graphics.fullscreen);
-      });
-    } catch (error) {
-      console.error('Failed to initialize services:', error);
-    }
+    // Subscribe to settings changes for real-time updates
+    const gfxController = renderingBootstrap.getGraphicsController();
+    services.settings.subscribe((newSettings) => {
+      gfxController.setAntialias(newSettings.graphics.antialias);
+      gfxController.setShadows(newSettings.graphics.shadows);
+      // Apply fullscreen changes immediately
+      services.window.setFullscreen(newSettings.graphics.fullscreen);
+    });
 
     // 6. Start render loop
     renderingBootstrap.start();

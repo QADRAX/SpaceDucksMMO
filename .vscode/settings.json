@@ -1,6 +1,9 @@
 {
-  "jest.jestCommandLine": "npm test --",
   "jest.runMode": "on-demand",
-  "jest.rootPath": "packages/core",
-  "jest.coverageFormatter": "DefaultFormatter"
+  "jest.coverageFormatter": "DefaultFormatter",
+  "jest.jestCommandLine": "npx jest",
+  "jest.rootPath": ".",
+  "jest.nodeEnv": {
+    "NODE_OPTIONS": "--experimental-vm-modules"
+  }
 }

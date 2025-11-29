@@ -2,7 +2,9 @@
 module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
+  injectGlobals: true,
   roots: ['<rootDir>/src'],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/out/'],
   testMatch: ['**/__tests__/**/*.ts', '**/*.spec.ts', '**/*.test.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],
   collectCoverageFrom: [

@@ -14,29 +14,39 @@
     "dev:renderer": "vite",
     "dev:start": "wait-on http://localhost:5173 dist/main.js dist/preload.js && electron .",
     "dev:all": "concurrently -k -n renderer,main,start -c yellow,cyan,magenta \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:start\"",
-  "dev:start:debug": "wait-on http://localhost:5173 dist/main.js dist/preload.js && cross-env NODE_OPTIONS=--inspect=9229 electron .",
-  "dev:all:debug": "concurrently -k -n renderer,main,start -c yellow,cyan,magenta \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:start:debug\"",
+    "dev:start:debug": "wait-on http://localhost:5173 dist/main.js dist/preload.js && cross-env NODE_OPTIONS=--inspect=9229 electron .",
+    "dev:all:debug": "concurrently -k -n renderer,main,start -c yellow,cyan,magenta \"npm run dev:renderer\" \"npm run dev:main\" \"npm run dev:start:debug\"",
     "ev:dev": "electron-vite dev",
     "ev:build": "electron-vite build",
     "ev:dev:debug": "cross-env NODE_OPTIONS=--inspect=9229 electron-vite dev",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   },
   "dependencies": {
+    "preact": "^10.19.3",
     "three": "^0.181.1",
-    "zod": "^3.23.8",
-    "preact": "^10.19.3"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "electron": "^35.7.5",
-    "vite": "^6.4.1",
-    "concurrently": "^8.2.0",
-    "wait-on": "^7.0.0",
-    "cross-env": "^7.0.3",
-    "typescript": "^5.5.0",
-    "rimraf": "^5.0.0",
+    "@babel/core": "^7.28.5",
+    "@babel/preset-env": "^7.28.5",
+    "@babel/preset-react": "^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
+    "@preact/preset-vite": "^2.9.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/preact": "^3.2.4",
     "@types/node": "^20.0.0",
     "@types/three": "^0.158.0",
-    "@preact/preset-vite": "^2.9.1"
+    "babel-jest": "^30.2.0",
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "electron": "^35.7.5",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.5.0",
+    "vite": "^6.4.1",
+    "wait-on": "^7.0.0"
   },
   "overrides": {
     "react": "npm:preact-compat",

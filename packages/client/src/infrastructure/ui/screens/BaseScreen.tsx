@@ -2,8 +2,8 @@
 import { render, type ComponentChild } from 'preact';
 import type IScreen from '@client/domain/ports/IScreen';
 import type ScreenId from '@client/domain/ui/ScreenId';
-import type { Services } from '../hooks/useServices';
 import { ServicesContext } from '../hooks/useServices';
+import Services from '@client/infrastructure/di/Services';
 
 /**
  * BaseScreen - Generic Screen implementation
@@ -29,10 +29,17 @@ import { ServicesContext } from '../hooks/useServices';
 export abstract class BaseScreen implements IScreen {
   readonly id: ScreenId;
   protected root: HTMLElement | null = null;
-  protected services?: Services;
+  protected services!: Services; // Ensure proper typing for `services`
 
   constructor(id: ScreenId) {
     this.id = id;
+  }
+
+  /**
+   * Inject services bundle into the screen
+   */
+  setServices(services: Services): void {
+    this.services = services;
   }
 
   /**
@@ -70,8 +77,9 @@ export abstract class BaseScreen implements IScreen {
 
     const content = this.renderContent();
     
+    console.log('[BaseScreen] Services:', this.services);
     render(
-      <ServicesContext.Provider value={this.services || null}>
+      <ServicesContext.Provider value={this.services}>
         {content}
       </ServicesContext.Provider>,
       this.root

@@ -3,13 +3,19 @@ import I18nService from "@client/application/I18nService";
 import ServerBrowserService from "@client/application/ServerBrowserService";
 import WindowService from "@client/application/WindowService";
 import TextureResolverService from "@client/application/TextureResolverService";
+import TextureCatalogIpcService from "@client/application/TextureCatalogIpcService";
 import JsonSettingsRepository from "@client/infrastructure/settings/JsonSettingsRepository";
 import JsonTranslationProvider from "@client/infrastructure/i18n/JsonTranslationProvider";
 import PersistentServerDirectory from "@client/infrastructure/server/PersistentServerDirectory";
 import IpcStorage from "@client/infrastructure/storage/IpcStorage";
 import { BrowserStorage } from "@client/infrastructure/storage/BrowserStorage";
 import BrowserFileExistenceChecker from "@client/infrastructure/assets/BrowserFileExistenceChecker";
-import type { Services } from "../ui/hooks/useServices";
+import DevRegistry from '@client/infrastructure/ui/dev/DevRegistry';
+import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
+import KeyboardInputService from '@client/application/KeyboardInputService';
+import MouseInputService from '@client/application/MouseInputService';
+import type { Services} from "./Services";
+import DefaultEcsComponentFactory from '@client/domain/ecs/core/ComponentFactory';
 
 /**
  * Service Container - Composition Root for Dependency Injection
@@ -22,7 +28,7 @@ export class ServiceContainer {
   /**
    * Build and wire all services
    */
-  build(): Services {
+  build(texturePaths?: string[]): Services {
     // Storage adapters
     const storage = this.createStorage();
     const serverStorage = new IpcStorage();
@@ -40,18 +46,34 @@ export class ServiceContainer {
     const serverBrowser = new ServerBrowserService(serverDirectory);
     const windowService = new WindowService();
     
-    // File system utilities
+    // File system utilities (kept for potential future use)
     const fileChecker = new BrowserFileExistenceChecker();
-    
-    // Asset services
-    const textureResolver = new TextureResolverService(settingsService, fileChecker);
 
+    // Texture catalog: use IPC-backed service that fetches from main process.
+    const textureCatalog = new TextureCatalogIpcService();
+
+    // Asset services
+    // TextureResolverService now depends on SettingsService + TextureCatalogService
+    const textureResolver = new TextureResolverService(settingsService, textureCatalog);
+
+    // Debug utilities
+    const fpsController = new FpsController();
+    const devRegistry = new DevRegistry();
+    const keyboard = new KeyboardInputService();
+    const mouse = new MouseInputService();
     this.services = {
       settings: settingsService,
       i18n: i18nService,
       serverBrowser: serverBrowser,
       window: windowService,
       textureResolver: textureResolver,
+      textureCatalog: textureCatalog,
+      fpsController: fpsController,
+      devRegistry: devRegistry,
+      keyboard: keyboard,
+      mouse: mouse,
+      // renderingEngine/navigation/sceneManager are provided later by RendererBootstrap
+      ecsComponentFactory: new DefaultEcsComponentFactory(),
     };
 
     return this.services;

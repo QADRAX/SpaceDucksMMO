@@ -1,0 +1,21 @@
+.sd-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: var(--accent);
+    transition: all 0.2s ease;
+}
+
+.sd-checkbox:hover:not(:disabled) {
+    transform: scale(1.1);
+}
+
+.sd-checkbox:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.sd-checkbox:focus {
+    outline: 2px solid var(--accent-shadow-2-20);
+    outline-offset: 2px;
+}

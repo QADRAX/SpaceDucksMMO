@@ -1,0 +1,37 @@
+.sd-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: var(--card-padding);
+    transition: all 0.2s ease;
+}
+
+.sd-card--small {
+    padding: 8px;
+    border-radius: 6px;
+}
+
+.sd-card--panel {
+    padding: 0; /* Panel's header/content provide their own padding */
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+}
+
+.sd-card--clickable {
+    cursor: pointer;
+}
+
+.sd-card--clickable:hover {
+    border-color: var(--accent);
+    background: rgba(15, 18, 24, 0.8);
+}
+
+/* Popup-specific card variant (heavier border, panel background and shadow) */
+.sd-card--popup {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow), 0 0 40px rgba(0,0,0,0.5);
+}

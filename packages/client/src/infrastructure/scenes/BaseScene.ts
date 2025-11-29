@@ -1,185 +1,358 @@
-import type IScene from '@client/domain/ports/IScene';
-import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
-import type { ISceneObject } from '@client/domain/scene/ISceneObject';
-import type { ISceneController } from '@client/domain/scene/ISceneController';
-import type { SettingsService } from '@client/application/SettingsService';
-import { isTextureReloadable } from '@client/domain/scene/ITextureReloadable';
-import type SceneId from '@client/domain/scene/SceneId';
-import { SceneBuilder } from './SceneBuilder';
+import type IScene from "@client/domain/ports/IScene";
+import type IRenderingEngine from "@client/domain/ports/IRenderingEngine";
+import type { SettingsService } from "@client/application/SettingsService";
+import type SceneId from "@client/domain/scene/SceneId";
+import { RenderSyncSystem } from "../graphics/sync/RenderSyncSystem";
+import type TextureResolverService from "@client/application/TextureResolverService";
+import type { TextureCatalogService } from "@client/application/TextureCatalog";
+import { setCurrentEcsWorld } from "@client/domain/ecs/core/EcsWorldContext";
+import type { Entity } from "@client/domain/ecs/core/Entity";
+import { Result, ok, err } from "@client/domain/errors/EngineError";
 
-/**
- * Base class for scenes that provides automatic texture reload functionality and fluent scene setup.
- * 
- * Features:
- * - Automatically detects ITextureReloadable objects when added
- * - Subscribes to settings changes and reloads textures when quality changes
- * - Handles cleanup of subscriptions to prevent memory leaks
- * - Provides fluent SceneBuilder API for clean scene setup
- * 
- * Usage:
- * ```ts
- * export class MyScene extends BaseScene {
- *   readonly id = SceneId.MyScene;
- *   
- *   constructor(settingsService: SettingsService) {
- *     super(settingsService);
- *   }
- *   
- *   setup(engine: IRenderingEngine): void {
- *     super.setup(engine); // Important: call parent setup
- *     
- *     // Option 1: Fluent builder API (recommended)
- *     this.setupScene(engine)
- *       .add(skybox)
- *       .add(star, { position: [0, 0, 0] })
- *       .add(planet, { position: [3, 0, 0] })
- *       .build();
- *     
- *     // Option 2: Manual (still available)
- *     const planet = new RockyTexturedPlanet(...);
- *     this.addObject(engine, planet);
- *   }
- * }
- * ```
- */
+type VoidResult = Result<void>;
+import type SceneChangeEvent from "@client/domain/scene/SceneChangeEvent";
+import type { IComponentObserver } from "@client/domain/ecs/core/IComponentObserver";
+
 export abstract class BaseScene implements IScene {
   abstract readonly id: SceneId;
-  
-  protected objects: ISceneObject[] = [];
-  protected controllers: ISceneController[] = [];
+
+  protected entities: Map<string, Entity> = new Map();
+  private _changeListeners: Set<(ev: SceneChangeEvent) => void> = new Set();
+  private entitySubscriptions: Map<string, () => void> = new Map();
+  protected activeCameraId: string | null = null;
+  protected engine?: IRenderingEngine;
+  protected renderScene?: any; // THREE.Scene injected by engine
+
+  // ECS Systems
+  protected renderSyncSystem?: RenderSyncSystem;
+
+  // Settings service kept for future use (e.g., quality affecting ECS components)
+  // Currently unused since legacy texture reload path was removed.
   private settingsUnsubscribe?: () => void;
-  private previousTextureQuality: string;
-  
+
   constructor(protected settingsService: SettingsService) {
-    this.previousTextureQuality = settingsService.getSettings().graphics.textureQuality;
+    // No-op: legacy texture reload path removed in ECS-only mode
+  }
+
+  // EcsWorldContext implementation
+  getEntity(id: string) {
+    return this.entities.get(id);
+  }
+
+  getAllEntities(): Iterable<Entity> {
+    return this.entities.values();
   }
 
   /**
-   * Setup the scene. Call super.setup(engine) in derived classes.
+   * Add an ECS Entity directly, without any adapter.
    */
-  setup(engine: IRenderingEngine): void {
-    // Subscribe to settings changes
-    this.settingsUnsubscribe = this.settingsService.subscribe((newSettings) => {
-      const newQuality = newSettings.graphics.textureQuality;
-      
-      // Only reload if texture quality changed
-      if (newQuality !== this.previousTextureQuality) {
-        console.log(`[${this.id}] Texture quality changed: ${this.previousTextureQuality} -> ${newQuality}`);
-        this.previousTextureQuality = newQuality;
-        this.reloadAllTextures();
-      }
-    });
-  }
-
-  /**
-   * Create a fluent scene builder for adding multiple objects.
-   * 
-   * @example
-   * ```ts
-   * this.setupScene(engine)
-   *   .add(skybox)
-   *   .add(star, { position: [0, 0, 0] })
-   *   .add(planet, { position: [3, 0, 0] })
-   *   .build();
-   * ```
-   */
-  protected setupScene(engine: IRenderingEngine): SceneBuilder {
-    return new SceneBuilder(engine, this);
-  }
-
-  /**
-   * Add a scene object and track it for texture reloading if applicable.
-   * Use this instead of engine.add() directly.
-   */
-  protected addObject(engine: IRenderingEngine, obj: ISceneObject): void {
-    this.objects.push(obj);
-    engine.add(obj);
-  }
-
-  /**
-   * Add a controller to the scene (camera control, object manipulation, etc.)
-   */
-  protected addController(controller: ISceneController): void {
-    this.controllers.push(controller);
-  }
-
-  /**
-   * Update all enabled controllers
-   */
-  protected updateControllers(dt: number): void {
-    for (const controller of this.controllers) {
-      if (controller.isEnabled()) {
-        controller.update(dt);
-      }
-    }
-  }
-
-  /**
-   * Get all controllers in this scene
-   */
-  getControllers(): ISceneController[] {
-    return this.controllers;
-  }
-
-  /**
-   * Get a specific controller by ID
-   */
-  getController(id: string): ISceneController | undefined {
-    return this.controllers.find(c => c.id === id);
-  }
-
-  /**
-   * Reload textures for all ITextureReloadable objects in the scene.
-   */
-  private reloadAllTextures(): void {
-    if (this.objects.length === 0) {
+  addEntity(entity: Entity): void {
+    if (this.entities.has(entity.id)) {
+      console.warn(
+        `[${this.id}] addEntity: entity '${entity.id}' already added`
+      );
       return;
     }
-    
-    let reloadCount = 0;
-    
-    this.objects.forEach(obj => {
-      if (isTextureReloadable(obj)) {
-        reloadCount++;
-        obj.reloadTexture().catch((err: unknown) => {
-          console.error(`[${this.id}] Failed to reload texture:`, err);
-        });
+    this.entities.set(entity.id, entity);
+    if (this.renderSyncSystem) {
+      this.renderSyncSystem.addEntity(entity);
+    }
+    // subscribe to entity-level events for inspector/debug
+    this.attachEntityObservers(entity);
+    this.emitChange({ kind: "entity-added", entity });
+  }
+
+  /** Remove an ECS Entity by ID */
+  removeEntity(id: string): void {
+    const ent = this.entities.get(id);
+    if (!ent) {
+      console.warn(`[${this.id}] removeEntity: entity '${id}' not found`);
+      return;
+    }
+    if (this.renderSyncSystem) {
+      this.renderSyncSystem.removeEntity(id);
+    }
+    if (this.activeCameraId === id) {
+      this.activeCameraId = null;
+      if (this.engine) {
+        try {
+          this.engine.onActiveCameraChanged();
+        } catch {}
       }
+    }
+    this.detachEntityObservers(id);
+    this.entities.delete(id);
+    this.emitChange({ kind: "entity-removed", entityId: id });
+  }
+
+  /**
+   * IScene API: Set which object is the active camera.
+   * The object must implement ISceneCamera and must have been added via addObject() first.
+   */
+  setActiveCamera(id: string): void {
+    const ent = this.entities.get(id);
+    if (!ent || !this.renderSyncSystem) {
+      console.warn(`[${this.id}] setActiveCamera: entity '${id}' not found`);
+      return;
+    }
+    const camera = this.renderSyncSystem.getCamera(id);
+    if (!camera) {
+      console.warn(
+        `[${this.id}] setActiveCamera: entity '${id}' has no CameraViewComponent`
+      );
+      return;
+    }
+    this.activeCameraId = id;
+
+    if (this.engine) {
+      try {
+        this.engine.onActiveCameraChanged();
+      } catch (e) {
+        // ignore notify errors
+      }
+    }
+    // Notify subscribers that active camera changed
+    this.emitChange({
+      kind: "active-camera-changed",
+      entityId: this.activeCameraId,
     });
-    
-    if (reloadCount > 0) {
-      console.log(`[${this.id}] Reloading textures for ${reloadCount} object(s)`);
+  }
+
+  /**
+   * IScene API: Return the active THREE.Camera or null.
+   */
+  getActiveCamera(): Entity | null {
+    if (!this.activeCameraId) return null;
+    return this.entities.get(this.activeCameraId) || null;
+  }
+
+  /**
+   * Setup the scene. Call super.setup(engine, renderScene) in derived classes.
+   */
+  setup(engine: IRenderingEngine, renderScene: any): void {
+    this.engine = engine;
+    this.renderScene = renderScene;
+
+    // Set current ECS world context
+    setCurrentEcsWorld(this);
+
+    // Initialize ECS systems
+    // Obtain resolver/catalog from the engine (typed accessors on IRenderingEngine).
+    // These methods may return undefined on engines that don't implement them.
+    let resolver: TextureResolverService | undefined = undefined;
+    let catalog: TextureCatalogService | undefined = undefined;
+    if (this.engine) {
+      resolver = this.engine.getTextureResolver?.();
+      catalog = this.engine.getTextureCatalog?.();
+    }
+    this.renderSyncSystem = new RenderSyncSystem(
+      renderScene,
+      catalog,
+      resolver
+    );
+
+    // Add all entities that were already added
+    for (const ent of this.entities.values()) {
+      this.renderSyncSystem.addEntity(ent);
     }
   }
 
-  abstract update(dt: number): void;
+  /**
+   * Update all objects.
+   * Most scenes don't need to override this.
+   */
+  update(dt: number): void {
+    // Update ECS entities
+    for (const ent of this.entities.values()) {
+      ent.update(dt);
+    }
+    if (this.renderSyncSystem) {
+      this.renderSyncSystem.update(dt);
+    }
+  }
+
+  // --- Scene debug/inspector helpers -------------------------------------
+  public getEntities(): ReadonlyArray<Entity> {
+    return Array.from(this.entities.values());
+  }
+
+  public getActiveCameraEntityId(): string | null {
+    return this.activeCameraId;
+  }
+
+  public subscribeChanges(
+    listener: (ev: SceneChangeEvent) => void
+  ): () => void {
+    this._changeListeners.add(listener);
+    return () => this._changeListeners.delete(listener);
+  }
+
+  public reparentEntity(childId: string, newParentId: string | null): void {
+    const res = this.reparentEntityResult(childId, newParentId);
+    if (!res.ok) {
+      // emit error for backward-compatible behavior and for debug/inspector
+      this.emitChange({ kind: "error", message: res.error.message });
+    }
+  }
 
   /**
-   * Teardown the scene. Call super.teardown(engine) in derived classes.
+   * Result-based reparent operation. Returns structured error on failure.
    */
-  teardown(engine: IRenderingEngine): void {
-    // Unsubscribe from settings changes
+  public reparentEntityResult(
+    childId: string,
+    newParentId: string | null
+  ): VoidResult {
+    const child = this.entities.get(childId);
+    if (!child)
+      return err("invalid-reparent", `Child '${childId}' not found`, {
+        childId,
+        newParentId,
+      });
+    const oldParent = child.parent;
+
+    // no-op when parent unchanged
+    if (oldParent && oldParent.id === newParentId) return ok(undefined);
+
+    // Validate new parent (if any) BEFORE mutating hierarchy
+    let newParent: Entity | undefined;
+    if (newParentId) {
+      newParent = this.entities.get(newParentId);
+      if (!newParent)
+        return err("invalid-reparent", `Parent '${newParentId}' not found`, {
+          childId,
+          newParentId,
+        });
+
+      // Prevent cycles: if the new parent is a descendant of the child, attaching would create a cycle
+      if (this.wouldCreateCycle(child, newParent)) {
+        return err(
+          "invalid-reparent",
+          `Invalid reparent: '${newParentId}' is a descendant of '${childId}'`,
+          { childId, newParentId }
+        );
+      }
+    }
+
+    // All validations passed; perform the mutation atomically
+    if (oldParent) oldParent.removeChild(childId);
+
+    if (newParent) {
+      newParent.addChild(child);
+    }
+
+    this.emitChange({ kind: "hierarchy-changed", childId, newParentId });
+    return ok(undefined);
+  }
+
+  private wouldCreateCycle(child: Entity, candidateParent: Entity): boolean {
+    // Walk up candidateParent's ancestor chain; if we encounter the child, it would create a cycle
+    let cur: Entity | undefined = candidateParent;
+    while (cur) {
+      if (cur.id === child.id) return true;
+      cur = cur.parent;
+    }
+    return false;
+  }
+
+  private emitChange(ev: SceneChangeEvent) {
+    for (const l of this._changeListeners) {
+      try {
+        l(ev);
+      } catch (e) {
+        /* swallow listener errors */
+      }
+    }
+  }
+
+  private attachEntityObservers(entity: Entity) {
+    const componentObserver: IComponentObserver = {
+      onComponentChanged: (_entityId: string, componentType: string) => {
+        // forward both normal change and removal notifications
+        this.emitChange({
+          kind: "component-changed",
+          entityId: entity.id,
+          componentType,
+        });
+      },
+    };
+
+    const transformListener = () =>
+      this.emitChange({ kind: "transform-changed", entityId: entity.id });
+
+    for (const comp of entity.getAllComponents())
+      comp.addObserver(componentObserver);
+    try {
+      entity.transform.onChange(transformListener);
+    } catch {}
+
+    const cleanup = () => {
+      for (const comp of entity.getAllComponents()) {
+        try {
+          comp.removeObserver(componentObserver);
+        } catch {}
+      }
+      try {
+        entity.transform.removeOnChange(transformListener);
+      } catch {}
+    };
+
+    this.entitySubscriptions.set(entity.id, cleanup);
+  }
+
+  private detachEntityObservers(entityId: string) {
+    const cleanup = this.entitySubscriptions.get(entityId);
+    if (cleanup) {
+      try {
+        cleanup();
+      } catch {}
+      this.entitySubscriptions.delete(entityId);
+    }
+  }
+
+  /**
+   * Teardown the scene. Call super.teardown(engine, renderScene) if overriding.
+   */
+  teardown(engine: IRenderingEngine, renderScene: any): void {
     if (this.settingsUnsubscribe) {
       this.settingsUnsubscribe();
       this.settingsUnsubscribe = undefined;
     }
-    
-    // Dispose and remove all objects
-    this.objects.forEach(obj => {
-      if (obj.dispose) {
-        obj.dispose(); // Clean up Three.js resources (textures, geometries, materials)
-      }
-      engine.remove(obj.id);
-    });
-    this.objects = [];
 
-    // Dispose all controllers
-    this.controllers.forEach(controller => {
-      if (controller.dispose) {
-        controller.dispose();
+    // Remove and dispose all entities
+    if (this.renderSyncSystem) {
+      for (const ent of this.entities.values()) {
+        this.renderSyncSystem.removeEntity(ent.id);
+        // detach any observers attached for inspector/debug
+        try {
+          this.detachEntityObservers(ent.id);
+        } catch {}
       }
-    });
-    this.controllers = [];
+    }
+    // ensure cleanup of any remaining subscriptions
+    for (const id of Array.from(this.entitySubscriptions.keys())) {
+      try {
+        this.detachEntityObservers(id);
+      } catch {}
+    }
+    this.entities.clear();
+
+    this.activeCameraId = null;
+    // notify listeners that active camera is now null
+    this.emitChange({ kind: "active-camera-changed", entityId: null });
+
+    // Clean up systems
+    this.renderSyncSystem = undefined;
+
+    // Notify engine that camera is gone
+    if (engine) {
+      try {
+        engine.onActiveCameraChanged();
+      } catch (e) {
+        /* ignore */
+      }
+    }
+
+    this.renderScene = undefined;
   }
 }
 

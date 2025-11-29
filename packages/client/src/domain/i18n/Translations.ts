@@ -21,6 +21,51 @@ export interface Translations {
     play: string;
     settings: string;
     quit: string;
+    sandbox: string;
+  };
+
+  // Sandbox screen
+  sandbox: {
+    backToMenu: string;
+  };
+
+  // Scene Editor
+  editor: {
+    sceneHierarchy: {
+      title: string;
+      objectCount: string;
+      empty: string;
+      addObjects: string;
+      deleteConfirm: string;
+      cannotDeleteCamera: string;
+    };
+    objectInspector: {
+      title: string;
+      noSelection: string;
+      selectFromHierarchy: string;
+      transform: string;
+      properties: string;
+      position: string;
+      rotation: string;
+      scale: string;
+    };
+    camera: {
+      modes: {
+        orbit: string;
+        fixed: string;
+      };
+      orbitTarget: string;
+      manualPosition: string;
+    };
+    addObject: {
+      title: string;
+      categories: {
+        visual: string;
+        lights: string;
+        helpers: string;
+        cameras: string;
+      };
+    };
   };
 
   // Settings popup

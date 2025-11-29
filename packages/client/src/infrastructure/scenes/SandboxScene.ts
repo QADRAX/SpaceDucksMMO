@@ -1,227 +1,349 @@
-import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
-import type { TextureResolverService } from '@client/application/TextureResolverService';
-import type { SettingsService } from '@client/application/SettingsService';
-import { BaseScene } from '@client/infrastructure/scenes/BaseScene';
-import SceneId from '@client/domain/scene/SceneId';
-import * as THREE from 'three';
-import { StarBuilder, PlanetBuilder, SkyboxBuilder } from '@client/infrastructure/scene-objects/visual-components';
-import { OrbitCameraController } from '@client/infrastructure/scene-controllers';
+import { BaseScene } from "./BaseScene";
+import type IRenderingEngine from "@client/domain/ports/IRenderingEngine";
+import type { SettingsService } from "@client/application/SettingsService";
+import SceneId from "@client/domain/scene/SceneId";
+
+import { Entity } from "@client/domain/ecs/core/Entity";
+import { PlaneGeometryComponent } from "@client/domain/ecs/components/geometry/PlaneGeometryComponent";
+import SphereGeometryComponent from "@client/domain/ecs/components/geometry/SphereGeometryComponent";
+import { CameraViewComponent } from "@client/domain/ecs/components/CameraViewComponent";
+import { MouseLookComponent } from "@client/domain/ecs/components/MouseLookComponent";
+import { FirstPersonMoveComponent } from "@client/domain/ecs/components/FirstPersonMoveComponent";
+
+import { BasicMaterialComponent } from "@client/domain/ecs/components/material/BasicMaterialComponent";
+import { LambertMaterialComponent } from "@client/domain/ecs/components/material/LambertMaterialComponent";
+import { PhongMaterialComponent } from "@client/domain/ecs/components/material/PhongMaterialComponent";
+import { StandardMaterialComponent } from "@client/domain/ecs/components/material/StandardMaterialComponent";
+import BaseMaterialComponent from "@client/domain/ecs/components/material/BaseMaterialComponent";
+
+import AmbientLightComponent from "@client/domain/ecs/components/light/AmbientLightComponent";
+import DirectionalLightComponent from "@client/domain/ecs/components/light/DirectionalLightComponent";
 
 /**
- * Sandbox Scene - Testing and prototyping environment
- * 
- * Purpose:
- * - Rapid prototyping of new visual components
- * - Testing visual object behaviors
- * - Experimenting with lighting and materials
- * - Interactive camera control for detailed inspection
- * 
- * Features:
- * - Orbiting camera with mouse control (future)
- * - Grid helper for spatial reference
- * - Axis helper for orientation
- * - Configurable lighting setup
- * - Easy object addition/removal
+ * Sandbox scene: material gallery showcasing Basic, Lambert, Phong and Standard materials
+ * using the downloaded PBR texture sets under assets/textures/materials.
+ *
+ * Layout:
+ * - Ground plane with a dirt material
+ * - 3 rows (Z axis) of spheres, each row = texture set
+ *   - X = -6  -> BasicMaterial
+ *   - X = -2  -> LambertMaterial
+ *   - X = +2  -> PhongMaterial
+ *   - X = +6  -> StandardMaterial
+ * - Camera orbits around the gallery center using OrbitComponent.
  */
 export class SandboxScene extends BaseScene {
   readonly id = SceneId.Sandbox;
-  
-  private camera: THREE.PerspectiveCamera | null = null;
-  private cameraDistance: number = 10;
-  private cameraAngle: number = 0;
-  private gridHelper: THREE.GridHelper | null = null;
-  private axesHelper: THREE.AxesHelper | null = null;
-  
-  constructor(
-    private textureResolver: TextureResolverService,
-    settingsService: SettingsService
-  ) {
+
+  constructor(settingsService: SettingsService) {
     super(settingsService);
   }
 
-  setup(engine: IRenderingEngine): void {
-    super.setup(engine);
-    
-    const scene = engine.getScene();
-    const camera = engine.getCamera();
-    this.camera = camera instanceof THREE.PerspectiveCamera ? camera : null;
+  setup(engine: IRenderingEngine, renderScene: any): void {
+    super.setup(engine, renderScene);
 
-    // Configure camera for object inspection
-    if (this.camera) {
-      this.camera.position.set(0, 5, this.cameraDistance);
-      this.camera.lookAt(0, 0, 0);
-    }
+    // --- Lights ----------------------------------------------------------------
 
-    // Add helpers for spatial reference
-    this.addHelpers(scene);
-    
-    // Add ambient light for general visibility
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-    scene.add(ambientLight);
+    // Soft ambient light
+    const ambient = new Entity("light-ambient").addComponent(
+      new AmbientLightComponent({
+        color: 0xffffff,
+        intensity: 0.4,
+      })
+    );
+    this.addEntity(ambient);
 
-    // Add directional light for shadows and depth
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.7);
-    directionalLight.position.set(5, 10, 5);
-    directionalLight.castShadow = true;
-    scene.add(directionalLight);
+    // Main directional light for clear highlights
+    const dir = new Entity("light-directional");
+    dir.transform.setPosition(8, 10, 6);
+    dir.addComponent(
+      new DirectionalLightComponent({
+        color: 0xffffff,
+        intensity: 1.2,
+        castShadow: false,
+      })
+    );
+    this.addEntity(dir);
 
-    // Skybox for context
-    const skybox = SkyboxBuilder.createStarfield('sandbox-skybox', this.textureResolver, {
-      brightness: 0.8 // Dimmer to focus on test objects
-    });
+    // Secondary directional to fill shadows a bit
+    const dir2 = new Entity("light-directional-2");
+    dir2.transform.setPosition(-6, 4, -8);
+    dir2.addComponent(
+      new DirectionalLightComponent({
+        color: 0xfff0e0,
+        intensity: 0.5,
+        castShadow: false,
+      })
+    );
+    this.addEntity(dir2);
 
-    // ===================================
-    // SANDBOX OBJECTS - Add your test objects here!
-    // ===================================
-    
-    // Example: Test planet with atmosphere
-    const testPlanet = PlanetBuilder.create('test-planet', this.textureResolver, {
-      radius: 2,
-      textureId: 'rocky-planet',
-      tintColor: 0x4488ff,
-      tintIntensity: 0.4,
-      hasAtmosphere: true,
-      atmosphereColor: 0x88ccff,
-      atmosphereThickness: 1.2,
-      atmosphereIntensity: 2.0,
-      rotationSpeed: 0.02,
-    });
+    // --- Ground plane ---------------------------------------------------------
 
-    // Example: Small moon orbiting
-    const testMoon = PlanetBuilder.create('test-moon', this.textureResolver, {
-      radius: 0.5,
-      textureId: 'rocky-planet',
-      tintColor: 0xaaaaaa,
-      tintIntensity: 0.3,
-      hasAtmosphere: false,
-      rotationSpeed: 0.05,
-    });
+    const ground = new Entity("ground");
+    ground.addComponent(
+      new PlaneGeometryComponent({
+        width: 40,
+        height: 40,
+      })
+    );
 
-    // Example: Test star
-    const testStar = StarBuilder.create('test-star', this.textureResolver, {
-      radius: 1.5,
-      textureId: 'sun',
-      coronaColor: 0xffaa44,
-      coronaIntensity: 1.5,
-      lightIntensity: 3.0,
-      lightColor: 0xffddaa,
-      rotationSpeed: 0.03,
-    });
+    // Use GroundDirt as floor
+    ground.addComponent(
+      new StandardMaterialComponent({
+        color: "#ffffff",
+        metalness: 0,
+        roughness: 1,
+        texture: "materials/GroundDirt009/basecolor",
+        normalMap: "materials/GroundDirt009/normal",
+        aoMap: "materials/GroundDirt009/ambientOcclusion",
+        roughnessMap: "materials/GroundDirt009/roughness",
+      })
+    );
 
-    // Setup scene with fluent API
-    this.setupScene(engine)
-      .add(skybox)
-      .add(testPlanet, { position: [0, 0, 0] })
-      .add(testMoon, { position: [4, 0, 0] })
-      .add(testStar, { position: [-6, 2, -3] })
-      .build();
+    ground.transform.setRotation(-Math.PI / 2, 0, 0);
+    ground.transform.setPosition(0, 0, 0);
+    this.addEntity(ground);
 
-    // ===================================
-    // CONTROLLERS - Camera & Object Control
-    // ===================================
+    // --- Origin (center of gallery & camera target) ---------------------------
 
-    // Camera controller: orbit around center of scene
-    if (this.camera) {
-      const cameraController = new OrbitCameraController(
-        'sandbox-camera-orbit',
-        this.camera,
-        {
-          target: new THREE.Vector3(0, 0, 0),
-          distance: this.cameraDistance,
-          speed: 0.0001,
-          height: 5,
-          autoRotate: true
-        }
+    const origin = new Entity("origin");
+    origin.transform.setPosition(0, 1, 0);
+    this.addEntity(origin);
+
+    // --- Helper: create a sphere at (x, z) with a given material component ----
+
+    const createSphere = (
+      id: string,
+      x: number,
+      z: number,
+      material: BaseMaterialComponent
+    ) => {
+      const e = new Entity(id);
+      e.addComponent(
+        new SphereGeometryComponent({
+          radius: 1,
+          widthSegments: 32,
+          heightSegments: 16,
+        })
       );
+      e.addComponent(material);
+      e.transform.setPosition(x, 1, z);
+      this.addEntity(e);
+    };
 
-      this.addController(cameraController);
-      cameraController.enable();
-    }
+    const colBasicX = -6;
+    const colLambertX = -2;
+    const colPhongX = 2;
+    const colStandardX = 6;
+
+    const rowConcreteZ = -4;
+    const rowMetalZ = 0;
+    const rowGlassPlasticZ = 4;
+
+    // ROW 1: concrete-muddy
+    createSphere(
+      "concrete-basic",
+      colBasicX,
+      rowConcreteZ,
+      new BasicMaterialComponent({
+        color: "#ffffff",
+        texture: "materials/concrete-muddy/basecolor",
+        normalMap: "materials/concrete-muddy/normal",
+      })
+    );
+
+    createSphere(
+      "concrete-lambert",
+      colLambertX,
+      rowConcreteZ,
+      new LambertMaterialComponent({
+        color: "#ffffff",
+        texture: "materials/concrete-muddy/basecolor",
+        normalMap: "materials/concrete-muddy/normal",
+        aoMap: "materials/concrete-muddy/ambientOcclusion",
+        bumpMap: "materials/concrete-muddy/height",
+      })
+    );
+
+    createSphere(
+      "concrete-phong",
+      colPhongX,
+      rowConcreteZ,
+      new PhongMaterialComponent({
+        color: "#cccccc",
+        specular: "#222222",
+        shininess: 20,
+        texture: "materials/concrete-muddy/basecolor",
+        normalMap: "materials/concrete-muddy/normal",
+        aoMap: "materials/concrete-muddy/ambientOcclusion",
+        bumpMap: "materials/concrete-muddy/height",
+      })
+    );
+
+    createSphere(
+      "concrete-standard",
+      colStandardX,
+      rowConcreteZ,
+      new StandardMaterialComponent({
+        color: "#ffffff",
+        metalness: 0,
+        roughness: 1,
+        texture: "materials/concrete-muddy/basecolor",
+        normalMap: "materials/concrete-muddy/normal",
+        aoMap: "materials/concrete-muddy/ambientOcclusion",
+        roughnessMap: "materials/concrete-muddy/roughness",
+      })
+    );
+
+    // ROW 2: Metal006
+    createSphere(
+      "metal006-basic",
+      colBasicX,
+      rowMetalZ,
+      new BasicMaterialComponent({
+        color: "#ffffff",
+        texture: "materials/Metal006/basecolor",
+      })
+    );
+
+    createSphere(
+      "metal006-lambert",
+      colLambertX,
+      rowMetalZ,
+      new LambertMaterialComponent({
+        color: "#aaaaaa",
+        texture: "materials/Metal006/basecolor",
+        normalMap: "materials/Metal006/normal",
+        aoMap: "materials/Metal006/ambientOcclusion",
+        bumpMap: "materials/Metal006/height",
+      })
+    );
+
+    createSphere(
+      "metal006-phong",
+      colPhongX,
+      rowMetalZ,
+      new PhongMaterialComponent({
+        color: "#888888",
+        specular: "#ffffff",
+        shininess: 60,
+        texture: "materials/Metal006/basecolor",
+        normalMap: "materials/Metal006/normal",
+        aoMap: "materials/Metal006/ambientOcclusion",
+        bumpMap: "materials/Metal006/height",
+      })
+    );
+
+    createSphere(
+      "metal006-standard",
+      colStandardX,
+      rowMetalZ,
+      new StandardMaterialComponent({
+        color: "#ffffff",
+        metalness: 1,
+        roughness: 0.3,
+        texture: "materials/Metal006/basecolor",
+        normalMap: "materials/Metal006/normal",
+        aoMap: "materials/Metal006/ambientOcclusion",
+        roughnessMap: "materials/Metal006/roughness",
+        metalnessMap: "materials/Metal006/metallic",
+      })
+    );
+
+    // ROW 3: Glass / Plastic / Water
+    createSphere(
+      "glass-basic",
+      colBasicX,
+      rowGlassPlasticZ,
+      new BasicMaterialComponent({
+        color: "#ffffff",
+        texture: "materials/GlassFrosted001/basecolor",
+        transparent: true,
+        opacity: 0.6,
+      })
+    );
+
+    createSphere(
+      "glass-lambert",
+      colLambertX,
+      rowGlassPlasticZ,
+      new LambertMaterialComponent({
+        color: "#ffffff",
+        texture: "materials/GlassFrosted001/basecolor",
+        normalMap: "materials/GlassFrosted001/normal",
+        aoMap: "materials/GlassFrosted001/ambientOcclusion",
+        bumpMap: "materials/GlassFrosted001/height",
+        transparent: true,
+        opacity: 0.7,
+      })
+    );
+
+    createSphere(
+      "plastic-phong",
+      colPhongX,
+      rowGlassPlasticZ,
+      new PhongMaterialComponent({
+        color: "#ffffff",
+        specular: "#ffffff",
+        shininess: 80,
+        texture: "materials/Plastic004/basecolor",
+        normalMap: "materials/Plastic004/normal",
+        aoMap: "materials/Plastic004/ambientOcclusion",
+        bumpMap: "materials/Plastic004/height",
+      })
+    );
+
+    createSphere(
+      "water-standard",
+      colStandardX,
+      rowGlassPlasticZ,
+      new StandardMaterialComponent({
+        color: "#ffffff",
+        metalness: 0,
+        roughness: 0.1,
+        transparent: true,
+        opacity: 0.8,
+        texture: "materials/Water002/COLOR",
+        normalMap: "materials/Water002/NORM",
+        aoMap: "materials/Water002/OCC",
+        roughnessMap: "materials/Water002/ROUGH",
+      })
+    );
+
+    // --- Camera with controls --------------------------------------------------
+
+    const camera = new Entity("main-camera");
+    camera.addComponent(
+      new CameraViewComponent({
+        fov: 60,
+        near: 0.1,
+        far: 1000,
+      })
+    );
+
+    camera.addComponent(
+      new MouseLookComponent({
+        // default params
+      })
+    );
+    camera.addComponent(
+      new FirstPersonMoveComponent({
+        flyMode: true,
+      })
+    );
+
+    camera.transform.setPosition(0, 10, 24);
+    this.addEntity(camera);
+    this.setActiveCamera("main-camera");
+
+    console.log(
+      "[SandboxScene] Material gallery (Basic/Lambert/Phong/Standard) ready"
+    );
   }
 
-  private addHelpers(scene: THREE.Scene): void {
-    // Grid helper (XZ plane)
-    this.gridHelper = new THREE.GridHelper(20, 20, 0x444444, 0x222222);
-    scene.add(this.gridHelper);
-
-    // Axes helper (RGB = XYZ)
-    this.axesHelper = new THREE.AxesHelper(5);
-    scene.add(this.axesHelper);
-  }
-
-  update(dt: number): void {
-    // Update all scene objects
-    this.objects.forEach(obj => obj.update(dt));
-    
-    // Update all controllers (camera, objects, etc.)
-    this.updateControllers(dt);
-  }
-
-  teardown(engine: IRenderingEngine): void {
-    super.teardown(engine);
-    
-    const scene = engine.getScene();
-    
-    // Remove helpers
-    if (this.gridHelper) {
-      scene.remove(this.gridHelper);
-      this.gridHelper.dispose();
-      this.gridHelper = null;
-    }
-    
-    if (this.axesHelper) {
-      scene.remove(this.axesHelper);
-      this.axesHelper.dispose();
-      this.axesHelper = null;
-    }
-    
-    // Clear lights
-    const lights = scene.children.filter(child => child instanceof THREE.Light);
-    lights.forEach(light => scene.remove(light));
-    
-    this.camera = null;
+  teardown(engine: IRenderingEngine, renderScene: any): void {
+    super.teardown(engine, renderScene);
   }
 }
 
 export default SandboxScene;
-
-/* ========================================
- * SANDBOX SCENE - QUICK START GUIDE
- * ========================================
- * 
- * This scene is your playground for testing visual components!
- * 
- * HOW TO ADD TEST OBJECTS:
- * 
- * 1. Create your objects using builders:
- *    ```ts
- *    const myObject = PlanetBuilder.create('test-id', this.textureResolver, {
- *      radius: 1.0,
- *      tintColor: 0xff0000,
- *      // ... your config
- *    });
- *    ```
- * 
- * 2. Add to scene with position:
- *    ```ts
- *    this.setupScene(engine)
- *      .add(myObject, { position: [x, y, z] })
- *      .build();
- *    ```
- * 
- * HELPERS:
- * - Grid: XZ plane with 1-unit spacing
- * - Axes: Red=X, Green=Y, Blue=Z
- * - Camera: Slow auto-orbit for 360° view
- * 
- * LIGHTING:
- * - Ambient: Soft fill light (0.3)
- * - Directional: Main light with shadows (0.7)
- * - Star objects: Add their own point lights
- * 
- * TIPS:
- * - Adjust cameraDistance for closer/farther view
- * - Toggle helpers visibility by commenting gridHelper/axesHelper
- * - Use different tint colors to distinguish test objects
- * - Check console for texture loading and component info
- */

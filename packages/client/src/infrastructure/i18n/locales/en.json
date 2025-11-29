@@ -20,6 +20,61 @@
   "sandbox": {
     "backToMenu": "Back to Menu"
   },
+  "editor": {
+    "sceneHierarchy": {
+      "title": "Scene Hierarchy",
+      "objectCount": "{count} objects",
+      "empty": "No objects in scene",
+      "addObjects": "Add objects from the menu",
+      "deleteConfirm": "Delete object \"{id}\"?",
+      "cannotDeleteCamera": "Cannot delete camera. The scene must always have a camera."
+    },
+    "objectInspector": {
+      "title": "Object Inspector",
+      "noSelection": "No object selected",
+      "selectFromHierarchy": "Select an object from the scene hierarchy to inspect its properties.",
+      "objectId": "ID",
+      "objectType": "Type",
+      "transform": "Transform",
+      "properties": "Properties",
+      "components": "Components",
+      "notInspectable": {
+        "title": "This object is not inspectable",
+        "description": "The object doesn't implement IInspectable interface"
+      }
+    },
+    "transform": {
+      "position": "Position",
+      "rotation": "Rotation",
+      "scale": "Scale"
+    },
+    "components": {
+      "empty": {
+        "title": "No components yet",
+        "description": "Add components to customize this object"
+      },
+      "remove": {
+        "confirm": "Remove this component?"
+      }
+    },
+    "camera": {
+      "modes": {
+        "orbit": "Orbit",
+        "fixed": "Fixed"
+      },
+      "orbitTarget": "Orbit Target",
+      "manualPosition": "Manual Position"
+    },
+    "addObject": {
+      "title": "Add Object",
+      "categories": {
+        "visual": "Visual",
+        "lights": "Lights",
+        "helpers": "Helpers",
+        "cameras": "Cameras"
+      }
+    }
+  },
   "settings": {
     "title": "Settings",
     "saveChanges": "Save Changes",

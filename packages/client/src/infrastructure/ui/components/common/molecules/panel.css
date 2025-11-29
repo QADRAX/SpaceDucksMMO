@@ -1,0 +1,56 @@
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--panel-header-padding);
+  border-bottom: 2px solid;
+  border-radius: 6px 6px 0 0;
+  font-weight: 600;
+  font-size: 14px;
+  user-select: none;
+}
+
+.panel-header.draggable { cursor: move; }
+.panel-header.draggable:active { cursor: grabbing; }
+
+.panel-title { flex: 1; font-weight: bold; text-transform: uppercase; letter-spacing: 0.5px; }
+
+.panel-controls { display: flex; gap: 8px; }
+
+.panel-control-btn { background: var(--control-bg); border: 1px solid var(--control-border); color: inherit; width: 24px; height: 24px; border-radius: var(--control-radius); cursor: pointer; display:flex; align-items:center; justify-content:center; font-size:12px; transition: all 0.2s; }
+.panel-control-btn:hover { background: var(--control-hover-bg); border-color: var(--control-hover-border); transform: scale(1.1); }
+.panel-control-btn:active{ transform: scale(0.95); }
+
+.panel-control-btn.close-btn { color: var(--close-color, #d33); border-color: rgba(211,51,51,0.16); }
+.panel-control-btn.close-btn:hover { background: rgba(211,51,51,0.06); border-color: rgba(211,51,51,0.32); transform: none; }
+
+.panel-content { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 16px; pointer-events: auto; min-height: 0; }
+  user-select: auto; }
+.panel-content::-webkit-scrollbar { width: 8px; }
+.panel-content::-webkit-scrollbar-track { background: var(--scrollbar-track); border-radius: var(--control-radius); }
+.panel-content::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: var(--control-radius); }
+.panel-content::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+
+/* Theme Colors (kept targeting the container theme classes used by DraggablePanel) */
+.draggable-panel-blue .panel-header { background: linear-gradient(135deg, var(--theme-blue-30), var(--theme-blue-30)); border-bottom-color: var(--theme-blue-50); color: var(--theme-blue); }
+.draggable-panel-blue .panel-content::-webkit-scrollbar-thumb { background: var(--theme-blue-50); }
+
+.draggable-panel-pink .panel-header { background: linear-gradient(135deg, var(--theme-pink-30), var(--theme-pink-30)); border-bottom-color: var(--theme-pink-50); color: var(--theme-pink); }
+.draggable-panel-pink .panel-content::-webkit-scrollbar-thumb { background: var(--theme-pink-50); }
+
+.draggable-panel-green .panel-header { background: linear-gradient(135deg, var(--theme-green-30), var(--theme-green-30)); border-bottom-color: var(--theme-green-50); color: var(--theme-green); }
+.draggable-panel-green .panel-content::-webkit-scrollbar-thumb { background: var(--theme-green-50); }
+
+.draggable-panel-gold .panel-header { background: linear-gradient(135deg, var(--theme-gold-30), var(--theme-gold-30)); border-bottom-color: var(--theme-gold-50); color: var(--theme-gold); }
+.draggable-panel-gold .panel-content::-webkit-scrollbar-thumb { background: var(--theme-gold-50); }
+
+/* Hide content/resize when parent has collapsed state */
+.draggable-panel.collapsed .panel-content { display: none; }
+.draggable-panel.collapsed .resize-handle { display: none; }
+
+/* sd-panel base: keeps a semantic hook when `sd-panel` class is used on Card.
+   Minimal rule to avoid missing-class inconsistencies. */
+.sd-panel {
+  width: 100%;
+  box-sizing: border-box;
+}

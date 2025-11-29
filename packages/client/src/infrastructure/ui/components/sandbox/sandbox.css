@@ -18,6 +18,10 @@
   z-index: 10;
 }
 
+.sandbox-container > * {
+  pointer-events: auto;
+}
+
 /* Top Bar */
 .sandbox-topbar {
   position: fixed;

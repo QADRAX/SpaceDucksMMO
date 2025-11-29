@@ -1,0 +1,100 @@
+.sd-button {
+    appearance: none;
+    border: 2px solid var(--border);
+    background: var(--panel);
+    backdrop-filter: blur(10px);
+    color: var(--text);
+    font-family: inherit;
+    font-weight: 500;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.sd-button:hover:not(:disabled) {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-shadow-15), var(--shadow);
+    transform: translateY(-1px);
+}
+
+.sd-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.sd-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Variants */
+.sd-button--primary {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+}
+
+.sd-button--primary:hover:not(:disabled) {
+    box-shadow: 0 0 0 4px var(--accent-shadow-2-20), 0 4px 12px var(--accent-shadow-2-20);
+}
+
+.sd-button--secondary {
+    /* Uses base styles from .sd-button */
+}
+
+.sd-button--danger {
+    background: var(--danger-bg);
+    border-color: var(--danger-30);
+    color: var(--danger);
+}
+
+.sd-button--danger:hover:not(:disabled) {
+    background: var(--danger-20);
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px var(--danger-15);
+}
+
+.sd-button--ghost {
+    background: transparent;
+    border-color: transparent;
+}
+
+.sd-button--ghost:hover:not(:disabled) {
+    background: var(--ghost-hover-bg);
+}
+
+.sd-button--success {
+    background: var(--success-bg);
+    border-color: var(--success-20);
+    color: var(--success);
+}
+
+.sd-button--success:hover:not(:disabled) {
+    background: var(--success-20);
+    border-color: var(--success);
+    box-shadow: 0 0 0 3px var(--success-15);
+}
+
+/* Sizes */
+.sd-button--small {
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+.sd-button--medium {
+    padding: 10px 16px;
+    font-size: 14px;
+}
+
+.sd-button--large {
+    padding: 14px 24px;
+    font-size: 16px;
+}
+
+/* Full width */
+.sd-button--full {
+    width: 100%;
+}

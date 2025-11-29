@@ -1,168 +1,288 @@
-import * as THREE from 'three';
-import type { IRenderingEngine } from '@client/domain/ports/IRenderingEngine';
-import type { ISceneObject } from '@client/domain/scene/ISceneObject';
-import { FpsCounter } from '@client/infrastructure/ui/FpsCounter';
+import * as THREE from "three";
+import type { IRenderingEngine } from "@client/domain/ports/IRenderingEngine";
+import type IScene from "@client/domain/ports/IScene";
+import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
+import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
+import type { FpsController } from "@client/infrastructure/ui/dev/FpsController";
+import type TextureResolverService from '@client/application/TextureResolverService';
+import type { TextureCatalogService } from '@client/application/TextureCatalog';
 
 export class ThreeRenderer implements IRenderingEngine {
   private scene!: THREE.Scene;
-  private camera!: THREE.PerspectiveCamera;
   private renderer!: THREE.WebGLRenderer;
-  private objects = new Map<string, ISceneObject>();
+  private composer?: EffectComposer;
+  private renderPass?: RenderPass;
+  private usePostProcessing = false;
   private container!: HTMLElement;
-  private resolutionPolicy: 'auto' | 'scale' = 'auto';
-  private resolutionScale = 1.0; // multiplier used when policy === 'scale'
-  private onResizeBound = () => this.handleResize();
+  private resolutionPolicy: "auto" | "scale" = "auto";
+  private resolutionScale = 1.0;
+  private rafId: number | null = null;
+  private activeIScene: IScene | null = null;
   private antialias = true;
   private shadows = true;
-  private fpsCounter: FpsCounter;
+  private missingCameraWarned = false;
+  private fpsController: FpsController;
+  private textureResolver?: TextureResolverService;
+  private textureCatalog?: TextureCatalogService;
 
-  constructor() {
-    this.fpsCounter = new FpsCounter();
+  constructor(fpsController: FpsController) {
+    this.fpsController = fpsController;
+  }
+
+  setTextureResolver(resolver: TextureResolverService): void {
+    this.textureResolver = resolver;
+  }
+
+  getTextureResolver(): TextureResolverService | undefined {
+    return this.textureResolver;
+  }
+
+  setTextureCatalog(catalog: TextureCatalogService): void {
+    this.textureCatalog = catalog;
+  }
+
+  getTextureCatalog(): TextureCatalogService | undefined {
+    return this.textureCatalog;
   }
 
   init(container: HTMLElement): void {
     this.container = container;
     this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x0a0e14); // Dark space background
-    this.camera = new THREE.PerspectiveCamera(
-      75,
-      container.clientWidth / container.clientHeight,
-      0.1,
-      1000
-    );
-    this.camera.position.z = 5;
-
-  this.renderer = new THREE.WebGLRenderer({ antialias: this.antialias });
-  this.renderer.shadowMap.enabled = this.shadows;
-  if (this.shadows) this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.initializeRenderer();
     this.applyResolutionScale();
     container.appendChild(this.renderer.domElement);
+    window.addEventListener("resize", () => this.handleResize());
+  }
 
-  // listen for window resize to keep internal buffer in sync with window size
-  window.addEventListener('resize', this.onResizeBound);
+  private initializeRenderer(): void {
+    this.renderer = new THREE.WebGLRenderer({ antialias: this.antialias });
+    this.renderer.shadowMap.enabled = this.shadows;
+    if (this.shadows) this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  }
 
-    // No default lights - scenes handle their own lighting
-    
-    // Show FPS counter in development
-    if (process.env.NODE_ENV === 'development') {
-      this.fpsCounter.show();
+  public getActiveCamera(): THREE.Camera | null {
+    if (this.activeIScene?.getActiveCamera) {
+      try {
+        const ent = this.activeIScene.getActiveCamera();
+        if (!ent) return null;
+        // Find the corresponding Three.Object3D that was tagged with entityId by the RenderSyncSystem
+        const obj = this.findObjectByEntityId(ent.id);
+        if (obj && (obj as any) instanceof THREE.Camera) return obj as THREE.Camera;
+        return null;
+      } catch (err) {
+        console.warn('[ThreeRenderer] Error calling scene.getActiveCamera():', err);
+      }
     }
+    return null;
   }
 
-  add(object: ISceneObject): void {
-    this.objects.set(object.id, object);
-    object.addTo(this.scene);
-  }
-
-  remove(id: string): void {
-    const obj = this.objects.get(id);
-    if (obj) {
-      // First remove from Three.js scene (calls removeFrom which handles dispose)
-      obj.removeFrom(this.scene);
-      // Then remove from tracking map
-      this.objects.delete(id);
+  private findObjectByEntityId(entityId: string): THREE.Object3D | null {
+    if (!this.scene) return null;
+    const stack: THREE.Object3D[] = [this.scene];
+    while (stack.length) {
+      const obj = stack.pop()!;
+      try {
+        if (obj.userData && (obj.userData as any).entityId === entityId) return obj;
+      } catch {}
+      for (const c of obj.children) stack.push(c);
     }
+    return null;
   }
 
-  getScene(): THREE.Scene { return this.scene; }
-  getCamera(): THREE.Camera { return this.camera; }
-
-  /**
-   * Apply a resolution scale factor to the WebGL renderer. This keeps the CSS size the same
-   * but renders to a smaller/larger internal buffer for performance/quality tradeoff.
-   */
-  private applyResolutionScale() {
+  private applyResolutionScale(): void {
     if (!this.renderer || !this.container) return;
-    const w = this.container.clientWidth;
-    const h = this.container.clientHeight;
-    // Keep CSS size (false) so canvas stays layout-sized, but internal buffer scales
+    const { clientWidth: w, clientHeight: h } = this.container;
     this.renderer.setSize(w, h, false);
-    const base = window.devicePixelRatio || 1;
-    const ratio = this.resolutionPolicy === 'scale' ? base * this.resolutionScale : base;
+    const ratio =
+      this.resolutionPolicy === "scale"
+        ? (window.devicePixelRatio || 1) * this.resolutionScale
+        : window.devicePixelRatio || 1;
     this.renderer.setPixelRatio(ratio);
 
-    // update camera aspect as well
-    if (this.camera && this.camera instanceof THREE.PerspectiveCamera) {
-      this.camera.aspect = w / h;
-      this.camera.updateProjectionMatrix();
+    const cam = this.getActiveCamera();
+    if (cam instanceof THREE.PerspectiveCamera) {
+      cam.aspect = w / h;
+      cam.updateProjectionMatrix();
     }
   }
 
-  /** Update resolution scale factor at runtime (e.g., after changing settings) */
-  setResolutionScale(scale: number) {
+  setResolutionScale(scale: number): void {
     this.resolutionScale = Math.max(0.25, Math.min(4, scale));
     this.applyResolutionScale();
   }
 
-  /** Set the resolution policy (auto or scale) and optional scale multiplier */
-  setResolutionPolicy(policy: 'auto' | 'scale', scale?: number) {
+  setResolutionPolicy(policy: "auto" | "scale", scale?: number): void {
     this.resolutionPolicy = policy;
-    if (typeof scale === 'number') this.resolutionScale = Math.max(0.25, Math.min(4, scale));
-    this.applyResolutionScale();
+    if (scale !== undefined) this.setResolutionScale(scale);
   }
 
-  private handleResize() {
-    this.applyResolutionScale();
-  }
-
-  /** Toggle antialias; requires recreating the renderer to take effect reliably */
-  setAntialias(enabled: boolean) {
+  setAntialias(enabled: boolean): void {
     if (this.antialias === enabled) return;
     this.antialias = enabled;
+    this.reinitializeRenderer();
+  }
+
+  private reinitializeRenderer(): void {
     if (!this.container) return;
-    // dispose old renderer and recreate
-    const canvas = this.renderer?.domElement;
-    try { canvas?.remove(); } catch {}
-    try { this.renderer?.dispose(); } catch {}
-    this.renderer = new THREE.WebGLRenderer({ antialias: this.antialias });
-    this.renderer.shadowMap.enabled = this.shadows;
-    if (this.shadows) this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.domElement.remove();
+    this.renderer.dispose();
+    this.initializeRenderer();
     this.container.appendChild(this.renderer.domElement);
     this.applyResolutionScale();
   }
 
-  /** Toggle shadows at renderer level; scene objects also need cast/receive flags separately */
-  setShadows(enabled: boolean, type: THREE.ShadowMapType = THREE.PCFSoftShadowMap) {
+  setShadows(enabled: boolean, type: any = THREE.PCFSoftShadowMap): void {
     this.shadows = enabled;
-    if (!this.renderer) return;
-    this.renderer.shadowMap.enabled = enabled;
-    if (enabled) this.renderer.shadowMap.type = type;
+    if (this.renderer) {
+      this.renderer.shadowMap.enabled = enabled;
+      if (enabled) this.renderer.shadowMap.type = type;
+    }
   }
 
   renderFrame(): void {
-    // Objects are updated by SceneService loop, not here
-    this.renderer.render(this.scene, this.camera);
-    
-    // Update FPS counter
-    this.fpsCounter.update();
+    const cam = this.getActiveCamera();
+    if (!cam) {
+      this.warnMissingCamera();
+      this.clearRenderer();
+      // Update FPS counter even when skipping render
+      try { this.fpsController.update(); } catch { /* ignore */ }
+      return;
+    }
+
+    this.missingCameraWarned = false;
+
+    if (this.usePostProcessing && this.composer) {
+      this.updateComposerCamera(cam);
+      this.composer.render();
+    } else {
+      this.renderer.render(this.scene, cam);
+    }
+    // Update FPS counter after rendering
+    try { this.fpsController.update(); } catch { /* ignore */ }
+  }
+  private warnMissingCamera(): void {
+    if (!this.missingCameraWarned) {
+      console.warn("[ThreeRenderer] No active camera for current scene — skipping render frame.");
+      this.missingCameraWarned = true;
+    }
   }
 
-  /**
-   * Toggle FPS counter visibility
-   */
+  private clearRenderer(): void {
+    try {
+      this.renderer.setClearColor(0x000000, 0);
+      this.renderer.clear(true, true, true);
+    } catch {
+      // Ignore errors
+    }
+  }
+
+  private updateComposerCamera(cam: THREE.Camera): void {
+    if (this.renderPass && this.renderPass.camera !== cam) {
+      this.renderPass.camera = cam;
+    }
+  }
+
+  enablePostProcessing(): EffectComposer {
+    if (!this.composer) {
+      const cam = this.getActiveCamera();
+      if (!cam) throw new Error("Cannot enable post-processing: no active camera.");
+      this.composer = new EffectComposer(this.renderer);
+      this.renderPass = new RenderPass(this.scene, cam);
+      this.composer.addPass(this.renderPass);
+    }
+    this.usePostProcessing = true;
+    return this.composer;
+  }
+
+  disablePostProcessing(): void {
+    this.usePostProcessing = false;
+    if (this.composer) {
+      this.composer.dispose();
+      this.composer = undefined;
+    }
+  }
+
+  start(): void {
+    if (this.rafId !== null) return;
+    const loop = (t: number) => {
+      try {
+        this.renderFrame();
+        this.rafId = requestAnimationFrame(loop);
+      } catch (err) {
+        console.error("[ThreeRenderer] Fatal loop error", err);
+        this.stop();
+      }
+    };
+    this.rafId = requestAnimationFrame(loop);
+  }
+
+  stop(): void {
+    if (this.rafId !== null) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = null;
+    }
+  }
+
+  setScene(scene: IScene): void {
+    this.teardownPreviousScene();
+    this.activeIScene = scene;
+    scene.setup(this, this.scene);
+    this.onActiveCameraChanged();
+    if (!this.getActiveCamera()) {
+      console.warn("[ThreeRenderer] Scene setup did not register an active camera.");
+    }
+  }
+
+  private teardownPreviousScene(): void {
+    if (this.activeIScene?.teardown) {
+      try {
+        this.activeIScene.teardown(this, this.scene);
+      } catch (e) {
+        console.warn("[ThreeRenderer] Error during previous scene teardown", e);
+      }
+    }
+    this.scene.clear();
+    if (this.composer) {
+      this.composer.dispose?.();
+      this.composer = undefined;
+      this.renderPass = undefined;
+      this.usePostProcessing = false;
+    }
+  }
+
+  handleResize(): void {
+    this.applyResolutionScale();
+  }
+
+  onActiveCameraChanged(): void {
+    const camera = this.getActiveCamera();
+    if (camera) this.missingCameraWarned = false;
+    if (this.renderPass && camera) {
+      this.renderPass.camera = camera;
+    }
+    if (camera instanceof THREE.PerspectiveCamera) {
+      const { clientWidth: w, clientHeight: h } = this.container || window;
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+  }
+
+  getComposer(): EffectComposer | undefined {
+    return this.composer;
+  }
+
+  getActiveScene(): IScene | null {
+    return this.activeIScene;
+  }
+
   toggleFpsCounter(): void {
-    this.fpsCounter.toggle();
-  }
-
-  /**
-   * Show FPS counter
-   */
-  showFpsCounter(): void {
-    this.fpsCounter.show();
-  }
-
-  /**
-   * Hide FPS counter
-   */
-  hideFpsCounter(): void {
-    this.fpsCounter.hide();
-  }
-
-  /**
-   * Get current FPS value
-   */
-  getFps(): number {
-    return this.fpsCounter.getFps();
+    if (this.fpsController.isRunning()) {
+      this.fpsController.stop();
+      this.fpsController.hide();
+    } else {
+      this.fpsController.start();
+      this.fpsController.show();
+    }
   }
 }
 

@@ -1,0 +1,78 @@
+.sd-icon-button {
+    appearance: none;
+    border: 2px solid var(--border);
+    background: var(--panel);
+    backdrop-filter: blur(10px);
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+}
+
+.sd-icon-button:hover:not(:disabled) {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-shadow-15), var(--shadow);
+    transform: scale(1.05);
+}
+
+.sd-icon-button:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.sd-icon-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Variants */
+.sd-icon-button--primary {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+}
+
+.sd-icon-button--danger {
+    border-color: var(--danger-30);
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+.sd-icon-button--danger:hover:not(:disabled) {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 4px var(--danger-15), var(--shadow);
+}
+
+.sd-icon-button--ghost {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+}
+
+/* Secondary variant: explicit no-op that mirrors base button visuals */
+.sd-icon-button--secondary {
+    border-color: var(--border);
+    background: var(--panel);
+    color: var(--text);
+}
+
+/* Sizes */
+.sd-icon-button--small {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+}
+
+.sd-icon-button--medium {
+    width: 48px;
+    height: 48px;
+    font-size: 20px;
+}
+
+.sd-icon-button--large {
+    width: 56px;
+    height: 56px;
+    font-size: 24px;
+}

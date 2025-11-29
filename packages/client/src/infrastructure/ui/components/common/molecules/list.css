@@ -1,0 +1,36 @@
+.sd-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Base list item styles - list uses Card but we provide a base rule
+   so `sd-list-item` can control spacing and surface look when used
+   as a list child. Keep visuals consistent with card defaults. */
+.sd-list-item {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    transition: all 0.2s ease;
+}
+
+.sd-list-item--hover:hover {
+    border-color: var(--accent);
+    background: var(--panel);
+}
+
+.sd-list-item--clickable {
+    cursor: pointer;
+}
+
+.sd-list-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+}
+
+.sd-list-empty p {
+    margin: 0;
+    font-size: 14px;
+}
