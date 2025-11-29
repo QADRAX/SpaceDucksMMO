@@ -13,18 +13,20 @@ function copyEuler(e: EulerLike): EulerLike {
   return { x: e.x, y: e.y, z: e.z };
 }
 
+// YXZ order: yaw (Y), pitch (X), roll (Z)
 function quatFromEuler(e: EulerLike): QuatLike {
-  // Euler order XYZ
-  const c1 = Math.cos(e.x / 2);
-  const c2 = Math.cos(e.y / 2);
-  const c3 = Math.cos(e.z / 2);
-  const s1 = Math.sin(e.x / 2);
-  const s2 = Math.sin(e.y / 2);
+  // YXZ order: yaw (Y), pitch (X), roll (Z)
+  const c1 = Math.cos(e.y / 2); // yaw
+  const c2 = Math.cos(e.x / 2); // pitch
+  const c3 = Math.cos(e.z / 2); // roll
+  const s1 = Math.sin(e.y / 2);
+  const s2 = Math.sin(e.x / 2);
   const s3 = Math.sin(e.z / 2);
-  const x = s1 * c2 * c3 + c1 * s2 * s3 * -1; // note: match conventional formula
-  const y = c1 * s2 * c3 + s1 * c2 * s3;
-  const z = c1 * c2 * s3 - s1 * s2 * c3;
-  const w = c1 * c2 * c3 - s1 * s2 * s3;
+  // YXZ quaternion construction
+  const x = s2 * c1 * c3 + c2 * s1 * s3;
+  const y = c2 * s1 * c3 - s2 * c1 * s3;
+  const z = c2 * c1 * s3 - s2 * s1 * c3;
+  const w = c2 * c1 * c3 + s2 * s1 * s3;
   return { x, y, z, w };
 }
 

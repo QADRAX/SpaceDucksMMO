@@ -15,6 +15,8 @@ import { ShaderMaterialComponent } from "@client/domain/ecs/components/material/
 import { TextureTilingComponent } from '@client/domain/ecs/components/material/TextureTilingComponent';
 import { OrbitComponent } from "@client/domain/ecs/components/OrbitComponent";
 import { CameraViewComponent } from "@client/domain/ecs/components/CameraViewComponent";
+import { MouseLookComponent } from "@client/domain/ecs/components/MouseLookComponent";
+import { FirstPersonMoveComponent } from "@client/domain/ecs/components/FirstPersonMoveComponent";
 import { LookAtEntityComponent } from '@client/domain/ecs/components/LookAtEntityComponent';
 import { LookAtPointComponent } from '@client/domain/ecs/components/LookAtPointComponent';
 import { LightComponent } from "@client/domain/ecs/components/LightComponent";
@@ -34,6 +36,8 @@ export type KnownComponentType =
   | "shaderMaterial"
   | "orbit"
   | "cameraView"
+  | "mouseLook"
+  | "firstPersonMove"
   | "textureTiling"
   
   | "lookAtEntity"
@@ -98,6 +102,10 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
     // camera view (unique)
     if (!has("cameraView")) defs.push({ type: "cameraView", label: "Camera View" });
 
+    // mouse / first-person movement (only when camera present)
+    if (has("cameraView") && !has("mouseLook")) defs.push({ type: "mouseLook", label: "Mouse Look" });
+    if (has("cameraView") && !has("firstPersonMove")) defs.push({ type: "firstPersonMove", label: "First Person Move" });
+
     // look-at components
     if (!has('lookAtEntity')) defs.push({ type: 'lookAtEntity', label: 'Look At Entity' });
     if (!has('lookAtPoint')) defs.push({ type: 'lookAtPoint', label: 'Look At Point' });
@@ -140,6 +148,10 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
         return new OrbitComponent({ targetEntityId: "", altitudeFromSurface: 10, speed: 1 });
       case "cameraView":
         return new CameraViewComponent({});
+      case "mouseLook":
+        return new MouseLookComponent(params ?? {});
+      case "firstPersonMove":
+        return new FirstPersonMoveComponent(params ?? {});
       case "lookAtEntity":
         return new LookAtEntityComponent({ targetEntityId: "", offset: [0, 0, 0] });
       case "lookAtPoint":

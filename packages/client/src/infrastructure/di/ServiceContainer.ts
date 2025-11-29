@@ -13,6 +13,7 @@ import BrowserFileExistenceChecker from "@client/infrastructure/assets/BrowserFi
 import DevRegistry from '@client/infrastructure/ui/dev/DevRegistry';
 import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
 import KeyboardInputService from '@client/application/KeyboardInputService';
+import MouseInputService from '@client/application/MouseInputService';
 import type { Services} from "./Services";
 import DefaultEcsComponentFactory from '@client/domain/ecs/core/ComponentFactory';
 
@@ -59,6 +60,7 @@ export class ServiceContainer {
     const fpsController = new FpsController();
     const devRegistry = new DevRegistry();
     const keyboard = new KeyboardInputService();
+    const mouse = new MouseInputService();
     this.services = {
       settings: settingsService,
       i18n: i18nService,
@@ -69,6 +71,7 @@ export class ServiceContainer {
       fpsController: fpsController,
       devRegistry: devRegistry,
       keyboard: keyboard,
+      mouse: mouse,
       // renderingEngine/navigation/sceneManager are provided later by RendererBootstrap
       ecsComponentFactory: new DefaultEcsComponentFactory(),
     };

@@ -1,5 +1,6 @@
 import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
 import type SceneManager from './SceneManager';
+import { getInputServices } from '@client/domain/ecs/core/InputContext';
 
 /**
  * Application service that orchestrates the render loop.
@@ -33,15 +34,14 @@ export class SceneService {
       const dt = now - this.lastTime;
       this.lastTime = now;
       
-      // Delegate scene update to SceneManager
-      // (SceneManager calls update on current scene, which updates its objects)
       this.sceneManager.update(dt);
-      // Previously we failed-fast when a scene did not provide a camera.
-      // To support scenes that intentionally have no camera (editor modes,
-      // background-only scenes, etc.) we no longer throw here. The engine's
-      // `renderFrame()` should handle missing cameras gracefully and simply
-      // skip rendering while keeping the app alive.
       this.engine.renderFrame();
+      try {
+        const input = getInputServices();
+        if (input && input.mouse && input.mouse.beginFrame) input.mouse.beginFrame();
+      } catch (e) {
+        // ignore: input services might not be set in tests
+      }
       this.frameHandle = requestAnimationFrame(loop);
     };
     loop();

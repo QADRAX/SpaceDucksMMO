@@ -8,8 +8,8 @@ import { PlaneGeometryComponent } from '@client/domain/ecs/components/geometry/P
 import SphereGeometryComponent from '@client/domain/ecs/components/geometry/SphereGeometryComponent';
 import { LightComponent } from '@client/domain/ecs/components/LightComponent';
 import { CameraViewComponent } from '@client/domain/ecs/components/CameraViewComponent';
-import { OrbitComponent } from '@client/domain/ecs/components/OrbitComponent';
-import { LookAtEntityComponent } from '@client/domain/ecs/components/LookAtEntityComponent';
+import { MouseLookComponent } from '@client/domain/ecs/components/MouseLookComponent';
+import { FirstPersonMoveComponent } from '@client/domain/ecs/components/FirstPersonMoveComponent';
 
 import { BasicMaterialComponent } from '@client/domain/ecs/components/material/BasicMaterialComponent';
 import { LambertMaterialComponent } from '@client/domain/ecs/components/material/LambertMaterialComponent';
@@ -343,24 +343,16 @@ export class SandboxScene extends BaseScene {
       })
     );
 
-    // Orbit around the origin (center of gallery)
-    camera.addComponent(
-      new OrbitComponent({
-        targetEntityId: 'origin',
-        altitudeFromSurface: 18,
-        speed: 0.15,
-        orbitPlane: 'xz',
-        initialAngle: 0,
-      })
-    );
-
-    // Always look at the origin
-    camera.addComponent(
-      new LookAtEntityComponent({
-        targetEntityId: 'origin',
-        offset: [0, 0, 0],
-      })
-    );
+    // Use interactive first-person controls by default
+    // Mouse look: rotates camera when pointer locked
+    // First person move: WASD + Space/C to move; Shift to sprint
+    // These components cooperate with MouseInputService to request pointer lock
+    camera.addComponent(new MouseLookComponent({
+      
+    }));
+    camera.addComponent(new FirstPersonMoveComponent({
+      flyMode: true,
+    }));
 
     camera.transform.setPosition(0, 10, 24);
     this.addEntity(camera);

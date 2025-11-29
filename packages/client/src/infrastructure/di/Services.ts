@@ -11,6 +11,7 @@ import GameScreenManager from "@client/application/ui/GameScreenManager";
 import type SceneManager from '@client/application/SceneManager';
 import type { IEcsComponentFactory } from '@client/domain/ecs/core/ComponentFactory';
 import KeyboardInputService from "@client/application/KeyboardInputService";
+import MouseInputService from "@client/application/MouseInputService";
 
 export interface Services {
   settings: SettingsService;
@@ -26,6 +27,8 @@ export interface Services {
   navigation?: GameScreenManager;
   /** Centralized keyboard input for hotkeys and input handling */
   keyboard: KeyboardInputService;
+  /** Centralized mouse input for pointer lock and mouse-driven controllers */
+  mouse: MouseInputService;
   /** Reference to the application SceneManager so UI tooling (dev inspector) can access ECS/scene APIs */
   sceneManager?: SceneManager;
   /** Domain ECS component factory for creating components in editor UIs */
