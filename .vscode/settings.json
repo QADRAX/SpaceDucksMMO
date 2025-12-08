@@ -5,5 +5,6 @@
   "jest.rootPath": ".",
   "jest.nodeEnv": {
     "NODE_OPTIONS": "--experimental-vm-modules"
-  }
+  },
+  "prisma.pinToPrisma6": true
 }
