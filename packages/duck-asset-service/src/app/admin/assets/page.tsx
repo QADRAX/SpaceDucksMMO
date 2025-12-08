@@ -10,6 +10,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Badge } from '@/components/atoms/Badge';
 import { Tag } from '@/components/atoms/Tag';
 import { Button } from '@/components/atoms/Button';
+import { CreateAssetDialog } from '@/components/organisms';
 
 export default function AssetsPage() {
   const [assets, setAssets] = useState<ParsedAssetWithVersionCount[]>([]);
@@ -50,11 +51,36 @@ export default function AssetsPage() {
     }
   };
 
+  const deleteAsset = async (assetId: string, displayName: string) => {
+    if (!confirm(`Are you sure you want to delete "${displayName}"?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/assets/${assetId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        fetchAssets(); // Refresh the list
+      } else {
+        const data = await response.json();
+        alert(`Failed to delete asset: ${data.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error('Failed to delete asset:', err);
+      alert('Failed to delete asset. Please try again.');
+    }
+  };
+
   return (
     <div>
       <PageHeader 
         title="Assets" 
-        description="Manage your asset catalog" 
+        description="Manage your asset catalog"
+        actions={
+          <CreateAssetDialog onAssetCreated={fetchAssets} />
+        }
       />
 
       <FilterBar
@@ -83,7 +109,8 @@ export default function AssetsPage() {
         <Card>
           <div className="text-center py-12">
             <div className="text-6xl mb-4">📦</div>
-            <p className="text-neutral-600">No assets found. Use the API to create your first asset.</p>
+            <p className="text-neutral-600 mb-4">No assets found. Create your first asset to get started.</p>
+            <CreateAssetDialog onAssetCreated={fetchAssets} />
           </div>
         </Card>
       ) : (
@@ -122,9 +149,18 @@ export default function AssetsPage() {
                   </TableCell>
                   <TableCell>{asset.versionCount}</TableCell>
                   <TableCell>
-                    <Link href={`/admin/assets/${asset.id}`}>
-                      <Button size="sm">View</Button>
-                    </Link>
+                    <div className="flex gap-2">
+                      <Link href={`/admin/assets/${asset.id}`}>
+                        <Button size="sm">View</Button>
+                      </Link>
+                      <Button 
+                        size="sm" 
+                        variant="secondary"
+                        onClick={() => deleteAsset(asset.id, asset.displayName)}
+                      >
+                        🗑️
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

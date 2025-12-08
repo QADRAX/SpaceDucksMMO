@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import type { ParsedAssetWithVersions } from '@/lib/types';
@@ -104,6 +104,29 @@ export default function AssetDetailPage() {
     }
   };
 
+  const deleteAsset = async () => {
+    if (!confirm(`Are you sure you want to delete "${asset?.displayName}"? This will archive the asset and all its versions.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/assets/${assetId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Redirect to assets list
+        window.location.href = '/admin/assets';
+      } else {
+        const data = await response.json();
+        alert(`Failed to delete asset: ${data.error || 'Unknown error'}`);
+      }
+    } catch (err) {
+      console.error('Failed to delete asset:', err);
+      alert('Failed to delete asset. Please try again.');
+    }
+  };
+
   if (loading) {
     return (
       <Card>
@@ -134,9 +157,14 @@ export default function AssetDetailPage() {
       <PageHeader 
         title={asset.displayName}
         actions={
-          <Link href="/admin/assets">
-            <Button variant="secondary">← Back to Assets</Button>
-          </Link>
+          <div className="flex gap-2">
+            <Button variant="secondary" onClick={deleteAsset}>
+              🗑️ Delete Asset
+            </Button>
+            <Link href="/admin/assets">
+              <Button variant="secondary">← Back to Assets</Button>
+            </Link>
+          </div>
         }
       />
 
@@ -197,8 +225,8 @@ export default function AssetDetailPage() {
             </TableHeader>
             <TableBody>
               {asset.versions.map((version) => (
-                <>
-                  <TableRow key={version.id}>
+                <React.Fragment key={version.id}>
+                  <TableRow>
                     <TableCell>
                       <strong>{version.version}</strong>
                     </TableCell>
@@ -243,29 +271,63 @@ export default function AssetDetailPage() {
                       <TableCell colSpan={6} className="bg-bg">
                         <div className="p-4">
                           <h4 className="font-heading mb-2">Files</h4>
-                          <ul className="space-y-2">
-                            {version.files.map((file) => (
-                              <li key={file.id} className="border-l-2 border-border pl-3">
-                                <strong>{file.fileName}</strong>
-                                <br />
-                                <small className="text-neutral-600">
-                                  Type: {file.contentType} | Size: {(file.size / 1024).toFixed(2)} KB
+                          {asset.type === 'material' ? (
+                            // Material PBR Maps organized view
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {version.files.map((file) => (
+                                <div key={file.id} className="border-2 border-border rounded-base p-3 bg-white">
+                                  <div className="flex items-start justify-between mb-2">
+                                    <strong className="font-heading">{file.fileName}</strong>
+                                    {file.mapType && (
+                                      <Badge variant="default" className="ml-2">
+                                        {file.mapType}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <div className="text-xs text-neutral-600 space-y-1">
+                                    <div>Type: {file.contentType}</div>
+                                    <div>Size: {(file.size / 1024).toFixed(2)} KB</div>
+                                    <div className="break-all">Hash: <code className="text-xs">{file.hash}</code></div>
+                                    <div className="mt-2">
+                                      <a 
+                                        href={`${baseUrl}/api/assets/file/${asset.key}/${version.version}/${file.fileName}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-main hover:underline"
+                                      >
+                                        Download ↗
+                                      </a>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            // Generic file list view
+                            <ul className="space-y-2">
+                              {version.files.map((file) => (
+                                <li key={file.id} className="border-l-2 border-border pl-3">
+                                  <strong>{file.fileName}</strong>
                                   <br />
-                                  Hash: {file.hash}
-                                  <br />
-                                  URL:{' '}
-                                  <code className="text-xs bg-white px-2 py-1 rounded-base border border-border">
-                                    {baseUrl}/api/assets/file/{asset.key}/{version.version}/{file.fileName}
-                                  </code>
-                                </small>
-                              </li>
-                            ))}
-                          </ul>
+                                  <small className="text-neutral-600">
+                                    Type: {file.contentType} | Size: {(file.size / 1024).toFixed(2)} KB
+                                    <br />
+                                    Hash: {file.hash}
+                                    <br />
+                                    URL:{' '}
+                                    <code className="text-xs bg-white px-2 py-1 rounded-base border border-border">
+                                      {baseUrl}/api/assets/file/{asset.key}/{version.version}/{file.fileName}
+                                    </code>
+                                  </small>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </React.Fragment>
               ))}
             </TableBody>
           </Table>

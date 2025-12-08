@@ -8,8 +8,80 @@ import { parseTags } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 
 /**
- * GET /api/assets/manifest/by-query
- * Get manifest of published assets matching query criteria
+ * @swagger
+ * /api/assets/manifest/by-query:
+ *   get:
+ *     tags: [Assets]
+ *     summary: Get asset manifest
+ *     description: Get a manifest of published assets with file URLs for game clients
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [material, texture]
+ *         description: Filter by asset type
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category
+ *       - in: query
+ *         name: tag
+ *         schema:
+ *           type: string
+ *         description: Filter by tag
+ *     responses:
+ *       200:
+ *         description: Asset manifest with file URLs
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 assets:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       key:
+ *                         type: string
+ *                       displayName:
+ *                         type: string
+ *                       type:
+ *                         type: string
+ *                       category:
+ *                         type: string
+ *                       tags:
+ *                         type: array
+ *                         items:
+ *                           type: string
+ *                       version:
+ *                         type: string
+ *                       files:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           properties:
+ *                             fileName:
+ *                               type: string
+ *                             url:
+ *                               type: string
+ *                             size:
+ *                               type: integer
+ *                             hash:
+ *                               type: string
+ *                             contentType:
+ *                               type: string
+ *                             mapType:
+ *                               type: string
+ *                               nullable: true
+ *       400:
+ *         description: Invalid query parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function GET(request: NextRequest) {
   try {
@@ -92,6 +164,7 @@ export async function GET(request: NextRequest) {
           size: file.size,
           hash: file.hash,
           contentType: file.contentType,
+          mapType: file.mapType,
         })),
       };
     });

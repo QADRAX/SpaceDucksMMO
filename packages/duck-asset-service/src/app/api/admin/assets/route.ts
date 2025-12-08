@@ -6,8 +6,70 @@ import type { AssetWithVersionCount, AssetListResponse, ParsedAssetWithVersionCo
 import { parseAsset } from '@/lib/types';
 
 /**
- * GET /api/admin/assets
- * List assets with optional filtering and pagination
+ * @swagger
+ * /api/admin/assets:
+ *   get:
+ *     tags: [Admin]
+ *     summary: List all assets
+ *     description: Get a paginated list of assets with optional filtering
+ *     parameters:
+ *       - in: query
+ *         name: type
+ *         schema:
+ *           type: string
+ *           enum: [material, texture]
+ *         description: Filter by asset type
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Filter by category
+ *       - in: query
+ *         name: tag
+ *         schema:
+ *           type: string
+ *         description: Filter by tag
+ *       - in: query
+ *         name: query
+ *         schema:
+ *           type: string
+ *         description: Search in key and displayName
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 50
+ *         description: Items per page
+ *     responses:
+ *       200:
+ *         description: List of assets
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 assets:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Asset'
+ *                 total:
+ *                   type: integer
+ *                 page:
+ *                   type: integer
+ *                 limit:
+ *                   type: integer
+ *       400:
+ *         description: Invalid query parameters
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function GET(request: NextRequest) {
   try {
@@ -100,8 +162,37 @@ export async function GET(request: NextRequest) {
 }
 
 /**
- * POST /api/admin/assets
- * Create a new asset
+ * @swagger
+ * /api/admin/assets:
+ *   post:
+ *     tags: [Admin]
+ *     summary: Create a new asset
+ *     description: Creates a new asset with the provided metadata
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CreateAssetRequest'
+ *     responses:
+ *       201:
+ *         description: Asset created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Asset'
+ *       400:
+ *         description: Invalid request body
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       409:
+ *         description: Asset with this key already exists
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
  */
 export async function POST(request: NextRequest) {
   try {
@@ -117,12 +208,37 @@ export async function POST(request: NextRequest) {
 
     const { key, displayName, type, category, tags } = validation.data;
 
-    // Check if asset with this key already exists
+    // Check if active asset with this key already exists (ignore archived)
     const existing = await prisma.asset.findUnique({ where: { key } });
-    if (existing) {
+    if (existing && !existing.isArchived) {
       return NextResponse.json(
         { error: 'Asset with this key already exists' },
         { status: 409 }
+      );
+    }
+    
+    // If archived asset exists with same key, update it instead of creating new
+    if (existing && existing.isArchived) {
+      const asset = await prisma.asset.update({
+        where: { id: existing.id },
+        data: {
+          displayName,
+          type,
+          category,
+          tags: JSON.stringify(tags),
+          isArchived: false,
+          updatedAt: new Date(),
+        },
+      });
+
+      logger.info('Archived asset restored', { assetId: asset.id, key: asset.key });
+
+      return NextResponse.json(
+        {
+          ...asset,
+          tags: JSON.parse(asset.tags),
+        },
+        { status: 201 }
       );
     }
 

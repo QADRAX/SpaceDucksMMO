@@ -2,16 +2,7 @@ import { z } from 'zod';
 import type { AssetType, VersionStatus } from './types';
 
 // Asset type validation
-export const AssetTypeSchema = z.enum([
-  'texture',
-  'sprite_sheet',
-  'audio',
-  'map',
-  'prefab',
-  'shader',
-  'script',
-  'other',
-]) as z.ZodType<AssetType>;
+export const AssetTypeSchema = z.enum(['material', 'texture']) as z.ZodType<AssetType>;
 
 export const VersionStatusSchema = z.enum(['draft', 'published', 'deprecated']) as z.ZodType<VersionStatus>;
 
@@ -38,14 +29,14 @@ export const UpdateAssetSchema = z.object({
 export const CreateVersionSchema = z.object({
   version: z.string().optional(),
   status: VersionStatusSchema.optional().default('draft'),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 // Update Version Schema
 export const UpdateVersionSchema = z.object({
   status: VersionStatusSchema.optional(),
   isDefault: z.boolean().optional(),
-  notes: z.string().optional(),
+  notes: z.string().nullable().optional(),
 });
 
 // Query params for asset listing

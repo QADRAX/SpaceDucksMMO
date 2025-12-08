@@ -54,7 +54,9 @@ model AssetFile {
   contentType    String
   size           Int
   hash           String
+  mapType        String?      // For materials: "albedo" | "normal" | "roughness" | "metallic" | "ao" | "height" | "emission"
   createdAt      DateTime     @default(now())
 
   @@index([assetVersionId])
+  @@index([mapType])
 }

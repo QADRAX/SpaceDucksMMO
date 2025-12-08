@@ -14,6 +14,7 @@ export function AdminLayout({ children, className }: AdminLayoutProps) {
         <SidebarMenu>
           <SidebarMenuItem href="/admin">Dashboard</SidebarMenuItem>
           <SidebarMenuItem href="/admin/assets">Assets</SidebarMenuItem>
+          <SidebarMenuItem href="/api-docs">📖 API Docs</SidebarMenuItem>
         </SidebarMenu>
       </Sidebar>
       <main className={cn('flex-1 p-8 bg-bg', className)}>

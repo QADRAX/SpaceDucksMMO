@@ -5,15 +5,7 @@ import type { Asset, AssetVersion, AssetFile } from '@prisma/client';
  */
 
 // Asset type enum
-export type AssetType = 
-  | 'texture' 
-  | 'sprite_sheet' 
-  | 'audio' 
-  | 'map' 
-  | 'prefab' 
-  | 'shader' 
-  | 'script' 
-  | 'other';
+export type AssetType = 'material' | 'texture';
 
 // Version status enum
 export type VersionStatus = 'draft' | 'published' | 'deprecated';
@@ -94,6 +86,7 @@ export interface ManifestFile {
   size: number;
   hash: string;
   contentType: string;
+  mapType?: string | null; // For material assets: PBR map type
 }
 
 // API Response types
@@ -132,6 +125,56 @@ export function parseTags(tagsJson: string): string[] {
   } catch {
     return [];
   }
+}
+
+// Material metadata types
+export type MaterialMapType = 
+  | 'albedo'
+  | 'normal' 
+  | 'roughness'
+  | 'metallic'
+  | 'ao'
+  | 'height'
+  | 'emission';
+
+export interface MaterialMetadata {
+  materialType: 'pbr';
+  maps: Partial<Record<MaterialMapType, string>>; // filename mapping
+  tiling?: [number, number];
+  properties?: {
+    roughnessScale?: number;
+    metallicScale?: number;
+    normalStrength?: number;
+  };
+}
+
+// Helper to detect map type from filename
+export function detectMapType(filename: string): MaterialMapType | null {
+  const lower = filename.toLowerCase();
+  
+  if (lower.includes('albedo') || lower.includes('diffuse') || lower.includes('color') || lower.includes('basecolor')) {
+    return 'albedo';
+  }
+  if (lower.includes('normal')) {
+    return 'normal';
+  }
+  if (lower.includes('rough')) {
+    return 'roughness';
+  }
+  if (lower.includes('metal')) {
+    return 'metallic';
+  }
+  if (lower.includes('ao') || lower.includes('occlusion')) {
+    return 'ao';
+  }
+  if (lower.includes('height') || lower.includes('displacement')) {
+    return 'height';
+  }
+  if (lower.includes('emission') || lower.includes('emissive')) {
+    return 'emission';
+  }
+  
+  return null;
 }
 
 // Helper function to parse asset
