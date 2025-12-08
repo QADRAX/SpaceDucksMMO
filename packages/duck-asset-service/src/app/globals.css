@@ -2,6 +2,53 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Neo-Brutalist Scrollbar */
+body,
+.scrollbar {
+  --sb-track-color: #ffffff;
+  --sb-thumb-color: #000000;
+}
+
+html.dark body,
+html.dark .scrollbar {
+  --sb-track-color: #1f1f1f;
+  --sb-thumb-color: #e6e6e6;
+}
+
+.scrollbar::-webkit-scrollbar {
+  width: 16px;
+}
+
+body::-webkit-scrollbar {
+  width: 20px;
+}
+
+body::-webkit-scrollbar-track,
+.scrollbar::-webkit-scrollbar-track {
+  background: var(--sb-track-color);
+}
+
+body::-webkit-scrollbar-track {
+  border-left: 4px solid #000;
+}
+
+body::-webkit-scrollbar-thumb,
+.scrollbar::-webkit-scrollbar-thumb {
+  background: var(--sb-thumb-color);
+}
+
+html.dark body::-webkit-scrollbar-thumb {
+  border-left: 4px solid #000;
+}
+
+/* Firefox scrollbar */
+@supports not selector(::-webkit-scrollbar) {
+  body,
+  .scrollbar {
+    scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
+  }
+}
+
 :root {
   --border-radius: 5px;
   --box-shadow-x: 4px;

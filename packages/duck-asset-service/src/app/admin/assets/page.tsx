@@ -10,6 +10,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Badge } from '@/components/atoms/Badge';
 import { Tag } from '@/components/atoms/Tag';
 import { Button } from '@/components/atoms/Button';
+import { DropdownMenu, DropdownMenuItem } from '@/components/molecules/DropdownMenu';
 import { CreateAssetDialog } from '@/components/organisms';
 
 export default function AssetsPage() {
@@ -149,18 +150,18 @@ export default function AssetsPage() {
                   </TableCell>
                   <TableCell>{asset.versionCount}</TableCell>
                   <TableCell>
-                    <div className="flex gap-2">
-                      <Link href={`/admin/assets/${asset.id}`}>
-                        <Button size="sm">View</Button>
-                      </Link>
-                      <Button 
-                        size="sm" 
-                        variant="secondary"
-                        onClick={() => deleteAsset(asset.id, asset.displayName)}
-                      >
-                        🗑️
-                      </Button>
-                    </div>
+                    <DropdownMenu
+                      trigger={<Button size="sm" variant="ghost">⋮</Button>}
+                    >
+                      <DropdownMenuItem>
+                        <Link href={`/admin/assets/${asset.id}`} className="w-full text-left">
+                          View Details
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => deleteAsset(asset.id, asset.displayName)}>
+                        Delete Asset
+                      </DropdownMenuItem>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}

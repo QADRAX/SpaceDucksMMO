@@ -7,3 +7,5 @@ export * from './CreateAssetDialog';
 export * from './AssetMetadataStep';
 export * from './MaterialUploadStep';
 export * from './TextureUploadStep';
+export * from './EditVersionDialog';
+export * from './AddAssetVersionDialog';

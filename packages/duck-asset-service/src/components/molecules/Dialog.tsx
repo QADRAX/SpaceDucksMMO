@@ -63,21 +63,31 @@ interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {}
 export function DialogContent({ className, children, ...props }: DialogContentProps) {
   const { open, setOpen } = useDialog();
 
+  React.useEffect(() => {
+    if (open) {
+      // Block body scroll when dialog is open
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = '';
+      };
+    }
+  }, [open]);
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-overlay"
+        className="fixed inset-0 bg-black/50"
         onClick={() => setOpen(false)}
       />
       
       {/* Dialog */}
       <div
         className={cn(
-          'relative z-50 w-full max-w-lg bg-background border-4 border-border rounded-base shadow-base',
-          'max-h-[90vh] overflow-auto',
+          'relative z-[10001] w-full max-w-lg bg-white border-4 border-black rounded-base shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]',
+          'max-h-[90vh] overflow-auto scrollbar p-6',
           className
         )}
         {...props}

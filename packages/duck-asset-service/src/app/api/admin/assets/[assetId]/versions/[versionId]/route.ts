@@ -50,8 +50,44 @@ export async function GET(
 }
 
 /**
- * PATCH /api/admin/assets/[assetId]/versions/[versionId]
- * Update version metadata
+ * @swagger
+ * /api/admin/assets/{assetId}/versions/{versionId}:
+ *   patch:
+ *     tags: [Admin]
+ *     summary: Update version metadata
+ *     description: Update status, notes, or default flag for a version
+ *     parameters:
+ *       - in: path
+ *         name: assetId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *       - in: path
+ *         name: versionId
+ *         required: true
+ *         schema:
+ *           type: string
+ *           format: uuid
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [draft, published]
+ *               notes:
+ *                 type: string
+ *                 nullable: true
+ *               isDefault:
+ *                 type: boolean
+ *     responses:
+ *       200:
+ *         description: Version updated successfully
+ *       404:
+ *         description: Version not found
  */
 export async function PATCH(
   request: NextRequest,

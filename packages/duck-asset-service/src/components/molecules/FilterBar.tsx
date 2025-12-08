@@ -37,14 +37,8 @@ export function FilterBar({
       <FormGroup label="Type" className="flex-1 min-w-[200px]">
         <Select value={typeFilter} onChange={(e) => onTypeChange(e.target.value)}>
           <option value="">All Types</option>
+          <option value="material">Material</option>
           <option value="texture">Texture</option>
-          <option value="sprite_sheet">Sprite Sheet</option>
-          <option value="audio">Audio</option>
-          <option value="map">Map</option>
-          <option value="prefab">Prefab</option>
-          <option value="shader">Shader</option>
-          <option value="script">Script</option>
-          <option value="other">Other</option>
         </Select>
       </FormGroup>
       

@@ -10,6 +10,9 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import { Badge } from '@/components/atoms/Badge';
 import { Tag } from '@/components/atoms/Tag';
 import { Button } from '@/components/atoms/Button';
+import { DropdownMenu, DropdownMenuItem } from '@/components/molecules/DropdownMenu';
+import { EditVersionDialog } from '@/components/organisms/EditVersionDialog';
+import { AddAssetVersionDialog } from '@/components/organisms/AddAssetVersionDialog';
 
 export default function AssetDetailPage() {
   const params = useParams();
@@ -19,6 +22,7 @@ export default function AssetDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedVersion, setExpandedVersion] = useState<string | null>(null);
+  const [editingVersion, setEditingVersion] = useState<string | null>(null);
 
   useEffect(() => {
     fetchAsset();
@@ -158,8 +162,14 @@ export default function AssetDetailPage() {
         title={asset.displayName}
         actions={
           <div className="flex gap-2">
+            <AddAssetVersionDialog 
+              assetId={assetId} 
+              assetType={asset.type}
+              onVersionAdded={fetchAsset}
+              trigger={<Button>+ Add Version</Button>}
+            />
             <Button variant="secondary" onClick={deleteAsset}>
-              🗑️ Delete Asset
+              Delete Asset
             </Button>
             <Link href="/admin/assets">
               <Button variant="secondary">← Back to Assets</Button>
@@ -239,7 +249,7 @@ export default function AssetDetailPage() {
                     <TableCell>{version.fileCount}</TableCell>
                     <TableCell>{new Date(version.createdAt).toLocaleString()}</TableCell>
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 items-center">
                         <Button
                           size="sm"
                           variant="secondary"
@@ -247,22 +257,23 @@ export default function AssetDetailPage() {
                         >
                           {expandedVersion === version.id ? 'Hide' : 'Show'} Files
                         </Button>
-                        {!version.isDefault && (
-                          <Button
-                            size="sm"
-                            onClick={() => setDefaultVersion(version.id)}
-                          >
-                            Set Default
-                          </Button>
-                        )}
-                        {version.status === 'draft' && (
-                          <Button
-                            size="sm"
-                            onClick={() => updateVersionStatus(version.id, 'published')}
-                          >
-                            Publish
-                          </Button>
-                        )}
+                        <DropdownMenu
+                          trigger={<Button size="sm" variant="ghost">⋮</Button>}
+                        >
+                          <DropdownMenuItem onClick={() => setEditingVersion(version.id)}>
+                            Edit Version
+                          </DropdownMenuItem>
+                          {!version.isDefault && (
+                            <DropdownMenuItem onClick={() => setDefaultVersion(version.id)}>
+                              Set as Default
+                            </DropdownMenuItem>
+                          )}
+                          {version.status === 'draft' && (
+                            <DropdownMenuItem onClick={() => updateVersionStatus(version.id, 'published')}>
+                              Publish Version
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenu>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -333,6 +344,19 @@ export default function AssetDetailPage() {
           </Table>
         )}
       </Card>
+
+      {/* Edit Version Dialog */}
+      {editingVersion && asset && (
+        <EditVersionDialog
+          version={asset.versions.find(v => v.id === editingVersion)!}
+          assetId={assetId}
+          onVersionUpdated={() => {
+            fetchAsset();
+            setEditingVersion(null);
+          }}
+          trigger={<button style={{ display: 'none' }} />}
+        />
+      )}
     </div>
   );
 }

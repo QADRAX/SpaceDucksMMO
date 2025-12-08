@@ -9,9 +9,12 @@ interface SidebarProps {
 
 export function Sidebar({ children, className }: SidebarProps) {
   return (
-    <nav className={cn('w-64 bg-darkBg text-darkText p-6 border-r-2 border-border', className)}>
-      <div className="mb-8">
-        <h1 className="text-2xl font-heading">🦆 DAS Admin</h1>
+    <nav className={cn('w-72 bg-white border-r-4 border-black p-8', className)}>
+      <div className="mb-10">
+        <div className="bg-main border-4 border-black p-4 rounded-base shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+          <h1 className="text-3xl font-black uppercase tracking-tight">Duck Engine</h1>
+          <p className="text-xs font-bold mt-1 opacity-70">Assets Service</p>
+        </div>
       </div>
       {children}
     </nav>
@@ -43,7 +46,7 @@ export function SidebarMenuItem({ href, children, className }: SidebarMenuItemPr
       <Link
         href={href}
         className={cn(
-          'block px-4 py-2 rounded-base hover:bg-secondaryBlack transition-colors text-darkText font-base border-2 border-transparent hover:border-border',
+          'block px-5 py-3 rounded-base font-bold text-black border-2 border-black transition-all hover:translate-x-[2px] hover:translate-y-[2px] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] bg-white hover:bg-main',
           className
         )}
       >
