@@ -1,18 +1,21 @@
-// Barrel central del dominio
-export * from './domain/types/vector';
-export * from './domain/types/entity';
-export * from './domain/types/game';
+// Minimal source entrypoint for @duckengine/core (build is deferred).
 
-// Map related domain models
-export * from './domain/map/ids';
-export * from './domain/map/star';
-export * from './domain/map/planet';
-export * from './domain/map/atmosphere';
-export * from './domain/map/solarSystem';
-export * from './domain/map/galaxy';
-export * from './domain/map/spaceUtils';
+export type { default as IScene } from './domain/ports/IScene';
+export type { default as IRenderingEngine } from './domain/ports/IRenderingEngine';
+export type { default as IRenderSyncSystem } from './domain/ports/IRenderSyncSystem';
+export type { ITextureResolver } from './domain/ports/ITextureResolver';
+export type { default as ISettingsService } from './domain/ports/ISettingsService';
 
-// Physics domain services
-export * from './domain/physics/constants';
-export * from './domain/physics/orbits';
+export { default as BaseScene } from './infrastructure/scenes/BaseScene';
 
+export type { default as SceneChangeEvent } from './domain/scene/SceneChangeEvent';
+
+export type {
+	TextureCatalogService,
+	TextureCatalog,
+	TextureVariant,
+} from './domain/assets/TextureCatalog';
+export type * from './domain/assets/TextureTypes';
+export type { GameSettings } from './domain/settings/GameSettings';
+
+export { default as TextureResolverService } from './application/TextureResolverService';

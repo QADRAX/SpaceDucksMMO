@@ -4,7 +4,6 @@ import { ServerBrowserService } from "@client/application/ServerBrowserService";
 import { WindowService } from "@client/application/WindowService";
 import DevRegistry from "@client/infrastructure/ui/dev/DevRegistry";
 import { FpsController } from "@client/infrastructure/ui/dev/FpsController";
-import { ThreeRenderer } from "@client/infrastructure/rendering/ThreeRenderer";
 import { createContext } from "preact";
 import { useContext } from "preact/hooks";
 import GameScreenManager from "@client/application/ui/GameScreenManager";

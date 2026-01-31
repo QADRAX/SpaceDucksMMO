@@ -1,10 +1,5 @@
-# @spaceducks/core
+# @duckengine/core
 
-Core TypeScript types for the SpaceDucks MMO.
+Core engine interfaces and reusable base abstractions.
 
-This package contains minimal game domain types (entities, players, positions, etc.) intended to be the foundational package in a monorepo.
-
-How to build
-
-1. From repository root install dependencies: `npm install`
-2. Build: `npm run build:core` or `npm run build` (root builds all workspaces)
+This package is renderer-agnostic and must not depend on three.js.

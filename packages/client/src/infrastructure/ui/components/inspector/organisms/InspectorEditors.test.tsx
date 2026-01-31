@@ -2,11 +2,8 @@
 import { h } from "preact";
 import { render, cleanup, fireEvent } from "@testing-library/preact";
 import { ComponentInspector } from "./ComponentInspector";
-import { Entity } from "@client/domain/ecs/core/Entity";
-import { BoxGeometryComponent } from "@client/domain/ecs/components/geometry/BoxGeometryComponent";
-import { StandardMaterialComponent } from "@client/domain/ecs/components/material/StandardMaterialComponent";
+import { Entity, BoxGeometryComponent, StandardMaterialComponent } from "@duckengine/rendering-three/ecs";
 import { ServicesContext } from "../../../hooks/useServices";
-import DefaultEcsComponentFactory from "@client/domain/ecs/core/ComponentFactory";
 
 afterEach(() => cleanup());
 
@@ -16,7 +13,7 @@ describe("Inspector editors", () => {
     e.safeAddComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 }));
 
     const mockI18n: any = { getCurrentLanguage: () => 'en', subscribe: () => () => {}, t: (k: any, f?: any) => f || k, changeLanguage: async () => {}, getTranslations: () => ({}) };
-    const services: any = { i18n: mockI18n, sceneManager: { subscribeToSceneChanges: () => jest.fn() }, ecsComponentFactory: new DefaultEcsComponentFactory() };
+    const services: any = { i18n: mockI18n, sceneManager: { subscribeToSceneChanges: () => jest.fn() } };
 
     render(
       <ServicesContext.Provider value={services}>

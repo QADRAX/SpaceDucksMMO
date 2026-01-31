@@ -1,4 +1,5 @@
 import type { DevWidgetController, FpsChange } from './DevWidgetController';
+import type { IFpsController } from '@duckengine/rendering-three';
 
 type FpsListener = (fps: number) => void;
 
@@ -7,7 +8,7 @@ type FpsListener = (fps: number) => void;
  * compatibility with the previous controller API but computes FPS
  * internally so we can remove the legacy `FpsCounter` class.
  */
-export class FpsController implements DevWidgetController<FpsChange> {
+export class FpsController implements IFpsController, DevWidgetController<FpsChange> {
   private frames: number = 0;
   private lastTime: number = performance.now();
   private fps: number = 0;
@@ -71,6 +72,11 @@ export class FpsController implements DevWidgetController<FpsChange> {
   onChange(listener: (c: FpsChange) => void): () => void {
     this.changeListeners.add(listener);
     return () => this.changeListeners.delete(listener);
+  }
+
+  dispose(): void {
+    this.changeListeners.clear();
+    this.running = false;
   }
 }
 

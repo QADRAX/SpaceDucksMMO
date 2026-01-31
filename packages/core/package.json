@@ -1,19 +1,21 @@
 {
-  "name": "@spaceducks/core",
+  "name": "@duckengine/core",
   "version": "0.1.0",
   "private": false,
   "main": "dist/index.js",
+  "module": "dist/index.js",
   "types": "dist/index.d.ts",
-  "license": "MIT",
-  "scripts": {
-    "build": "tsc -b",
-    "clean": "rimraf dist",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
-  "devDependencies": {
-    "typescript": "^5.5.0",
-    "rimraf": "^5.0.0"
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@duckengine/ecs": "^0.1.0"
   }
 }

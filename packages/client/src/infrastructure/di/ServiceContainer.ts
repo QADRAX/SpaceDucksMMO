@@ -2,7 +2,6 @@ import SettingsService from "@client/application/SettingsService";
 import I18nService from "@client/application/I18nService";
 import ServerBrowserService from "@client/application/ServerBrowserService";
 import WindowService from "@client/application/WindowService";
-import TextureResolverService from "@client/application/TextureResolverService";
 import TextureCatalogIpcService from "@client/application/TextureCatalogIpcService";
 import JsonSettingsRepository from "@client/infrastructure/settings/JsonSettingsRepository";
 import JsonTranslationProvider from "@client/infrastructure/i18n/JsonTranslationProvider";
@@ -15,7 +14,6 @@ import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
 import KeyboardInputService from '@client/application/KeyboardInputService';
 import MouseInputService from '@client/application/MouseInputService';
 import type { Services} from "./Services";
-import DefaultEcsComponentFactory from '@client/domain/ecs/core/ComponentFactory';
 
 /**
  * Service Container - Composition Root for Dependency Injection
@@ -52,10 +50,6 @@ export class ServiceContainer {
     // Texture catalog: use IPC-backed service that fetches from main process.
     const textureCatalog = new TextureCatalogIpcService();
 
-    // Asset services
-    // TextureResolverService now depends on SettingsService + TextureCatalogService
-    const textureResolver = new TextureResolverService(settingsService, textureCatalog);
-
     // Debug utilities
     const fpsController = new FpsController();
     const devRegistry = new DevRegistry();
@@ -66,14 +60,12 @@ export class ServiceContainer {
       i18n: i18nService,
       serverBrowser: serverBrowser,
       window: windowService,
-      textureResolver: textureResolver,
       textureCatalog: textureCatalog,
       fpsController: fpsController,
       devRegistry: devRegistry,
       keyboard: keyboard,
       mouse: mouse,
       // renderingEngine/navigation/sceneManager are provided later by RendererBootstrap
-      ecsComponentFactory: new DefaultEcsComponentFactory(),
     };
 
     return this.services;

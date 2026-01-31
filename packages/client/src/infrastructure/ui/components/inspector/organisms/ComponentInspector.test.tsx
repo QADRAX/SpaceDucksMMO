@@ -2,8 +2,7 @@
 import { h } from "preact";
 import { render, cleanup, fireEvent } from "@testing-library/preact";
 import { ComponentInspector } from "./ComponentInspector";
-import { Entity } from "@client/domain/ecs/core/Entity";
-import { Component } from "@client/domain/ecs/core/Component";
+import { Entity, Component } from "@duckengine/rendering-three/ecs";
 import { ServicesContext } from "../../../hooks/useServices";
 
 afterEach(() => cleanup());
@@ -32,10 +31,6 @@ describe("ComponentInspector", () => {
     const mockServices: any = {
       i18n: mockI18n,
       sceneManager: { subscribeToSceneChanges: () => jest.fn() },
-      ecsComponentFactory: {
-        listCreatableComponents: () => [],
-        create: () => ({}),
-      },
     };
 
     const { getByText, getByLabelText } = render(

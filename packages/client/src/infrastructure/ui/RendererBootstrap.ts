@@ -2,7 +2,7 @@ import ServiceContainer from "@client/infrastructure/di/ServiceContainer";
 import RenderingBootstrap from "@client/infrastructure/rendering/RenderingBootstrap";
 import UIBootstrap from "./UIBootstrap";
 import DevToolsBootstrap from './dev/DevToolsBootstrap';
-import { setInputServices } from "@client/domain/ecs/core/InputContext";
+import { setInputServices } from "@duckengine/rendering-three/ecs";
 
 /**
  * Renderer Bootstrap - Main Application Orchestrator
@@ -22,14 +22,11 @@ export class RendererBootstrap {
     const serviceContainer = new ServiceContainer();
     const services = serviceContainer.build();
 
-    // Expose input services to ECS components (only when available)
-    // Use explicit existence checks instead of try/catch so failures are deterministic.
-    if (services) {
-      setInputServices({ mouse: services.mouse, keyboard: services.keyboard });
-    }
+    // Expose input services globally for runtime systems/components.
+    setInputServices({ mouse: services.mouse, keyboard: services.keyboard });
 
     // 3. Initialize 3D rendering engine
-    const renderingBootstrap = new RenderingBootstrap(services.textureResolver, services.settings, services.fpsController);
+    const renderingBootstrap = new RenderingBootstrap(services.settings, services.fpsController);
     // Texture catalog is required in Services; wire it into renderer unconditionally
     renderingBootstrap.getRenderer().setTextureCatalog(services.textureCatalog);
     renderingBootstrap.initialize(container);

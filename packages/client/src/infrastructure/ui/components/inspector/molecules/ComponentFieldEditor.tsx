@@ -8,7 +8,7 @@ import { PropertyInput } from "../../common/atoms/PropertyInput";
 import { PropertyNumber } from "../../common/atoms/PropertyNumber";
 import { PropertyReadonly } from "../../common/atoms/PropertyReadonly";
 import { PropertyColor } from "../../common/atoms/PropertyColor";
-import type { InspectorFieldConfig } from "@client/domain/ecs/core/ComponentMetadata";
+import type { InspectorFieldConfig } from "@duckengine/rendering-three/ecs";
 
 type UniformsObject = { [key: string]: { value: any } };
 

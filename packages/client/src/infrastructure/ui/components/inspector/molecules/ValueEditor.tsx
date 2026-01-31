@@ -8,7 +8,7 @@ import { ColorPicker } from "../../common/atoms/ColorPicker";
 import { Vector3Editor } from "../../common/molecules/Vector3Editor";
 import { NullableToggleEditor } from "./NullableToggleEditor";
 import { UniformsValueEditor } from "./UniformsValueEditor";
-import type { InspectorFieldConfig } from "@client/domain/ecs/core/ComponentMetadata";
+import type { InspectorFieldConfig } from "@duckengine/rendering-three/ecs";
 
 
 
