@@ -15,6 +15,7 @@ export interface FileMetadata {
   size: number;
   hash: string;
   contentType: string;
+  absolutePath: string;
 }
 
 export class StorageService {
@@ -65,6 +66,7 @@ export class StorageService {
         size: buffer.length,
         hash: `sha256:${hash}`,
         contentType,
+        absolutePath: targetPath,
       };
     } catch (error) {
       logger.error('Failed to save file', {

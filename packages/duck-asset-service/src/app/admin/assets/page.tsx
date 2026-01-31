@@ -119,6 +119,7 @@ export default function AssetsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>Preview</TableHead>
                 <TableHead>Key</TableHead>
                 <TableHead>Display Name</TableHead>
                 <TableHead>Type</TableHead>
@@ -131,6 +132,19 @@ export default function AssetsPage() {
             <TableBody>
               {assets.map((asset) => (
                 <TableRow key={asset.id}>
+                  <TableCell>
+                    {asset.thumbnail ? (
+                      <img 
+                        src={`/api/assets/thumbnail/${asset.key}`} 
+                        alt={asset.displayName}
+                        className="w-16 h-16 object-cover rounded-base border-2 border-black"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-neutral-200 rounded-base border-2 border-black flex items-center justify-center text-2xl">
+                        📦
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <code className="text-xs bg-bg px-2 py-1 rounded-base border border-border">
                       {asset.key}

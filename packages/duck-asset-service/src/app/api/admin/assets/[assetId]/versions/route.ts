@@ -3,8 +3,10 @@ import { prisma } from '@/lib/db';
 import { CreateVersionSchema } from '@/lib/validation';
 import { StorageService } from '@/lib/storage';
 import { logger } from '@/lib/logger';
+import { generateAssetThumbnail } from '@/lib/thumbnails';
 import type { VersionWithFiles, VersionListResponse } from '@/lib/types';
 import type { AssetVersion } from '@prisma/client';
+import path from 'path';
 
 interface RouteContext {
   params: {
@@ -196,6 +198,8 @@ export async function POST(
 
     // Save files and create file records
     const fileRecords = [];
+    let albedoFilePath: string | null = null;
+
     for (const entry of fileEntries) {
       const metadata = await StorageService.saveFile(
         asset.key,
@@ -217,6 +221,41 @@ export async function POST(
       });
 
       fileRecords.push(fileRecord);
+
+      // Track albedo/basecolor for thumbnail generation
+      if (entry.mapType === 'albedo' && !albedoFilePath) {
+        albedoFilePath = metadata.absolutePath;
+      }
+    }
+
+    // Generate thumbnail if we have an albedo texture
+    if (albedoFilePath && asset.type === 'material') {
+      try {
+        const uploadsDir = process.env.ASSET_STORAGE_PATH || '/data/assets';
+        const thumbnailPath = await generateAssetThumbnail(
+          asset.key,
+          albedoFilePath,
+          uploadsDir
+        );
+
+        // Update asset with thumbnail path
+        await prisma.asset.update({
+          where: { id: assetId },
+          data: { thumbnail: thumbnailPath },
+        });
+
+        logger.info('Thumbnail generated for asset', {
+          assetId,
+          assetKey: asset.key,
+          thumbnailPath,
+        });
+      } catch (error) {
+        logger.error('Failed to generate thumbnail', {
+          assetId,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        });
+        // Don't fail the whole request if thumbnail generation fails
+      }
     }
 
     logger.info('Version created with files', {

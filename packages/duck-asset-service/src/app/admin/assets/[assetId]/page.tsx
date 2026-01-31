@@ -13,6 +13,8 @@ import { Button } from '@/components/atoms/Button';
 import { DropdownMenu, DropdownMenuItem } from '@/components/molecules/DropdownMenu';
 import { EditVersionDialog } from '@/components/organisms/EditVersionDialog';
 import { AddAssetVersionDialog } from '@/components/organisms/AddAssetVersionDialog';
+import { MaterialPreview } from '@/components/organisms/MaterialPreview';
+import { selectPreviewVersion, hasPreviewableFiles } from '@/lib/utils/versionUtils';
 
 export default function AssetDetailPage() {
   const params = useParams();
@@ -182,35 +184,110 @@ export default function AssetDetailPage() {
         <code className="bg-bg px-2 py-1 rounded-base border border-border">{asset.key}</code>
       </p>
 
-      <Card className="mb-4">
-        <CardHeader>
-          <CardTitle>Asset Details</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center gap-4">
-              <span className="font-base w-24">Type</span>
-              <Badge variant="default">{asset.type}</Badge>
+      {/* Combined Asset Details + Preview Card */}
+      <div className="mb-4 border-4 border-black rounded-base shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] bg-white">
+        <div className="grid md:grid-cols-2 divide-x-4 divide-black">
+          
+          {/* Asset Details Section */}
+          <div>
+            <div className="p-6 border-b-4 border-black bg-main">
+              <h2 className="text-2xl font-heading font-bold">Asset Details</h2>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="font-base w-24">Category</span>
-              <span>{asset.category}</span>
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="font-base w-24">Tags</span>
-              <div className="flex flex-wrap gap-1">
-                {asset.tags.map((tag) => (
-                  <Tag key={tag}>{tag}</Tag>
-                ))}
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-4">
+                <span className="font-bold w-24">Type</span>
+                <Badge variant="default">{asset.type}</Badge>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="font-bold w-24">Category</span>
+                <span className="text-lg">{asset.category}</span>
+              </div>
+              <div className="flex items-start gap-4">
+                <span className="font-bold w-24">Tags</span>
+                <div className="flex flex-wrap gap-2">
+                  {asset.tags.map((tag) => (
+                    <Tag key={tag}>{tag}</Tag>
+                  ))}
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="font-bold w-24">Created</span>
+                <span>{new Date(asset.createdAt).toLocaleString()}</span>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="font-base w-24">Created</span>
-              <span>{new Date(asset.createdAt).toLocaleString()}</span>
+          </div>
+
+          {/* Preview Section */}
+          <div>
+            <div className="p-6 border-b-4 border-black bg-mainAccent">
+              <h2 className="text-2xl font-heading font-bold">
+                Preview
+                {(() => {
+                  const previewVersion = selectPreviewVersion(asset.versions);
+                  if (previewVersion) {
+                    return (
+                      <span className="ml-2 text-sm font-normal text-neutral-600">
+                        (v{previewVersion.version})
+                      </span>
+                    );
+                  }
+                  return null;
+                })()}
+              </h2>
+            </div>
+            <div className="p-6 flex items-center justify-center min-h-[400px]">
+              {(() => {
+                const previewVersion = selectPreviewVersion(asset.versions);
+                
+                // Material preview (PBR with 3D viewer)
+                if (asset.type === 'material') {
+                  const canPreview = hasPreviewableFiles(previewVersion);
+                  
+                  if (!canPreview) {
+                    return (
+                      <p className="text-neutral-600 text-center">
+                        No texture files available for preview. Upload material textures to see a 3D preview.
+                      </p>
+                    );
+                  }
+                  
+                  if (previewVersion && previewVersion.files) {
+                    return (
+                      <MaterialPreview
+                        assetKey={asset.key}
+                        version={previewVersion.version}
+                        files={previewVersion.files}
+                        className="w-full"
+                      />
+                    );
+                  }
+                }
+                
+                // Texture preview (simple image)
+                if (asset.type === 'texture') {
+                  if (previewVersion && previewVersion.files && previewVersion.files.length > 0) {
+                    const imageFile = previewVersion.files[0];
+                    const imageUrl = `/api/assets/file/${asset.key}/${previewVersion.version}/${imageFile.fileName}`;
+                    return (
+                      <img 
+                        src={imageUrl} 
+                        alt={asset.displayName}
+                        className="max-w-full max-h-[400px] border-4 border-black rounded-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                      />
+                    );
+                  }
+                }
+                
+                return (
+                  <p className="text-neutral-600 text-center">
+                    No preview available for this asset type.
+                  </p>
+                );
+              })()}
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <Card className="p-0">
         <div className="p-6 border-b-2 border-border">

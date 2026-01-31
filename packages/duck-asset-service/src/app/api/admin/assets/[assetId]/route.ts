@@ -56,11 +56,12 @@ export async function GET(
   try {
     const { assetId } = context.params;
 
-    const asset: AssetWithVersions | null = await prisma.asset.findUnique({
+    const asset = await prisma.asset.findUnique({
       where: { id: assetId },
       include: {
         versions: {
           include: {
+            files: true,
             _count: {
               select: { files: true },
             },
@@ -79,9 +80,10 @@ export async function GET(
 
     const response: ParsedAssetWithVersions = {
       ...parseAsset(asset),
-      versions: asset.versions.map((v): AssetVersion & { fileCount: number } => ({
+      versions: asset.versions.map((v) => ({
         ...v,
         fileCount: v._count.files,
+        files: v.files,
       })),
     };
 
@@ -206,21 +208,20 @@ export async function DELETE(
       );
     }
 
-    // Archive the asset in database
-    await prisma.asset.update({
-      where: { id: assetId },
-      data: { isArchived: true },
-    });
-
     // Delete all physical files for this asset
     await StorageService.deleteAsset(asset.key);
 
-    logger.info('Asset archived and files deleted', { 
+    // Delete the asset from database (cascade will delete versions and files)
+    await prisma.asset.delete({
+      where: { id: assetId },
+    });
+
+    logger.info('Asset deleted', { 
       assetId, 
       assetKey: asset.key 
     });
 
-    return NextResponse.json({ message: 'Asset archived successfully' });
+    return NextResponse.json({ message: 'Asset deleted successfully' });
   } catch (error) {
     if ((error as any)?.code === 'P2025') {
       return NextResponse.json(
