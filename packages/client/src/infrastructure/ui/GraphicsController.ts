@@ -1,5 +1,5 @@
 import type IGraphicsController from '../../application/ui/IGraphicsController';
-import { ThreeRenderer } from '../rendering/ThreeRenderer';
+import type { ThreeRenderer } from '@duckengine/rendering-three';
 
 export class GraphicsController implements IGraphicsController {
   constructor(private engine: ThreeRenderer) {}

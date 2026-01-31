@@ -1,6 +1,5 @@
 import type { ComponentChildren } from "preact";
-import Component from "@client/domain/ecs/core/Component";
-import type { InspectorFieldConfig } from "@client/domain/ecs/core/ComponentMetadata";
+import type { Component, InspectorFieldConfig } from "@duckengine/rendering-three/ecs";
 import { renderFieldEditor } from "./ComponentFieldEditor";
 import { NullableFieldWrapper } from "./NullableFieldWrapper";
 

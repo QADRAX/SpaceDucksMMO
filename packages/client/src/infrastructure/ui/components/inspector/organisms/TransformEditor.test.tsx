@@ -1,6 +1,6 @@
 import { render, cleanup, fireEvent } from "@testing-library/preact";
 import { TransformEditor } from "./TransformEditor";
-import { Entity } from "@client/domain/ecs/core/Entity";
+import { Entity } from "@duckengine/rendering-three/ecs";
 import { ServicesContext } from "../../../hooks/useServices";
 
 afterEach(() => cleanup());

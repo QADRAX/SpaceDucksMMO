@@ -1,4 +1,5 @@
-import type Entity from "@client/domain/ecs/core/Entity";
+import type { Entity } from "@duckengine/rendering-three/ecs";
+import { DefaultEcsComponentFactory } from "@duckengine/rendering-three/ecs";
 import { SelectOption, SelectField } from "../../common/molecules/SelectField";
 import {
   GeometryIcon,
@@ -6,19 +7,18 @@ import {
   LightIcon,
   EntityIcon,
 } from "../../common/icons";
+import { useMemo } from "preact/hooks";
 
 type Props = {
   entity: Entity;
-  services: any;
   onAdded: () => void;
   t: (k: string, f?: string) => string;
 };
 
-export function AddComponentSection({ entity, services, onAdded, t }: Props) {
-  const factory = services.ecsComponentFactory;
+export function AddComponentSection({ entity, onAdded, t }: Props) {
+  const factory = useMemo(() => new DefaultEcsComponentFactory(), []);
 
-  const list =
-    factory && entity ? (factory.listCreatableComponents(entity) as any[]) : [];
+  const list = entity ? (factory.listCreatableComponents(entity) as any[]) : [];
 
   const options: SelectOption<string>[] = list.map((d: any) => {
     let icon = <EntityIcon />;
@@ -44,12 +44,6 @@ export function AddComponentSection({ entity, services, onAdded, t }: Props) {
 
   const handleChange = (v: string | null) => {
     if (!v) return;
-    if (!factory) {
-      alert(
-        t("inspector.addComponentNoFactory", "No component factory available")
-      );
-      return;
-    }
     try {
       const comp = factory.create(v as any);
       const res = entity.safeAddComponent(comp);

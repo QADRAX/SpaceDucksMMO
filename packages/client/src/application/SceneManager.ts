@@ -1,11 +1,8 @@
-import type IScene from "@client/domain/ports/IScene";
-import type IRenderingEngine from "@client/domain/ports/IRenderingEngine";
+import type { IScene, IRenderingEngine, Entity, SceneChangeEvent } from "@duckengine/rendering-three";
 import type SceneId from "@client/domain/scene/SceneId";
-import { Result, ok, err } from "@client/domain/errors/EngineError";
+import { Result, ok, err } from "@duckengine/rendering-three/ecs";
 
 type VoidResult = Result<void>;
-import type { Entity } from "@client/domain/ecs/core/Entity";
-import type SceneChangeEvent from "@client/domain/scene/SceneChangeEvent";
 import type { SettingsService } from "@client/application/SettingsService";
 /**
  * Application service that manages 3D scene lifecycle and transitions.

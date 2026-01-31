@@ -1,6 +1,6 @@
-import type IRenderingEngine from '@client/domain/ports/IRenderingEngine';
+import type { IRenderingEngine } from '@duckengine/rendering-three';
 import type SceneManager from './SceneManager';
-import { getInputServices } from '@client/domain/ecs/core/InputContext';
+import { getInputServices } from '@duckengine/rendering-three/ecs';
 
 /**
  * Application service that orchestrates the render loop.
@@ -38,7 +38,7 @@ export class SceneService {
       this.engine.renderFrame();
       try {
         const input = getInputServices();
-        if (input && input.mouse && input.mouse.beginFrame) input.mouse.beginFrame();
+        if (input?.mouse?.beginFrame) input.mouse.beginFrame();
       } catch (e) {
         // ignore: input services might not be set in tests
       }

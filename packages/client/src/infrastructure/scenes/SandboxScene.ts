@@ -1,23 +1,23 @@
-import { BaseScene } from "./BaseScene";
-import type IRenderingEngine from "@client/domain/ports/IRenderingEngine";
+import { BaseScene } from "@duckengine/rendering-three";
 import type { SettingsService } from "@client/application/SettingsService";
 import SceneId from "@client/domain/scene/SceneId";
 
-import { Entity } from "@client/domain/ecs/core/Entity";
-import { PlaneGeometryComponent } from "@client/domain/ecs/components/geometry/PlaneGeometryComponent";
-import SphereGeometryComponent from "@client/domain/ecs/components/geometry/SphereGeometryComponent";
-import { CameraViewComponent } from "@client/domain/ecs/components/CameraViewComponent";
-import { MouseLookComponent } from "@client/domain/ecs/components/MouseLookComponent";
-import { FirstPersonMoveComponent } from "@client/domain/ecs/components/FirstPersonMoveComponent";
-
-import { BasicMaterialComponent } from "@client/domain/ecs/components/material/BasicMaterialComponent";
-import { LambertMaterialComponent } from "@client/domain/ecs/components/material/LambertMaterialComponent";
-import { PhongMaterialComponent } from "@client/domain/ecs/components/material/PhongMaterialComponent";
-import { StandardMaterialComponent } from "@client/domain/ecs/components/material/StandardMaterialComponent";
-import BaseMaterialComponent from "@client/domain/ecs/components/material/BaseMaterialComponent";
-
-import AmbientLightComponent from "@client/domain/ecs/components/light/AmbientLightComponent";
-import DirectionalLightComponent from "@client/domain/ecs/components/light/DirectionalLightComponent";
+import type { IRenderingEngine } from "@duckengine/rendering-three";
+import {
+  Entity,
+  PlaneGeometryComponent,
+  SphereGeometryComponent,
+  CameraViewComponent,
+  MouseLookComponent,
+  FirstPersonMoveComponent,
+  BasicMaterialComponent,
+  LambertMaterialComponent,
+  PhongMaterialComponent,
+  StandardMaterialComponent,
+  type BaseMaterialComponent,
+  AmbientLightComponent,
+  DirectionalLightComponent,
+} from "@duckengine/rendering-three";
 
 /**
  * Sandbox scene: material gallery showcasing Basic, Lambert, Phong and Standard materials

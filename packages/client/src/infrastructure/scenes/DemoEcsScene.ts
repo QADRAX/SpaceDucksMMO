@@ -1,19 +1,19 @@
-import { BaseScene } from "./BaseScene";
-import type IRenderingEngine from "@client/domain/ports/IRenderingEngine";
+import { BaseScene } from "@duckengine/rendering-three";
+import type { IRenderingEngine } from "@duckengine/rendering-three";
 import type { SettingsService } from "@client/application/SettingsService";
 import SceneId from "@client/domain/scene/SceneId";
 
-// ECS
-import { Entity } from "@client/domain/ecs/core/Entity";
-import { PlaneGeometryComponent } from "@client/domain/ecs/components/geometry/PlaneGeometryComponent";
-import { BoxGeometryComponent } from "@client/domain/ecs/components/geometry/BoxGeometryComponent";
-import { StandardMaterialComponent } from "@client/domain/ecs/components/material/StandardMaterialComponent";
-import { TextureTilingComponent } from "@client/domain/ecs/components/material/TextureTilingComponent";
-import { CameraViewComponent } from "@client/domain/ecs/components/CameraViewComponent";
-import { LookAtEntityComponent } from "@client/domain/ecs/components/LookAtEntityComponent";
-
-import AmbientLightComponent from "@client/domain/ecs/components/light/AmbientLightComponent";
-import DirectionalLightComponent from "@client/domain/ecs/components/light/DirectionalLightComponent";
+import {
+  Entity,
+  PlaneGeometryComponent,
+  BoxGeometryComponent,
+  StandardMaterialComponent,
+  TextureTilingComponent,
+  CameraViewComponent,
+  LookAtEntityComponent,
+  AmbientLightComponent,
+  DirectionalLightComponent,
+} from "@duckengine/rendering-three";
 
 /**
  * Demo scene showcasing the new ECS architecture with:

@@ -1,5 +1,5 @@
 import type { ComponentChildren } from "preact";
-import type { InspectorFieldConfig } from "@client/domain/ecs/core/ComponentMetadata";
+import type { InspectorFieldConfig } from "@duckengine/rendering-three/ecs";
 import { NullableToggleEditor } from "./NullableToggleEditor";
 
 type NullableFieldWrapperProps = {

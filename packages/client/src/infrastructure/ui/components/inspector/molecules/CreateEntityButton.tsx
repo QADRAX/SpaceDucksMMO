@@ -1,7 +1,7 @@
 import { h } from 'preact';
 import { useState } from 'preact/hooks';
 import { useServices } from '../../../hooks/useServices';
-import Entity from '@client/domain/ecs/core/Entity';
+import { Entity } from '@duckengine/rendering-three/ecs';
 
 type Props = {
   onCreated?: (id: string) => void;

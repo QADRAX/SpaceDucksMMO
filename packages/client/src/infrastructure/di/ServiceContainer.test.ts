@@ -3,7 +3,6 @@ import SettingsService from '@client/application/SettingsService';
 import I18nService from '@client/application/I18nService';
 import ServerBrowserService from '@client/application/ServerBrowserService';
 import WindowService from '@client/application/WindowService';
-import TextureResolverService from '@client/application/TextureResolverService';
 import { FpsController } from '@client/infrastructure/ui/dev/FpsController';
 
 
@@ -23,7 +22,6 @@ describe('ServiceContainer', () => {
       expect(services.i18n).toBeInstanceOf(I18nService);
       expect(services.serverBrowser).toBeInstanceOf(ServerBrowserService);
       expect(services.window).toBeInstanceOf(WindowService);
-      expect(services.textureResolver).toBeInstanceOf(TextureResolverService);
       expect(services.fpsController).toBeInstanceOf(FpsController);
       // renderingEngine/navigation/sceneManager are provided later by RendererBootstrap
       expect(services.renderingEngine).toBeUndefined();

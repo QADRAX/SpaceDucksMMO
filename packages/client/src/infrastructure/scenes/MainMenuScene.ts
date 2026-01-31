@@ -1,16 +1,17 @@
-import { BaseScene } from "./BaseScene";
-import type IRenderingEngine from "@client/domain/ports/IRenderingEngine";
+import { BaseScene } from "@duckengine/rendering-three";
 import type { SettingsService } from "@client/application/SettingsService";
 import SceneId from "@client/domain/scene/SceneId";
-import { Entity } from "@client/domain/ecs/core/Entity";
-import SphereGeometryComponent from "@client/domain/ecs/components/geometry/SphereGeometryComponent";
-import { StandardMaterialComponent } from "@client/domain/ecs/components/material/StandardMaterialComponent";
-import { LensFlareComponent } from "@client/domain/ecs/components/LensFlareComponent";
-import CameraViewComponent from "@client/domain/ecs/components/CameraViewComponent";
-import { OrbitComponent } from "@client/domain/ecs/components/OrbitComponent";
-import { LookAtEntityComponent } from "@client/domain/ecs/components/LookAtEntityComponent";
-
-import DirectionalLightComponent from "@client/domain/ecs/components/light/DirectionalLightComponent";
+import type { IRenderingEngine } from "@duckengine/rendering-three";
+import {
+  Entity,
+  SphereGeometryComponent,
+  StandardMaterialComponent,
+  LensFlareComponent,
+  CameraViewComponent,
+  OrbitComponent,
+  LookAtEntityComponent,
+  DirectionalLightComponent,
+} from "@duckengine/rendering-three";
 
 /**
  * Minimal Main Menu scene used during ECS migration.

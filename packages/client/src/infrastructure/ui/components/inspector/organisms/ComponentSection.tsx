@@ -1,6 +1,6 @@
-import Component from "@client/domain/ecs/core/Component";
+import type { Component } from "@duckengine/rendering-three/ecs";
 import { ComponentFieldList } from "../molecules/ComponentFieldList";
-import type Entity from "@client/domain/ecs/core/Entity";
+import type { Entity } from "@duckengine/rendering-three/ecs";
 import { PropertyCheckbox } from "../../common/atoms/PropertyCheckbox";
 import { Button } from "../../common/atoms/Button";
 

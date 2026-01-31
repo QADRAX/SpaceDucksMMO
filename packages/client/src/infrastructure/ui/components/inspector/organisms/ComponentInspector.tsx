@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'preact/hooks';
-import type Entity from '@client/domain/ecs/core/Entity';
+import type { Entity } from '@duckengine/rendering-three/ecs';
 import { useServices } from '../../../hooks/useServices';
 import { useI18n } from '../../../hooks/useI18n';
 import { ComponentSection } from './ComponentSection';
@@ -28,7 +28,7 @@ export function ComponentInspector({ entity }: Props) {
       <div className="component-inspector-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="small-label">{t('inspector.components','Components')}</div>
         <div>
-          <AddComponentSection entity={entity} services={services} onAdded={onChanged} t={t} />
+          <AddComponentSection entity={entity} onAdded={onChanged} t={t} />
         </div>
       </div>
 

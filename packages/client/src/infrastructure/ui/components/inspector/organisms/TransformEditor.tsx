@@ -1,5 +1,5 @@
 import { useEffect, useState } from "preact/hooks";
-import type Entity from "@client/domain/ecs/core/Entity";
+import type { Entity } from "@duckengine/rendering-three/ecs";
 import { useI18n } from '../../../hooks/useI18n';
 import { TransformGroup } from '../../common/molecules/TransformGroup';
 import { Vector3Input } from '../../common/molecules/Vector3Input';

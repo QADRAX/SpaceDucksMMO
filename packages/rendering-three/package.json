@@ -9,6 +9,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
+    },
+    "./ecs": {
+      "types": "./dist/ecs.d.ts",
+      "default": "./dist/ecs.js"
+    },
+    "./core": {
+      "types": "./dist/core.d.ts",
+      "default": "./dist/core.js"
     }
   },
   "scripts": {
@@ -17,6 +25,7 @@
   },
   "dependencies": {
     "@duckengine/core": "^0.1.0",
+    "@duckengine/ecs": "^0.1.0",
     "three": "^0.181.1"
   }
 }
