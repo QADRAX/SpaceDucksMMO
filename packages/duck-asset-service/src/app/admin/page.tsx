@@ -1,0 +1,53 @@
+import Link from 'next/link';
+import { prisma } from '@/lib/db';
+import { PageHeader } from '@/components/organisms/PageHeader';
+import { StatCard } from '@/components/molecules/StatCard';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/molecules/Card';
+import { Button } from '@/components/atoms/Button';
+
+// Force dynamic rendering - don't try to statically generate this page
+export const dynamic = 'force-dynamic';
+
+async function getStats() {
+  const [assetCount, versionCount] = await Promise.all([
+    prisma.asset.count({
+      where: { isArchived: false },
+    }),
+    prisma.assetVersion.count({
+      where: {
+        asset: { isArchived: false },
+      },
+    }),
+  ]);
+
+  return { assetCount, versionCount };
+}
+
+export default async function AdminDashboard() {
+  const stats = await getStats();
+
+  return (
+    <div>
+      <PageHeader 
+        title="Dashboard" 
+        description="Overview of your asset catalog" 
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        <StatCard label="Total Assets" value={stats.assetCount} />
+        <StatCard label="Total Versions" value={stats.versionCount} />
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Quick Actions</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Link href="/admin/assets">
+            <Button>View All Assets</Button>
+          </Link>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

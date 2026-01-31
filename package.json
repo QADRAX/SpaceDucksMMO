@@ -21,5 +21,8 @@
     "dev:client": "npm --workspace @spaceducks/client run dev:all",
     "start:client": "npm --workspace @spaceducks/client run start",
     "clean": "node -e \"console.log('No-op clean')\""
+  },
+  "dependencies": {
+    "sharp": "^0.34.5"
   }
 }
