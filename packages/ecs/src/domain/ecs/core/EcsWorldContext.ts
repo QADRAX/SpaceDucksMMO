@@ -5,12 +5,16 @@ export interface EcsWorldContext {
   getAllEntities(): Iterable<Entity>;
 }
 
-let currentWorld: EcsWorldContext | null = null;
+const ECS_WORLD_KEY = Symbol.for('@duckengine/ecs.currentWorld');
+
+function getGlobalStore(): any {
+  return globalThis as any;
+}
 
 export function setCurrentEcsWorld(world: EcsWorldContext | null): void {
-  currentWorld = world;
+  getGlobalStore()[ECS_WORLD_KEY] = world;
 }
 
 export function getCurrentEcsWorld(): EcsWorldContext | null {
-  return currentWorld;
+  return (getGlobalStore()[ECS_WORLD_KEY] as EcsWorldContext | null) ?? null;
 }

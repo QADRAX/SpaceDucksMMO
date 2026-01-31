@@ -46,16 +46,21 @@ const noopKeyboard: KeyboardApi = {
   onKeyUp: () => {},
 };
 
-let services: InputServices | null = null;
+const INPUT_SERVICES_KEY = Symbol.for('@duckengine/ecs.inputServices');
+
+function getGlobalStore(): any {
+  return globalThis as any;
+}
 
 export function setInputServices(s: Partial<InputServices> | null): void {
   // Merge provided services with no-op defaults so domain code can rely on
   // `getInputServices()` always returning fully-populated APIs.
   const base = { mouse: noopMouse, keyboard: noopKeyboard };
-  services = Object.assign(base, s || {});
+  getGlobalStore()[INPUT_SERVICES_KEY] = Object.assign(base, s || {});
 }
 
 export function getInputServices(): InputServices {
+  const services = getGlobalStore()[INPUT_SERVICES_KEY] as InputServices | null | undefined;
   if (!services) return { mouse: noopMouse, keyboard: noopKeyboard };
   return services;
 }
