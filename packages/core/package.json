@@ -13,7 +13,7 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "test": "echo '(no tests yet)'"
+    "test": "jest"
   },
   "dependencies": {
     "@duckengine/ecs": "^0.1.0"

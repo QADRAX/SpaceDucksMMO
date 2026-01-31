@@ -1,5 +1,10 @@
-export type { Result } from './result/Result';
-export { ok, err } from './result/Result';
+// Root "fat barrel" for @duckengine/ecs
 
-export type { ISceneEntity } from './scene/ISceneEntity';
-export { Entity } from './scene/Entity';
+export * from './domain/ecs';
+export * from './domain/ecs/core';
+export * from './domain/ecs/components';
+export * from './domain/ecs/components/geometry';
+export * from './domain/ecs/components/light';
+export * from './domain/ecs/components/material';
+
+export * from './domain/errors';
