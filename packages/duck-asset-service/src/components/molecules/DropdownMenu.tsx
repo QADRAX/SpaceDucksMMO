@@ -63,7 +63,7 @@ export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMen
         <div
           ref={menuRef}
           className={cn(
-            'fixed min-w-[180px] bg-white border-2 border-black rounded-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-[9999]',
+            'fixed min-w-[180px] bg-white border-2 border-black rounded-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] z-9999',
           )}
           style={{
             top: `${position.top}px`,

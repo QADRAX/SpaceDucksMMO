@@ -76,7 +76,7 @@ export function DialogContent({ className, children, ...props }: DialogContentPr
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-10000 flex items-center justify-center p-4">
       {/* Overlay */}
       <div
         className="fixed inset-0 bg-black/50"
@@ -86,7 +86,7 @@ export function DialogContent({ className, children, ...props }: DialogContentPr
       {/* Dialog */}
       <div
         className={cn(
-          'relative z-[10001] w-full max-w-lg bg-white border-4 border-black rounded-base shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]',
+          'relative z-10001 w-full max-w-lg bg-white border-4 border-black rounded-base shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]',
           'max-h-[90vh] overflow-auto scrollbar p-6',
           className
         )}

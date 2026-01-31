@@ -46,7 +46,7 @@ export function SidebarMenuItem({ href, children, className }: SidebarMenuItemPr
       <Link
         href={href}
         className={cn(
-          'block px-5 py-3 rounded-base font-bold text-black border-2 border-black transition-all hover:translate-x-[2px] hover:translate-y-[2px] shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] bg-white hover:bg-main',
+          'block px-5 py-3 rounded-base font-bold text-black border-2 border-black transition-all hover:translate-x-0.5 hover:translate-y-0.5 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] hover:shadow-none active:translate-x-[3px] active:translate-y-[3px] bg-white hover:bg-main',
           className
         )}
       >

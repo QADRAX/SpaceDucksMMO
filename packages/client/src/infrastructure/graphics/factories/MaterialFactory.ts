@@ -52,7 +52,19 @@ export class MaterialFactory {
         .then((tex) => {
           // Clone the texture before modifying it so we don't mutate
           // a shared cached texture instance used by other materials/entities.
-          const t = tex.clone();
+          // Some JS runtimes or mocked textures may throw during clone (eg. VideoFrame missing),
+          // so guard the operation and fall back to the original texture when cloning fails.
+          let t: THREE.Texture;
+          try {
+            // Call clone() on the typed THREE.Texture. Keep a try/catch to
+            // handle runtimes/tests where clone() may throw; falling back to
+            // the original texture preserves behavior without runtime typeof checks.
+            t = (tex as THREE.Texture).clone();
+          } catch (cloneErr) {
+            console.warn('[MaterialFactory] Texture.clone() failed, using original texture', cloneErr);
+            t = tex;
+          }
+
           apply(t);
           if (applyTiling) applyTiling(t);
           material.needsUpdate = true;

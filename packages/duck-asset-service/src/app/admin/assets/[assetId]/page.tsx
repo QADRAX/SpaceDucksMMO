@@ -191,7 +191,7 @@ export default function AssetDetailPage() {
           {/* Asset Details Section */}
           <div>
             <div className="p-6 border-b-4 border-black bg-main">
-              <h2 className="text-2xl font-heading font-bold">Asset Details</h2>
+              <h2 className="text-2xl font-heading">Asset Details</h2>
             </div>
             <div className="p-6 space-y-4">
               <div className="flex items-center gap-4">
@@ -220,7 +220,7 @@ export default function AssetDetailPage() {
           {/* Preview Section */}
           <div>
             <div className="p-6 border-b-4 border-black bg-mainAccent">
-              <h2 className="text-2xl font-heading font-bold">
+              <h2 className="text-2xl font-heading">
                 Preview
                 {(() => {
                   const previewVersion = selectPreviewVersion(asset.versions);

@@ -94,7 +94,7 @@ describe('BaseScene debug events', () => {
     scene.addEntity(cam);
 
     // No CameraViewComponent in RenderSyncSystem, so setup a fake renderSyncSystem that reports a camera
-    scene['renderSyncSystem'] = { getCamera: (id: string) => ({}) } as any;
+    scene['renderSyncSystem'] = { getCamera: (id: string) => ({}), setActiveCameraEntityId: jest.fn() } as any;
 
     scene.setActiveCamera('cam');
     const ev = events.find((e) => e.kind === 'active-camera-changed');
@@ -109,7 +109,7 @@ describe('BaseScene debug events', () => {
     scene.subscribeChanges((ev) => events.push(ev));
 
     // no entities
-    scene['renderSyncSystem'] = { getCamera: (_: string) => undefined } as any;
+    scene['renderSyncSystem'] = { getCamera: (_: string) => undefined, setActiveCameraEntityId: jest.fn() } as any;
     scene.setActiveCamera('nope');
     expect(events.find((e) => e.kind === 'active-camera-changed')).toBeUndefined();
   });

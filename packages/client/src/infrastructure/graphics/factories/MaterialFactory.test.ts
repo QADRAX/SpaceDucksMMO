@@ -14,8 +14,11 @@ describe('MaterialFactory', () => {
   let mockTexture: THREE.Texture;
 
   beforeEach(() => {
-    mockTexture = new THREE.Texture();
-    
+    // Use a lightweight mock texture object to avoid browser-specific
+    // image/video globals (VideoFrame) when running in Node/Jest.
+    mockTexture = {} as any;
+    (mockTexture as any).clone = jest.fn().mockImplementation(() => mockTexture);
+
     mockTextureCache = {
       load: jest.fn().mockResolvedValue(mockTexture),
       get: jest.fn(),
