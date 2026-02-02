@@ -52,6 +52,13 @@ export const GameScreens = {
     name: 'ECS Demo'
   } as GameScreenConfig,
 
+  /** Soccer FPS - physics-based first-person soccer prototype */
+  SoccerFps: {
+    screenId: ScreenId.SoccerFps,
+    sceneId: SceneId.SoccerFps,
+    name: 'Soccer FPS'
+  } as GameScreenConfig,
+
   // Add more game screens here as needed
   // Example:
   // ServerBrowser: {

@@ -6,5 +6,7 @@ export * from './Entity';
 export * from './IComponent';
 export * from './IComponentObserver';
 export * from './InputContext';
+export * from './PhysicsContext';
+export * from './Math3D';
 export * from './MathTypes';
 export * from './Transform';

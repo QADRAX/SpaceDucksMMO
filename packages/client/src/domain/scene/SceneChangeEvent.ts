@@ -1,16 +1,10 @@
-import type { Entity } from '../ecs/core/Entity';
+// This file exists for backwards-compatibility in the client package.
+// The canonical SceneChangeEvent types live in @duckengine/core.
 
-export type SceneChangeEvent =
-  | { kind: 'entity-added'; entity: Entity }
-  | { kind: 'entity-removed'; entityId: string }
-  | { kind: 'hierarchy-changed'; childId: string; newParentId: string | null }
-  | { kind: 'active-camera-changed'; entityId: string | null }
-  | { kind: 'transform-changed'; entityId: string }
-  | { kind: 'component-changed'; entityId: string; componentType: string }
-  | { kind: 'scene-debug-changed'; enabled: boolean };
+export type {
+  SceneChangeEventBase as SceneChangeEvent,
+  SceneChangeErrorEvent,
+  SceneChangeEventWithError,
+} from "@duckengine/core";
 
-// Generic error event to notify UI/inspector about invalid operations or problems
-export type SceneChangeErrorEvent = { kind: 'error'; message: string };
-
-export type SceneChangeEventWithError = SceneChangeEvent | SceneChangeErrorEvent;
-export default SceneChangeEventWithError;
+export type { SceneChangeEventWithError as default } from "@duckengine/core";

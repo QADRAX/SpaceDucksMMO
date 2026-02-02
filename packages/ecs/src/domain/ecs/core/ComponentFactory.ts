@@ -17,6 +17,7 @@ import { OrbitComponent } from "../components/OrbitComponent";
 import { CameraViewComponent } from "../components/CameraViewComponent";
 import { MouseLookComponent } from "../components/MouseLookComponent";
 import { FirstPersonMoveComponent } from "../components/FirstPersonMoveComponent";
+import { FirstPersonPhysicsMoveComponent } from "../components/FirstPersonPhysicsMoveComponent";
 import { LookAtEntityComponent } from "../components/LookAtEntityComponent";
 import { LookAtPointComponent } from "../components/LookAtPointComponent";
 
@@ -24,6 +25,15 @@ import AmbientLightComponent from "../components/light/AmbientLightComponent";
 import DirectionalLightComponent from "../components/light/DirectionalLightComponent";
 import PointLightComponent from "../components/light/PointLightComponent";
 import SpotLightComponent from "../components/light/SpotLightComponent";
+
+import { RigidBodyComponent } from "../components/physics/RigidBodyComponent";
+import { GravityComponent } from "../components/physics/GravityComponent";
+import { SphereColliderComponent } from "../components/physics/SphereColliderComponent";
+import { BoxColliderComponent } from "../components/physics/BoxColliderComponent";
+import { CapsuleColliderComponent } from "../components/physics/CapsuleColliderComponent";
+import { CylinderColliderComponent } from "../components/physics/CylinderColliderComponent";
+import { ConeColliderComponent } from "../components/physics/ConeColliderComponent";
+import { TerrainColliderComponent } from "../components/physics/TerrainColliderComponent";
 
 export type KnownComponentType =
   | "boxGeometry"
@@ -42,13 +52,22 @@ export type KnownComponentType =
   | "cameraView"
   | "mouseLook"
   | "firstPersonMove"
+  | "firstPersonPhysicsMove"
   | "textureTiling"
   | "lookAtEntity"
   | "lookAtPoint"
   | "ambientLight"
   | "directionalLight"
   | "pointLight"
-  | "spotLight";
+  | "spotLight"
+  | "rigidBody"
+  | "gravity"
+  | "sphereCollider"
+  | "boxCollider"
+  | "capsuleCollider"
+  | "cylinderCollider"
+  | "coneCollider"
+  | "terrainCollider";
 
 export interface CreatableComponentDef {
   type: KnownComponentType;
@@ -123,8 +142,11 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
     if (has("cameraView") && !has("mouseLook")) {
       defs.push({ type: "mouseLook", label: "Mouse Look" });
     }
-    if (has("cameraView") && !has("firstPersonMove")) {
+    if (has("cameraView") && !has("firstPersonMove") && !has("firstPersonPhysicsMove")) {
       defs.push({ type: "firstPersonMove", label: "First Person Move" });
+    }
+    if (has("cameraView") && has("rigidBody") && !has("firstPersonMove") && !has("firstPersonPhysicsMove")) {
+      defs.push({ type: "firstPersonPhysicsMove", label: "First Person Physics Move" });
     }
 
     // look-at components
@@ -147,6 +169,30 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       defs.push({ type: "directionalLight", label: "Directional Light" });
       defs.push({ type: "pointLight", label: "Point Light" });
       defs.push({ type: "spotLight", label: "Spot Light" });
+    }
+
+    // --- Physics ---------------------------------------------------------
+    // Physics system supports colliders both with and without a rigid body.
+    if (!has("rigidBody")) defs.push({ type: "rigidBody", label: "Rigid Body" });
+    if (!has("gravity")) defs.push({ type: "gravity", label: "Gravity" });
+
+    const hasAnyCollider =
+      has("sphereCollider") ||
+      has("boxCollider") ||
+      has("capsuleCollider") ||
+      has("cylinderCollider") ||
+      has("coneCollider") ||
+      has("terrainCollider");
+
+    // Collider components conflict with each other (one per entity). For compound
+    // setups, add colliders to child entities instead.
+    if (!hasAnyCollider) {
+      defs.push({ type: "sphereCollider", label: "Sphere Collider" });
+      defs.push({ type: "boxCollider", label: "Box Collider" });
+      defs.push({ type: "capsuleCollider", label: "Capsule Collider" });
+      defs.push({ type: "cylinderCollider", label: "Cylinder Collider" });
+      defs.push({ type: "coneCollider", label: "Cone Collider" });
+      defs.push({ type: "terrainCollider", label: "Terrain Collider" });
     }
 
     return defs;
@@ -206,6 +252,8 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
         return new MouseLookComponent(params ?? {});
       case "firstPersonMove":
         return new FirstPersonMoveComponent(params ?? {});
+      case "firstPersonPhysicsMove":
+        return new FirstPersonPhysicsMoveComponent(params ?? {});
       case "lookAtEntity":
         return new LookAtEntityComponent({
           targetEntityId: "",
@@ -241,6 +289,25 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
             decay: 1,
           }
         );
+
+      case "rigidBody":
+        return new RigidBodyComponent(params ?? { bodyType: "dynamic" });
+      case "gravity":
+        return new GravityComponent(params ?? { gravity: [0, -9.81, 0] });
+      case "sphereCollider":
+        return new SphereColliderComponent(params ?? { radius: 0.5 });
+      case "boxCollider":
+        return new BoxColliderComponent(
+          params ?? { halfExtents: { x: 0.5, y: 0.5, z: 0.5 } }
+        );
+      case "capsuleCollider":
+        return new CapsuleColliderComponent(params ?? { radius: 0.3, halfHeight: 0.7 });
+      case "cylinderCollider":
+        return new CylinderColliderComponent(params ?? { radius: 0.5, halfHeight: 0.5 });
+      case "coneCollider":
+        return new ConeColliderComponent(params ?? { radius: 0.5, halfHeight: 0.5 });
+      case "terrainCollider":
+        return new TerrainColliderComponent(params ?? {});
       default:
         throw new Error(`Unknown component type '${type}'`);
     }

@@ -6,6 +6,7 @@ import MainScreen from "./screens/MainScreen";
 import SandboxScreen from "./screens/SandboxScreen";
 import type SceneManager from "@client/application/SceneManager";
 import EcsDemoScreen from "./screens/EcsDemoScreen";
+import SoccerFpsScreen from "./screens/SoccerFpsScreen";
 import type { Services } from "../di/Services";
 
 /**
@@ -53,10 +54,14 @@ export class UIBootstrap {
     const ecsDemoScreen = new EcsDemoScreen();
     ecsDemoScreen.setServices(services);
 
+    const soccerFpsScreen = new SoccerFpsScreen();
+    soccerFpsScreen.setServices(services);
+
     // Register screens with router
     this.router.register(mainScreen);
     this.router.register(sandboxScreen);
     this.router.register(ecsDemoScreen);
+    this.router.register(soccerFpsScreen);
   }
 
   /**
@@ -68,16 +73,8 @@ export class UIBootstrap {
    * Show initial screen with transition
    */
   async showInitialScreen(): Promise<void> {
-    // In development start in Sandbox for faster iteration. Use import.meta.env.DEV when available.
-    let isDev = false;
-    try {
-      isDev = !!((import.meta as any).env?.DEV);
-    } catch (e) {}
-    if (!isDev && typeof process !== 'undefined' && process.env) {
-      isDev = process.env.NODE_ENV === 'development';
-    }
-
-    await this.gameScreenManager.navigateTo(isDev ? GameScreens.Sandbox : GameScreens.MainMenu);
+    // SoccerFps is the current primary gameplay/prototype screen.
+    await this.gameScreenManager.navigateTo(GameScreens.SoccerFps);
   }
 
   /**

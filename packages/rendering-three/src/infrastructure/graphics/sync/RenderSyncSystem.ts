@@ -19,6 +19,7 @@ import { CameraSyncSystem } from "./CameraSyncSystem";
 import { LightSyncSystem } from "./LightSyncSystem";
 import { LensFlareSystem } from "./LensFlareSystem";
 import DebugTransformSystem from "../debug/DebugTransformSystem";
+import DebugColliderSystem from "../debug/DebugColliderSystem";
 import { TextureCache } from "../factories/TextureCache";
 import type { AnyLightComponent } from "../factories/LightFactory";
 
@@ -34,10 +35,13 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
   private readonly lightSystem: LightSyncSystem;
   private readonly lensFlareSystem: LensFlareSystem;
   private readonly debugSystem: DebugTransformSystem;
+  private readonly colliderDebugSystem: DebugColliderSystem;
   private readonly textureCatalog?: TextureCatalogService;
   private readonly textureResolver?: ITextureResolver;
   private sceneDebugMaster = false;
+  private sceneColliderDebugMaster = false;
   private readonly debugFlagListeners = new Map<string, (enabled: boolean) => void>();
+  private readonly debugColliderFlagListeners = new Map<string, (enabled: boolean) => void>();
   private activeCameraEntityId: string | null = null;
 
   constructor(
@@ -59,6 +63,7 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     this.lightSystem = new LightSyncSystem(this.scene, this.registry);
     this.lensFlareSystem = new LensFlareSystem(this.scene, this.registry);
     this.debugSystem = new DebugTransformSystem(this.scene, this.registry);
+    this.colliderDebugSystem = new DebugColliderSystem(this.scene, this.registry);
   }
 
   addEntity(entity: Entity): void {
@@ -86,11 +91,22 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
       entity.addDebugTransformListener(dbgListener);
     } catch {}
 
+    // Listen to per-entity collider debug flag changes
+    const dbgColListener = (enabled: boolean) => this.onEntityColliderDebugFlagChanged(entity, enabled);
+    this.debugColliderFlagListeners.set(entity.id, dbgColListener);
+    try {
+      entity.addDebugColliderListener(dbgColListener);
+    } catch {}
+
     this.processEntity(entity);
     // If scene master and entity flag are enabled, let DebugTransformSystem
     // decide whether to create a helper (it checks forbidden set internally).
     if (this.sceneDebugMaster && entity.isDebugTransformEnabled()) {
       this.debugSystem.recreateForEntityIfNeeded(entity);
+    }
+
+    if (this.sceneColliderDebugMaster && entity.isDebugColliderEnabled?.()) {
+      this.colliderDebugSystem.recreateForEntityIfNeeded(entity);
     }
     for (const child of entity.getChildren()) this.addEntity(child);
   }
@@ -111,6 +127,10 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     try {
       this.debugSystem.removeHelper(entityId);
     } catch {}
+
+    try {
+      this.colliderDebugSystem.removeHelper(entityId);
+    } catch {}
     this.entities.delete(entityId);
 
     const dbg = this.debugFlagListeners.get(entityId);
@@ -120,9 +140,20 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
       } catch {}
     }
     this.debugFlagListeners.delete(entityId);
+
+    const dbgCol = this.debugColliderFlagListeners.get(entityId);
+    if (dbgCol && entity) {
+      try {
+        entity.removeDebugColliderListener(dbgCol);
+      } catch {}
+    }
+    this.debugColliderFlagListeners.delete(entityId);
     // ensure forbidden list cleanup
     try {
       this.debugSystem.removeForbiddenEntity(entityId);
+    } catch {}
+    try {
+      this.colliderDebugSystem.removeForbiddenEntity(entityId);
     } catch {}
   }
 
@@ -162,6 +193,16 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
           try {
             // ensure debug wireframe is refreshed (removed) when geometry/material/light/camera is removed
             this.debugSystem.refreshWireframeForEntity(entityId);
+          } catch {}
+          break;
+        case "sphereCollider":
+        case "boxCollider":
+        case "capsuleCollider":
+        case "cylinderCollider":
+        case "coneCollider":
+        case "terrainCollider":
+          try {
+            this.colliderDebugSystem.recreateForEntityIfNeeded(entity);
           } catch {}
           break;
         case "lensFlare":
@@ -206,6 +247,16 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
         break;
       case "lensFlare":
         this.lensFlareSystem.recreateLensFlare(entity);
+        break;
+      case "sphereCollider":
+      case "boxCollider":
+      case "capsuleCollider":
+      case "cylinderCollider":
+      case "coneCollider":
+      case "terrainCollider":
+        try {
+          this.colliderDebugSystem.recreateForEntityIfNeeded(entity);
+        } catch {}
         break;
       default:
         break;
@@ -275,6 +326,10 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     try {
       this.debugSystem.updateHelperTransform(entity);
     } catch {}
+
+    try {
+      this.colliderDebugSystem.updateHelperTransform(entity);
+    } catch {}
   }
 
   /**
@@ -298,12 +353,26 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     }
   }
 
+  /** Independent master switch for collider debug rendering. */
+  setSceneColliderDebugEnabled(enabled: boolean): void {
+    this.sceneColliderDebugMaster = !!enabled;
+    this.colliderDebugSystem.setMasterEnabled(this.sceneColliderDebugMaster);
+    for (const ent of this.entities.values()) {
+      this.colliderDebugSystem.recreateForEntityIfNeeded(ent);
+    }
+  }
+
   private onEntityDebugFlagChanged(entity: Entity, enabled: boolean): void {
     // If master disabled, helpers must remain hidden; do nothing
     if (!this.sceneDebugMaster) return;
     // Let DebugTransformSystem recreate/remove helper according to entity
     // flag and forbidden set.
     this.debugSystem.recreateForEntityIfNeeded(entity);
+  }
+
+  private onEntityColliderDebugFlagChanged(entity: Entity, enabled: boolean): void {
+    if (!this.sceneColliderDebugMaster) return;
+    this.colliderDebugSystem.recreateForEntityIfNeeded(entity);
   }
 
   /**
@@ -327,6 +396,7 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
         // new active camera: forbid helpers. removal of any existing helper
         // will be handled by addForbiddenEntity.
         this.debugSystem.addForbiddenEntity(id);
+        this.colliderDebugSystem.addForbiddenEntity(id);
       }
     } catch {}
   }

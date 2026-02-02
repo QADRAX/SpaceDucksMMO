@@ -1,6 +1,7 @@
 import type IRenderingEngine from './IRenderingEngine';
 import type { Entity } from '@duckengine/ecs';
 import type SceneChangeEvent from '../scene/SceneChangeEvent';
+import type CollisionEventsHub from '../physics/CollisionEventsHub';
 
 /**
  * Port abstraction for a complete 3D scene.
@@ -76,6 +77,13 @@ export interface IScene {
   /** Optional: read/write scene-level debug master flag for inspector tools */
   getDebugTransformsEnabled?(): boolean;
   setDebugTransformsEnabled?(enabled: boolean): void;
+
+  /** Optional: scene-level collider debug master flag for inspector tools */
+  getDebugCollidersEnabled?(): boolean;
+  setDebugCollidersEnabled?(enabled: boolean): void;
+
+  /** Optional: collision event hub (present on BaseScene). */
+  readonly collisionEvents?: CollisionEventsHub;
 }
 
 export default IScene;

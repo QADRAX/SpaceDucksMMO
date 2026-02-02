@@ -12,6 +12,8 @@ enum SceneId {
   Sandbox = 'sandbox',
   /** ECS demo scene for POC */
   EcsDemo = 'ecs-demo',
+  /** First-person soccer prototype using physics */
+  SoccerFps = 'soccer-fps',
 }
 
 export default SceneId;

@@ -14,6 +14,8 @@ export interface IRenderSyncSystem {
   getCamera?(id: string): unknown | undefined;
 
   setSceneDebugEnabled(enabled: boolean): void;
+  /** Optional: independent master switch for collider debug rendering. */
+  setSceneColliderDebugEnabled?(enabled: boolean): void;
   setActiveCameraEntityId(id: string | null): void;
   update(dt: number): void;
 }

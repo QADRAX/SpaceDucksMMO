@@ -26,6 +26,8 @@ export function AddComponentSection({ entity, onAdded, t }: Props) {
     if (type.includes("geometry")) icon = <GeometryIcon />;
     else if (type.includes("camera")) icon = <CameraIcon />;
     else if (type.includes("light")) icon = <LightIcon />;
+    const isPhysics =
+      type.includes("collider") || type.includes("rigidbody") || type.includes("gravity");
     return {
       value: d.type,
       label: d.label,
@@ -34,6 +36,8 @@ export function AddComponentSection({ entity, onAdded, t }: Props) {
         ? "Geometry"
         : type.includes("material")
         ? "Material"
+        : isPhysics
+        ? "Physics"
         : type.includes("camera")
         ? "Camera"
         : type.includes("light")

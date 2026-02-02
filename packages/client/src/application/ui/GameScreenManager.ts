@@ -48,6 +48,7 @@ export class GameScreenManager implements IGameScreenNavigator {
       [SceneId.GameWorld]: 'game-world',
       [SceneId.ServerBrowser]: 'server-browser',
       [SceneId.EcsDemo]: 'ecs-demo',
+      [SceneId.SoccerFps]: 'soccer-fps',
     };
     return sceneMapping[sceneId] || sceneId;
   }

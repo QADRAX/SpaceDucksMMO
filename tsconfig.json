@@ -15,6 +15,7 @@
   "files": [],
   "references": [
     { "path": "./packages/ecs" },
+    { "path": "./packages/physics-rapier" },
     { "path": "./packages/core" },
     { "path": "./packages/rendering-three" }
   ]

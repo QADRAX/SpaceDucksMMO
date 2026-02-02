@@ -2,6 +2,7 @@ import type IScene from './IScene';
 import type { TextureCatalogService } from '../assets/TextureCatalog';
 import IRenderSyncSystem from './IRenderSyncSystem';
 import { ITextureResolver } from './ITextureResolver';
+import type { IPhysicsSystem } from '../physics/IPhysicsSystem';
 
 /**
  * Port abstraction for a rendering engine.
@@ -67,6 +68,12 @@ export interface IRenderingEngine {
     catalog?: TextureCatalogService,
     textureResolver?: ITextureResolver,
   ): IRenderSyncSystem | undefined;
+
+  /**
+   * Optional: physics backends can provide a physics system instance.
+  * Core depends only on the interface (defined in @duckengine/core), not an implementation.
+   */
+  createPhysicsSystem?(): IPhysicsSystem | undefined;
 }
 
 export default IRenderingEngine;

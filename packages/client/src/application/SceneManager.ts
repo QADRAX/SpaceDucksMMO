@@ -1,6 +1,7 @@
 import type { IScene, IRenderingEngine, Entity, SceneChangeEvent } from "@duckengine/rendering-three";
 import type SceneId from "@client/domain/scene/SceneId";
 import { Result, ok, err } from "@duckengine/rendering-three/ecs";
+import type { CollisionEventsHub } from "@duckengine/rendering-three";
 
 type VoidResult = Result<void>;
 import type { SettingsService } from "@client/application/SettingsService";
@@ -122,6 +123,11 @@ export class SceneManager {
     return this.currentScene;
   }
 
+  /** Convenience: return current scene collision events hub, or null if not supported. */
+  getCollisionEvents(): CollisionEventsHub | null {
+    return this.currentScene?.collisionEvents ?? null;
+  }
+
   /**
    * Convenience: return entities of the current scene or empty array.
    */
@@ -218,6 +224,13 @@ export class SceneManager {
     } catch {}
   }
 
+  /** Convenience: set the scene-level collider debug flag on the current scene if supported. */
+  setSceneColliderDebugEnabled(enabled: boolean): void {
+    try {
+      this.currentScene?.setDebugCollidersEnabled?.(enabled);
+    } catch {}
+  }
+
   /**
    * Convenience: read the current scene-level debug flag if the scene exposes it.
    * Returns `null` when the current scene does not expose the debug flag.
@@ -225,6 +238,15 @@ export class SceneManager {
   getCurrentSceneDebugEnabled(): boolean | null {
     try {
       const v = this.currentScene?.getDebugTransformsEnabled?.();
+      return typeof v === 'boolean' ? v : null;
+    } catch {}
+    return null;
+  }
+
+  /** Read the current scene-level collider debug flag, or null if not exposed. */
+  getCurrentSceneColliderDebugEnabled(): boolean | null {
+    try {
+      const v = this.currentScene?.getDebugCollidersEnabled?.();
       return typeof v === 'boolean' ? v : null;
     } catch {}
     return null;

@@ -1,4 +1,5 @@
 import { ThreeRenderer, type IFpsController } from "@duckengine/rendering-three";
+import EngineWithPhysics from "./EngineWithPhysics";
 import { SceneService } from "@client/application/SceneService";
 import SceneManager from "@client/application/SceneManager";
 import SceneId from "@client/domain/scene/SceneId";
@@ -8,6 +9,7 @@ import type { SettingsService } from "@client/application/SettingsService";
 import { DemoEcsScene } from '@client/infrastructure/scenes/DemoEcsScene';
 import { MainMenuScene } from '@client/infrastructure/scenes/MainMenuScene';
 import { SandboxScene } from '@client/infrastructure/scenes/SandboxScene';
+import { SoccerFpsScene } from '@client/infrastructure/scenes/SoccerFpsScene';
 
 /**
  * Rendering Bootstrap
@@ -15,7 +17,7 @@ import { SandboxScene } from '@client/infrastructure/scenes/SandboxScene';
  * scene management, graphics controller, and scene editor
  */
 export class RenderingBootstrap {
-  private engine: ThreeRenderer;
+  private engine: EngineWithPhysics;
   private sceneManager: SceneManager;
   private sceneService: SceneService;
   private graphicsController: GraphicsController;
@@ -24,7 +26,7 @@ export class RenderingBootstrap {
     private settingsService: SettingsService,
     private fpsController: IFpsController // Add fpsController as a dependency
   ) {
-    this.engine = new ThreeRenderer(fpsController); // Pass fpsController to ThreeRenderer
+    this.engine = new EngineWithPhysics(fpsController);
     this.sceneManager = new SceneManager(this.engine, this.settingsService);
     this.sceneService = new SceneService(this.engine, this.sceneManager);
     this.graphicsController = new GraphicsController(this.engine);
@@ -33,12 +35,17 @@ export class RenderingBootstrap {
   /**
    * Initialize rendering engine and register scenes
    */
-  initialize(container: HTMLElement): void {
+  async initialize(container: HTMLElement): Promise<void> {
+    // Ensure physics backend (Rapier) is initialized before any scene creates a physics system.
+    await EngineWithPhysics.initPhysicsBackend();
+
     // Register scenes as class instances (migrating away from definition-based SceneFactory)
     this.sceneManager.register(new MainMenuScene(this.settingsService));
     this.sceneManager.register(new SandboxScene(this.settingsService));
     // Register ECS demo scene (POC)
     this.sceneManager.register(new DemoEcsScene(this.settingsService));
+    // Register physics-based soccer prototype
+    this.sceneManager.register(new SoccerFpsScene(this.settingsService));
     
     // Initialize Three.js renderer, camera, scene
     this.sceneService.init(container);
@@ -55,7 +62,12 @@ export class RenderingBootstrap {
       isDev = process.env.NODE_ENV === 'development';
     }
 
-    this.sceneManager.switchTo(isDev ? SceneId.Sandbox : SceneId.MainMenu);
+    // SoccerFps is the current primary gameplay/prototype scene.
+    // Keep MainMenu available for later UI navigation.
+    const res = this.sceneManager.switchTo(SceneId.SoccerFps);
+    if (!res.ok) {
+      console.warn('[RenderingBootstrap] Failed to switch to SoccerFps:', res.error);
+    }
     
   }
 

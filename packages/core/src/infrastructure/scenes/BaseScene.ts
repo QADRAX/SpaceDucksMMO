@@ -2,11 +2,13 @@ import type IScene from '../../domain/ports/IScene';
 import type IRenderingEngine from '../../domain/ports/IRenderingEngine';
 import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
 import TextureResolverService from '../../application/TextureResolverService';
-import { setCurrentEcsWorld, Result, ok, err } from '@duckengine/ecs';
+import { setCurrentEcsWorld, setPhysicsServices, Result, ok, err } from '@duckengine/ecs';
 import type { Entity, IComponentObserver } from '@duckengine/ecs';
 import type SceneChangeEvent from '../../domain/scene/SceneChangeEvent';
 import IRenderSyncSystem from '../../domain/ports/IRenderSyncSystem';
 import ISettingsService from '../../domain/ports/ISettingsService';
+import type { IPhysicsSystem } from '../../domain/physics/IPhysicsSystem';
+import CollisionEventsHub from '../../domain/physics/CollisionEventsHub';
 
 type VoidResult = Result<void>;
 
@@ -22,6 +24,10 @@ export abstract class BaseScene implements IScene {
 
   // ECS Systems
   protected renderSyncSystem?: IRenderSyncSystem;
+  protected physicsSystem?: IPhysicsSystem;
+
+  /** Collision events convenience hub; auto-attaches to physics system when present. */
+  public readonly collisionEvents: CollisionEventsHub = new CollisionEventsHub();
   /**
    * Scene-level master switch for debug transform helpers.
    * When false (default), no debug helpers are rendered even if
@@ -32,6 +38,9 @@ export abstract class BaseScene implements IScene {
    * Public so the scene inspector can read/write the value generically.
    */
   public debugTransformsEnabled: boolean = false;
+
+  /** Scene-level master switch for collider debug helpers. Independent from transform debug. */
+  public debugCollidersEnabled: boolean = false;
 
   // Settings service kept for future use (e.g., quality affecting ECS components)
   // Used to drive texture resolver quality.
@@ -65,6 +74,11 @@ export abstract class BaseScene implements IScene {
     if (this.renderSyncSystem) {
       this.renderSyncSystem.addEntity(entity);
     }
+    if (this.physicsSystem) {
+      try {
+        this.physicsSystem.addEntity(entity);
+      } catch {}
+    }
     // subscribe to entity-level events for inspector/debug
     this.attachEntityObservers(entity);
     this.emitChange({ kind: "entity-added", entity });
@@ -90,6 +104,23 @@ export abstract class BaseScene implements IScene {
     } catch {}
   }
 
+  /**
+   * Enable or disable collider debug helpers for all entities in this scene.
+   * Master switch: requires per-entity `entity.isDebugColliderEnabled() === true`.
+   */
+  public setDebugCollidersEnabled(enabled: boolean): void {
+    if (this.debugCollidersEnabled === enabled) return;
+    this.debugCollidersEnabled = enabled;
+    if (this.renderSyncSystem) {
+      try {
+        this.renderSyncSystem.setSceneColliderDebugEnabled?.(enabled);
+      } catch {}
+    }
+    try {
+      this.emitChange({ kind: 'scene-collider-debug-changed', enabled: !!enabled });
+    } catch {}
+  }
+
   /** Remove an ECS Entity by ID */
   removeEntity(id: string): void {
     const ent = this.entities.get(id);
@@ -99,6 +130,11 @@ export abstract class BaseScene implements IScene {
     }
     if (this.renderSyncSystem) {
       this.renderSyncSystem.removeEntity(id);
+    }
+    if (this.physicsSystem) {
+      try {
+        this.physicsSystem.removeEntity(id);
+      } catch {}
     }
     if (this.activeCameraId === id) {
       this.activeCameraId = null;
@@ -169,6 +205,50 @@ export abstract class BaseScene implements IScene {
     // Set current ECS world context
     setCurrentEcsWorld(this);
 
+    // Optional physics system creation (provided by app/backend)
+    try {
+      this.physicsSystem = this.engine?.createPhysicsSystem?.();
+    } catch {
+      this.physicsSystem = undefined;
+    }
+
+    // Provide physics services globally so ECS components can apply forces/impulses.
+    // This is scene-scoped; teardown clears it.
+    try {
+      const sys = this.physicsSystem;
+      setPhysicsServices({
+        applyImpulse: (entityId, impulse) => {
+          try {
+            sys?.applyImpulse?.(entityId, impulse);
+          } catch {}
+        },
+        applyForce: (entityId, force) => {
+          try {
+            sys?.applyForce?.(entityId, force);
+          } catch {}
+        },
+        getLinearVelocity: (entityId) => {
+          try {
+            return sys?.getLinearVelocity?.(entityId) ?? null;
+          } catch {
+            return null;
+          }
+        },
+        raycast: (ray) => {
+          try {
+            return sys?.raycast?.(ray) ?? null;
+          } catch {
+            return null;
+          }
+        },
+      });
+    } catch {}
+
+    // Auto-wire collision event hub (no-op if physics backend doesn't support collisions).
+    try {
+      this.collisionEvents.attach(this.physicsSystem);
+    } catch {}
+
     // Initialize ECS systems
     // Obtain catalog from the engine (optional). If present, core constructs
     // the texture resolver implementation.
@@ -219,9 +299,22 @@ export abstract class BaseScene implements IScene {
         this.renderSyncSystem.setSceneDebugEnabled(this.debugTransformsEnabled);
       } catch {}
 
+      try {
+        this.renderSyncSystem.setSceneColliderDebugEnabled?.(this.debugCollidersEnabled);
+      } catch {}
+
       // Add all entities that were already added
       for (const ent of this.entities.values()) {
         this.renderSyncSystem.addEntity(ent);
+      }
+    }
+
+    // Add all entities to physics system as well (if present)
+    if (this.physicsSystem) {
+      for (const ent of this.entities.values()) {
+        try {
+          this.physicsSystem.addEntity(ent);
+        } catch {}
       }
     }
   }
@@ -234,6 +327,14 @@ export abstract class BaseScene implements IScene {
     // Update ECS entities
     for (const ent of this.entities.values()) {
       ent.update(dt);
+    }
+
+    // Physics step (singleplayer): after ECS component updates so gameplay can
+    // apply forces/impulses before stepping.
+    if (this.physicsSystem) {
+      try {
+        this.physicsSystem.update(dt);
+      } catch {}
     }
     if (this.renderSyncSystem) {
       this.renderSyncSystem.update(dt);
@@ -382,10 +483,24 @@ export abstract class BaseScene implements IScene {
     return this.debugTransformsEnabled;
   }
 
+  public getDebugCollidersEnabled(): boolean {
+    return this.debugCollidersEnabled;
+  }
+
   /**
    * Teardown the scene. Call super.teardown(engine, renderScene) if overriding.
    */
   teardown(engine: IRenderingEngine, renderScene: any): void {
+    // Clear scene-scoped physics services first to avoid components calling into a disposed backend.
+    try {
+      setPhysicsServices(null);
+    } catch {}
+
+    // Detach collision hub first to ensure no callbacks fire during teardown/dispose.
+    try {
+      this.collisionEvents.detach();
+    } catch {}
+
     if (this.settingsUnsubscribe) {
       this.settingsUnsubscribe();
       this.settingsUnsubscribe = undefined;
@@ -407,6 +522,18 @@ export abstract class BaseScene implements IScene {
           this.detachEntityObservers(ent.id);
         } catch {}
       }
+    }
+
+    if (this.physicsSystem) {
+      for (const ent of this.entities.values()) {
+        try {
+          this.physicsSystem.removeEntity(ent.id);
+        } catch {}
+      }
+      try {
+        this.physicsSystem.dispose();
+      } catch {}
+      this.physicsSystem = undefined;
     }
     // ensure cleanup of any remaining subscriptions
     for (const id of Array.from(this.entitySubscriptions.keys())) {

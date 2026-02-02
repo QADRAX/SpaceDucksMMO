@@ -29,7 +29,7 @@ export class RendererBootstrap {
     const renderingBootstrap = new RenderingBootstrap(services.settings, services.fpsController);
     // Texture catalog is required in Services; wire it into renderer unconditionally
     renderingBootstrap.getRenderer().setTextureCatalog(services.textureCatalog);
-    renderingBootstrap.initialize(container);
+    await renderingBootstrap.initialize(container);
 
     // Expose single renderer and scene manager instances from RenderingBootstrap into services
     const sceneManager = renderingBootstrap.getSceneManager();

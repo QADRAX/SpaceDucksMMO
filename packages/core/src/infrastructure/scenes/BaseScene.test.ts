@@ -13,6 +13,68 @@ describe('BaseScene debug events', () => {
     readonly id = 'Sandbox';
   }
 
+  it('auto-attaches and detaches collisionEvents hub when physics system is provided', () => {
+    let subscribed = 0;
+    let unsubscribed = 0;
+
+    const physics = {
+      addEntity: () => {},
+      removeEntity: () => {},
+      update: () => {},
+      dispose: () => {},
+      subscribeCollisions: (_listener: any) => {
+        subscribed += 1;
+        return () => {
+          unsubscribed += 1;
+        };
+      },
+    } as any;
+
+    const engine: any = {
+      createPhysicsSystem: () => physics,
+      onActiveCameraChanged: jest.fn(),
+    };
+
+    const scene = new TestScene({} as any);
+    scene.setup(engine, {});
+    expect(subscribed).toBe(1);
+
+    scene.teardown(engine, {});
+    expect(unsubscribed).toBe(1);
+  });
+
+  it('calls physics system add/remove/update/dispose through the scene lifecycle', () => {
+    const calls: string[] = [];
+
+    const physics = {
+      addEntity: (e: Entity) => calls.push(`add:${e.id}`),
+      removeEntity: (id: string) => calls.push(`remove:${id}`),
+      update: (_dt: number) => calls.push('update'),
+      dispose: () => calls.push('dispose'),
+    } as any;
+
+    const engine: any = {
+      createPhysicsSystem: () => physics,
+      onActiveCameraChanged: jest.fn(),
+    };
+
+    const scene = new TestScene({} as any);
+    scene.setup(engine, {});
+
+    const e1 = new Entity('e1');
+    scene.addEntity(e1);
+    expect(calls).toContain('add:e1');
+
+    scene.update(16);
+    expect(calls).toContain('update');
+
+    scene.removeEntity('e1');
+    expect(calls).toContain('remove:e1');
+
+    scene.teardown(engine, {});
+    expect(calls).toContain('dispose');
+  });
+
   it('setup creates a texture resolver from settings+catalog and passes it to createRenderSyncSystem', () => {
     let settingsListener: any;
     const settingsService = {

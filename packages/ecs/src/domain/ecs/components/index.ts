@@ -1,5 +1,6 @@
 export * from './CameraViewComponent';
 export * from './FirstPersonMoveComponent';
+export * from './FirstPersonPhysicsMoveComponent';
 export * from './LensFlareComponent';
 export * from './LookAtEntityComponent';
 export * from './LookAtPointComponent';
@@ -10,3 +11,5 @@ export * from './PostProcessComponent';
 export * from './geometry';
 export * from './light';
 export * from './material';
+
+export * from './physics';

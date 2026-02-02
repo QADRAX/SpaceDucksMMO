@@ -15,11 +15,15 @@
     "typescript": "^5.5.0"
   },
   "scripts": {
-    "build": "npm --workspaces run build",
+    "build": "npm run build:all",
+    "build:workspaces": "npm --workspaces run build",
+    "build:all": "npm run build:duckengine:ecs && npm run build:duckengine:core && npm run build:duckengine:physics-rapier && npm run build:duckengine:rendering-three && npm run build:client && npm run build:duck-asset-service",
     "build:duckengine:ecs": "npm --workspace @duckengine/ecs run build",
     "build:duckengine:core": "npm --workspace @duckengine/core run build",
+    "build:duckengine:physics-rapier": "npm --workspace @duckengine/physics-rapier run build",
     "build:duckengine:rendering-three": "npm --workspace @duckengine/rendering-three run build",
     "build:client": "npm --workspace @spaceducks/client run build",
+    "build:duck-asset-service": "npm --workspace @spaceducks/duck-asset-service run build",
     "dev:client": "npm --workspace @spaceducks/client run dev:all",
     "start:client": "npm --workspace @spaceducks/client run start",
     "clean": "node -e \"console.log('No-op clean')\""

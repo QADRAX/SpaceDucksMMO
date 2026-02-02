@@ -15,6 +15,9 @@ export function TransformEditor({ entity }: Props) {
   const [rot, setRot] = useState({ x: 0, y: 0, z: 0 });
   const [scale, setScale] = useState({ x: 1, y: 1, z: 1 });
   const [debugEnabled, setDebugEnabled] = useState<boolean>(() => !!entity?.isDebugTransformEnabled());
+  const [colliderDebugEnabled, setColliderDebugEnabled] = useState<boolean>(() =>
+    !!entity?.isDebugColliderEnabled()
+  );
 
   useEffect(() => {
     if (!transform) return;
@@ -49,6 +52,20 @@ export function TransformEditor({ entity }: Props) {
     };
   }, [entity]);
 
+  useEffect(() => {
+    if (!entity) return;
+    const listener = (enabled: boolean) => setColliderDebugEnabled(!!enabled);
+    try {
+      entity.addDebugColliderListener(listener);
+      setColliderDebugEnabled(!!entity.isDebugColliderEnabled());
+    } catch {}
+    return () => {
+      try {
+        entity.removeDebugColliderListener(listener);
+      } catch {}
+    };
+  }, [entity]);
+
   if (!entity || !transform)
     return (
       <div className="small-label">{t("inspector.noEntitySelected", "No entity selected")}</div>
@@ -69,6 +86,18 @@ export function TransformEditor({ entity }: Props) {
             setDebugEnabled(v);
           }}
           label={t('inspector.entityDebug', 'Show Debug')}
+        />
+      </div>
+      <div style={{ padding: '0px 8px 6px' }}>
+        <ToggleSwitch
+          checked={colliderDebugEnabled}
+          onChange={(v) => {
+            try {
+              entity?.setDebugColliderEnabled(v);
+            } catch {}
+            setColliderDebugEnabled(v);
+          }}
+          label={t('inspector.entityColliderDebug', 'Show Collider Debug')}
         />
       </div>
       <div style={{ paddingTop: 6 }}>

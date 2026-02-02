@@ -41,6 +41,7 @@ export function SceneInspectorPanel() {
           "component-changed",
           "active-camera-changed",
           "scene-debug-changed",
+          "scene-collider-debug-changed",
         ].includes(k)
       ) {
         setEntities(sceneManager.getEntities());
@@ -48,6 +49,9 @@ export function SceneInspectorPanel() {
       if (k === 'scene-debug-changed') {
         // forward new value to local state
         setSceneDebugEnabledLocal(!!(ev as any).enabled);
+      }
+      if (k === 'scene-collider-debug-changed') {
+        setSceneColliderDebugEnabledLocal(!!(ev as any).enabled);
       }
       if (ev.kind === "error") setLastError(ev.message || null);
       if (ev.kind === "active-camera-changed")
@@ -77,12 +81,23 @@ export function SceneInspectorPanel() {
     () => sceneManager?.getCurrentSceneDebugEnabled() ?? false
   );
 
+  const [sceneColliderDebugEnabledLocal, setSceneColliderDebugEnabledLocal] = useState<boolean>(
+    () => sceneManager?.getCurrentSceneColliderDebugEnabled?.() ?? false
+  );
+
   const onToggleSceneDebug = (enabled: boolean) => {
     try {
       sceneManager?.setSceneDebugEnabled(enabled);
     } catch {}
     setSceneDebugEnabledLocal(enabled);
     // also ensure renderSyncSystem reacts by re-evaluating helpers via SceneManager events
+  };
+
+  const onToggleSceneColliderDebug = (enabled: boolean) => {
+    try {
+      sceneManager?.setSceneColliderDebugEnabled?.(enabled);
+    } catch {}
+    setSceneColliderDebugEnabledLocal(enabled);
   };
 
   const selectedEntity = entities.find((e) => e.id === selected);
@@ -129,6 +144,13 @@ export function SceneInspectorPanel() {
                     checked={sceneDebugEnabledLocal}
                     onChange={onToggleSceneDebug}
                     label={t('inspector.sceneDebug', 'Scene Debug')}
+                  />
+                </div>
+                <div style={{ marginLeft: 12 }}>
+                  <ToggleSwitch
+                    checked={sceneColliderDebugEnabledLocal}
+                    onChange={onToggleSceneColliderDebug}
+                    label={t('inspector.sceneColliderDebug', 'Collider Debug')}
                   />
                 </div>
             </div>

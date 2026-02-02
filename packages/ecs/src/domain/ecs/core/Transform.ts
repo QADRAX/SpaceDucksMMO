@@ -1,4 +1,5 @@
 import type { Vec3Like, EulerLike, QuatLike } from "./MathTypes";
+import { applyQuatToVec, eulerFromQuatYXZ, quatFromDirection, quatFromEulerYXZ, quatMul } from "./Math3D";
 
 function vec3FromArray(a?: [number, number, number]): Vec3Like {
   if (!a) return { x: 0, y: 0, z: 0 };
@@ -11,87 +12,6 @@ function copyVec(v: Vec3Like): Vec3Like {
 
 function copyEuler(e: EulerLike): EulerLike {
   return { x: e.x, y: e.y, z: e.z };
-}
-
-// YXZ order: yaw (Y), pitch (X), roll (Z)
-function quatFromEuler(e: EulerLike): QuatLike {
-  // YXZ order: yaw (Y), pitch (X), roll (Z)
-  const c1 = Math.cos(e.y / 2); // yaw
-  const c2 = Math.cos(e.x / 2); // pitch
-  const c3 = Math.cos(e.z / 2); // roll
-  const s1 = Math.sin(e.y / 2);
-  const s2 = Math.sin(e.x / 2);
-  const s3 = Math.sin(e.z / 2);
-  // YXZ quaternion construction
-  const x = s2 * c1 * c3 + c2 * s1 * s3;
-  const y = c2 * s1 * c3 - s2 * c1 * s3;
-  const z = c2 * c1 * s3 - s2 * s1 * c3;
-  const w = c2 * c1 * c3 + s2 * s1 * s3;
-  return { x, y, z, w };
-}
-
-function multiplyQuat(a: QuatLike, b: QuatLike): QuatLike {
-  return {
-    w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
-    x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
-    y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
-    z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
-  };
-}
-
-function applyQuatToVec(v: Vec3Like, q: QuatLike): Vec3Like {
-  // v' = v + 2*cross(q.xyz, cross(q.xyz, v) + q.w*v)
-  const qx = q.x,
-    qy = q.y,
-    qz = q.z,
-    qw = q.w;
-  const vx = v.x,
-    vy = v.y,
-    vz = v.z;
-  const ix = qw * vx + qy * vz - qz * vy;
-  const iy = qw * vy + qz * vx - qx * vz;
-  const iz = qw * vz + qx * vy - qy * vx;
-  const rx = ix * qw + qy * iz - qz * iy - qx * (ix * qx + iy * qy + iz * qz);
-  const ry = iy * qw + qz * ix - qx * iz - qy * (ix * qx + iy * qy + iz * qz);
-  const rz = iz * qw + qx * iy - qy * ix - qz * (ix * qx + iy * qy + iz * qz);
-  return { x: rx, y: ry, z: rz };
-}
-
-function quatFromDirection(dir: Vec3Like, up: Vec3Like = { x: 0, y: 1, z: 0 }): QuatLike {
-  // Create quaternion that rotates forward (0,0,-1) to dir
-  const fx = 0,
-    fy = 0,
-    fz = -1;
-  const dx = dir.x,
-    dy = dir.y,
-    dz = dir.z;
-  // normalize dir
-  const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
-  if (len === 0) return { x: 0, y: 0, z: 0, w: 1 };
-  const ndx = dx / len,
-    ndy = dy / len,
-    ndz = dz / len;
-  // axis = cross(forward, dir)
-  let ax = fy * ndz - fz * ndy;
-  let ay = fz * ndx - fx * ndz;
-  let az = fx * ndy - fy * ndx;
-  const alen = Math.sqrt(ax * ax + ay * ay + az * az);
-  if (alen < 1e-6) {
-    // parallel or anti-parallel
-    const dot = fx * ndx + fy * ndy + fz * ndz;
-    if (dot < 0) {
-      // 180 degrees around up axis
-      return { x: up.x, y: up.y, z: up.z, w: 0 };
-    }
-    return { x: 0, y: 0, z: 0, w: 1 };
-  }
-  ax /= alen;
-  ay /= alen;
-  az /= alen;
-  const dot = fx * ndx + fy * ndy + fz * ndz;
-  const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
-  const s = Math.sin(angle / 2);
-  return { x: ax * s, y: ay * s, z: az * s, w: Math.cos(angle / 2) };
 }
 
 export class Transform {
@@ -139,24 +59,11 @@ export class Transform {
   }
 
   setRotationFromQuaternion(q: QuatLike): void {
-    // convert quaternion to Euler (XYZ)
-    const { x: qx, y: qy, z: qz, w: qw } = q;
-    const sinr_cosp = 2 * (qw * qx + qy * qz);
-    const cosr_cosp = 1 - 2 * (qx * qx + qy * qy);
-    const rx = Math.atan2(sinr_cosp, cosr_cosp);
-
-    const sinp = 2 * (qw * qy - qz * qx);
-    let ry: number;
-    if (Math.abs(sinp) >= 1) ry = Math.sign(sinp) * Math.PI / 2;
-    else ry = Math.asin(sinp);
-
-    const siny_cosp = 2 * (qw * qz + qx * qy);
-    const cosy_cosp = 1 - 2 * (qy * qy + qz * qz);
-    const rz = Math.atan2(siny_cosp, cosy_cosp);
-
-    this._localRotation.x = rx;
-    this._localRotation.y = ry;
-    this._localRotation.z = rz;
+    // Convert quaternion to Euler using the engine's rotation order (YXZ).
+    const e = eulerFromQuatYXZ(q);
+    this._localRotation.x = e.x;
+    this._localRotation.y = e.y;
+    this._localRotation.z = e.z;
     this.markDirty();
   }
 
@@ -195,22 +102,10 @@ export class Transform {
   lookAt(target: Vec3Like): void {
     const dir = { x: target.x - this.worldPosition.x, y: target.y - this.worldPosition.y, z: target.z - this.worldPosition.z };
     const q = quatFromDirection(dir, { x: 0, y: 1, z: 0 });
-    // convert quaternion to euler for worldRotation and set local rotation so that worldRotation becomes q
-    this._worldRotation = this._worldRotation || { x: 0, y: 0, z: 0 };
-    // set local rotation such that when updated it will reflect lookAt result (approximation: set localRotation from quat)
-    const sinr_cosp = 2 * (q.w * q.x + q.y * q.z);
-    const cosr_cosp = 1 - 2 * (q.x * q.x + q.y * q.y);
-    const rx = Math.atan2(sinr_cosp, cosr_cosp);
-    const sinp = 2 * (q.w * q.y - q.z * q.x);
-    let ry: number;
-    if (Math.abs(sinp) >= 1) ry = Math.sign(sinp) * Math.PI / 2;
-    else ry = Math.asin(sinp);
-    const siny_cosp = 2 * (q.w * q.z + q.x * q.y);
-    const cosy_cosp = 1 - 2 * (q.y * q.y + q.z * q.z);
-    const rz = Math.atan2(siny_cosp, cosy_cosp);
-    this._localRotation.x = rx;
-    this._localRotation.y = ry;
-    this._localRotation.z = rz;
+    const e = eulerFromQuatYXZ(q);
+    this._localRotation.x = e.x;
+    this._localRotation.y = e.y;
+    this._localRotation.z = e.z;
     this.markDirty();
   }
 
@@ -239,9 +134,9 @@ export class Transform {
       const pr = this._parent.worldRotation;
       const ps = this._parent.worldScale;
       // compute parent quaternion
-      const parentQuat = quatFromEuler(pr);
-      const localQuat = quatFromEuler(this._localRotation);
-      const worldQuat = multiplyQuat(parentQuat, localQuat);
+      const parentQuat = quatFromEulerYXZ(pr);
+      const localQuat = quatFromEulerYXZ(this._localRotation);
+      const worldQuat = quatMul(parentQuat, localQuat);
       // rotated local position by parent rotation
       const rotated = applyQuatToVec(this._localPosition, parentQuat);
       // apply scale
@@ -250,19 +145,7 @@ export class Transform {
       rotated.z *= ps.z;
       this._worldPosition = { x: pw.x + rotated.x, y: pw.y + rotated.y, z: pw.z + rotated.z };
       // set world rotation from worldQuat
-      // convert quaternion to euler
-      const { x: qx, y: qy, z: qz, w: qw } = worldQuat;
-      const sinr_cosp = 2 * (qw * qx + qy * qz);
-      const cosr_cosp = 1 - 2 * (qx * qx + qy * qy);
-      const rx = Math.atan2(sinr_cosp, cosr_cosp);
-      const sinp = 2 * (qw * qy - qz * qx);
-      let ry: number;
-      if (Math.abs(sinp) >= 1) ry = Math.sign(sinp) * Math.PI / 2;
-      else ry = Math.asin(sinp);
-      const siny_cosp = 2 * (qw * qz + qx * qy);
-      const cosy_cosp = 1 - 2 * (qy * qy + qz * qz);
-      const rz = Math.atan2(siny_cosp, cosy_cosp);
-      this._worldRotation = { x: rx, y: ry, z: rz };
+      this._worldRotation = eulerFromQuatYXZ(worldQuat);
       this._worldScale = { x: this._localScale.x * ps.x, y: this._localScale.y * ps.y, z: this._localScale.z * ps.z };
     } else {
       this._worldPosition = copyVec(this._localPosition);
@@ -299,21 +182,21 @@ export class Transform {
   }
 
   getForward(): Vec3Like {
-    const q = quatFromEuler(this.worldRotation);
+    const q = quatFromEulerYXZ(this.worldRotation);
     const v = applyQuatToVec({ x: 0, y: 0, z: -1 }, q);
     const l = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z) || 1;
     return { x: v.x / l, y: v.y / l, z: v.z / l };
   }
 
   getUp(): Vec3Like {
-    const q = quatFromEuler(this.worldRotation);
+    const q = quatFromEulerYXZ(this.worldRotation);
     const v = applyQuatToVec({ x: 0, y: 1, z: 0 }, q);
     const l = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z) || 1;
     return { x: v.x / l, y: v.y / l, z: v.z / l };
   }
 
   getRight(): Vec3Like {
-    const q = quatFromEuler(this.worldRotation);
+    const q = quatFromEulerYXZ(this.worldRotation);
     const v = applyQuatToVec({ x: 1, y: 0, z: 0 }, q);
     const l = Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z) || 1;
     return { x: v.x / l, y: v.y / l, z: v.z / l };

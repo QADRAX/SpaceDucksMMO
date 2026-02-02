@@ -30,6 +30,10 @@ export class Entity {
   private _debugTransformEnabled = false;
   private debugTransformListeners: Array<(enabled: boolean) => void> = [];
 
+  /** Per-entity flag to indicate whether collider debug helpers should be rendered. Default: false. */
+  private _debugColliderEnabled = false;
+  private debugColliderListeners: Array<(enabled: boolean) => void> = [];
+
   constructor(id: string, position?: [number, number, number]) {
     this.id = id;
     this.transform = new Transform(position);
@@ -203,6 +207,35 @@ export class Entity {
   /** Register a listener for debug flag changes. */
   addDebugTransformListener(listener: (enabled: boolean) => void): void {
     if (!this.debugTransformListeners.includes(listener)) this.debugTransformListeners.push(listener);
+  }
+
+  /** Enable or disable debug collider helpers for this entity. */
+  setDebugColliderEnabled(enabled: boolean): void {
+    if (this._debugColliderEnabled === enabled) return;
+    this._debugColliderEnabled = enabled;
+    for (const l of this.debugColliderListeners) {
+      try {
+        l(enabled);
+      } catch {
+        /* swallow listener errors */
+      }
+    }
+  }
+
+  /** Returns whether debug collider helpers are enabled for this entity. */
+  isDebugColliderEnabled(): boolean {
+    return this._debugColliderEnabled;
+  }
+
+  /** Register a listener for collider debug flag changes. */
+  addDebugColliderListener(listener: (enabled: boolean) => void): void {
+    if (!this.debugColliderListeners.includes(listener)) this.debugColliderListeners.push(listener);
+  }
+
+  /** Remove a previously registered collider debug flag listener. */
+  removeDebugColliderListener(listener: (enabled: boolean) => void): void {
+    const i = this.debugColliderListeners.indexOf(listener);
+    if (i >= 0) this.debugColliderListeners.splice(i, 1);
   }
 
   /** Remove a previously registered debug flag listener. */

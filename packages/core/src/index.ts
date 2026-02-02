@@ -6,9 +6,18 @@ export type { default as IRenderSyncSystem } from './domain/ports/IRenderSyncSys
 export type { ITextureResolver } from './domain/ports/ITextureResolver';
 export type { default as ISettingsService } from './domain/ports/ISettingsService';
 
+export type { default as IPhysicsSystem } from './domain/physics/IPhysicsSystem';
+export type * from './domain/physics/PhysicsTypes';
+export { default as CollisionEventsHub } from './domain/physics/CollisionEventsHub';
+
 export { default as BaseScene } from './infrastructure/scenes/BaseScene';
 
 export type { default as SceneChangeEvent } from './domain/scene/SceneChangeEvent';
+export type {
+	SceneChangeEvent as SceneChangeEventBase,
+	SceneChangeErrorEvent,
+	SceneChangeEventWithError,
+} from './domain/scene/SceneChangeEvent';
 
 export type {
 	TextureCatalogService,

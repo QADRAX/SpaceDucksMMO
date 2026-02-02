@@ -2,6 +2,7 @@ import { Entity } from "./Entity";
 import { DefaultEcsComponentFactory } from "./ComponentFactory";
 import { BoxGeometryComponent } from "../components/geometry/BoxGeometryComponent";
 import { ShaderMaterialComponent } from "../components/material/ShaderMaterialComponent";
+import { SphereColliderComponent } from "../components/physics/SphereColliderComponent";
 
 describe("DefaultEcsComponentFactory", () => {
   const factory = new DefaultEcsComponentFactory();
@@ -29,5 +30,26 @@ describe("DefaultEcsComponentFactory", () => {
     const afterShader = factory.listCreatableComponents(e).map((d) => d.type);
     expect(afterShader).not.toContain("standardMaterial");
     expect(afterShader).not.toContain("basicMaterial");
+  });
+
+  test("listCreatableComponents includes physics components", () => {
+    const e = new Entity("e-physics");
+    const initial = factory.listCreatableComponents(e).map((d) => d.type);
+    expect(initial).toContain("rigidBody");
+    expect(initial).toContain("gravity");
+    expect(initial).toContain("sphereCollider");
+    expect(initial).toContain("boxCollider");
+  });
+
+  test("listCreatableComponents omits additional colliders when one is present on the same entity", () => {
+    const e = new Entity("e-collider");
+    e.addComponent(new SphereColliderComponent({ radius: 1 }) as any);
+    const after = factory.listCreatableComponents(e).map((d) => d.type);
+    expect(after).not.toContain("sphereCollider");
+    expect(after).not.toContain("boxCollider");
+    expect(after).not.toContain("capsuleCollider");
+    expect(after).not.toContain("cylinderCollider");
+    expect(after).not.toContain("coneCollider");
+    expect(after).not.toContain("terrainCollider");
   });
 });
