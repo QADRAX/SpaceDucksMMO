@@ -21,6 +21,20 @@ import type {
 import type RapierBodies from "./RapierBodies";
 import type RapierCollisionEvents from "./RapierCollisionEvents";
 
+function callOptional(receiver: any, methodName: string, ...args: any[]): void {
+  const fn = receiver?.[methodName];
+  if (typeof fn !== "function") return;
+  fn.call(receiver, ...args);
+}
+
+function callRequired(receiver: any, methodName: string, nameForError: string, ...args: any[]): void {
+  const fn = receiver?.[methodName];
+  if (typeof fn !== "function") {
+    throw new Error(`Rapier binding missing required method: ${nameForError}`);
+  }
+  fn.call(receiver, ...args);
+}
+
 /**
  * Responsible for mapping ECS collider components to Rapier colliders.
  *
@@ -42,13 +56,11 @@ export class RapierColliders {
   removeEntityCollider(entityId: string): void {
     const collider = this.colliderByEntity.get(entityId);
     if (!collider) return;
-    try {
-      const handle = typeof collider.handle === "number" ? (collider.handle as number) : undefined;
-      if (handle !== undefined) this.collisions.unregisterColliderHandle(handle);
-    } catch {}
-    try {
-      this.world.removeCollider(collider, true);
-    } catch {}
+
+    const handle = typeof collider.handle === "number" ? (collider.handle as number) : undefined;
+    if (handle !== undefined) callOptional(this.collisions, "unregisterColliderHandle", handle);
+
+    callRequired(this.world, "removeCollider", "World.removeCollider", collider, true);
     this.colliderByEntity.delete(entityId);
   }
 
@@ -62,23 +74,21 @@ export class RapierColliders {
       const body = this.bodies.bodyByEntity.get(bodyOwner.id);
       if (body) {
         const local = this.getLocalPoseRelativeTo(bodyOwner, entity);
-        try {
-          desc.setTranslation(
-            local.pos.x + localCenterShift.x,
-            local.pos.y + localCenterShift.y,
-            local.pos.z + localCenterShift.z
-          );
-        } catch {}
-        try {
-          desc.setRotation?.(local.rot);
-        } catch {}
+
+        callOptional(
+          desc,
+          "setTranslation",
+          local.pos.x + localCenterShift.x,
+          local.pos.y + localCenterShift.y,
+          local.pos.z + localCenterShift.z
+        );
+        callOptional(desc, "setRotation", local.rot);
 
         const collider = this.world.createCollider(desc, body);
         this.colliderByEntity.set(entity.id, collider);
-        try {
-          const handle = collider.handle as number;
-          this.collisions.registerColliderHandle(handle, entity.id, bodyOwner.id);
-        } catch {}
+
+        const createdHandle = collider.handle as number;
+        callOptional(this.collisions, "registerColliderHandle", createdHandle, entity.id, bodyOwner.id);
         return;
       }
     }
@@ -87,24 +97,20 @@ export class RapierColliders {
     const fixedDesc = this.R.RigidBodyDesc.fixed();
     const wp = entity.transform.worldPosition;
     fixedDesc.setTranslation(wp.x, wp.y, wp.z);
-    try {
-      const wr = entity.transform.worldRotation;
-      const q = quatNormalize(quatFromEulerYXZ(wr));
-      fixedDesc.setRotation?.(q);
-    } catch {}
+
+    const wr = entity.transform.worldRotation;
+    const q = quatNormalize(quatFromEulerYXZ(wr));
+    callOptional(fixedDesc, "setRotation", q);
     const fixed = this.world.createRigidBody(fixedDesc);
     this.bodies.bodyByEntity.set(entity.id, fixed);
 
-    try {
-      desc.setTranslation(localCenterShift.x, localCenterShift.y, localCenterShift.z);
-    } catch {}
+    callOptional(desc, "setTranslation", localCenterShift.x, localCenterShift.y, localCenterShift.z);
 
     const collider = this.world.createCollider(desc, fixed);
     this.colliderByEntity.set(entity.id, collider);
-    try {
-      const handle = collider.handle as number;
-      this.collisions.registerColliderHandle(handle, entity.id, entity.id);
-    } catch {}
+
+    const createdHandle = collider.handle as number;
+    callOptional(this.collisions, "registerColliderHandle", createdHandle, entity.id, entity.id);
   }
 
   ensureCollidersInSubtree(root: Entity): void {
@@ -196,37 +202,44 @@ export class RapierColliders {
         break;
     }
 
-    if (col.friction !== undefined) desc.setFriction(col.friction);
-    if (col.restitution !== undefined) desc.setRestitution(col.restitution);
-    if (col.isSensor) desc.setSensor(true);
+    if (col.friction !== undefined) callOptional(desc, "setFriction", col.friction);
+    if (col.restitution !== undefined) callOptional(desc, "setRestitution", col.restitution);
+    if (col.isSensor) callOptional(desc, "setSensor", true);
 
-    try {
-      desc.setActiveEvents(this.R.ActiveEvents.COLLISION_EVENTS);
-    } catch {}
-
-    try {
-      desc.setActiveCollisionTypes(this.R.ActiveCollisionTypes.ALL);
-    } catch {}
-
-    try {
-      desc.setUserData({ entityId: entity.id });
-    } catch {}
+    callOptional(desc, "setActiveEvents", this.R.ActiveEvents.COLLISION_EVENTS);
+    callOptional(desc, "setActiveCollisionTypes", this.R.ActiveCollisionTypes.ALL);
+    callOptional(desc, "setUserData", { entityId: entity.id });
 
     return { desc, localCenterShift };
   }
 
   private getLocalPoseRelativeTo(root: Entity, child: Entity): { pos: { x: number; y: number; z: number }; rot: QuatLike } {
-    const rw = root.transform.worldPosition;
-    const cw = child.transform.worldPosition;
+    // Compute the relative pose using *local* transforms only.
+    // This avoids Transform.world* getter side-effects (which trigger onChange) and
+    // correctly supports deep hierarchies.
+    const path: Entity[] = [];
+    let cur: Entity | undefined = child;
+    while (cur && cur !== root) {
+      path.push(cur);
+      cur = cur.parent;
+    }
+    if (cur !== root) {
+      return { pos: { x: 0, y: 0, z: 0 }, rot: { x: 0, y: 0, z: 0, w: 1 } };
+    }
 
-    const rqr = quatNormalize(quatFromEulerYXZ(root.transform.worldRotation));
-    const cqr = quatNormalize(quatFromEulerYXZ(child.transform.worldRotation));
-    const invRoot = quatInvert(rqr);
+    let pos = { x: 0, y: 0, z: 0 };
+    let rot: QuatLike = { x: 0, y: 0, z: 0, w: 1 };
 
-    const dp = { x: cw.x - rw.x, y: cw.y - rw.y, z: cw.z - rw.z };
-    const localPos = applyQuatToVec(dp, invRoot);
-    const localRot = quatMul(invRoot, cqr);
-    return { pos: localPos, rot: localRot };
+    for (const node of path.reverse()) {
+      const lp = node.transform.localPosition;
+      const lq = quatNormalize(quatFromEulerYXZ(node.transform.localRotation));
+      const rotated = applyQuatToVec(lp, rot);
+      pos = { x: pos.x + rotated.x, y: pos.y + rotated.y, z: pos.z + rotated.z };
+      rot = quatMul(rot, lq);
+    }
+
+    // Note: we intentionally do not include scaling here.
+    return { pos, rot };
   }
 }
 

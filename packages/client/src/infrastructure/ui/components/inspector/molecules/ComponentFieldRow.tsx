@@ -11,6 +11,7 @@ type Props = {
 
 export function ComponentFieldRow({ component, fieldKey, fieldConfig }: Props) {
   const label = fieldConfig?.label ?? fieldKey;
+  const description = fieldConfig?.description;
 
   if (!fieldConfig || typeof fieldConfig.get !== "function") {
     return null;
@@ -29,12 +30,6 @@ export function ComponentFieldRow({ component, fieldKey, fieldConfig }: Props) {
 
     if (isMutable && fieldConfig.set) {
       fieldConfig.set(component, nv);
-    } else {
-      (component as any)[fieldKey] = nv;
-    }
-
-    if (typeof (component as any).notifyChanged === "function") {
-      (component as any).notifyChanged();
     }
 
     if (typeof fieldConfig.get === "function") {
@@ -68,7 +63,10 @@ export function ComponentFieldRow({ component, fieldKey, fieldConfig }: Props) {
 
   return (
     <div className="prop-row" key={fieldKey}>
-      <div className="prop-key">{label}</div>
+      <div className="prop-key" title={description || undefined}>
+        <div className="prop-label">{label}</div>
+        {description ? <div className="prop-desc">{description}</div> : null}
+      </div>
       <div className="prop-value">{editor}</div>
     </div>
   );

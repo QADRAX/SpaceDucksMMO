@@ -27,10 +27,11 @@ export class BoxColliderComponent extends BaseColliderComponent {
           type: "number",
           default: 0.5,
           min: 0.01,
-          max: 1000,
+          max: 100,
           step: 0.01,
+          description: "Half-size of the box along the X axis (width/2).",
           get: (c) => c.halfExtents.x,
-          set: (c, v) => {
+          set: (c, v: number) => {
             c.halfExtents.x = Number(v);
             c.notifyChanged();
           },
@@ -41,10 +42,11 @@ export class BoxColliderComponent extends BaseColliderComponent {
           type: "number",
           default: 0.5,
           min: 0.01,
-          max: 1000,
+          max: 100,
           step: 0.01,
+          description: "Half-size of the box along the Y axis (height/2).",
           get: (c) => c.halfExtents.y,
-          set: (c, v) => {
+          set: (c, v: number) => {
             c.halfExtents.y = Number(v);
             c.notifyChanged();
           },
@@ -55,55 +57,16 @@ export class BoxColliderComponent extends BaseColliderComponent {
           type: "number",
           default: 0.5,
           min: 0.01,
-          max: 1000,
+          max: 100,
           step: 0.01,
+          description: "Half-size of the box along the Z axis (depth/2).",
           get: (c) => c.halfExtents.z,
-          set: (c, v) => {
+          set: (c, v: number) => {
             c.halfExtents.z = Number(v);
             c.notifyChanged();
           },
         },
-        {
-          key: "friction",
-          label: "Friction",
-          type: "number",
-          nullable: true,
-          default: 0.5,
-          min: 0,
-          max: 10,
-          step: 0.01,
-          get: (c) => c.friction,
-          set: (c, v) => {
-            c.friction = v === null || v === undefined ? undefined : Number(v);
-            c.notifyChanged();
-          },
-        },
-        {
-          key: "restitution",
-          label: "Restitution",
-          type: "number",
-          nullable: true,
-          default: 0,
-          min: 0,
-          max: 1,
-          step: 0.01,
-          get: (c) => c.restitution,
-          set: (c, v) => {
-            c.restitution = v === null || v === undefined ? undefined : Number(v);
-            c.notifyChanged();
-          },
-        },
-        {
-          key: "isSensor",
-          label: "Is Sensor",
-          type: "boolean",
-          default: false,
-          get: (c) => !!c.isSensor,
-          set: (c, v) => {
-            c.isSensor = !!v;
-            c.notifyChanged();
-          },
-        },
+        ...this.getCommonInspectorFields(),
       ],
     },
     description: "Box collider (cuboid) defined by half-extents.",

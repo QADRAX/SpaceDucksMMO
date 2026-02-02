@@ -25,6 +25,8 @@ export class RigidBodyComponent extends Component {
           key: "bodyType",
           label: "Body Type",
           type: "enum",
+          description:
+            "Static = immovable, Dynamic = simulated, Kinematic = moved by code but collides.",
           options: [
             { value: "static", label: "Static" },
             { value: "dynamic", label: "Dynamic" },
@@ -45,6 +47,8 @@ export class RigidBodyComponent extends Component {
           min: 0,
           max: 100000,
           step: 0.01,
+          description:
+            "Mass in kg. If unset, the physics backend default / computed mass is used.",
           get: (c) => c.mass,
           set: (c, v) => {
             c.mass = v === null || v === undefined ? undefined : Number(v);
@@ -60,6 +64,7 @@ export class RigidBodyComponent extends Component {
           min: 0,
           max: 100,
           step: 0.01,
+          description: "Reduces linear velocity over time (air resistance-like).",
           get: (c) => c.linearDamping,
           set: (c, v) => {
             c.linearDamping = v === null || v === undefined ? undefined : Number(v);
@@ -75,6 +80,7 @@ export class RigidBodyComponent extends Component {
           min: 0,
           max: 100,
           step: 0.01,
+          description: "Reduces angular velocity over time (spin damping).",
           get: (c) => c.angularDamping,
           set: (c, v) => {
             c.angularDamping = v === null || v === undefined ? undefined : Number(v);
@@ -90,6 +96,8 @@ export class RigidBodyComponent extends Component {
           min: -10,
           max: 10,
           step: 0.01,
+          description:
+            "Multiplier applied to scene gravity for this body. 0 disables gravity; negative inverts it.",
           get: (c) => c.gravityScale,
           set: (c, v) => {
             c.gravityScale = v === null || v === undefined ? undefined : Number(v);
@@ -101,6 +109,8 @@ export class RigidBodyComponent extends Component {
           label: "Start Sleeping",
           type: "boolean",
           default: false,
+          description:
+            "If true, the body starts asleep until woken by forces/collisions (backend permitting).",
           get: (c) => !!c.startSleeping,
           set: (c, v) => {
             c.startSleeping = !!v;

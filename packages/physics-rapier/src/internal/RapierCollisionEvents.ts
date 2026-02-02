@@ -9,6 +9,12 @@ export class RapierCollisionEvents {
   private readonly colliderMetaByHandle = new Map<number, { colliderEntityId: string; bodyOwnerId: string }>();
   private readonly activePairs = new Set<string>();
 
+  private clearEventQueue(eventQueue: any): void {
+    const clear = eventQueue?.clear;
+    if (typeof clear !== "function") return;
+    clear.call(eventQueue);
+  }
+
   subscribe(listener: (ev: PhysicsCollisionEvent) => void): () => void {
     this.collisionListeners.add(listener);
     return () => this.collisionListeners.delete(listener);
@@ -26,23 +32,19 @@ export class RapierCollisionEvents {
   drain(eventQueue: any): void {
     if (!eventQueue) return;
     if (this.collisionListeners.size === 0) {
-      try {
-        eventQueue.clear?.();
-      } catch {}
+      this.clearEventQueue(eventQueue);
       return;
     }
 
     const startedPairs: Array<[number, number]> = [];
     const endedPairs: Array<[number, number]> = [];
 
-    try {
-      eventQueue.drainCollisionEvents((h1: number, h2: number, started: boolean) => {
-        if (started) startedPairs.push([h1, h2]);
-        else endedPairs.push([h1, h2]);
-      });
-    } catch {
-      return;
-    }
+    const drainCollisionEvents = eventQueue?.drainCollisionEvents;
+    if (typeof drainCollisionEvents !== "function") return;
+    drainCollisionEvents.call(eventQueue, (h1: number, h2: number, started: boolean) => {
+      if (started) startedPairs.push([h1, h2]);
+      else endedPairs.push([h1, h2]);
+    });
 
     for (const [h1, h2] of startedPairs) {
       const key = this.pairKey(h1, h2);
@@ -86,9 +88,7 @@ export class RapierCollisionEvents {
     };
 
     for (const l of this.collisionListeners) {
-      try {
-        l(ev);
-      } catch {}
+      l(ev);
     }
   }
 

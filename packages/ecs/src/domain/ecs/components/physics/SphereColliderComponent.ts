@@ -25,55 +25,16 @@ export class SphereColliderComponent extends BaseColliderComponent {
           type: "number",
           default: 0.5,
           min: 0.01,
-          max: 1000,
+          max: 100,
           step: 0.01,
+          description: "Sphere radius in world units.",
           get: (c) => c.radius,
-          set: (c, v) => {
+          set: (c, v: number) => {
             c.radius = Number(v);
             c.notifyChanged();
           },
         },
-        {
-          key: "friction",
-          label: "Friction",
-          type: "number",
-          nullable: true,
-          default: 0.5,
-          min: 0,
-          max: 10,
-          step: 0.01,
-          get: (c) => c.friction,
-          set: (c, v) => {
-            c.friction = v === null || v === undefined ? undefined : Number(v);
-            c.notifyChanged();
-          },
-        },
-        {
-          key: "restitution",
-          label: "Restitution",
-          type: "number",
-          nullable: true,
-          default: 0,
-          min: 0,
-          max: 1,
-          step: 0.01,
-          get: (c) => c.restitution,
-          set: (c, v) => {
-            c.restitution = v === null || v === undefined ? undefined : Number(v);
-            c.notifyChanged();
-          },
-        },
-        {
-          key: "isSensor",
-          label: "Is Sensor",
-          type: "boolean",
-          default: false,
-          get: (c) => !!c.isSensor,
-          set: (c, v) => {
-            c.isSensor = !!v;
-            c.notifyChanged();
-          },
-        },
+        ...this.getCommonInspectorFields(),
       ],
     },
     description: "Sphere collider. Use child entities to build compound colliders for a single rigid body.",

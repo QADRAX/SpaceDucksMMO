@@ -153,7 +153,6 @@ export class Transform {
       this._worldScale = copyVec(this._localScale);
     }
     this._dirty = false;
-    this.notifyChange();
   }
 
   private markDirty(): void {

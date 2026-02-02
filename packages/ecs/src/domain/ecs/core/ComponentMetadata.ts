@@ -1,8 +1,8 @@
-export interface InspectorFieldConfig<TComponent = any> {
+export interface InspectorFieldConfig<TComponent = any, TValue = unknown> {
   key: string;
   label?: string;
-  get?: (component: TComponent) => unknown;
-  set?: (component: TComponent, value: unknown) => void;
+  get?(component: TComponent): TValue;
+  set?(component: TComponent, value: TValue): void;
   // UI metadata
   type?:
     | "number"
@@ -25,7 +25,7 @@ export interface InspectorFieldConfig<TComponent = any> {
 }
 
 export interface InspectorMetadata<TComponent = any> {
-  fields: InspectorFieldConfig<TComponent>[];
+  fields: InspectorFieldConfig<TComponent, unknown>[];
 }
 
 export interface ComponentMetadata<TComponent = any> {

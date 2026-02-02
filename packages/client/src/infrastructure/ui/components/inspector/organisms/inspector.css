@@ -292,6 +292,18 @@
     word-break: break-word;
 }
 
+.prop-label {
+    font-size: 12px;
+    line-height: 1.1;
+}
+
+.prop-desc {
+    margin-top: 2px;
+    font-size: 11px;
+    line-height: 1.2;
+    color: rgba(207,216,227,0.7);
+}
+
 .prop-value {
     flex: 1;
     min-width: 0; /* enable proper shrink/truncation inside this column */

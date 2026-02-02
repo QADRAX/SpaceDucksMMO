@@ -1,4 +1,4 @@
-import type { ComponentEvent, ComponentListener, Entity, Vec3Like } from "@duckengine/ecs";
+import type { ComponentEvent, ComponentListener, Entity, Vec3Like, IComponentObserver } from "@duckengine/ecs";
 import { BaseColliderComponent } from "@duckengine/ecs";
 import type {
   AnyColliderComponent,
@@ -7,9 +7,12 @@ import type {
 } from "@duckengine/ecs";
 import type { IPhysicsSystem, PhysicsTimestepConfig, PhysicsCollisionEvent } from "@duckengine/core";
 import { getRapier } from "./rapier/RapierInit";
+import type { RapierModule } from "./rapier/RapierInit";
+import type { EventQueue, World } from "@dimforge/rapier3d-compat";
 import { RapierBodies } from "./internal/RapierBodies";
 import { RapierColliders } from "./internal/RapierColliders";
 import { RapierCollisionEvents } from "./internal/RapierCollisionEvents";
+import { RapierEcsUpdateCoordinator } from "./internal/RapierEcsUpdateCoordinator";
 
 /**
  * Rapier-backed physics system.
@@ -26,9 +29,10 @@ import { RapierCollisionEvents } from "./internal/RapierCollisionEvents";
  * - Rapier uses quaternions; conversion is handled via shared Math3D utilities in @duckengine/ecs.
  */
 export class RapierPhysicsSystem implements IPhysicsSystem {
-  private readonly R = getRapier();
-  private world: any;
-  private eventQueue: any;
+  private readonly R: RapierModule = getRapier();
+  private world: World;
+  private eventQueue: EventQueue;
+  private disposed = false;
   private accumulatorSeconds = 0;
   private fixedStepSeconds = 1 / 60;
   private maxSubSteps = 5;
@@ -36,9 +40,13 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
   private entities = new Map<string, Entity>();
   private componentListeners = new Map<string, ComponentListener>();
 
+  private entitySubscriptions = new Map<string, () => void>();
+  private componentObserversByEntity = new Map<string, IComponentObserver>();
+
   private readonly bodies: RapierBodies;
   private readonly collisions: RapierCollisionEvents;
   private readonly colliders: RapierColliders;
+  private readonly updates: RapierEcsUpdateCoordinator;
 
   constructor() {
     // Gravity is opt-in via GravityComponent. Default world gravity is zero.
@@ -49,6 +57,13 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
     this.bodies = new RapierBodies();
     this.collisions = new RapierCollisionEvents();
     this.colliders = new RapierColliders(this.R, this.world, this.bodies, this.collisions);
+    this.updates = new RapierEcsUpdateCoordinator(
+      this.R,
+      this.world,
+      this.bodies,
+      this.colliders,
+      (id) => this.getEntity(id)
+    );
   }
 
   configureTimestep(cfg: PhysicsTimestepConfig): void {
@@ -65,11 +80,17 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
   private addEntityRecursive(entity: Entity): void {
     this.entities.set(entity.id, entity);
 
+    // Observe component + transform changes so inspector edits propagate to Rapier.
+    this.attachEntityObservers(entity);
+
     // Listen to component add/remove so physics objects can be created/destroyed at runtime.
     if (!this.componentListeners.has(entity.id)) {
       const listener: ComponentListener = (ev: ComponentEvent) => {
         if (!this.entities.has(ev.entity.id)) return;
         if (ev.action === "added") {
+          const obs = this.componentObserversByEntity.get(ev.entity.id);
+          if (obs) ev.component.addObserver(obs);
+
           if (ev.component.type === "rigidBody") {
             const rb = ev.component as unknown as RigidBodyComponent;
             this.bodies.ensureRigidBody(this.R, this.world, ev.entity, rb);
@@ -85,6 +106,9 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
         }
 
         if (ev.action === "removed") {
+          const obs = this.componentObserversByEntity.get(ev.entity.id);
+          if (obs) ev.component.removeObserver(obs);
+
           if (ev.component instanceof BaseColliderComponent) {
             this.colliders.removeEntityCollider(ev.entity.id);
           }
@@ -100,9 +124,7 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
         }
       };
       this.componentListeners.set(entity.id, listener);
-      try {
-        entity.addComponentListener(listener);
-      } catch {}
+      entity.addComponentListener(listener);
     }
 
     // create body if component exists
@@ -121,11 +143,11 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
       for (const child of ent.getChildren()) this.removeEntity(child.id);
     }
 
+    this.detachEntityObservers(id);
+
     const l = this.componentListeners.get(id);
     if (l && ent) {
-      try {
-        ent.removeComponentListener(l);
-      } catch {}
+      ent.removeComponentListener(l);
     }
     this.componentListeners.delete(id);
 
@@ -133,21 +155,26 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
     this.colliders.removeEntityCollider(id);
     this.bodies.removeEntityBody(this.world, id);
 
+    this.updates.removeEntity(id);
+
     this.entities.delete(id);
   }
 
   update(dtMs: number): void {
+    if (this.disposed) return;
+
+    // Apply any queued ECS->Rapier updates outside of a simulation step.
+    this.updates.flushPendingUpdates();
+
     const dt = Math.max(0, dtMs) / 1000;
     this.accumulatorSeconds += Math.min(dt, 0.25);
 
     // Update gravity from ECS if any gravity component exists.
     // Current simple heuristic: scan bodies map for an entity with gravity.
     // In a later iteration this should be scene/world-driven.
-    try {
-      const g = this.findGravity();
-      if (g) this.world.gravity = { x: g[0], y: g[1], z: g[2] };
-      else this.world.gravity = { x: 0, y: 0, z: 0 };
-    } catch {}
+    const g = this.findGravity();
+    if (g) this.world.gravity = { x: g[0], y: g[1], z: g[2] };
+    else this.world.gravity = { x: 0, y: 0, z: 0 };
 
     let subSteps = 0;
     while (this.accumulatorSeconds >= this.fixedStepSeconds && subSteps < this.maxSubSteps) {
@@ -160,18 +187,12 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
   private stepOnce(dtSeconds: number): void {
     // Rapier world step uses internal timestep.
     // Some builds expose `integrationParameters.dt`; guard.
-    try {
-      if (this.world.integrationParameters)
-        this.world.integrationParameters.dt = dtSeconds;
-    } catch {}
+    if (this.world.integrationParameters) this.world.integrationParameters.dt = dtSeconds;
 
     this.bodies.syncKinematicBodiesFromEcs((id) => this.getEntity(id));
 
-    try {
-      this.world.step(this.eventQueue);
-    } catch {
-      this.world.step();
-    }
+    // Our codebase expects EventQueue stepping support; if this throws, it's a bug we should see.
+    this.world.step(this.eventQueue);
 
     this.collisions.drain(this.eventQueue);
 
@@ -195,9 +216,15 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
   }
 
   dispose(): void {
-    try {
-      this.world.free?.();
-    } catch {}
+    if (this.disposed) return;
+    this.disposed = true;
+
+    this.world.free?.();
+
+    for (const id of Array.from(this.entitySubscriptions.keys())) {
+      this.detachEntityObservers(id);
+    }
+    this.updates.dispose();
     this.entities.clear();
     this.componentListeners.clear();
     this.colliders.dispose();
@@ -207,6 +234,46 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
 
   private getEntity(_id: string): Entity | null {
     return this.entities.get(_id) ?? null;
+  }
+
+  private attachEntityObservers(entity: Entity): void {
+    if (this.entitySubscriptions.has(entity.id)) return;
+
+    const componentObserver: IComponentObserver = {
+      onComponentChanged: (entityId: string, componentType: string) => {
+        this.updates.onComponentChanged(entityId, componentType);
+      },
+    };
+
+    const transformListener = () => {
+      this.updates.onTransformChanged(entity.id);
+    };
+
+    this.componentObserversByEntity.set(entity.id, componentObserver);
+
+    for (const comp of entity.getAllComponents()) {
+      comp.addObserver(componentObserver);
+    }
+
+    entity.transform.onChange(transformListener);
+
+    const cleanup = () => {
+      for (const comp of entity.getAllComponents()) {
+        comp.removeObserver(componentObserver);
+      }
+      entity.transform.removeOnChange(transformListener);
+      this.componentObserversByEntity.delete(entity.id);
+    };
+
+    this.entitySubscriptions.set(entity.id, cleanup);
+  }
+
+  private detachEntityObservers(entityId: string): void {
+    const cleanup = this.entitySubscriptions.get(entityId);
+    if (!cleanup) return;
+    cleanup();
+    this.entitySubscriptions.delete(entityId);
+    this.componentObserversByEntity.delete(entityId);
   }
 
   private findGravity(): [number, number, number] | null {

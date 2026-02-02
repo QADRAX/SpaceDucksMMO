@@ -18,6 +18,7 @@ export class GravityComponent extends Component {
           label: "Gravity",
           type: "vector",
           default: [0, -9.81, 0],
+          description: "World gravity vector in units/s^2. Typical Earth gravity is (0, -9.81, 0).",
           get: (c) => c.gravity,
           set: (c, v) => {
             const arr = Array.isArray(v) ? v : [0, -9.81, 0];

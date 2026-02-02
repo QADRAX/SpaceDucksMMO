@@ -38,8 +38,9 @@ export class TerrainColliderComponent extends BaseColliderComponent {
           min: 2,
           max: 2048,
           step: 1,
+          description: "Number of height samples along the X axis.",
           get: (c) => c.heightfield.columns,
-          set: (c, v) => {
+          set: (c, v: number) => {
             c.heightfield.columns = Math.floor(Number(v));
             c.notifyChanged();
           },
@@ -52,8 +53,9 @@ export class TerrainColliderComponent extends BaseColliderComponent {
           min: 2,
           max: 2048,
           step: 1,
+          description: "Number of height samples along the Z axis.",
           get: (c) => c.heightfield.rows,
-          set: (c, v) => {
+          set: (c, v: number) => {
             c.heightfield.rows = Math.floor(Number(v));
             c.notifyChanged();
           },
@@ -64,10 +66,11 @@ export class TerrainColliderComponent extends BaseColliderComponent {
           type: "number",
           default: 10,
           min: 0.01,
-          max: 100000,
+          max: 1000,
           step: 0.01,
+          description: "Total terrain size along X in world units (before entity worldScale).",
           get: (c) => c.heightfield.size.x,
-          set: (c, v) => {
+          set: (c, v: number) => {
             c.heightfield.size.x = Number(v);
             c.notifyChanged();
           },
@@ -78,55 +81,16 @@ export class TerrainColliderComponent extends BaseColliderComponent {
           type: "number",
           default: 10,
           min: 0.01,
-          max: 100000,
+          max: 1000,
           step: 0.01,
+          description: "Total terrain size along Z in world units (before entity worldScale).",
           get: (c) => c.heightfield.size.z,
-          set: (c, v) => {
+          set: (c, v: number) => {
             c.heightfield.size.z = Number(v);
             c.notifyChanged();
           },
         },
-        {
-          key: "friction",
-          label: "Friction",
-          type: "number",
-          nullable: true,
-          default: 0.5,
-          min: 0,
-          max: 10,
-          step: 0.01,
-          get: (c) => c.friction,
-          set: (c, v) => {
-            c.friction = v === null || v === undefined ? undefined : Number(v);
-            c.notifyChanged();
-          },
-        },
-        {
-          key: "restitution",
-          label: "Restitution",
-          type: "number",
-          nullable: true,
-          default: 0,
-          min: 0,
-          max: 1,
-          step: 0.01,
-          get: (c) => c.restitution,
-          set: (c, v) => {
-            c.restitution = v === null || v === undefined ? undefined : Number(v);
-            c.notifyChanged();
-          },
-        },
-        {
-          key: "isSensor",
-          label: "Is Sensor",
-          type: "boolean",
-          default: false,
-          get: (c) => !!c.isSensor,
-          set: (c, v) => {
-            c.isSensor = !!v;
-            c.notifyChanged();
-          },
-        },
+        ...this.getCommonInspectorFields(),
       ],
     },
     description: "Terrain collider using a heightfield grid.",
