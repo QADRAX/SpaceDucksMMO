@@ -1,6 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import type { Entity } from "@duckengine/rendering-three/ecs";
 import { useI18n } from '../../../hooks/useI18n';
+import { useServices } from '../../../hooks/useServices';
 import { TransformGroup } from '../../common/molecules/TransformGroup';
 import { Vector3Input } from '../../common/molecules/Vector3Input';
 import { ToggleSwitch } from '../../common/atoms/ToggleSwitch';
@@ -8,6 +9,7 @@ import { ToggleSwitch } from '../../common/atoms/ToggleSwitch';
 type Props = { entity?: Entity };
 
 export function TransformEditor({ entity }: Props) {
+  const services = useServices();
   const { t } = useI18n();
   const transform = entity?.transform;
 
@@ -81,6 +83,7 @@ export function TransformEditor({ entity }: Props) {
           checked={debugEnabled}
           onChange={(v) => {
             try {
+              if (v) services.sceneManager?.setSceneDebugEnabled?.(true);
               entity?.setDebugTransformEnabled(v);
             } catch {}
             setDebugEnabled(v);
@@ -92,9 +95,8 @@ export function TransformEditor({ entity }: Props) {
         <ToggleSwitch
           checked={colliderDebugEnabled}
           onChange={(v) => {
-            try {
-              entity?.setDebugColliderEnabled(v);
-            } catch {}
+            if (v) services.sceneManager?.setSceneColliderDebugEnabled?.(true);
+            entity?.setDebugColliderEnabled(v);
             setColliderDebugEnabled(v);
           }}
           label={t('inspector.entityColliderDebug', 'Show Collider Debug')}

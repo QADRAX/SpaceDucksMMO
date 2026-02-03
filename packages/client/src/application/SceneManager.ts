@@ -226,9 +226,7 @@ export class SceneManager {
 
   /** Convenience: set the scene-level collider debug flag on the current scene if supported. */
   setSceneColliderDebugEnabled(enabled: boolean): void {
-    try {
-      this.currentScene?.setDebugCollidersEnabled?.(enabled);
-    } catch {}
+    this.currentScene?.setDebugCollidersEnabled?.(enabled);
   }
 
   /**

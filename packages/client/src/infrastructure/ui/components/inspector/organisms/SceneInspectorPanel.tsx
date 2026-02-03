@@ -94,10 +94,27 @@ export function SceneInspectorPanel() {
   };
 
   const onToggleSceneColliderDebug = (enabled: boolean) => {
-    try {
-      sceneManager?.setSceneColliderDebugEnabled?.(enabled);
-    } catch {}
+    sceneManager?.setSceneColliderDebugEnabled?.(enabled);
     setSceneColliderDebugEnabledLocal(enabled);
+
+    // UX: if the user enables the scene master switch, ensure something becomes visible.
+    // Collider debug rendering requires both the scene master flag and per-entity flags.
+    if (enabled) {
+      const ents = sceneManager?.getEntities?.() ?? [];
+      for (const e of ents as any[]) {
+        if (!e || typeof e.hasComponent !== 'function' || typeof e.setDebugColliderEnabled !== 'function') continue;
+        const hasAnyCollider =
+          e.hasComponent('sphereCollider') ||
+          e.hasComponent('boxCollider') ||
+          e.hasComponent('capsuleCollider') ||
+          e.hasComponent('cylinderCollider') ||
+          e.hasComponent('coneCollider') ||
+          e.hasComponent('terrainCollider');
+        if (hasAnyCollider) {
+          e.setDebugColliderEnabled(true);
+        }
+      }
+    }
   };
 
   const selectedEntity = entities.find((e) => e.id === selected);

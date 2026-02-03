@@ -120,13 +120,9 @@ export abstract class BaseScene implements IScene {
     if (this.debugCollidersEnabled === enabled) return;
     this.debugCollidersEnabled = enabled;
     if (this.renderSyncSystem) {
-      try {
-        this.renderSyncSystem.setSceneColliderDebugEnabled?.(enabled);
-      } catch {}
+      this.renderSyncSystem.setSceneColliderDebugEnabled?.(enabled);
     }
-    try {
-      this.emitChange({ kind: 'scene-collider-debug-changed', enabled: !!enabled });
-    } catch {}
+    this.emitChange({ kind: 'scene-collider-debug-changed', enabled: !!enabled });
   }
 
   /** Remove an ECS Entity by ID */

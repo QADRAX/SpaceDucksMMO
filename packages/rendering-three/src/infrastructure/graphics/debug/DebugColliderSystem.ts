@@ -94,11 +94,12 @@ export class DebugColliderSystem {
     wire.name = "colliderWire";
     group.add(wire);
 
-    // Build geometry once
+    // Important: refreshColliderGeometry reads from this.helpers map.
+    // Register the helper before refreshing so geometry actually gets built.
+    this.helpers.set(entity.id, group);
     this.refreshColliderGeometry(entity.id, entity);
 
     this.scene.add(group);
-    this.helpers.set(entity.id, group);
     this.updateHelperTransform(entity);
   }
 
@@ -166,49 +167,184 @@ export class DebugColliderSystem {
     const e = entity;
     if (!e) return;
 
-    const geom = this.buildColliderGeometry(e);
-    if (!geom) return;
-
-    const wireGeom = new THREE.WireframeGeometry(geom);
-    const mat = new THREE.LineBasicMaterial({
-      color: 0xff00ff,
-      linewidth: 1,
-      depthTest: true,
-      transparent: true,
-      opacity: 0.7,
-    });
-    const lines = new THREE.LineSegments(wireGeom, mat);
-    lines.renderOrder = 998;
-    wire.add(lines);
+    // Build a clean outline representation.
+    // For primitives, prefer analytic circles/edges (looks "perfect" and not faceted).
+    // For heightfields, keep a mesh wireframe.
+    const objects = this.buildColliderWireObjects(e);
+    for (const o of objects) {
+      // render on top of meshes
+      (o as any).renderOrder = 998;
+      wire.add(o);
+    }
   }
 
   // --- Geometry mapping -------------------------------------------------
 
-  private buildColliderGeometry(entity: Entity): THREE.BufferGeometry | null {
+  private buildColliderWireObjects(entity: Entity): THREE.Object3D[] {
     const col = this.getAnyColliderComponent(entity);
-    if (!col) return null;
+    if (!col) return [];
 
-    try {
-      switch (col.type) {
-        case "sphereCollider":
-          return new THREE.SphereGeometry(col.radius, 16, 12);
-        case "boxCollider":
-          return new THREE.BoxGeometry(col.halfExtents.x * 2, col.halfExtents.y * 2, col.halfExtents.z * 2);
-        case "capsuleCollider":
-          // Three CapsuleGeometry: (radius, length) where length is cylinder length (total height = length + 2*radius)
-          return new THREE.CapsuleGeometry(col.radius, col.halfHeight * 2, 6, 12);
-        case "cylinderCollider":
-          return new THREE.CylinderGeometry(col.radius, col.radius, col.halfHeight * 2, 16);
-        case "coneCollider":
-          return new THREE.ConeGeometry(col.radius, col.halfHeight * 2, 16);
-        case "terrainCollider":
-          return this.buildHeightfieldGeometry(col.heightfield.columns, col.heightfield.rows, col.heightfield.heights, col.heightfield.size.x, col.heightfield.size.z);
-        default:
-          return null;
+    switch (col.type) {
+      case "sphereCollider":
+        return this.buildSphereOutline(col.radius);
+      case "boxCollider":
+        return this.buildBoxOutline(col.halfExtents.x * 2, col.halfExtents.y * 2, col.halfExtents.z * 2);
+      case "cylinderCollider":
+        return this.buildCylinderOutline(col.radius, col.halfHeight * 2);
+      case "coneCollider":
+        return this.buildConeOutline(col.radius, col.halfHeight * 2);
+      case "capsuleCollider":
+        return this.buildCapsuleOutline(col.radius, col.halfHeight * 2);
+      case "terrainCollider": {
+        const geom = this.buildHeightfieldGeometry(
+          col.heightfield.columns,
+          col.heightfield.rows,
+          col.heightfield.heights,
+          col.heightfield.size.x,
+          col.heightfield.size.z
+        );
+        const wireGeom = new THREE.WireframeGeometry(geom);
+        const mat = this.makeLineMaterial();
+        return [new THREE.LineSegments(wireGeom, mat)];
       }
-    } catch {
-      return null;
+      default:
+        return [];
     }
+  }
+
+  private makeLineMaterial(): THREE.LineBasicMaterial {
+    return new THREE.LineBasicMaterial({
+      color: 0xff00ff,
+      linewidth: 1,
+      // Overlay highlight
+      depthTest: false,
+      depthWrite: false,
+      transparent: true,
+      opacity: 0.85,
+    });
+  }
+
+  private makeCircle(radius: number, segments = 96): THREE.LineLoop {
+    const pts: THREE.Vector3[] = [];
+    const seg = Math.max(12, Math.floor(segments));
+    for (let i = 0; i < seg; i++) {
+      const t = (i / seg) * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(t) * radius, Math.sin(t) * radius, 0));
+    }
+    const geom = new THREE.BufferGeometry().setFromPoints(pts);
+    return new THREE.LineLoop(geom, this.makeLineMaterial());
+  }
+
+  private buildSphereOutline(radius: number): THREE.Object3D[] {
+    const cXY = this.makeCircle(radius);
+    // cXY already in XY plane
+
+    const cXZ = this.makeCircle(radius);
+    cXZ.rotation.x = Math.PI / 2;
+
+    const cYZ = this.makeCircle(radius);
+    cYZ.rotation.y = Math.PI / 2;
+
+    return [cXY, cXZ, cYZ];
+  }
+
+  private buildBoxOutline(width: number, height: number, depth: number): THREE.Object3D[] {
+    const geom = new THREE.BoxGeometry(width, height, depth);
+    const edges = new THREE.EdgesGeometry(geom);
+    const lines = new THREE.LineSegments(edges, this.makeLineMaterial());
+    return [lines];
+  }
+
+  private buildCylinderOutline(radius: number, height: number): THREE.Object3D[] {
+    const hh = height / 2;
+    const top = this.makeCircle(radius);
+    top.rotation.x = Math.PI / 2;
+    top.position.y = hh;
+
+    const bottom = this.makeCircle(radius);
+    bottom.rotation.x = Math.PI / 2;
+    bottom.position.y = -hh;
+
+    // A few vertical generatrix lines (cardinal directions) for readability
+    const pts: THREE.Vector3[] = [];
+    const dirs = [
+      { x: radius, z: 0 },
+      { x: -radius, z: 0 },
+      { x: 0, z: radius },
+      { x: 0, z: -radius },
+    ];
+    for (const d of dirs) {
+      pts.push(new THREE.Vector3(d.x, -hh, d.z), new THREE.Vector3(d.x, hh, d.z));
+    }
+    const vGeom = new THREE.BufferGeometry().setFromPoints(pts);
+    const vLines = new THREE.LineSegments(vGeom, this.makeLineMaterial());
+
+    return [top, bottom, vLines];
+  }
+
+  private buildConeOutline(radius: number, height: number): THREE.Object3D[] {
+    const hh = height / 2;
+    // Rapier cone is centered at origin: apex at +hh, base at -hh
+    const base = this.makeCircle(radius);
+    base.rotation.x = Math.PI / 2;
+    base.position.y = -hh;
+
+    const apex = new THREE.Vector3(0, hh, 0);
+    const seg = 12;
+    const pts: THREE.Vector3[] = [];
+    for (let i = 0; i < seg; i++) {
+      const t = (i / seg) * Math.PI * 2;
+      const x = Math.cos(t) * radius;
+      const z = Math.sin(t) * radius;
+      pts.push(new THREE.Vector3(x, -hh, z), apex);
+    }
+    const g = new THREE.BufferGeometry().setFromPoints(pts);
+    const side = new THREE.LineSegments(g, this.makeLineMaterial());
+    return [base, side];
+  }
+
+  private buildCapsuleOutline(radius: number, cylinderHeight: number): THREE.Object3D[] {
+    // Capsule is a cylinder of height (cylinderHeight) plus hemispheres.
+    // Our debug goal: a clean, readable "perfect" outline rather than a faceted mesh.
+    const hh = cylinderHeight / 2;
+
+    // End circles (XZ) at cylinder ends
+    const topXZ = this.makeCircle(radius);
+    topXZ.rotation.x = Math.PI / 2;
+    topXZ.position.y = hh;
+
+    const botXZ = this.makeCircle(radius);
+    botXZ.rotation.x = Math.PI / 2;
+    botXZ.position.y = -hh;
+
+    // Two orthogonal circles at each cap center to suggest hemispheres
+    const topXY = this.makeCircle(radius);
+    topXY.position.y = hh;
+    const topYZ = this.makeCircle(radius);
+    topYZ.rotation.y = Math.PI / 2;
+    topYZ.position.y = hh;
+
+    const botXY = this.makeCircle(radius);
+    botXY.position.y = -hh;
+    const botYZ = this.makeCircle(radius);
+    botYZ.rotation.y = Math.PI / 2;
+    botYZ.position.y = -hh;
+
+    // Cylinder generatrix lines
+    const pts: THREE.Vector3[] = [];
+    const dirs = [
+      { x: radius, z: 0 },
+      { x: -radius, z: 0 },
+      { x: 0, z: radius },
+      { x: 0, z: -radius },
+    ];
+    for (const d of dirs) {
+      pts.push(new THREE.Vector3(d.x, -hh, d.z), new THREE.Vector3(d.x, hh, d.z));
+    }
+    const vGeom = new THREE.BufferGeometry().setFromPoints(pts);
+    const vLines = new THREE.LineSegments(vGeom, this.makeLineMaterial());
+
+    return [topXZ, botXZ, topXY, topYZ, botXY, botYZ, vLines];
   }
 
   private buildHeightfieldGeometry(columns: number, rows: number, heights: number[], sizeX: number, sizeZ: number): THREE.BufferGeometry {

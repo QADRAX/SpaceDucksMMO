@@ -94,9 +94,7 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     // Listen to per-entity collider debug flag changes
     const dbgColListener = (enabled: boolean) => this.onEntityColliderDebugFlagChanged(entity, enabled);
     this.debugColliderFlagListeners.set(entity.id, dbgColListener);
-    try {
-      entity.addDebugColliderListener(dbgColListener);
-    } catch {}
+    entity.addDebugColliderListener(dbgColListener);
 
     this.processEntity(entity);
     // If scene master and entity flag are enabled, let DebugTransformSystem
@@ -124,13 +122,8 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
 
     this.registry.remove(entityId, this.scene);
     // Remove debug helper if present
-    try {
-      this.debugSystem.removeHelper(entityId);
-    } catch {}
-
-    try {
-      this.colliderDebugSystem.removeHelper(entityId);
-    } catch {}
+    this.debugSystem.removeHelper(entityId);
+    this.colliderDebugSystem.removeHelper(entityId);
     this.entities.delete(entityId);
 
     const dbg = this.debugFlagListeners.get(entityId);
@@ -143,18 +136,14 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
 
     const dbgCol = this.debugColliderFlagListeners.get(entityId);
     if (dbgCol && entity) {
-      try {
-        entity.removeDebugColliderListener(dbgCol);
-      } catch {}
+      entity.removeDebugColliderListener(dbgCol);
     }
     this.debugColliderFlagListeners.delete(entityId);
     // ensure forbidden list cleanup
     try {
       this.debugSystem.removeForbiddenEntity(entityId);
     } catch {}
-    try {
-      this.colliderDebugSystem.removeForbiddenEntity(entityId);
-    } catch {}
+    this.colliderDebugSystem.removeForbiddenEntity(entityId);
   }
 
   getCamera(entityId: string): THREE.Camera | undefined {
@@ -254,9 +243,7 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
       case "cylinderCollider":
       case "coneCollider":
       case "terrainCollider":
-        try {
-          this.colliderDebugSystem.recreateForEntityIfNeeded(entity);
-        } catch {}
+        this.colliderDebugSystem.recreateForEntityIfNeeded(entity);
         break;
       default:
         break;
@@ -326,10 +313,7 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     try {
       this.debugSystem.updateHelperTransform(entity);
     } catch {}
-
-    try {
-      this.colliderDebugSystem.updateHelperTransform(entity);
-    } catch {}
+    this.colliderDebugSystem.updateHelperTransform(entity);
   }
 
   /**
