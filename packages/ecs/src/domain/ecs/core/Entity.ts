@@ -75,24 +75,24 @@ export class Entity {
         errors.map((e) => `  - ${e}`).join('\n');
       return err('invalid-component', message, { errors });
     }
-    // notify observers registered on the component that it's being removed
-    // notify entity-level listeners first
+
     this.notifyComponentEvent(comp, 'removed');
-    // notify observers registered on the component that it's being removed
     comp.notifyRemoved();
     this.components.delete(type);
     return ok(undefined);
   }
-  getComponent<T extends Component>(type: string): T | undefined {
+
+  getComponent<T extends Component = Component>(type: string): T | undefined {
     return this.components.get(type) as T | undefined;
   }
+
   hasComponent(type: string): boolean {
     return this.components.has(type);
   }
+
   getAllComponents(): Component[] {
     return [...this.components.values()];
   }
-
 
   addComponentListener(listener: ComponentListener): void {
     if (!this.componentListeners.includes(listener)) this.componentListeners.push(listener);

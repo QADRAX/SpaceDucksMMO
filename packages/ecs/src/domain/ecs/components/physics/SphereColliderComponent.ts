@@ -10,6 +10,7 @@ export class SphereColliderComponent extends BaseColliderComponent {
   readonly metadata: ComponentMetadata<SphereColliderComponent> = {
     type: "sphereCollider",
     unique: true,
+    requiresInHierarchy: ["rigidBody"],
     conflicts: [
       "boxCollider",
       "capsuleCollider",
@@ -37,7 +38,8 @@ export class SphereColliderComponent extends BaseColliderComponent {
         ...this.getCommonInspectorFields(),
       ],
     },
-    description: "Sphere collider. Use child entities to build compound colliders for a single rigid body.",
+    description:
+      "Sphere collider. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
   };
 
   radius: number;

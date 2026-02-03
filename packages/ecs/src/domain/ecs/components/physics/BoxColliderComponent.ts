@@ -12,6 +12,7 @@ export class BoxColliderComponent extends BaseColliderComponent {
   readonly metadata: ComponentMetadata<BoxColliderComponent> = {
     type: "boxCollider",
     unique: true,
+    requiresInHierarchy: ["rigidBody"],
     conflicts: [
       "sphereCollider",
       "capsuleCollider",
@@ -69,7 +70,8 @@ export class BoxColliderComponent extends BaseColliderComponent {
         ...this.getCommonInspectorFields(),
       ],
     },
-    description: "Box collider (cuboid) defined by half-extents.",
+    description:
+      "Box collider (cuboid) defined by half-extents. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
   };
 
   halfExtents: BoxHalfExtents;

@@ -46,15 +46,15 @@ describe('Transform', () => {
     expect(u.y).toBeCloseTo(1, 5);
   });
 
-  test('onChange callbacks fire on modifications and world access updates dirty', () => {
+  test('onChange callbacks fire on modifications (world getters are side-effect free)', () => {
     const t = new Transform();
     let count = 0;
     t.onChange(() => count++);
     t.setPosition(1,2,3); // markDirty triggers callback
     t.setRotation(0,0,Math.PI/4);
     t.setUniformScale(2);
-    // Access world should trigger update (markDirty already invoked, updateWorldTransform also notifies)
+    // Accessing world getters should NOT fire callbacks (no side effects on read).
     void t.worldPosition;
-    expect(count).toBeGreaterThanOrEqual(4); // position, rotation, scale, update
+    expect(count).toBeGreaterThanOrEqual(3); // position, rotation, scale
   });
 });

@@ -41,7 +41,7 @@ function callRequired(receiver: any, methodName: string, nameForError: string, .
  * Supports:
  * - colliders on the same entity as a rigidBody
  * - compound colliders: colliders on child entities attach to nearest rigidBody ancestor
- * - standalone colliders: entities with collider but without rigidBody get a fixed body host
+ * - colliders without any rigidBody owner are ignored by physics
  */
 export class RapierColliders {
   readonly colliderByEntity = new Map<string, any>();
@@ -93,24 +93,9 @@ export class RapierColliders {
       }
     }
 
-    // No rigid body found: create as standalone collider by attaching to a fixed body.
-    const fixedDesc = this.R.RigidBodyDesc.fixed();
-    const wp = entity.transform.worldPosition;
-    fixedDesc.setTranslation(wp.x, wp.y, wp.z);
-
-    const wr = entity.transform.worldRotation;
-    const q = quatNormalize(quatFromEulerYXZ(wr));
-    callOptional(fixedDesc, "setRotation", q);
-    const fixed = this.world.createRigidBody(fixedDesc);
-    this.bodies.bodyByEntity.set(entity.id, fixed);
-
-    callOptional(desc, "setTranslation", localCenterShift.x, localCenterShift.y, localCenterShift.z);
-
-    const collider = this.world.createCollider(desc, fixed);
-    this.colliderByEntity.set(entity.id, collider);
-
-    const createdHandle = collider.handle as number;
-    callOptional(this.collisions, "registerColliderHandle", createdHandle, entity.id, entity.id);
+    // No rigid body found: intentionally ignore.
+    // (Editor should prevent/flag these; engine remains robust by skipping them.)
+    return;
   }
 
   ensureCollidersInSubtree(root: Entity): void {

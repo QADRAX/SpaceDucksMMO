@@ -3,6 +3,7 @@ import { DefaultEcsComponentFactory } from "./ComponentFactory";
 import { BoxGeometryComponent } from "../components/geometry/BoxGeometryComponent";
 import { ShaderMaterialComponent } from "../components/material/ShaderMaterialComponent";
 import { SphereColliderComponent } from "../components/physics/SphereColliderComponent";
+import { RigidBodyComponent } from "../components/physics/RigidBodyComponent";
 
 describe("DefaultEcsComponentFactory", () => {
   const factory = new DefaultEcsComponentFactory();
@@ -37,12 +38,34 @@ describe("DefaultEcsComponentFactory", () => {
     const initial = factory.listCreatableComponents(e).map((d) => d.type);
     expect(initial).toContain("rigidBody");
     expect(initial).toContain("gravity");
-    expect(initial).toContain("sphereCollider");
-    expect(initial).toContain("boxCollider");
+    // Colliders require a rigidBody owner (self or ancestor)
+    expect(initial).not.toContain("sphereCollider");
+    expect(initial).not.toContain("boxCollider");
+  });
+
+  test("listCreatableComponents offers colliders when entity has rigidBody", () => {
+    const e = new Entity("e-physics-rb");
+    e.addComponent(new RigidBodyComponent({ bodyType: "dynamic" }) as any);
+    const list = factory.listCreatableComponents(e).map((d) => d.type);
+    expect(list).toContain("sphereCollider");
+    expect(list).toContain("boxCollider");
+  });
+
+  test("listCreatableComponents offers colliders when rigidBody exists on an ancestor", () => {
+    const parent = new Entity("p");
+    parent.addComponent(new RigidBodyComponent({ bodyType: "dynamic" }) as any);
+
+    const child = new Entity("c");
+    parent.addChild(child);
+
+    const list = factory.listCreatableComponents(child).map((d) => d.type);
+    expect(list).toContain("sphereCollider");
+    expect(list).toContain("capsuleCollider");
   });
 
   test("listCreatableComponents omits additional colliders when one is present on the same entity", () => {
     const e = new Entity("e-collider");
+    e.addComponent(new RigidBodyComponent({ bodyType: "dynamic" }) as any);
     e.addComponent(new SphereColliderComponent({ radius: 1 }) as any);
     const after = factory.listCreatableComponents(e).map((d) => d.type);
     expect(after).not.toContain("sphereCollider");

@@ -4,6 +4,7 @@ import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
 import TextureResolverService from '../../application/TextureResolverService';
 import { setCurrentEcsWorld, setPhysicsServices, Result, ok, err } from '@duckengine/ecs';
 import type { Entity, IComponentObserver } from '@duckengine/ecs';
+import type { Component } from '@duckengine/ecs';
 import type SceneChangeEvent from '../../domain/scene/SceneChangeEvent';
 import IRenderSyncSystem from '../../domain/ports/IRenderSyncSystem';
 import ISettingsService from '../../domain/ports/ISettingsService';
@@ -70,14 +71,21 @@ export abstract class BaseScene implements IScene {
       );
       return;
     }
+
+    const hierarchyErrors = this.validateHierarchyRequirementsInSubtree(entity);
+    if (hierarchyErrors.length) {
+      throw new Error(
+        `Cannot add entity '${entity.id}' to scene '${this.id}':\n` +
+          hierarchyErrors.map((e) => `  - ${e}`).join("\n")
+      );
+    }
+
     this.entities.set(entity.id, entity);
     if (this.renderSyncSystem) {
       this.renderSyncSystem.addEntity(entity);
     }
     if (this.physicsSystem) {
-      try {
-        this.physicsSystem.addEntity(entity);
-      } catch {}
+      this.physicsSystem.addEntity(entity);
     }
     // subscribe to entity-level events for inspector/debug
     this.attachEntityObservers(entity);
@@ -410,8 +418,58 @@ export abstract class BaseScene implements IScene {
       newParent.addChild(child);
     }
 
+    // Validate hierarchy requirements for the moved subtree. If invalid, revert.
+    const hierarchyErrors = this.validateHierarchyRequirementsInSubtree(child);
+    if (hierarchyErrors.length) {
+      // revert
+      if (newParent) newParent.removeChild(childId);
+      if (oldParent) oldParent.addChild(child);
+
+      return err(
+        "invalid-reparent",
+        `Reparent would violate component hierarchy requirements for '${childId}':\n` +
+          hierarchyErrors.map((e) => `  - ${e}`).join("\n"),
+        { childId, newParentId, errors: hierarchyErrors }
+      );
+    }
+
     this.emitChange({ kind: "hierarchy-changed", childId, newParentId });
     return ok(undefined);
+  }
+
+  private validateHierarchyRequirementsInSubtree(root: Entity): string[] {
+    const errors: string[] = [];
+    const visit = (e: Entity) => {
+      errors.push(...this.validateHierarchyRequirements(e));
+      for (const c of e.getChildren()) visit(c);
+    };
+    visit(root);
+    return errors;
+  }
+
+  private validateHierarchyRequirements(entity: Entity): string[] {
+    const errors: string[] = [];
+    for (const comp of entity.getAllComponents() as Component[]) {
+      const reqs = (comp.metadata as any)?.requiresInHierarchy as string[] | undefined;
+      if (!reqs || reqs.length === 0) continue;
+      for (const req of reqs) {
+        if (!this.hasComponentInSelfOrAncestors(entity, req)) {
+          errors.push(
+            `Component '${comp.type}' on entity '${entity.id}' requires '${req}' on this entity or an ancestor`
+          );
+        }
+      }
+    }
+    return errors;
+  }
+
+  private hasComponentInSelfOrAncestors(entity: Entity, type: string): boolean {
+    let cur: Entity | undefined = entity;
+    while (cur) {
+      if (cur.hasComponent(type)) return true;
+      cur = cur.parent;
+    }
+    return false;
   }
 
   private wouldCreateCycle(child: Entity, candidateParent: Entity): boolean {
@@ -446,6 +504,55 @@ export abstract class BaseScene implements IScene {
       },
     };
 
+    // Enforce requiresInHierarchy even when components are added/removed after the entity
+    // has already been added to the scene.
+    let isHandlingComponentEvent = false;
+    const componentListener = (ev: any) => {
+      if (isHandlingComponentEvent) return;
+      if (!ev || ev.entity !== entity) return;
+      const comp: Component | undefined = ev.component;
+      const action: string | undefined = ev.action;
+      if (!comp || (action !== 'added' && action !== 'removed')) return;
+
+      isHandlingComponentEvent = true;
+      try {
+        if (action === 'added') {
+          // Ensure scene observes new component changes.
+          try {
+            comp.addObserver(componentObserver);
+          } catch {}
+
+          // Validate hierarchy requirements for this entity (owner/ancestor dependencies).
+          const errs = this.validateHierarchyRequirements(entity);
+          if (errs.length) {
+            // Revert the add.
+            entity.safeRemoveComponent(comp.type);
+            this.emitChange({ kind: 'error', message: errs.join('\n') } as any);
+          }
+        }
+
+        if (action === 'removed') {
+          // Validate subtree, because removing an owner component (e.g. rigidBody)
+          // may break descendants.
+          const errs = this.validateHierarchyRequirementsInSubtree(entity);
+          if (errs.length) {
+            // Attempt to restore the removed component instance.
+            const restore = entity.safeAddComponent(comp as any);
+            const msg =
+              `Cannot remove component '${comp.type}' from '${entity.id}' because it breaks hierarchy requirements.\n` +
+              errs.map((e) => `  - ${e}`).join('\n');
+            this.emitChange({ kind: 'error', message: msg } as any);
+            if (!restore.ok) {
+              // If restoration fails, surface the error.
+              throw new Error(msg + `\nRestore failed: ${restore.error.message}`);
+            }
+          }
+        }
+      } finally {
+        isHandlingComponentEvent = false;
+      }
+    };
+
     const transformListener = () =>
       this.emitChange({ kind: "transform-changed", entityId: entity.id });
 
@@ -453,6 +560,10 @@ export abstract class BaseScene implements IScene {
       comp.addObserver(componentObserver);
     try {
       entity.transform.onChange(transformListener);
+    } catch {}
+
+    try {
+      entity.addComponentListener(componentListener);
     } catch {}
 
     const cleanup = () => {
@@ -463,6 +574,10 @@ export abstract class BaseScene implements IScene {
       }
       try {
         entity.transform.removeOnChange(transformListener);
+      } catch {}
+
+      try {
+        entity.removeComponentListener(componentListener);
       } catch {}
     };
 

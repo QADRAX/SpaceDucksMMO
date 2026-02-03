@@ -32,6 +32,13 @@ export interface ComponentMetadata<TComponent = any> {
   type: string;
   unique?: boolean;
   requires?: string[];
+  /**
+   * Component types that must exist on this entity OR any ancestor in the entity hierarchy.
+   *
+   * Use this for requirements that are satisfied by an "owner" entity, e.g. compound colliders
+   * requiring a `rigidBody` on a parent.
+   */
+  requiresInHierarchy?: string[];
   conflicts?: string[];
   inspector?: InspectorMetadata<TComponent>;
   description?: string;

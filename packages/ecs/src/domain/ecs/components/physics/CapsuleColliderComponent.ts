@@ -11,6 +11,7 @@ export class CapsuleColliderComponent extends BaseColliderComponent {
   readonly metadata: ComponentMetadata<CapsuleColliderComponent> = {
     type: "capsuleCollider",
     unique: true,
+    requiresInHierarchy: ["rigidBody"],
     conflicts: [
       "sphereCollider",
       "boxCollider",
@@ -54,7 +55,8 @@ export class CapsuleColliderComponent extends BaseColliderComponent {
         ...this.getCommonInspectorFields(),
       ],
     },
-    description: "Capsule collider (Y axis) defined by radius and half-height.",
+    description:
+      "Capsule collider (Y axis) defined by radius and half-height. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
   };
 
   radius: number;

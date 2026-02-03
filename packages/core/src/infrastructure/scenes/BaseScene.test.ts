@@ -1,5 +1,6 @@
 import BaseScene from './BaseScene';
 import { Entity, Component } from '@duckengine/ecs';
+import { RigidBodyComponent, SphereColliderComponent } from '@duckengine/ecs';
 import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
 
 class TestComp extends Component {
@@ -12,6 +13,44 @@ describe('BaseScene debug events', () => {
   class TestScene extends BaseScene {
     readonly id = 'Sandbox';
   }
+
+  it('rejects adding an entity with a collider but no rigidBody owner in hierarchy', () => {
+    const scene = new TestScene({} as any);
+    const e = new Entity('orphan');
+    e.addComponent(new SphereColliderComponent({ radius: 1 }) as any);
+    expect(() => scene.addEntity(e)).toThrow(/requires 'rigidBody'/i);
+  });
+
+  it('allows adding a child collider entity when a parent rigidBody exists', () => {
+    const scene = new TestScene({} as any);
+
+    const parent = new Entity('parent');
+    parent.addComponent(new RigidBodyComponent({ bodyType: 'static' }) as any);
+
+    const child = new Entity('child');
+    child.addComponent(new SphereColliderComponent({ radius: 1 }) as any);
+    parent.addChild(child);
+
+    expect(() => scene.addEntity(parent)).not.toThrow();
+    expect(() => scene.addEntity(child)).not.toThrow();
+  });
+
+  it('rejects reparenting a collider subtree away from any rigidBody owner', () => {
+    const scene = new TestScene({} as any);
+
+    const parent = new Entity('parent');
+    parent.addComponent(new RigidBodyComponent({ bodyType: 'static' }) as any);
+
+    const child = new Entity('child');
+    child.addComponent(new SphereColliderComponent({ radius: 1 }) as any);
+    parent.addChild(child);
+
+    scene.addEntity(parent);
+    scene.addEntity(child);
+
+    const res = scene.reparentEntityResult('child', null);
+    expect(res.ok).toBe(false);
+  });
 
   it('auto-attaches and detaches collisionEvents hub when physics system is provided', () => {
     let subscribed = 0;

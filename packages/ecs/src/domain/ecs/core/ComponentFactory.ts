@@ -84,6 +84,27 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
     const defs: CreatableComponentDef[] = [];
     const has = (t: string) => entity.hasComponent(t);
 
+    const hasInHierarchy = (t: string) => {
+      let cur: Entity | undefined = entity;
+      while (cur) {
+        if (cur.hasComponent(t)) return true;
+        cur = cur.parent;
+      }
+      return false;
+    };
+
+    const satisfiesRequiresInHierarchy = (type: KnownComponentType): boolean => {
+      // Create a fresh instance so we can read its metadata. This is low cost (small list)
+      // and keeps the factory metadata-driven (no hardcoded rules in UI).
+      const comp = this.create(type);
+      const reqs = (comp.metadata as any)?.requiresInHierarchy as string[] | undefined;
+      if (!reqs || reqs.length === 0) return true;
+      for (const r of reqs) {
+        if (!hasInHierarchy(r)) return false;
+      }
+      return true;
+    };
+
     const hasAnyGeometry =
       has("boxGeometry") ||
       has("sphereGeometry") ||
@@ -172,7 +193,7 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
     }
 
     // --- Physics ---------------------------------------------------------
-    // Physics system supports colliders both with and without a rigid body.
+    // Physics: component-level requirements are enforced by metadata (requires/requiresInHierarchy).
     if (!has("rigidBody")) defs.push({ type: "rigidBody", label: "Rigid Body" });
     if (!has("gravity")) defs.push({ type: "gravity", label: "Gravity" });
 
@@ -195,7 +216,7 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       defs.push({ type: "terrainCollider", label: "Terrain Collider" });
     }
 
-    return defs;
+    return defs.filter((d) => satisfiesRequiresInHierarchy(d.type));
   }
 
   create(type: KnownComponentType, params?: any): Component {
