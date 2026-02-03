@@ -11,6 +11,7 @@ import type {
   TerrainColliderComponent,
 } from "@duckengine/ecs";
 import type { RenderObjectRegistry } from "../sync/RenderObjectRegistry";
+import { DEBUG_LAYERS } from "./DebugLayers";
 
 /**
  * Manages debug collider helpers for entities.
@@ -98,6 +99,12 @@ export class DebugColliderSystem {
     // Register the helper before refreshing so geometry actually gets built.
     this.helpers.set(entity.id, group);
     this.refreshColliderGeometry(entity.id, entity);
+
+    // Assign all collider debug objects to a dedicated layer so each
+    // view/canvas can independently show/hide collider debug.
+    try {
+      group.traverse((o) => o.layers.set(DEBUG_LAYERS.colliders));
+    } catch {}
 
     this.scene.add(group);
     this.updateHelperTransform(entity);

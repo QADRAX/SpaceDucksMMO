@@ -41,6 +41,7 @@ export function SceneInspectorPanel() {
           "component-changed",
           "active-camera-changed",
           "scene-debug-changed",
+          "scene-mesh-debug-changed",
           "scene-collider-debug-changed",
         ].includes(k)
       ) {
@@ -49,6 +50,9 @@ export function SceneInspectorPanel() {
       if (k === 'scene-debug-changed') {
         // forward new value to local state
         setSceneDebugEnabledLocal(!!(ev as any).enabled);
+      }
+      if (k === 'scene-mesh-debug-changed') {
+        setSceneMeshDebugEnabledLocal(!!(ev as any).enabled);
       }
       if (k === 'scene-collider-debug-changed') {
         setSceneColliderDebugEnabledLocal(!!(ev as any).enabled);
@@ -81,6 +85,10 @@ export function SceneInspectorPanel() {
     () => sceneManager?.getCurrentSceneDebugEnabled() ?? false
   );
 
+  const [sceneMeshDebugEnabledLocal, setSceneMeshDebugEnabledLocal] = useState<boolean>(
+    () => (sceneManager as any)?.getCurrentSceneMeshDebugEnabled?.() ?? false
+  );
+
   const [sceneColliderDebugEnabledLocal, setSceneColliderDebugEnabledLocal] = useState<boolean>(
     () => sceneManager?.getCurrentSceneColliderDebugEnabled?.() ?? false
   );
@@ -93,28 +101,16 @@ export function SceneInspectorPanel() {
     // also ensure renderSyncSystem reacts by re-evaluating helpers via SceneManager events
   };
 
+  const onToggleSceneMeshDebug = (enabled: boolean) => {
+    try {
+      (sceneManager as any)?.setSceneMeshDebugEnabled?.(enabled);
+    } catch {}
+    setSceneMeshDebugEnabledLocal(enabled);
+  };
+
   const onToggleSceneColliderDebug = (enabled: boolean) => {
     sceneManager?.setSceneColliderDebugEnabled?.(enabled);
     setSceneColliderDebugEnabledLocal(enabled);
-
-    // UX: if the user enables the scene master switch, ensure something becomes visible.
-    // Collider debug rendering requires both the scene master flag and per-entity flags.
-    if (enabled) {
-      const ents = sceneManager?.getEntities?.() ?? [];
-      for (const e of ents as any[]) {
-        if (!e || typeof e.hasComponent !== 'function' || typeof e.setDebugColliderEnabled !== 'function') continue;
-        const hasAnyCollider =
-          e.hasComponent('sphereCollider') ||
-          e.hasComponent('boxCollider') ||
-          e.hasComponent('capsuleCollider') ||
-          e.hasComponent('cylinderCollider') ||
-          e.hasComponent('coneCollider') ||
-          e.hasComponent('terrainCollider');
-        if (hasAnyCollider) {
-          e.setDebugColliderEnabled(true);
-        }
-      }
-    }
   };
 
   const selectedEntity = entities.find((e) => e.id === selected);
@@ -160,7 +156,14 @@ export function SceneInspectorPanel() {
                   <ToggleSwitch
                     checked={sceneDebugEnabledLocal}
                     onChange={onToggleSceneDebug}
-                    label={t('inspector.sceneDebug', 'Scene Debug')}
+                    label={t('inspector.sceneTransformDebug', 'Transform Debug')}
+                  />
+                </div>
+                <div style={{ marginLeft: 12 }}>
+                  <ToggleSwitch
+                    checked={sceneMeshDebugEnabledLocal}
+                    onChange={onToggleSceneMeshDebug}
+                    label={t('inspector.sceneMeshDebug', 'Mesh Debug')}
                   />
                 </div>
                 <div style={{ marginLeft: 12 }}>

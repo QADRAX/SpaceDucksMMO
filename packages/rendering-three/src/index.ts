@@ -15,5 +15,12 @@ export type {
 export { default } from './infrastructure/rendering/ThreeRenderer';
 export { ThreeRenderer } from './infrastructure/rendering/ThreeRenderer';
 
+export { ThreeMultiRenderer } from './infrastructure/rendering/ThreeMultiRenderer';
+export { default as ThreeMultiRendererDefault } from './infrastructure/rendering/ThreeMultiRenderer';
+export type { ViewId, ViewOptions, ViewDebugOptions } from './infrastructure/rendering/ThreeMultiRenderer';
+
+// Re-export core multi-view port types so consumers can type against the engine interface.
+export type { RenderViewId, RenderViewOptions, RenderViewDebugOptions } from '@duckengine/core';
+
 export type { IFpsController } from './infrastructure/ui/dev/FpsController';
 export { NoopFpsController } from './infrastructure/ui/dev/FpsController';

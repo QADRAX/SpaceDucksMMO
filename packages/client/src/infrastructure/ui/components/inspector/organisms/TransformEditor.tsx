@@ -16,7 +16,12 @@ export function TransformEditor({ entity }: Props) {
   const [pos, setPos] = useState({ x: 0, y: 0, z: 0 });
   const [rot, setRot] = useState({ x: 0, y: 0, z: 0 });
   const [scale, setScale] = useState({ x: 1, y: 1, z: 1 });
-  const [debugEnabled, setDebugEnabled] = useState<boolean>(() => !!entity?.isDebugTransformEnabled());
+  const [transformDebugEnabled, setTransformDebugEnabled] = useState<boolean>(() =>
+    !!entity?.isDebugTransformEnabled()
+  );
+  const [meshDebugEnabled, setMeshDebugEnabled] = useState<boolean>(() =>
+    typeof (entity as any)?.isDebugMeshEnabled === 'function' ? !!(entity as any).isDebugMeshEnabled() : false
+  );
   const [colliderDebugEnabled, setColliderDebugEnabled] = useState<boolean>(() =>
     !!entity?.isDebugColliderEnabled()
   );
@@ -42,14 +47,34 @@ export function TransformEditor({ entity }: Props) {
 
   useEffect(() => {
     if (!entity) return;
-    const listener = (enabled: boolean) => setDebugEnabled(!!enabled);
+    const listener = (enabled: boolean) => setTransformDebugEnabled(!!enabled);
     try {
       entity.addDebugTransformListener(listener);
-      setDebugEnabled(!!entity.isDebugTransformEnabled());
+      setTransformDebugEnabled(!!entity.isDebugTransformEnabled());
     } catch {}
     return () => {
       try {
         entity.removeDebugTransformListener(listener);
+      } catch {}
+    };
+  }, [entity]);
+
+  useEffect(() => {
+    if (!entity) return;
+    if (typeof (entity as any).addDebugMeshListener !== 'function') {
+      setMeshDebugEnabled(false);
+      return;
+    }
+    const listener = (enabled: boolean) => setMeshDebugEnabled(!!enabled);
+    try {
+      (entity as any).addDebugMeshListener(listener);
+      setMeshDebugEnabled(
+        typeof (entity as any).isDebugMeshEnabled === 'function' ? !!(entity as any).isDebugMeshEnabled() : false
+      );
+    } catch {}
+    return () => {
+      try {
+        (entity as any).removeDebugMeshListener(listener);
       } catch {}
     };
   }, [entity]);
@@ -80,15 +105,28 @@ export function TransformEditor({ entity }: Props) {
       </div>
       <div style={{ padding: '6px 8px' }}>
         <ToggleSwitch
-          checked={debugEnabled}
+          checked={transformDebugEnabled}
           onChange={(v) => {
             try {
               if (v) services.sceneManager?.setSceneDebugEnabled?.(true);
               entity?.setDebugTransformEnabled(v);
             } catch {}
-            setDebugEnabled(v);
+            setTransformDebugEnabled(v);
           }}
-          label={t('inspector.entityDebug', 'Show Debug')}
+          label={t('inspector.entityTransformDebug', 'Show Transform Debug')}
+        />
+      </div>
+      <div style={{ padding: '0px 8px 6px' }}>
+        <ToggleSwitch
+          checked={meshDebugEnabled}
+          onChange={(v) => {
+            try {
+              if (v) services.sceneManager?.setSceneMeshDebugEnabled?.(true);
+              if (typeof (entity as any)?.setDebugMeshEnabled === 'function') (entity as any).setDebugMeshEnabled(v);
+            } catch {}
+            setMeshDebugEnabled(v);
+          }}
+          label={t('inspector.entityMeshDebug', 'Show Mesh Debug')}
         />
       </div>
       <div style={{ padding: '0px 8px 6px' }}>

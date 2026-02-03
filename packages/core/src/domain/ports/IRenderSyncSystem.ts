@@ -14,6 +14,8 @@ export interface IRenderSyncSystem {
   getCamera?(id: string): unknown | undefined;
 
   setSceneDebugEnabled(enabled: boolean): void;
+  /** Optional: independent master switch for mesh (wireframe) debug rendering. */
+  setSceneMeshDebugEnabled?(enabled: boolean): void;
   /** Optional: independent master switch for collider debug rendering. */
   setSceneColliderDebugEnabled?(enabled: boolean): void;
   setActiveCameraEntityId(id: string | null): void;

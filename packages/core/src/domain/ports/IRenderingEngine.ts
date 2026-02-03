@@ -59,6 +59,22 @@ export interface IRenderingEngine {
 
   getTextureCatalog(): TextureCatalogService | undefined;
 
+  // --- Multi-view (optional) --------------------------------------------
+  //
+  // Some renderer backends can render the same scene into multiple views
+  // (multiple canvases in the same window, or multiple windows).
+  // These APIs are optional so single-canvas backends remain compatible.
+  //
+  // Design: a "view" owns its presentation target (canvas/container) and can
+  // select a camera entity id (overriding scene active camera).
+
+  /** Opaque view identifier returned by addView(). */
+  addView?(container: HTMLElement, options?: RenderViewOptions): RenderViewId;
+  removeView?(viewId: RenderViewId): void;
+  setViewCamera?(viewId: RenderViewId, cameraEntityId: string | undefined): void;
+  setViewDebug?(viewId: RenderViewId, debug: RenderViewDebugOptions): void;
+  getViews?(): ReadonlyArray<{ id: RenderViewId; container: HTMLElement }>;
+
   /**
    * Optional: renderer backends can provide a scene sync system instance.
    * Core does not implement this; backends (three, etc.) do.
@@ -75,5 +91,25 @@ export interface IRenderingEngine {
    */
   createPhysicsSystem?(): IPhysicsSystem | undefined;
 }
+
+export type RenderViewId = string;
+
+export type RenderViewDebugOptions = {
+  transforms?: boolean;
+  mesh?: boolean;
+  colliders?: boolean;
+};
+
+export type RenderViewOptions = {
+  /** Optional id to make view addressing stable (e.g., 'main', 'editor'). */
+  id?: RenderViewId;
+  /** Camera entity id to render from. If omitted, backend uses the scene active camera. */
+  cameraEntityId?: string;
+  /** Per-view debug visibility (if supported by backend). */
+  debug?: RenderViewDebugOptions;
+  /** Optional per-view resolution policy override. */
+  resolutionPolicy?: 'auto' | 'scale';
+  resolutionScale?: number;
+};
 
 export default IRenderingEngine;

@@ -40,6 +40,9 @@ export abstract class BaseScene implements IScene {
    */
   public debugTransformsEnabled: boolean = false;
 
+  /** Scene-level master switch for mesh (wireframe) debug helpers. Independent from transform/collider debug. */
+  public debugMeshesEnabled: boolean = false;
+
   /** Scene-level master switch for collider debug helpers. Independent from transform debug. */
   public debugCollidersEnabled: boolean = false;
 
@@ -109,6 +112,20 @@ export abstract class BaseScene implements IScene {
     // Notify subscribers (inspector/UI) about the change so they can react.
     try {
       this.emitChange({ kind: 'scene-debug-changed', enabled: !!enabled });
+    } catch {}
+  }
+
+  /** Enable or disable mesh (wireframe) debug helpers for all entities in this scene. */
+  public setDebugMeshesEnabled(enabled: boolean): void {
+    if (this.debugMeshesEnabled === enabled) return;
+    this.debugMeshesEnabled = enabled;
+    if (this.renderSyncSystem) {
+      try {
+        this.renderSyncSystem.setSceneMeshDebugEnabled?.(enabled);
+      } catch {}
+    }
+    try {
+      this.emitChange({ kind: 'scene-mesh-debug-changed', enabled: !!enabled });
     } catch {}
   }
 
@@ -301,6 +318,10 @@ export abstract class BaseScene implements IScene {
     if (this.renderSyncSystem) {
       try {
         this.renderSyncSystem.setSceneDebugEnabled(this.debugTransformsEnabled);
+      } catch {}
+
+      try {
+        this.renderSyncSystem.setSceneMeshDebugEnabled?.(this.debugMeshesEnabled);
       } catch {}
 
       try {
@@ -592,6 +613,10 @@ export abstract class BaseScene implements IScene {
 
   public getDebugTransformsEnabled(): boolean {
     return this.debugTransformsEnabled;
+  }
+
+  public getDebugMeshesEnabled(): boolean {
+    return this.debugMeshesEnabled;
   }
 
   public getDebugCollidersEnabled(): boolean {

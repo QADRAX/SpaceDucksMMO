@@ -8,6 +8,7 @@ export type SceneChangeEvent =
   | { kind: 'transform-changed'; entityId: string }
   | { kind: 'component-changed'; entityId: string; componentType: string }
   | { kind: 'scene-debug-changed'; enabled: boolean }
+  | { kind: 'scene-mesh-debug-changed'; enabled: boolean }
   | { kind: 'scene-collider-debug-changed'; enabled: boolean };
 
 // Generic error event to notify UI/inspector about invalid operations or problems

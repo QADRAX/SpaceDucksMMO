@@ -30,6 +30,10 @@ export class Entity {
   private _debugTransformEnabled = false;
   private debugTransformListeners: Array<(enabled: boolean) => void> = [];
 
+  /** Per-entity flag to indicate whether mesh (wireframe) debug helpers should be rendered for this entity. Default: false. */
+  private _debugMeshEnabled = false;
+  private debugMeshListeners: Array<(enabled: boolean) => void> = [];
+
   /** Per-entity flag to indicate whether collider debug helpers should be rendered. Default: false. */
   private _debugColliderEnabled = false;
   private debugColliderListeners: Array<(enabled: boolean) => void> = [];
@@ -209,6 +213,29 @@ export class Entity {
     if (!this.debugTransformListeners.includes(listener)) this.debugTransformListeners.push(listener);
   }
 
+  /** Enable or disable mesh (wireframe) debug helpers for this entity. */
+  setDebugMeshEnabled(enabled: boolean): void {
+    if (this._debugMeshEnabled === enabled) return;
+    this._debugMeshEnabled = enabled;
+    for (const l of this.debugMeshListeners) {
+      try {
+        l(enabled);
+      } catch {
+        /* swallow listener errors */
+      }
+    }
+  }
+
+  /** Returns whether mesh (wireframe) debug helpers are enabled for this entity. */
+  isDebugMeshEnabled(): boolean {
+    return this._debugMeshEnabled;
+  }
+
+  /** Register a listener for mesh debug flag changes. */
+  addDebugMeshListener(listener: (enabled: boolean) => void): void {
+    if (!this.debugMeshListeners.includes(listener)) this.debugMeshListeners.push(listener);
+  }
+
   /** Enable or disable debug collider helpers for this entity. */
   setDebugColliderEnabled(enabled: boolean): void {
     if (this._debugColliderEnabled === enabled) return;
@@ -236,6 +263,12 @@ export class Entity {
   removeDebugColliderListener(listener: (enabled: boolean) => void): void {
     const i = this.debugColliderListeners.indexOf(listener);
     if (i >= 0) this.debugColliderListeners.splice(i, 1);
+  }
+
+  /** Remove a previously registered mesh debug flag listener. */
+  removeDebugMeshListener(listener: (enabled: boolean) => void): void {
+    const i = this.debugMeshListeners.indexOf(listener);
+    if (i >= 0) this.debugMeshListeners.splice(i, 1);
   }
 
   /** Remove a previously registered debug flag listener. */

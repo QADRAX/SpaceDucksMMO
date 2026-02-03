@@ -78,6 +78,10 @@ export interface IScene {
   getDebugTransformsEnabled?(): boolean;
   setDebugTransformsEnabled?(enabled: boolean): void;
 
+  /** Optional: scene-level mesh (wireframe) debug master flag for inspector tools */
+  getDebugMeshesEnabled?(): boolean;
+  setDebugMeshesEnabled?(enabled: boolean): void;
+
   /** Optional: scene-level collider debug master flag for inspector tools */
   getDebugCollidersEnabled?(): boolean;
   setDebugCollidersEnabled?(enabled: boolean): void;

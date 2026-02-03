@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import type { Entity } from "@duckengine/ecs";
-import type { RenderObjectRegistry } from "../sync/RenderObjectRegistry";
+import { DEBUG_LAYERS } from "./DebugLayers";
 
 /**
  * Manages debug transform helpers for entities.
@@ -11,21 +11,18 @@ import type { RenderObjectRegistry } from "../sync/RenderObjectRegistry";
  */
 export class DebugTransformSystem {
   private readonly scene: THREE.Scene;
-  private readonly registry: RenderObjectRegistry;
   private readonly helpers = new Map<string, THREE.Object3D>();
   private masterEnabled = false;
   /** Set of entity ids that must never show a helper (e.g., active camera) */
   private forbidden = new Set<string>();
 
-  constructor(scene: THREE.Scene, registry: RenderObjectRegistry) {
+  constructor(scene: THREE.Scene) {
     this.scene = scene;
-    this.registry = registry;
   }
 
   setMasterEnabled(enabled: boolean): void {
     this.masterEnabled = !!enabled;
     for (const [id, h] of this.helpers.entries()) {
-      // If entity is forbidden, ensure helper is removed/hidden
       if (this.forbidden.has(id)) {
         try {
           this.scene.remove(h);
@@ -44,54 +41,99 @@ export class DebugTransformSystem {
     const group = new THREE.Object3D();
     group.name = `debug:${entity.id}`;
 
-    // We keep two sub-groups so we can have fixed-size visuals and
-    // optionally a wireframe that mirrors the real mesh size.
+    // We keep a sub-group so we can keep fixed-size visuals.
     const visuals = new THREE.Object3D();
     visuals.name = "visuals";
-    // Axes helper (local axes) - will be scaled to fixed world size via visuals
-    const axes = new THREE.AxesHelper(1);
-    axes.renderOrder = 1000;
-    visuals.add(axes);
+    this.ensureVisualsForEntity(entity, visuals);
 
-    // Arrow helper pointing forward (Z+ in our convention: forward is -Z in engine; show world forward)
-    const dir = new THREE.Vector3(0, 0, -1);
-    const origin = new THREE.Vector3(0, 0, 0);
-    const arrow = new THREE.ArrowHelper(dir, origin, 1, 0xffff00);
-    arrow.renderOrder = 1000;
-    visuals.add(arrow);
-
-    // Label sprite
-    const label = this.createLabelForEntity(entity);
-    label.name = "labelSprite";
-    // position label slightly above origin
-    label.position.set(0, 1.2, 0);
-    visuals.add(label);
-
-    // Wireframe group: stays at identity scale so it follows actual mesh size
-    const wireframeGroup = new THREE.Object3D();
-    wireframeGroup.name = "wireframeGroup";
-
-    // Keep visibility in sync with master flag
     group.visible = this.masterEnabled;
+    visuals.visible = this.masterEnabled;
 
-    // Attach groups
     group.add(visuals);
-    group.add(wireframeGroup);
 
-    // If there's a render component with geometry, add wireframe
+    // Assign all transform debug objects to a dedicated layer so renderers/views can
+    // independently include/exclude transform gizmos.
     try {
-      const rc = this.registry.get(entity.id);
-      const geometry = rc?.geometry ?? (rc?.object3D && (rc.object3D as any).geometry);
-      if (geometry && geometry instanceof THREE.BufferGeometry) {
-        const wf = this.createWireframeFromGeometry(geometry);
-        wireframeGroup.add(wf);
-      }
+      visuals.traverse((o) => o.layers.set(DEBUG_LAYERS.transforms));
     } catch {}
 
     this.scene.add(group);
     this.helpers.set(entity.id, group);
     // immediately sync transform
     this.updateHelperTransform(entity);
+  }
+
+  private ensureVisualsForEntity(entity: Entity, visuals: THREE.Object3D): void {
+    if (visuals.children.length) return;
+
+    const axes = new THREE.AxesHelper(1);
+    axes.renderOrder = 1000;
+    axes.layers.set(DEBUG_LAYERS.transforms);
+    // Always visible (overlay) like collider debug lines
+    try {
+      const m = (axes.material as unknown as THREE.LineBasicMaterial);
+      m.depthTest = false;
+      m.depthWrite = false;
+      m.transparent = true;
+      m.opacity = 1;
+    } catch {}
+    visuals.add(axes);
+
+    const dir = new THREE.Vector3(0, 0, -1);
+    const origin = new THREE.Vector3(0, 0, 0);
+    const arrow = new THREE.ArrowHelper(dir, origin, 1, 0xffff00);
+    arrow.renderOrder = 1000;
+    arrow.layers.set(DEBUG_LAYERS.transforms);
+    // Always visible (overlay)
+    try {
+      arrow.traverse((o) => {
+        const mat = (o as any).material as THREE.Material | THREE.Material[] | undefined;
+        if (!mat) return;
+        const apply = (m: THREE.Material) => {
+          (m as any).depthTest = false;
+          (m as any).depthWrite = false;
+          (m as any).transparent = true;
+          if (typeof (m as any).opacity === 'number') (m as any).opacity = 1;
+        };
+        if (Array.isArray(mat)) mat.forEach(apply);
+        else apply(mat);
+      });
+    } catch {}
+    visuals.add(arrow);
+
+    const label = this.createLabelForEntity(entity);
+    label.name = 'labelSprite';
+    label.position.set(0, 1.2, 0);
+    label.layers.set(DEBUG_LAYERS.transforms);
+    visuals.add(label);
+  }
+
+  private clearAndDisposeGroupChildren(group: THREE.Object3D): void {
+    const toRemove = group.children.slice();
+    for (const c of toRemove) {
+      group.remove(c);
+      c.traverse((o) => {
+        const geom = (o as any).geometry as THREE.BufferGeometry | undefined;
+        if (geom) {
+          try {
+            geom.dispose();
+          } catch {}
+        }
+        const mat = (o as any).material as THREE.Material | THREE.Material[] | undefined;
+        if (mat) {
+          try {
+            if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+            else mat.dispose();
+          } catch {}
+        }
+        const map = (o as any).map as THREE.Texture | undefined;
+        if (map) {
+          try {
+            map.dispose();
+          } catch {}
+        }
+      });
+    }
   }
 
   removeHelper(entityId: string): void {
@@ -148,25 +190,9 @@ export class DebugTransformSystem {
       // @ts-ignore setScalar exists on Vector3
       visuals.scale.setScalar(baseSize);
     }
-    // wireframeGroup should keep identity scale so wireframe matches actual mesh size
-    const wireframeGroup = h.getObjectByName("wireframeGroup") as THREE.Object3D | undefined;
-    if (wireframeGroup) {
-      wireframeGroup.scale.set(1, 1, 1);
-    }
   }
 
-  /** Update label sprites so they face the provided camera (billboard). */
-  updateLabels(camera: THREE.Camera): void {
-    if (!camera) return;
-    for (const [id, group] of this.helpers.entries()) {
-      // ensure forbidden entities don't have helpers, but double-check
-      if (this.forbidden.has(id)) continue;
-      const label = group.getObjectByName("labelSprite") as THREE.Sprite | undefined;
-      if (!label) continue;
-      // billboard: copy camera quaternion
-      label.quaternion.copy(camera.quaternion);
-    }
-  }
+
 
   private createLabelForEntity(entity: Entity): THREE.Sprite {
     const canvas = document.createElement("canvas");
@@ -215,65 +241,15 @@ export class DebugTransformSystem {
     return sprite;
   }
 
-  private createWireframeFromGeometry(geom: THREE.BufferGeometry): THREE.LineSegments {
-    const wireGeom = new THREE.WireframeGeometry(geom);
-    const mat = new THREE.LineBasicMaterial({
-      color: 0x00ffff,
-      linewidth: 1,
-      depthTest: true,
-      transparent: true,
-      opacity: 0.6,
-    });
-    const lines = new THREE.LineSegments(wireGeom, mat);
-    lines.renderOrder = 999;
-    return lines;
-  }
-
-  /** Refresh (rebuild/remove) the wireframe child for a given entity id. */
-  refreshWireframeForEntity(entityId: string): void {
-    const h = this.helpers.get(entityId);
-    if (!h) return;
-    const wireframeGroup = h.getObjectByName("wireframeGroup") as THREE.Object3D | undefined;
-    if (!wireframeGroup) return;
-    // Remove existing children and dispose their geometries/materials
-    const toRemove = wireframeGroup.children.slice();
-    for (const c of toRemove) {
-      wireframeGroup.remove(c);
-      c.traverse((o) => {
-        const geom = (o as any).geometry as THREE.BufferGeometry | undefined;
-        if (geom) {
-          try {
-            geom.dispose();
-          } catch {}
-        }
-        const mat = (o as any).material as THREE.Material | THREE.Material[] | undefined;
-        if (mat) {
-          try {
-            if (Array.isArray(mat)) (mat as THREE.Material[]).forEach((m) => m.dispose());
-            else (mat as THREE.Material).dispose();
-          } catch {}
-        }
-      });
-    }
-
-    // Try to find geometry from registry
-    try {
-      const rc = this.registry.get(entityId);
-      const geometry = rc?.geometry ?? (rc?.object3D && (rc.object3D as any).geometry);
-      if (geometry && geometry instanceof THREE.BufferGeometry) {
-        const wf = this.createWireframeFromGeometry(geometry);
-        wireframeGroup.add(wf);
-      }
-    } catch {}
-  }
-
   recreateForEntityIfNeeded(entity: Entity): void {
     const exists = this.helpers.has(entity.id);
     if (this.forbidden.has(entity.id)) {
       if (exists) this.removeHelper(entity.id);
       return;
     }
-    if (entity.isDebugTransformEnabled() && this.masterEnabled) {
+    const wants = this.masterEnabled && entity.isDebugTransformEnabled();
+
+    if (wants) {
       if (!exists) this.ensureHelper(entity);
       else this.updateHelperTransform(entity);
     } else {

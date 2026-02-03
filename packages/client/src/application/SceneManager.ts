@@ -224,6 +224,13 @@ export class SceneManager {
     } catch {}
   }
 
+  /** Convenience: set the scene-level mesh (wireframe) debug flag on the current scene if supported. */
+  setSceneMeshDebugEnabled(enabled: boolean): void {
+    try {
+      (this.currentScene as any)?.setDebugMeshesEnabled?.(enabled);
+    } catch {}
+  }
+
   /** Convenience: set the scene-level collider debug flag on the current scene if supported. */
   setSceneColliderDebugEnabled(enabled: boolean): void {
     this.currentScene?.setDebugCollidersEnabled?.(enabled);
@@ -236,6 +243,15 @@ export class SceneManager {
   getCurrentSceneDebugEnabled(): boolean | null {
     try {
       const v = this.currentScene?.getDebugTransformsEnabled?.();
+      return typeof v === 'boolean' ? v : null;
+    } catch {}
+    return null;
+  }
+
+  /** Read the current scene-level mesh debug flag, or null if not exposed. */
+  getCurrentSceneMeshDebugEnabled(): boolean | null {
+    try {
+      const v = (this.currentScene as any)?.getDebugMeshesEnabled?.();
       return typeof v === 'boolean' ? v : null;
     } catch {}
     return null;

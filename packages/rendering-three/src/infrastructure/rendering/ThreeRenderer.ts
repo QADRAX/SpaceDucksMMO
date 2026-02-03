@@ -4,6 +4,7 @@ import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import type { IFpsController } from "../ui/dev/FpsController";
 import RenderSyncSystem from "../graphics/sync/RenderSyncSystem";
+import { DEBUG_LAYERS } from "../graphics/debug/DebugLayers";
 
 export class ThreeRenderer implements IRenderingEngine {
   private scene!: THREE.Scene;
@@ -157,11 +158,27 @@ export class ThreeRenderer implements IRenderingEngine {
 
     this.missingCameraWarned = false;
 
-    if (this.usePostProcessing && this.composer) {
-      this.updateComposerCamera(cam);
-      this.composer.render();
-    } else {
-      this.renderer.render(this.scene, cam);
+    // Debug helpers now live on dedicated layers; preserve previous behavior by
+    // auto-including them when the scene master switches are enabled.
+    const prevMask = cam.layers.mask;
+    try {
+      let mask = 1 << 0;
+      try {
+        const s: any = this.activeIScene as any;
+        if (s?.getDebugTransformsEnabled?.()) mask |= 1 << DEBUG_LAYERS.transforms;
+        if (s?.getDebugMeshesEnabled?.()) mask |= 1 << DEBUG_LAYERS.mesh;
+        if (s?.getDebugCollidersEnabled?.()) mask |= 1 << DEBUG_LAYERS.colliders;
+      } catch {}
+      cam.layers.mask = mask;
+
+      if (this.usePostProcessing && this.composer) {
+        this.updateComposerCamera(cam);
+        this.composer.render();
+      } else {
+        this.renderer.render(this.scene, cam);
+      }
+    } finally {
+      cam.layers.mask = prevMask;
     }
     // Update FPS counter after rendering
     try { this.fpsController.update(); } catch { /* ignore */ }
