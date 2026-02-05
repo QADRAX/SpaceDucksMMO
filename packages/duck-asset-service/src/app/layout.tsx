@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Duck Asset Service',
-  description: 'Asset management system for Duck Engine',
+  title: 'Duck Engine Web Core',
+  description: 'Web core for Duck Engine (assets, scenes, tools)',
 };
 
 export default function RootLayout({

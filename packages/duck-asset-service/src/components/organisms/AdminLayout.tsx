@@ -24,6 +24,12 @@ export function AdminLayout({ children, className }: AdminLayoutProps) {
               Assets
             </span>
           </SidebarMenuItem>
+          <SidebarMenuItem href="/admin/scenes">
+            <span className="flex items-center gap-3">
+              <span className="text-lg">▧</span>
+              Scenes
+            </span>
+          </SidebarMenuItem>
           <SidebarMenuItem href="/api-docs">
             <span className="flex items-center gap-3">
               <span className="text-lg">▤</span>

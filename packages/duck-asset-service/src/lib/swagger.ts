@@ -4,9 +4,9 @@ const options: swaggerJsdoc.Options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Duck Asset Service API',
+      title: 'Duck Engine Web Core API',
       version: '1.0.0',
-      description: 'API for managing game assets including materials, textures, and other resources',
+      description: 'Core web API for Duck Engine (assets today; scenes/editor next)',
       contact: {
         name: 'SpaceDucks Team',
       },

@@ -1,10 +1,10 @@
-# 🦆 Duck Asset Service -- Documento de Requisitos
+# 🦆 Duck Engine Web Core -- Documento de Requisitos
 
 ## 1. Propósito del sistema
 
-El **Duck Asset Service (DAS)** es un servicio centralizado para la
-**gestión, versionado, catalogación y distribución de assets**
-destinados a proyectos desarrollados con Duck Engine.
+El **Duck Engine Web Core** es un servicio/app web centralizado para la
+**gestión, versionado, catalogación y distribución de assets** y, progresivamente,
+para soportar **persistencia y edición web de escenas (ECS)** en proyectos desarrollados con Duck Engine.
 
 El sistema:
 

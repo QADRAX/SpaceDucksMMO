@@ -6,7 +6,7 @@ import { NextResponse } from 'next/server';
 export async function GET() {
   return NextResponse.json({
     status: 'healthy',
-    service: 'duck-asset-service',
+    service: 'duckengine-web-core',
     timestamp: new Date().toISOString(),
   });
 }

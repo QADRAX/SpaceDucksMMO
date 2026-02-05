@@ -30,7 +30,7 @@ export default async function AdminDashboard() {
     <div>
       <PageHeader 
         title="Dashboard" 
-        description="Overview of your asset catalog" 
+        description="Overview of your web core data" 
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">

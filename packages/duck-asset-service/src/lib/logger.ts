@@ -1,5 +1,5 @@
 /**
- * Simple logger utility for Duck Asset Service
+ * Simple logger utility for Duck Engine Web Core
  */
 
 type LogLevel = 'info' | 'warn' | 'error' | 'debug';

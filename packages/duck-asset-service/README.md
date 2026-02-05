@@ -1,6 +1,6 @@
-# 🦆 Duck Asset Service (DAS)
+# 🦆 Duck Engine Web Core
 
-A monolithic web service for managing, versioning, and distributing assets for Duck Engine projects.
+A monolithic web app that provides core web tooling for Duck Engine projects (asset management today; scene/ECS tooling next).
 
 ## Features
 
@@ -71,7 +71,7 @@ A monolithic web service for managing, versioning, and distributing assets for D
 
 1. **Build the image**:
    ```bash
-   docker build -t duck-asset-service .
+  docker build -t duck-engine-web-core .
    ```
 
 2. **Run the container**:
@@ -83,13 +83,13 @@ A monolithic web service for managing, versioning, and distributing assets for D
      -e ASSET_ADMIN_USER=admin \
      -e ASSET_ADMIN_PASS=your-secure-password \
      -e BASE_URL=http://your-domain.com \
-     --name das \
-     duck-asset-service
+    --name duck-engine-web-core \
+    duck-engine-web-core
    ```
 
 3. **Initialize database** (first time only):
    ```bash
-   docker exec das npx prisma migrate deploy
+  docker exec duck-engine-web-core npx prisma migrate deploy
    ```
 
 ## API Reference

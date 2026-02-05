@@ -1,4 +1,4 @@
-# Duck Asset Service - Component Library
+# Duck Engine Web Core - Component Library
 
 This UI follows **Atomic Design** principles with **Neobrutalism** styling using Tailwind CSS.
 

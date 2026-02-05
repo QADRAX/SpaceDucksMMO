@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  duck-asset-service:
+  duck-engine-web-core:
     build: .
     ports:
       - "3000:3000"
