@@ -33,3 +33,5 @@ export type * from './domain/assets/TextureTypes';
 export type { GameSettings } from './domain/settings/GameSettings';
 
 export { default as TextureResolverService } from './application/TextureResolverService';
+
+export { default as WebCoreTextureCatalogService } from './infrastructure/assets/WebCoreTextureCatalogService';

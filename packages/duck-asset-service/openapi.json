@@ -197,12 +197,12 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "assets": {
+                    "data": {
                       "type": "array",
                       "items": {
                         "type": "object",
                         "properties": {
-                          "key": {
+                          "assetKey": {
                             "type": "string"
                           },
                           "displayName": {
@@ -252,6 +252,10 @@
                           }
                         }
                       }
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "Total number of entries in data"
                     }
                   }
                 }

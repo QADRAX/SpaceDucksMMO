@@ -6,7 +6,7 @@ const options: swaggerJsdoc.Options = {
     info: {
       title: 'Duck Engine Web Core API',
       version: '1.0.0',
-      description: 'Core web API for Duck Engine (assets today; scenes/editor next)',
+      description: 'Core web API for Duck Engine (resource-first materials + file assets; scenes/editor next)',
       contact: {
         name: 'SpaceDucks Team',
       },
@@ -19,103 +19,19 @@ const options: swaggerJsdoc.Options = {
     ],
     tags: [
       {
-        name: 'Assets',
-        description: 'Asset management endpoints',
-      },
-      {
         name: 'Admin',
         description: 'Administrative endpoints',
       },
       {
+        name: 'Materials',
+        description: 'Material resource endpoints',
+      },
+      {
         name: 'Files',
-        description: 'File serving endpoints',
+        description: 'FileAsset serving endpoints',
       },
     ],
-    paths: {
-      '/api/assets/file/{assetKey}/{version}/{fileName}': {
-        get: {
-          tags: ['Files'],
-          summary: 'Download asset file',
-          description: "Download a specific file from an asset version. Use 'latest' as version to get the default/most recent published version.",
-          parameters: [
-            {
-              in: 'path',
-              name: 'assetKey',
-              required: true,
-              schema: { type: 'string' },
-              description: 'Asset key (may contain slashes)',
-              example: 'metal-grid-01',
-            },
-            {
-              in: 'path',
-              name: 'version',
-              required: true,
-              schema: { type: 'string' },
-              description: "Version number or 'latest'",
-              example: '1.0.0',
-            },
-            {
-              in: 'path',
-              name: 'fileName',
-              required: true,
-              schema: { type: 'string' },
-              description: 'File name',
-              example: 'albedo.png',
-            },
-          ],
-          responses: {
-            '200': {
-              description: 'File content',
-              content: {
-                'image/png': {
-                  schema: { type: 'string', format: 'binary' },
-                },
-                'image/jpeg': {
-                  schema: { type: 'string', format: 'binary' },
-                },
-                'application/octet-stream': {
-                  schema: { type: 'string', format: 'binary' },
-                },
-              },
-              headers: {
-                'Content-Type': {
-                  schema: { type: 'string' },
-                  description: 'MIME type of the file',
-                },
-                'Content-Length': {
-                  schema: { type: 'integer' },
-                  description: 'File size in bytes',
-                },
-                'Cache-Control': {
-                  schema: { type: 'string' },
-                  description: 'Cache directives',
-                },
-                ETag: {
-                  schema: { type: 'string' },
-                  description: 'Entity tag for cache validation',
-                },
-              },
-            },
-            '400': {
-              description: 'Invalid path format',
-              content: {
-                'application/json': {
-                  schema: { $ref: '#/components/schemas/Error' },
-                },
-              },
-            },
-            '404': {
-              description: 'Asset, version, or file not found',
-              content: {
-                'application/json': {
-                  schema: { $ref: '#/components/schemas/Error' },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
+    paths: {},
     components: {
       schemas: {
         Asset: {

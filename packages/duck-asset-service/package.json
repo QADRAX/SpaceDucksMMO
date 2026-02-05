@@ -13,6 +13,8 @@
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
+    "@duckengine/core": "^0.1.0",
+    "@duckengine/ecs": "^0.1.0",
     "@prisma/client": "^5.22.0",
     "next": "^14.2.35",
     "react": "^18.3.0",

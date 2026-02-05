@@ -20,8 +20,8 @@ export class AssetsService {
         category?: string,
         tag?: string,
     ): CancelablePromise<{
-        assets?: Array<{
-            key?: string;
+        data?: Array<{
+            assetKey?: string;
             displayName?: string;
             type?: string;
             category?: string;
@@ -36,6 +36,10 @@ export class AssetsService {
                 mapType?: string | null;
             }>;
         }>;
+        /**
+         * Total number of entries in data
+         */
+        count?: number;
     }> {
         return __request(OpenAPI, {
             method: 'GET',

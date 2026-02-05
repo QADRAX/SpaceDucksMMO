@@ -9,18 +9,18 @@ import { Button } from '@/components/atoms/Button';
 export const dynamic = 'force-dynamic';
 
 async function getStats() {
-  const [assetCount, versionCount] = await Promise.all([
-    prisma.asset.count({
-      where: { isArchived: false },
+  const [materialCount, versionCount] = await Promise.all([
+    prisma.resource.count({
+      where: { kind: 'material', isArchived: false },
     }),
-    prisma.assetVersion.count({
+    prisma.resourceVersion.count({
       where: {
-        asset: { isArchived: false },
+        resource: { kind: 'material', isArchived: false },
       },
     }),
   ]);
 
-  return { assetCount, versionCount };
+  return { materialCount, versionCount };
 }
 
 export default async function AdminDashboard() {
@@ -34,7 +34,7 @@ export default async function AdminDashboard() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <StatCard label="Total Assets" value={stats.assetCount} />
+        <StatCard label="Total Materials" value={stats.materialCount} />
         <StatCard label="Total Versions" value={stats.versionCount} />
       </div>
 
@@ -43,8 +43,8 @@ export default async function AdminDashboard() {
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <Link href="/admin/assets">
-            <Button>View All Assets</Button>
+          <Link href="/admin/materials">
+            <Button>View Materials</Button>
           </Link>
         </CardContent>
       </Card>

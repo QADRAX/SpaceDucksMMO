@@ -10,54 +10,71 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Asset {
-  id          String         @id @default(uuid())
-  key         String         @unique
+// NOTE: The old Asset/AssetVersion/AssetFile models were intentionally removed.
+// Web Core now models engine-facing Resources (versioned) and FileAssets (single file).
+
+model FileAsset {
+  id          String   @id @default(uuid())
+  fileName    String
+  contentType String
+  size        Int
+  sha256      String
+  storagePath String
+  createdAt   DateTime @default(now())
+
+  bindings ResourceBinding[]
+
+  @@index([sha256])
+}
+
+model Resource {
+  id          String   @id @default(uuid())
+  key         String   @unique
   displayName String
-  type        String // "texture" | "sprite_sheet" | "audio" | "map" | "prefab" | "shader" | "script" | "other"
-  category    String
-  tags        String // JSON array stored as string
-  thumbnail   String? // Relative path to thumbnail image
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  isArchived  Boolean        @default(false)
-  versions    AssetVersion[]
+  kind        String   // e.g. "material"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  isArchived  Boolean  @default(false)
+
+  versions ResourceVersion[]
 
   @@index([key])
-  @@index([type])
-  @@index([category])
+  @@index([kind])
   @@index([isArchived])
 }
 
-model AssetVersion {
-  id        String       @id @default(uuid())
-  assetId   String
-  asset     Asset        @relation(fields: [assetId], references: [id], onDelete: Cascade)
-  version   String
-  status    String       @default("draft") // "draft" | "published" | "deprecated"
-  isDefault Boolean      @default(false)
-  notes     String?
-  createdAt DateTime     @default(now())
-  files     AssetFile[]
+model ResourceVersion {
+  id            String   @id @default(uuid())
+  resourceId    String
+  resource      Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  version       Int
+  status        String   @default("draft") // "draft" | "published" | "deprecated"
+  isDefault     Boolean  @default(false)
+  componentType String   // e.g. "basicMaterial" | "lambertMaterial" | "phongMaterial" | "standardMaterial"
+  // SQLite doesn't support Prisma's Json type; store stringified JSON.
+  componentData String   @default("{}")
+  createdAt     DateTime @default(now())
 
-  @@unique([assetId, version])
-  @@index([assetId])
+  bindings ResourceBinding[]
+
+  @@unique([resourceId, version])
+  @@index([resourceId])
   @@index([status])
   @@index([isDefault])
+  @@index([componentType])
 }
 
-model AssetFile {
-  id             String       @id @default(uuid())
-  assetVersionId String
-  assetVersion   AssetVersion @relation(fields: [assetVersionId], references: [id], onDelete: Cascade)
-  fileName       String
-  relativePath   String?
-  contentType    String
-  size           Int
-  hash           String
-  mapType        String?      // For materials: "albedo" | "normal" | "roughness" | "metallic" | "ao" | "height" | "emission"
-  createdAt      DateTime     @default(now())
+model ResourceBinding {
+  id                String         @id @default(uuid())
+  resourceVersionId String
+  resourceVersion   ResourceVersion @relation(fields: [resourceVersionId], references: [id], onDelete: Cascade)
+  slot              String
+  fileAssetId       String
+  fileAsset         FileAsset      @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+  createdAt         DateTime       @default(now())
 
-  @@index([assetVersionId])
-  @@index([mapType])
+  @@unique([resourceVersionId, slot])
+  @@index([resourceVersionId])
+  @@index([fileAssetId])
+  @@index([slot])
 }

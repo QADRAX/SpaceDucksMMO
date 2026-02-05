@@ -16,6 +16,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@duckengine/ecs": "^0.1.0"
+    "@duckengine/ecs": "^0.1.0",
+    "@duckengine/web-core-api-client": "^0.1.0"
   }
 }

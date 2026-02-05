@@ -5,16 +5,22 @@ import { logger } from './logger';
 import { Readable } from 'stream';
 
 /**
- * Filesystem storage service for asset files
+ * Filesystem storage service for FileAsset blobs
  */
 
-const STORAGE_BASE_PATH = process.env.ASSET_STORAGE_PATH || '/data/assets';
+const STORAGE_ROOT_PATH =
+  process.env.WEB_CORE_STORAGE_PATH ||
+  process.env.ASSET_STORAGE_PATH ||
+  '/data/web-core';
+
+const STORAGE_FILES_PATH = path.join(STORAGE_ROOT_PATH, 'files');
 
 export interface FileMetadata {
   fileName: string;
   size: number;
-  hash: string;
+  sha256: string;
   contentType: string;
+  storagePath: string;
   absolutePath: string;
 }
 
@@ -23,14 +29,20 @@ export class StorageService {
    * Save a file to the storage directory
    */
   static async saveFile(
-    assetKey: string,
-    version: string,
     file: File | Buffer,
-    fileName: string
+    fileName: string,
+    opts?: {
+      fileId?: string;
+      contentType?: string;
+    }
   ): Promise<FileMetadata> {
     try {
-      const targetDir = path.join(STORAGE_BASE_PATH, assetKey, version);
-      const targetPath = path.join(targetDir, fileName);
+      const fileId = opts?.fileId || crypto.randomUUID();
+      const targetDir = path.join(STORAGE_FILES_PATH, fileId);
+      const safeName = path.basename(fileName);
+      const targetPath = path.join(targetDir, safeName);
+
+      const storagePath = path.relative(STORAGE_ROOT_PATH, targetPath).split(path.sep).join('/');
 
       // Ensure directory exists
       await fs.mkdir(targetDir, { recursive: true });
@@ -41,37 +53,36 @@ export class StorageService {
       if (file instanceof File) {
         const arrayBuffer = await file.arrayBuffer();
         buffer = Buffer.from(arrayBuffer);
-        contentType = file.type || 'application/octet-stream';
+        contentType = opts?.contentType || file.type || 'application/octet-stream';
       } else {
         buffer = file;
-        contentType = 'application/octet-stream';
+        contentType = opts?.contentType || 'application/octet-stream';
       }
 
       // Write file
       await fs.writeFile(targetPath, buffer);
 
       // Calculate hash
-      const hash = crypto.createHash('sha256').update(buffer).digest('hex');
+      const sha256 = crypto.createHash('sha256').update(buffer).digest('hex');
 
       logger.info('File saved successfully', {
-        assetKey,
-        version,
-        fileName,
+        fileId,
+        fileName: safeName,
         size: buffer.length,
-        hash,
+        sha256,
+        storagePath,
       });
 
       return {
-        fileName,
+        fileName: safeName,
         size: buffer.length,
-        hash: `sha256:${hash}`,
+        sha256,
         contentType,
+        storagePath,
         absolutePath: targetPath,
       };
     } catch (error) {
       logger.error('Failed to save file', {
-        assetKey,
-        version,
         fileName,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
@@ -80,19 +91,20 @@ export class StorageService {
   }
 
   /**
-   * Get file path
+   * Resolve an absolute path from a stored relative path
    */
-  static getFilePath(assetKey: string, version: string, fileName: string): string {
-    return path.join(STORAGE_BASE_PATH, assetKey, version, fileName);
+  static getAbsolutePath(storagePath: string): string {
+    const normalized = storagePath.replace(/\\/g, '/');
+    const resolved = path.join(STORAGE_ROOT_PATH, normalized);
+    return resolved;
   }
 
   /**
    * Check if file exists
    */
-  static async fileExists(assetKey: string, version: string, fileName: string): Promise<boolean> {
+  static async fileExists(storagePath: string): Promise<boolean> {
     try {
-      const filePath = this.getFilePath(assetKey, version, fileName);
-      await fs.access(filePath);
+      await fs.access(this.getAbsolutePath(storagePath));
       return true;
     } catch {
       return false;
@@ -102,56 +114,37 @@ export class StorageService {
   /**
    * Get file stats
    */
-  static async getFileStats(assetKey: string, version: string, fileName: string) {
-    const filePath = this.getFilePath(assetKey, version, fileName);
-    return await fs.stat(filePath);
+  static async getFileStats(storagePath: string) {
+    return await fs.stat(this.getAbsolutePath(storagePath));
   }
 
   /**
    * Read file as buffer
    */
-  static async readFile(assetKey: string, version: string, fileName: string): Promise<Buffer> {
-    const filePath = this.getFilePath(assetKey, version, fileName);
-    return await fs.readFile(filePath);
+  static async readFile(storagePath: string): Promise<Buffer> {
+    return await fs.readFile(this.getAbsolutePath(storagePath));
   }
 
   /**
    * Create a readable stream for a file
    */
-  static createReadStream(assetKey: string, version: string, fileName: string): Readable {
-    const filePath = this.getFilePath(assetKey, version, fileName);
+  static createReadStream(storagePath: string): Readable {
+    const filePath = this.getAbsolutePath(storagePath);
     const fsModule = require('fs');
     return fsModule.createReadStream(filePath);
   }
 
   /**
-   * Delete all files for a specific asset version
+   * Delete a file by its storage path
    */
-  static async deleteVersion(assetKey: string, version: string): Promise<void> {
+  static async deleteFile(storagePath: string): Promise<void> {
     try {
-      const versionDir = path.join(STORAGE_BASE_PATH, assetKey, version);
-      await fs.rm(versionDir, { recursive: true, force: true });
-      logger.info('Version directory deleted', { assetKey, version });
+      const filePath = this.getAbsolutePath(storagePath);
+      await fs.rm(filePath, { force: true });
+      logger.info('File deleted', { storagePath });
     } catch (error) {
-      logger.error('Failed to delete version directory', {
-        assetKey,
-        version,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      });
-    }
-  }
-
-  /**
-   * Delete all files for an asset
-   */
-  static async deleteAsset(assetKey: string): Promise<void> {
-    try {
-      const assetDir = path.join(STORAGE_BASE_PATH, assetKey);
-      await fs.rm(assetDir, { recursive: true, force: true });
-      logger.info('Asset directory deleted', { assetKey });
-    } catch (error) {
-      logger.error('Failed to delete asset directory', {
-        assetKey,
+      logger.error('Failed to delete file', {
+        storagePath,
         error: error instanceof Error ? error.message : 'Unknown error',
       });
     }

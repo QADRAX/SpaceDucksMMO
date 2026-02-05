@@ -1,131 +1,203 @@
-import type { Asset, AssetVersion, AssetFile } from '@prisma/client';
+import { z } from 'zod';
 
-/**
- * Type definitions for API responses and queries
- */
+import type {
+  BasicMaterialComponent,
+  LambertMaterialComponent,
+  PhongMaterialComponent,
+  StandardMaterialComponent,
+} from '@duckengine/ecs';
 
-// Asset type enum
+export const RESOURCE_KIND_MATERIAL = 'material' as const;
+
+export const ResourceStatusSchema = z.enum(['draft', 'published', 'deprecated']);
+export type ResourceStatus = z.infer<typeof ResourceStatusSchema>;
+
+// Legacy compatibility (assets UI/API are being retired).
 export type AssetType = 'material' | 'texture';
+export type VersionStatus = ResourceStatus;
 
-// Version status enum
-export type VersionStatus = 'draft' | 'published' | 'deprecated';
+export type MaterialComponentType =
+  | BasicMaterialComponent['type']
+  | LambertMaterialComponent['type']
+  | PhongMaterialComponent['type']
+  | StandardMaterialComponent['type'];
 
-// Asset with version count
-export type AssetWithVersionCount = Asset & {
-  _count: {
-    versions: number;
-  };
+export const MaterialComponentTypeSchema = z.enum([
+  'basicMaterial',
+  'lambertMaterial',
+  'phongMaterial',
+  'standardMaterial',
+]);
+
+const ColorSchema = z.union([z.string(), z.number()]);
+
+export type BasicMaterialComponentData = Partial<
+  Pick<
+    BasicMaterialComponent,
+    'color' | 'transparent' | 'opacity' | 'wireframe' | 'texture' | 'normalMap' | 'envMap'
+  >
+>;
+
+export type LambertMaterialComponentData = Partial<
+  Pick<
+    LambertMaterialComponent,
+    'color' | 'emissive' | 'transparent' | 'opacity' | 'texture' | 'normalMap' | 'aoMap' | 'bumpMap' | 'envMap'
+  >
+>;
+
+export type PhongMaterialComponentData = Partial<
+  Pick<
+    PhongMaterialComponent,
+    | 'color'
+    | 'specular'
+    | 'shininess'
+    | 'emissive'
+    | 'transparent'
+    | 'opacity'
+    | 'texture'
+    | 'normalMap'
+    | 'specularMap'
+    | 'aoMap'
+    | 'bumpMap'
+    | 'envMap'
+  >
+>;
+
+export type StandardMaterialComponentData = Partial<
+  Pick<
+    StandardMaterialComponent,
+    | 'color'
+    | 'metalness'
+    | 'roughness'
+    | 'emissive'
+    | 'emissiveIntensity'
+    | 'transparent'
+    | 'opacity'
+    | 'texture'
+    | 'normalMap'
+    | 'envMap'
+    | 'aoMap'
+    | 'roughnessMap'
+    | 'metalnessMap'
+  >
+>;
+
+export type MaterialComponentDataByType = {
+  basicMaterial: BasicMaterialComponentData;
+  lambertMaterial: LambertMaterialComponentData;
+  phongMaterial: PhongMaterialComponentData;
+  standardMaterial: StandardMaterialComponentData;
 };
 
-// Asset with full version details
-export type AssetWithVersions = Asset & {
-  versions: (AssetVersion & {
-    _count: {
-      files: number;
-    };
-  })[];
-};
+export const BasicMaterialComponentDataSchema = z
+  .object({
+    color: ColorSchema.optional(),
+    transparent: z.boolean().optional(),
+    opacity: z.number().optional(),
+    wireframe: z.boolean().optional(),
+    texture: z.string().optional(),
+    normalMap: z.string().optional(),
+    envMap: z.string().optional(),
+  })
+  .strict();
 
-// Version with files
-export type VersionWithFiles = AssetVersion & {
-  files: AssetFile[];
-};
+export const LambertMaterialComponentDataSchema = z
+  .object({
+    color: ColorSchema.optional(),
+    emissive: ColorSchema.optional(),
+    transparent: z.boolean().optional(),
+    opacity: z.number().optional(),
+    texture: z.string().optional(),
+    normalMap: z.string().optional(),
+    aoMap: z.string().optional(),
+    bumpMap: z.string().optional(),
+    envMap: z.string().optional(),
+  })
+  .strict();
 
-// Version with files and asset
-export type VersionWithFilesAndAsset = AssetVersion & {
-  files: AssetFile[];
-  asset: Asset;
-};
+export const PhongMaterialComponentDataSchema = z
+  .object({
+    color: ColorSchema.optional(),
+    specular: ColorSchema.optional(),
+    shininess: z.number().optional(),
+    emissive: ColorSchema.optional(),
+    transparent: z.boolean().optional(),
+    opacity: z.number().optional(),
+    texture: z.string().optional(),
+    normalMap: z.string().optional(),
+    specularMap: z.string().optional(),
+    aoMap: z.string().optional(),
+    bumpMap: z.string().optional(),
+    envMap: z.string().optional(),
+  })
+  .strict();
 
-// Asset with published versions and files
-export type AssetWithPublishedVersions = Asset & {
-  versions: (AssetVersion & {
-    files: AssetFile[];
-  })[];
-};
+export const StandardMaterialComponentDataSchema = z
+  .object({
+    color: ColorSchema.optional(),
+    metalness: z.number().optional(),
+    roughness: z.number().optional(),
+    emissive: ColorSchema.optional(),
+    emissiveIntensity: z.number().optional(),
+    transparent: z.boolean().optional(),
+    opacity: z.number().optional(),
+    texture: z.string().optional(),
+    normalMap: z.string().optional(),
+    envMap: z.string().optional(),
+    aoMap: z.string().optional(),
+    roughnessMap: z.string().optional(),
+    metalnessMap: z.string().optional(),
+  })
+  .strict();
 
-// Parsed asset (with tags as array)
-export type ParsedAsset = Omit<Asset, 'tags'> & {
-  tags: string[];
-};
+export const MaterialComponentSchema = z.discriminatedUnion('componentType', [
+  z.object({ componentType: z.literal('basicMaterial'), componentData: BasicMaterialComponentDataSchema }),
+  z.object({ componentType: z.literal('lambertMaterial'), componentData: LambertMaterialComponentDataSchema }),
+  z.object({ componentType: z.literal('phongMaterial'), componentData: PhongMaterialComponentDataSchema }),
+  z.object({ componentType: z.literal('standardMaterial'), componentData: StandardMaterialComponentDataSchema }),
+]);
 
-// Parsed asset with version count
-export type ParsedAssetWithVersionCount = ParsedAsset & {
-  versionCount: number;
-};
+export type MaterialComponentPayload = z.infer<typeof MaterialComponentSchema>;
 
-// Parsed asset with versions
-export type ParsedAssetWithVersions = ParsedAsset & {
-  versions: (AssetVersion & {
-    fileCount: number;
-    files?: AssetFile[];
-  })[];
-};
+export const CreateMaterialResourceSchema = z
+  .object({
+    key: z.string().min(1),
+    displayName: z.string().min(1),
+  })
+  .strict();
 
-// Parsed version with files (for UI)
-export type ParsedVersionWithFiles = AssetVersion & {
-  fileCount: number;
-  files: AssetFile[];
-};
+export type CreateMaterialResourceInput = z.infer<typeof CreateMaterialResourceSchema>;
 
-// Manifest entry
-export interface ManifestEntry {
-  assetKey: string;
-  displayName: string;
-  type: AssetType;
-  category: string;
-  tags: string[];
-  version: string;
-  files: ManifestFile[];
-}
+export const CreateMaterialVersionSchema = z
+  .object({
+    version: z.number().int().positive().optional(),
+    status: ResourceStatusSchema.optional(),
+    isDefault: z.boolean().optional(),
+    componentType: MaterialComponentTypeSchema,
+    componentData: z.unknown().optional(),
+  })
+  .strict();
 
-// Manifest file
-export interface ManifestFile {
+export type CreateMaterialVersionInput = z.infer<typeof CreateMaterialVersionSchema>;
+
+export type ResolvedFile = {
+  id: string;
   fileName: string;
-  url: string;
-  size: number;
-  hash: string;
   contentType: string;
-  mapType?: string | null; // For material assets: PBR map type
-}
+  size: number;
+  sha256: string;
+  url: string;
+};
 
-// API Response types
-export interface AssetListResponse {
-  data: ParsedAssetWithVersionCount[];
-  pagination: {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-  };
-}
-
-export interface VersionListResponse {
-  data: VersionWithFiles[];
-}
-
-export interface ManifestResponse {
-  data: ManifestEntry[];
-  count: number;
-}
-
-export interface CategoryListResponse {
-  data: string[];
-}
-
-export interface TagListResponse {
-  data: string[];
-}
-
-// Helper function to parse tags
-export function parseTags(tagsJson: string): string[] {
-  try {
-    const tags = JSON.parse(tagsJson);
-    return Array.isArray(tags) ? tags : [];
-  } catch {
-    return [];
-  }
-}
+export type ResolvedMaterialResource = {
+  key: string;
+  resourceId: string;
+  version: number;
+  status: ResourceStatus;
+  componentType: MaterialComponentType;
+  componentData: Record<string, unknown>;
+  textures: Record<string, ResolvedFile>;
+};
 
 // Material metadata types
 export type MaterialMapType = 
@@ -175,12 +247,4 @@ export function detectMapType(filename: string): MaterialMapType | null {
   }
   
   return null;
-}
-
-// Helper function to parse asset
-export function parseAsset<T extends Asset>(asset: T): Omit<T, 'tags'> & { tags: string[] } {
-  return {
-    ...asset,
-    tags: parseTags(asset.tags),
-  };
 }
