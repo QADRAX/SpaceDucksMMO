@@ -1,0 +1,774 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Duck Engine Web Core API",
+    "version": "1.0.0",
+    "description": "Core web API for Duck Engine (assets today; scenes/editor next)",
+    "contact": {
+      "name": "SpaceDucks Team"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Development server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Assets",
+      "description": "Asset management endpoints"
+    },
+    {
+      "name": "Admin",
+      "description": "Administrative endpoints"
+    },
+    {
+      "name": "Files",
+      "description": "File serving endpoints"
+    }
+  ],
+  "paths": {
+    "/api/assets/file/{assetKey}/{version}/{fileName}": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "summary": "Download asset file",
+        "description": "Download a specific file from an asset version. Use 'latest' as version to get the default/most recent published version.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assetKey",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Asset key (may contain slashes)",
+            "example": "metal-grid-01"
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Version number or 'latest'",
+            "example": "1.0.0"
+          },
+          {
+            "in": "path",
+            "name": "fileName",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "File name",
+            "example": "albedo.png"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File content",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            },
+            "headers": {
+              "Content-Type": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "MIME type of the file"
+              },
+              "Content-Length": {
+                "schema": {
+                  "type": "integer"
+                },
+                "description": "File size in bytes"
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Cache directives"
+              },
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Entity tag for cache validation"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid path format",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Asset, version, or file not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/docs": {
+      "get": {
+        "summary": "Get OpenAPI specification",
+        "description": "Returns the OpenAPI specification in JSON format",
+        "responses": {
+          "200": {
+            "description": "OpenAPI specification"
+          }
+        }
+      }
+    },
+    "/api/assets/manifest/by-query": {
+      "get": {
+        "tags": [
+          "Assets"
+        ],
+        "summary": "Get asset manifest",
+        "description": "Get a manifest of published assets with file URLs for game clients",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "material",
+                "texture"
+              ]
+            },
+            "description": "Filter by asset type"
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by category"
+          },
+          {
+            "in": "query",
+            "name": "tag",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by tag"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset manifest with file URLs",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "assets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "category": {
+                            "type": "string"
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "version": {
+                            "type": "string"
+                          },
+                          "files": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "fileName": {
+                                  "type": "string"
+                                },
+                                "url": {
+                                  "type": "string"
+                                },
+                                "size": {
+                                  "type": "integer"
+                                },
+                                "hash": {
+                                  "type": "string"
+                                },
+                                "contentType": {
+                                  "type": "string"
+                                },
+                                "mapType": {
+                                  "type": "string",
+                                  "nullable": true
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/assets": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "List all assets",
+        "description": "Get a paginated list of assets with optional filtering",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "material",
+                "texture"
+              ]
+            },
+            "description": "Filter by asset type"
+          },
+          {
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by category"
+          },
+          {
+            "in": "query",
+            "name": "tag",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by tag"
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search in key and displayName"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Page number"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 50
+            },
+            "description": "Items per page"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of assets",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "assets": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Asset"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "limit": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameters",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create a new asset",
+        "description": "Creates a new asset with the provided metadata",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAssetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Asset created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Asset"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Asset with this key already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/assets/{assetId}": {
+      "get": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Get asset details",
+        "description": "Get detailed information about a specific asset including all versions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Asset ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "$ref": "#/components/schemas/Asset"
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "versions": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AssetVersion"
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Asset not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Delete an asset",
+        "description": "Archives an asset (soft delete) and removes all associated files from storage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Asset ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Asset deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Asset not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/assets/{assetId}/versions/{versionId}": {
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Update version metadata",
+        "description": "Update status, notes, or default flag for a version",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "assetId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "in": "path",
+            "name": "versionId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "draft",
+                      "published"
+                    ]
+                  },
+                  "notes": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "isDefault": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Version updated successfully"
+          },
+          "404": {
+            "description": "Version not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Asset": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Unique identifier"
+          },
+          "key": {
+            "type": "string",
+            "description": "Unique key for the asset",
+            "example": "metal-grid-01"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable name",
+            "example": "Metal Grid Material"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "material",
+              "texture"
+            ],
+            "description": "Type of asset"
+          },
+          "category": {
+            "type": "string",
+            "nullable": true,
+            "description": "Category for organization",
+            "example": "metals"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Tags for searching and filtering",
+            "example": [
+              "metal",
+              "grid",
+              "industrial"
+            ]
+          },
+          "isArchived": {
+            "type": "boolean",
+            "description": "Whether the asset is archived"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AssetVersion": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "assetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published"
+            ]
+          },
+          "isDefault": {
+            "type": "boolean"
+          },
+          "notes": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AssetFile": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileName": {
+            "type": "string",
+            "example": "albedo.png"
+          },
+          "fileSize": {
+            "type": "integer",
+            "description": "File size in bytes"
+          },
+          "hash": {
+            "type": "string",
+            "description": "SHA-256 hash of the file"
+          },
+          "contentType": {
+            "type": "string",
+            "example": "image/png"
+          },
+          "mapType": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "albedo",
+              "normal",
+              "roughness",
+              "metallic",
+              "ao",
+              "height",
+              "emission"
+            ],
+            "description": "Type of PBR map (for materials)"
+          }
+        }
+      },
+      "CreateAssetRequest": {
+        "type": "object",
+        "required": [
+          "key",
+          "displayName",
+          "type"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Unique key for the asset"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Human-readable name"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "material",
+              "texture"
+            ]
+          },
+          "category": {
+            "type": "string",
+            "nullable": true
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          }
+        }
+      }
+    }
+  }
+}

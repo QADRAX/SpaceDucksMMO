@@ -1,0 +1,23 @@
+{
+  "name": "@duckengine/web-core-api-client",
+  "version": "0.1.0",
+  "private": false,
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "generate": "npm --workspace @duckengine/web-core run openapi:export && npm exec --yes openapi-typescript-codegen -- --input ../duck-asset-service/openapi.json --output src/generated --client fetch",
+    "build": "npm run generate && tsc -b tsconfig.json",
+    "test": "node -e \"console.log('No tests')\""
+  },
+  "devDependencies": {
+    "openapi-typescript-codegen": "^0.29.0",
+    "typescript": "^5.5.0"
+  }
+}

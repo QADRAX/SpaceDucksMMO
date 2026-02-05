@@ -17,13 +17,15 @@
   "scripts": {
     "build": "npm run build:all",
     "build:workspaces": "npm --workspaces run build",
-    "build:all": "npm run build:duckengine:ecs && npm run build:duckengine:core && npm run build:duckengine:physics-rapier && npm run build:duckengine:rendering-three && npm run build:client && npm run build:duckengine:web-core",
+    "build:all": "npm run build:duckengine:ecs && npm run build:duckengine:web-core && npm run build:duckengine:web-core-api-client && npm run build:duckengine:core && npm run build:duckengine:physics-rapier && npm run build:duckengine:rendering-three && npm run build:client",
     "build:duckengine:ecs": "npm --workspace @duckengine/ecs run build",
+    "build:duckengine:web-core": "npm --workspace @duckengine/web-core run build",
+    "build:duckengine:web-core-api-client": "npm --workspace @duckengine/web-core-api-client run build",
     "build:duckengine:core": "npm --workspace @duckengine/core run build",
     "build:duckengine:physics-rapier": "npm --workspace @duckengine/physics-rapier run build",
     "build:duckengine:rendering-three": "npm --workspace @duckengine/rendering-three run build",
     "build:client": "npm --workspace @spaceducks/client run build",
-    "build:duckengine:web-core": "npm --workspace @duckengine/web-core run build",
+    "generate:duckengine:web-core-api-client": "npm --workspace @duckengine/web-core-api-client run generate",
     "dev:client": "npm --workspace @spaceducks/client run dev:all",
     "start:client": "npm --workspace @spaceducks/client run start",
     "clean": "node -e \"console.log('No-op clean')\""
