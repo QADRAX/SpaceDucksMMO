@@ -46,13 +46,3 @@ export function selectPreviewVersion(versions: AssetVersion[]): AssetVersion | n
   // Return first available version
   return versions[0];
 }
-
-/**
- * Checks if a version has files suitable for material preview
- */
-export function hasPreviewableFiles(version: AssetVersion | null): boolean {
-  if (!version || !version.files) return false;
-  
-  // Check if at least one file has a mapType
-  return version.files.some(file => file.mapType !== null);
-}

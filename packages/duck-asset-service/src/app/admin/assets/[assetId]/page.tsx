@@ -13,8 +13,7 @@ import { Button } from '@/components/atoms/Button';
 import { DropdownMenu, DropdownMenuItem } from '@/components/molecules/DropdownMenu';
 import { EditVersionDialog } from '@/components/organisms/EditVersionDialog';
 import { AddAssetVersionDialog } from '@/components/organisms/AddAssetVersionDialog';
-import { MaterialPreview } from '@/components/organisms/MaterialPreview';
-import { selectPreviewVersion, hasPreviewableFiles } from '@/lib/utils/versionUtils';
+import { selectPreviewVersion } from '@/lib/utils/versionUtils';
 
 export default function AssetDetailPage() {
   const params = useParams();
@@ -235,32 +234,17 @@ export default function AssetDetailPage() {
                 })()}
               </h2>
             </div>
-            <div className="p-6 flex items-center justify-center min-h-[400px]">
+            <div className="p-6 flex items-center justify-center min-h-100">
               {(() => {
                 const previewVersion = selectPreviewVersion(asset.versions);
-                
-                // Material preview (PBR with 3D viewer)
+
+                // Material preview is not available
                 if (asset.type === 'material') {
-                  const canPreview = hasPreviewableFiles(previewVersion);
-                  
-                  if (!canPreview) {
-                    return (
-                      <p className="text-neutral-600 text-center">
-                        No texture files available for preview. Upload material textures to see a 3D preview.
-                      </p>
-                    );
-                  }
-                  
-                  if (previewVersion && previewVersion.files) {
-                    return (
-                      <MaterialPreview
-                        assetKey={asset.key}
-                        version={previewVersion.version}
-                        files={previewVersion.files}
-                        className="w-full"
-                      />
-                    );
-                  }
+                  return (
+                    <p className="text-neutral-600 text-center">
+                      Material preview is not available.
+                    </p>
+                  );
                 }
                 
                 // Texture preview (simple image)
@@ -272,7 +256,7 @@ export default function AssetDetailPage() {
                       <img 
                         src={imageUrl} 
                         alt={asset.displayName}
-                        className="max-w-full max-h-[400px] border-4 border-black rounded-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
+                        className="max-w-full max-h-100 border-4 border-black rounded-base shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]"
                       />
                     );
                   }

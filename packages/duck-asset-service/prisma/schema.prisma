@@ -61,13 +61,3 @@ model AssetFile {
   @@index([assetVersionId])
   @@index([mapType])
 }
-
-model AssetSettings {
-  id        String   @id @default(uuid())
-  assetId   String   @unique
-  settings  String   // JSON string with material preview settings
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([assetId])
-}

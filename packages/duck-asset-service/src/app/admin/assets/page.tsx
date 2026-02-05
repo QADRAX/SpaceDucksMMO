@@ -119,7 +119,7 @@ export default function AssetsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Preview</TableHead>
+                <TableHead>Thumbnail</TableHead>
                 <TableHead>Key</TableHead>
                 <TableHead>Display Name</TableHead>
                 <TableHead>Type</TableHead>

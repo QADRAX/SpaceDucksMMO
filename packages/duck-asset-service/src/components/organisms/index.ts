@@ -9,4 +9,3 @@ export * from './MaterialUploadStep';
 export * from './TextureUploadStep';
 export * from './EditVersionDialog';
 export * from './AddAssetVersionDialog';
-export * from './MaterialPreview';
