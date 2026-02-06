@@ -36,6 +36,12 @@ export function AdminLayout({ children, className }: AdminLayoutProps) {
               API Docs
             </span>
           </SidebarMenuItem>
+          <SidebarMenuItem href="/api/auth/logout">
+            <span className="flex items-center gap-3">
+              <span className="text-lg">⎋</span>
+              Logout
+            </span>
+          </SidebarMenuItem>
         </SidebarMenu>
       </Sidebar>
       <main className={cn('flex-1 p-8', className)}>

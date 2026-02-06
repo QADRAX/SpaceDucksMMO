@@ -24,6 +24,8 @@ model FileAsset {
 
   bindings ResourceBinding[]
 
+  thumbnailForResources Resource[] @relation("ResourceThumbnail")
+
   @@index([sha256])
 }
 
@@ -32,15 +34,16 @@ model Resource {
   key         String   @unique
   displayName String
   kind        String   // e.g. "material"
+  activeVersion Int    @default(1)
+  thumbnailFileAssetId String?
+  thumbnailFileAsset   FileAsset? @relation("ResourceThumbnail", fields: [thumbnailFileAssetId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-  isArchived  Boolean  @default(false)
 
   versions ResourceVersion[]
 
   @@index([key])
   @@index([kind])
-  @@index([isArchived])
 }
 
 model ResourceVersion {
@@ -48,8 +51,6 @@ model ResourceVersion {
   resourceId    String
   resource      Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
   version       Int
-  status        String   @default("draft") // "draft" | "published" | "deprecated"
-  isDefault     Boolean  @default(false)
   componentType String   // e.g. "basicMaterial" | "lambertMaterial" | "phongMaterial" | "standardMaterial"
   // SQLite doesn't support Prisma's Json type; store stringified JSON.
   componentData String   @default("{}")
@@ -59,8 +60,6 @@ model ResourceVersion {
 
   @@unique([resourceId, version])
   @@index([resourceId])
-  @@index([status])
-  @@index([isDefault])
   @@index([componentType])
 }
 

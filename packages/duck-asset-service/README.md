@@ -1,14 +1,14 @@
 # 🦆 Duck Engine Web Core
 
-A monolithic web app that provides core web tooling for Duck Engine projects (asset management today; scene/ECS tooling next).
+A monolithic web app that provides core web tooling for Duck Engine projects.
 
 ## Features
 
-- ✅ **Asset Management**: Create, update, and organize reusable assets
-- ✅ **Version Control**: Immutable versioning with published/draft/deprecated states
-- ✅ **File Storage**: Filesystem-based storage with hash verification
-- ✅ **Admin UI**: Web-based interface for catalog management
-- ✅ **REST API**: Full admin and public APIs
+- ✅ **Materials Management**: Create/update material resources and immutable versions
+- ✅ **File Assets**: Store uploaded blobs as FileAssets (sha256, content-type, size)
+- ✅ **Bindings**: Bind material slots (albedo/normal/etc) to FileAssets
+- ✅ **Admin UI**: Web-based interface for managing materials
+- ✅ **REST API**: Admin API + engine-facing resolve endpoint
 - ✅ **Basic Auth**: Simple authentication for admin endpoints
 - ✅ **Docker Support**: Containerized deployment with persistent volumes
 
@@ -16,9 +16,10 @@ A monolithic web app that provides core web tooling for Duck Engine projects (as
 
 ### Domain Model
 
-- **Asset**: Logical resource (texture, audio, map, etc.)
-- **AssetVersion**: Immutable version of an asset with files
-- **AssetFile**: Physical file metadata (size, hash, content type)
+- **Resource**: Logical entity (currently focused on materials)
+- **ResourceVersion**: Immutable version snapshot of a Resource
+- **FileAsset**: Stored blob metadata + storage path
+- **ResourceBinding**: Links a ResourceVersion “slot” (e.g. `albedo`) to a FileAsset
 
 ### Tech Stack
 
@@ -47,11 +48,11 @@ A monolithic web app that provides core web tooling for Duck Engine projects (as
    cp .env.example .env
    ```
 
-   Edit `.env` to configure:
-   - `DATABASE_URL`: SQLite database path
-   - `ASSET_STORAGE_PATH`: Where asset files are stored
-   - `ASSET_ADMIN_USER`: Admin username
-   - `ASSET_ADMIN_PASS`: Admin password
+  Edit `.env` to configure:
+  - `DATABASE_URL`: SQLite database path
+  - `WEB_CORE_STORAGE_PATH` (or `ASSET_STORAGE_PATH`): Files storage root (defaults to `/data/web-core`)
+  - `ASSET_ADMIN_USER`: Admin username
+  - `ASSET_ADMIN_PASS`: Admin password
 
 3. **Initialize database**:
    ```bash
@@ -78,7 +79,7 @@ A monolithic web app that provides core web tooling for Duck Engine projects (as
    ```bash
    docker run -d \
      -p 3000:3000 \
-     -v das-data:/data/assets \
+     -v das-data:/data/web-core \
      -v das-db:/app/prisma \
      -e ASSET_ADMIN_USER=admin \
      -e ASSET_ADMIN_PASS=your-secure-password \
@@ -96,169 +97,73 @@ A monolithic web app that provides core web tooling for Duck Engine projects (as
 
 ### Admin API (Protected with Basic Auth)
 
-#### Assets
+#### Materials
 
-**List Assets**
+**List Materials**
 ```bash
-GET /api/admin/assets?type=texture&category=terrain&page=1&limit=20
+GET /api/admin/resources
 ```
 
-**Create Asset**
+**Create Material**
 ```bash
-POST /api/admin/assets
+POST /api/admin/resources
 Content-Type: application/json
 
 {
-  "key": "textures/terrain/grass",
-  "displayName": "Grass Texture",
-  "type": "texture",
-  "category": "textures/terrain",
-  "tags": ["nature", "ground"]
+  "key": "materials/terrain/grass",
+  "displayName": "Grass",
+  "tags": ["terrain", "nature"]
 }
 ```
 
-**Get Asset**
+**Get / Update / Delete Material**
 ```bash
-GET /api/admin/assets/{assetId}
+GET    /api/admin/resources/{resourceId}
+PATCH  /api/admin/resources/{resourceId}
+DELETE /api/admin/resources/{resourceId}
 ```
 
-**Update Asset**
+**List / Create Versions**
 ```bash
-PATCH /api/admin/assets/{assetId}
-Content-Type: application/json
-
-{
-  "displayName": "Updated Name",
-  "tags": ["new", "tags"]
-}
+GET  /api/admin/resources/{resourceId}/versions
+POST /api/admin/resources/{resourceId}/versions
 ```
 
-**Archive Asset**
+Version creation is `multipart/form-data` and supports uploading files for named slots.
+
+### Engine API (No Authentication)
+
+**Resolve a material to concrete file URLs**
 ```bash
-DELETE /api/admin/assets/{assetId}
+GET /api/engine/resources/resolve?key=materials/terrain/grass&version=latest
 ```
 
-#### Versions
+Response includes the resolved Resource + version + bindings, where each file contains a stable URL like:
 
-**List Versions**
+- `GET /api/files/{fileId}`
+
+### Files API (No Authentication)
+
+**Download a FileAsset by id**
 ```bash
-GET /api/admin/assets/{assetId}/versions
-```
-
-**Create Version with Files**
-```bash
-POST /api/admin/assets/{assetId}/versions
-Content-Type: multipart/form-data
-
-files[]: <file1>
-files[]: <file2>
-version: "2"
-status: "draft"
-notes: "Updated textures"
-```
-
-**Get Version**
-```bash
-GET /api/admin/assets/{assetId}/versions/{versionId}
-```
-
-**Update Version**
-```bash
-PATCH /api/admin/assets/{assetId}/versions/{versionId}
-Content-Type: application/json
-
-{
-  "status": "published",
-  "isDefault": true
-}
-```
-
-**Deprecate Version**
-```bash
-DELETE /api/admin/assets/{assetId}/versions/{versionId}
-```
-
-#### Taxonomy
-
-**Get Categories**
-```bash
-GET /api/admin/categories
-```
-
-**Get Tags**
-```bash
-GET /api/admin/tags?query=nature
-```
-
-### Public API (No Authentication)
-
-**Get Manifest**
-```bash
-GET /api/assets/manifest/by-query?type=texture&category=terrain
-```
-
-Response:
-```json
-{
-  "data": [
-    {
-      "assetKey": "textures/terrain/grass",
-      "displayName": "Grass Texture",
-      "type": "texture",
-      "category": "textures/terrain",
-      "tags": ["nature", "ground"],
-      "version": "2",
-      "files": [
-        {
-          "fileName": "grass.png",
-          "url": "http://localhost:3000/api/assets/file/textures/terrain/grass/2/grass.png",
-          "size": 102400,
-          "hash": "sha256:abc123...",
-          "contentType": "image/png"
-        }
-      ]
-    }
-  ],
-  "count": 1
-}
-```
-
-**Download File (Specific Version)**
-```bash
-GET /api/assets/file/{assetKey}/{version}/{fileName}
-```
-
-**Download File (Latest Version)**
-```bash
-GET /api/assets/file/{assetKey}/latest/{fileName}
+GET /api/files/{fileId}
 ```
 
 ## File Storage Structure
 
-Assets are stored on the filesystem at:
+Files are stored on the filesystem at:
 ```
-/data/assets/{assetKey}/{version}/{fileName}
-```
-
-Example:
-```
-/data/assets/
-  └── textures/
-      └── terrain/
-          └── grass/
-              ├── 1/
-              │   └── grass.png
-              └── 2/
-                  ├── grass.png
-                  └── grass_normal.png
+/data/web-core/files/{fileId}/{fileName}
 ```
 
 ## Authentication
 
 Admin endpoints use HTTP Basic Authentication:
 
+Example (materials):
+
 ```bash
-curl -u admin:password http://localhost:3000/api/admin/assets
+curl -u admin:password http://localhost:3000/api/admin/resources
 ```
 
 Or in browser, when accessing `/admin`, you'll be prompted for credentials.
@@ -268,7 +173,8 @@ Or in browser, when accessing `/admin`, you'll be prompted for credentials.
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `DATABASE_URL` | `file:./dev.db` | SQLite database location |
-| `ASSET_STORAGE_PATH` | `/data/assets` | Asset file storage path |
+| `WEB_CORE_STORAGE_PATH` | `/data/web-core` | Storage root for file blobs |
+| `ASSET_STORAGE_PATH` | *(deprecated)* | Back-compat alias for `WEB_CORE_STORAGE_PATH` |
 | `ASSET_ADMIN_USER` | `admin` | Admin username |
 | `ASSET_ADMIN_PASS` | `changeme` | Admin password |
 | `BASE_URL` | `http://localhost:3000` | Public base URL for file URLs |
@@ -295,32 +201,18 @@ npm run prisma:generate   # Generate Prisma client
 npm run prisma:studio     # Open Prisma Studio
 ```
 
-## Asset Types
-
-Supported asset types:
-- `texture`: Image textures
-- `sprite_sheet`: Sprite atlases
-- `audio`: Sound effects and music
-- `map`: Game maps
-- `prefab`: Prefabs/blueprints
-- `shader`: Shader code
-- `script`: Game scripts
-- `other`: Other asset types
-
 ## Version Status
 
-- `draft`: Work in progress, not publicly available
-- `published`: Available via public API
-- `deprecated`: Marked for removal, not recommended
+- `draft`: Work in progress
+- `published`: Used by engine resolve
+- `deprecated`: Marked for removal
 
 ## Best Practices
 
-1. **Asset Keys**: Use hierarchical paths (e.g., `textures/terrain/grass`)
-2. **Versioning**: Create new versions for file changes, don't modify existing
-3. **Default Version**: Mark stable versions as default for "latest" access
-4. **Publishing**: Only publish tested and approved versions
-5. **Categories**: Use consistent category hierarchies
-6. **Tags**: Add descriptive tags for better searchability
+1. **Keys**: Use hierarchical paths (e.g., `materials/terrain/grass`)
+2. **Versioning**: Create new versions for file changes; keep versions immutable
+3. **Publishing**: Only publish tested versions used by the engine
+4. **Tags**: Add descriptive tags for discoverability
 
 ## Troubleshooting
 
@@ -329,7 +221,7 @@ Supported asset types:
 - In Docker, use a volume for `/app/prisma`
 
 **File not found errors**:
-- Verify `ASSET_STORAGE_PATH` is correct
+- Verify `WEB_CORE_STORAGE_PATH` is correct
 - Check file permissions in Docker volumes
 - Ensure files were uploaded successfully
 

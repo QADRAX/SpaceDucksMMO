@@ -7,14 +7,23 @@ import type {
   StandardMaterialComponent,
 } from '@duckengine/ecs';
 
-export const RESOURCE_KIND_MATERIAL = 'material' as const;
+// Resource kinds
+// For now, each Three material component type is treated as a distinct resource kind.
+// This lets the API expand kinds without multiplying endpoints.
+export const MATERIAL_RESOURCE_KINDS = [
+  'basicMaterial',
+  'lambertMaterial',
+  'phongMaterial',
+  'standardMaterial',
+] as const;
 
-export const ResourceStatusSchema = z.enum(['draft', 'published', 'deprecated']);
-export type ResourceStatus = z.infer<typeof ResourceStatusSchema>;
+export type MaterialResourceKind = (typeof MATERIAL_RESOURCE_KINDS)[number];
+
+export const ResourceKindSchema = z.enum(MATERIAL_RESOURCE_KINDS);
+export type ResourceKind = z.infer<typeof ResourceKindSchema>;
 
 // Legacy compatibility (assets UI/API are being retired).
 export type AssetType = 'material' | 'texture';
-export type VersionStatus = ResourceStatus;
 
 export type MaterialComponentType =
   | BasicMaterialComponent['type']
@@ -22,12 +31,7 @@ export type MaterialComponentType =
   | PhongMaterialComponent['type']
   | StandardMaterialComponent['type'];
 
-export const MaterialComponentTypeSchema = z.enum([
-  'basicMaterial',
-  'lambertMaterial',
-  'phongMaterial',
-  'standardMaterial',
-]);
+export const MaterialComponentTypeSchema = z.enum(MATERIAL_RESOURCE_KINDS);
 
 const ColorSchema = z.union([z.string(), z.number()]);
 
@@ -171,7 +175,9 @@ export type CreateMaterialResourceInput = z.infer<typeof CreateMaterialResourceS
 export const CreateMaterialVersionSchema = z
   .object({
     version: z.number().int().positive().optional(),
-    status: ResourceStatusSchema.optional(),
+    // Deprecated (ignored). Kept for backwards compatibility with older clients/manifests.
+    status: z.string().optional(),
+    // Deprecated (ignored). Kept for backwards compatibility with older clients/manifests.
     isDefault: z.boolean().optional(),
     componentType: MaterialComponentTypeSchema,
     componentData: z.unknown().optional(),
@@ -179,6 +185,64 @@ export const CreateMaterialVersionSchema = z
   .strict();
 
 export type CreateMaterialVersionInput = z.infer<typeof CreateMaterialVersionSchema>;
+
+// Generic resource API payloads
+
+export const CreateResourceSchema = z
+  .object({
+    kind: ResourceKindSchema,
+    key: z.string().min(1),
+    displayName: z.string().min(1),
+  })
+  .strict();
+
+export type CreateResourceInput = z.infer<typeof CreateResourceSchema>;
+
+export const PatchResourceSchema = z
+  .object({
+    displayName: z.string().min(1).optional(),
+  })
+  .strict();
+
+export type PatchResourceInput = z.infer<typeof PatchResourceSchema>;
+
+export const CreateResourceVersionSchema = z
+  .object({
+    version: z.number().int().positive().optional(),
+    // Deprecated (ignored). Kept for backwards compatibility with older clients/manifests.
+    status: z.string().optional(),
+    // Deprecated (ignored). Kept for backwards compatibility with older clients/manifests.
+    isDefault: z.boolean().optional(),
+    // Resource-kind-specific payload. For materials, this is the Three component data.
+    componentData: z.unknown().optional(),
+    // Optional legacy field: if provided, must match the resource kind.
+    componentType: z.string().optional(),
+  })
+  .strict();
+
+export type CreateResourceVersionInput = z.infer<typeof CreateResourceVersionSchema>;
+
+/**
+ * ZIP upload manifests
+ *
+ * - Creating a new resource: include `resource.json` with metadata + initial `version` payload.
+ * - Creating a new version: include `version.json` with the version payload.
+ */
+
+export const ResourceZipManifestSchema = z
+  .object({
+    kind: ResourceKindSchema,
+    key: z.string().min(1),
+    displayName: z.string().min(1),
+    tags: z.array(z.string().min(1)).optional(),
+    version: CreateResourceVersionSchema,
+  })
+  .strict();
+
+export type ResourceZipManifest = z.infer<typeof ResourceZipManifestSchema>;
+
+export const ResourceVersionZipManifestSchema = CreateResourceVersionSchema;
+export type ResourceVersionZipManifest = z.infer<typeof ResourceVersionZipManifestSchema>;
 
 export type ResolvedFile = {
   id: string;
@@ -189,14 +253,13 @@ export type ResolvedFile = {
   url: string;
 };
 
-export type ResolvedMaterialResource = {
+export type ResolvedResource = {
   key: string;
   resourceId: string;
   version: number;
-  status: ResourceStatus;
   componentType: MaterialComponentType;
   componentData: Record<string, unknown>;
-  textures: Record<string, ResolvedFile>;
+  files: Record<string, ResolvedFile>;
 };
 
 // Material metadata types

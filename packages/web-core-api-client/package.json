@@ -12,12 +12,14 @@
     }
   },
   "scripts": {
-    "generate": "npm --workspace @duckengine/web-core run openapi:export && npm exec --yes openapi-typescript-codegen -- --input ../duck-asset-service/openapi.json --output src/generated --client fetch",
-    "build": "npm run generate && tsc -b tsconfig.json",
+    "clean": "rimraf dist src/generated",
+    "generate": "npm run clean && npm --workspace @duckengine/web-core run openapi:export && npm exec --yes openapi-typescript-codegen -- --input ../duck-asset-service/openapi.json --output src/generated --client fetch",
+    "build": "npm run generate && rimraf tsconfig.tsbuildinfo && tsc -b tsconfig.json",
     "test": "node -e \"console.log('No tests')\""
   },
   "devDependencies": {
     "openapi-typescript-codegen": "^0.29.0",
+    "rimraf": "^6.0.1",
     "typescript": "^5.5.0"
   }
 }

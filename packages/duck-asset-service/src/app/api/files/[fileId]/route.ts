@@ -1,3 +1,31 @@
+/**
+ * @swagger
+ * /api/files/{fileId}:
+ *   get:
+ *     tags: [Files]
+ *     summary: Download a FileAsset by id
+ *     parameters:
+ *       - in: path
+ *         name: fileId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Binary file stream
+ *         content:
+ *           application/octet-stream:
+ *             schema:
+ *               type: string
+ *               format: binary
+ *       404:
+ *         description: File not found / blob missing
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
+
 import { NextRequest, NextResponse } from 'next/server';
 
 import { prisma } from '@/lib/db';

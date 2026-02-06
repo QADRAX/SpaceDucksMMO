@@ -59,15 +59,30 @@ export default async function MaterialDetailPage({
       />
 
       <Card>
-        <div className="space-y-2">
+        <div className="flex items-start justify-between gap-6">
+          <div className="space-y-2">
           <div>
             <span className="font-heading">Resource ID:</span> {material.id}
           </div>
           <div>
             <span className="font-heading">Engine resolve:</span>{' '}
             <code className="text-xs bg-bg px-2 py-1 rounded-base border border-border">
-              /api/engine/materials/resolve?key={material.key}
+              /api/engine/resources/resolve?key={material.key}
             </code>
+          </div>
+          </div>
+
+          <div>
+            {material.thumbnailFileAssetId ? (
+              <img
+                src={`/api/files/${material.thumbnailFileAssetId}`}
+                alt={`${material.displayName} thumbnail`}
+                className="w-24 h-24 rounded-base border border-border object-cover bg-bg"
+                loading="lazy"
+              />
+            ) : (
+              <div className="w-24 h-24 rounded-base border border-border bg-bg" />
+            )}
           </div>
         </div>
       </Card>
@@ -79,8 +94,7 @@ export default async function MaterialDetailPage({
           <TableHeader>
             <TableRow>
               <TableHead>Version</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Default</TableHead>
+              <TableHead>Active</TableHead>
               <TableHead>Component</TableHead>
               <TableHead>Bindings</TableHead>
             </TableRow>
@@ -88,10 +102,10 @@ export default async function MaterialDetailPage({
           <TableBody>
             {versions.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5}>
+                <TableCell colSpan={4}>
                   <p className="text-neutral-600">No versions yet.</p>
                   <p className="text-neutral-600 text-sm mt-1">
-                    Upload via <code className="text-xs">POST /api/admin/materials/{material.id}/versions</code>.
+                    Upload via <code className="text-xs">POST /api/admin/resources/{material.id}/versions</code>.
                   </p>
                 </TableCell>
               </TableRow>
@@ -99,8 +113,7 @@ export default async function MaterialDetailPage({
               versions.map((v) => (
                 <TableRow key={v.id}>
                   <TableCell>{v.version}</TableCell>
-                  <TableCell>{v.status}</TableCell>
-                  <TableCell>{v.isDefault ? '✓' : ''}</TableCell>
+                  <TableCell>{material.activeVersion === v.version ? '✓' : ''}</TableCell>
                   <TableCell>
                     <code className="text-xs">{v.componentType}</code>
                   </TableCell>

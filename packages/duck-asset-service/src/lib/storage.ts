@@ -141,6 +141,14 @@ export class StorageService {
     try {
       const filePath = this.getAbsolutePath(storagePath);
       await fs.rm(filePath, { force: true });
+
+      // Best-effort cleanup: remove the per-file directory if it's now empty.
+      try {
+        const dirPath = path.dirname(filePath);
+        await fs.rmdir(dirPath);
+      } catch {
+        // ignore
+      }
       logger.info('File deleted', { storagePath });
     } catch (error) {
       logger.error('Failed to delete file', {

@@ -3,9 +3,8 @@
 /* tslint:disable */
 /* eslint-disable */
 export type Error = {
-    /**
-     * Error message
-     */
-    error?: string;
+    error: string;
+    message?: string;
+    details?: Record<string, any>;
 };
 

@@ -4,6 +4,7 @@ import { PageHeader } from '@/components/organisms/PageHeader';
 import { StatCard } from '@/components/molecules/StatCard';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/molecules/Card';
 import { Button } from '@/components/atoms/Button';
+import { MATERIAL_RESOURCE_KINDS } from '@/lib/types';
 
 // Force dynamic rendering - don't try to statically generate this page
 export const dynamic = 'force-dynamic';
@@ -11,11 +12,11 @@ export const dynamic = 'force-dynamic';
 async function getStats() {
   const [materialCount, versionCount] = await Promise.all([
     prisma.resource.count({
-      where: { kind: 'material', isArchived: false },
+      where: { kind: { in: [...MATERIAL_RESOURCE_KINDS] } },
     }),
     prisma.resourceVersion.count({
       where: {
-        resource: { kind: 'material', isArchived: false },
+        resource: { kind: { in: [...MATERIAL_RESOURCE_KINDS] } },
       },
     }),
   ]);

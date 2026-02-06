@@ -3,7 +3,7 @@
   "info": {
     "title": "Duck Engine Web Core API",
     "version": "1.0.0",
-    "description": "Core web API for Duck Engine (assets today; scenes/editor next)",
+    "description": "Core web API for Duck Engine (resource-first materials + file assets; scenes/editor next)",
     "contact": {
       "name": "SpaceDucks Team"
     }
@@ -14,112 +14,145 @@
       "description": "Development server"
     }
   ],
-  "tags": [
-    {
-      "name": "Assets",
-      "description": "Asset management endpoints"
-    },
-    {
-      "name": "Admin",
-      "description": "Administrative endpoints"
-    },
-    {
-      "name": "Files",
-      "description": "File serving endpoints"
-    }
-  ],
   "paths": {
-    "/api/assets/file/{assetKey}/{version}/{fileName}": {
+    "/api/resources/kinds": {
+      "get": {
+        "tags": [
+          "Resources"
+        ],
+        "summary": "List supported resource kinds",
+        "description": "Returns the list of resource kinds currently supported by this API.",
+        "responses": {
+          "200": {
+            "description": "Supported resource kinds",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceKindsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/health": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "service",
+                    "timestamp"
+                  ],
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    },
+                    "service": {
+                      "type": "string"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{fileId}": {
       "get": {
         "tags": [
           "Files"
         ],
-        "summary": "Download asset file",
-        "description": "Download a specific file from an asset version. Use 'latest' as version to get the default/most recent published version.",
+        "summary": "Download a FileAsset by id",
         "parameters": [
           {
             "in": "path",
-            "name": "assetKey",
+            "name": "fileId",
             "required": true,
             "schema": {
               "type": "string"
-            },
-            "description": "Asset key (may contain slashes)",
-            "example": "metal-grid-01"
-          },
-          {
-            "in": "path",
-            "name": "version",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Version number or 'latest'",
-            "example": "1.0.0"
-          },
-          {
-            "in": "path",
-            "name": "fileName",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "File name",
-            "example": "albedo.png"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "File content",
+            "description": "Binary file stream",
             "content": {
-              "image/png": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              },
-              "image/jpeg": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              },
               "application/octet-stream": {
                 "schema": {
                   "type": "string",
                   "format": "binary"
                 }
               }
+            }
+          },
+          "404": {
+            "description": "File not found / blob missing",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/engine/resources/resolve": {
+      "get": {
+        "tags": [
+          "Engine"
+        ],
+        "summary": "Resolve a resource for engine runtime",
+        "description": "Resolve by `key` and optional `version` selector (active | latest | integer). `default` is accepted as an alias for `active`.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "version",
+            "required": false,
+            "schema": {
+              "type": "string"
             },
-            "headers": {
-              "Content-Type": {
+            "description": "active | latest | integer"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resolved resource",
+            "content": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
-                },
-                "description": "MIME type of the file"
-              },
-              "Content-Length": {
-                "schema": {
-                  "type": "integer"
-                },
-                "description": "File size in bytes"
-              },
-              "Cache-Control": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Cache directives"
-              },
-              "ETag": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "Entity tag for cache validation"
+                  "$ref": "#/components/schemas/ResolvedResource"
+                }
               }
             }
           },
           "400": {
-            "description": "Invalid path format",
+            "description": "Missing key / invalid query",
             "content": {
               "application/json": {
                 "schema": {
@@ -129,7 +162,7 @@
             }
           },
           "404": {
-            "description": "Asset, version, or file not found",
+            "description": "Resource or version not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -152,226 +185,45 @@
         }
       }
     },
-    "/api/assets/manifest/by-query": {
-      "get": {
-        "tags": [
-          "Assets"
-        ],
-        "summary": "Get asset manifest",
-        "description": "Get a manifest of published assets with file URLs for game clients",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "type",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "material",
-                "texture"
-              ]
-            },
-            "description": "Filter by asset type"
-          },
-          {
-            "in": "query",
-            "name": "category",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by category"
-          },
-          {
-            "in": "query",
-            "name": "tag",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by tag"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Asset manifest with file URLs",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "assetKey": {
-                            "type": "string"
-                          },
-                          "displayName": {
-                            "type": "string"
-                          },
-                          "type": {
-                            "type": "string"
-                          },
-                          "category": {
-                            "type": "string"
-                          },
-                          "tags": {
-                            "type": "array",
-                            "items": {
-                              "type": "string"
-                            }
-                          },
-                          "version": {
-                            "type": "string"
-                          },
-                          "files": {
-                            "type": "array",
-                            "items": {
-                              "type": "object",
-                              "properties": {
-                                "fileName": {
-                                  "type": "string"
-                                },
-                                "url": {
-                                  "type": "string"
-                                },
-                                "size": {
-                                  "type": "integer"
-                                },
-                                "hash": {
-                                  "type": "string"
-                                },
-                                "contentType": {
-                                  "type": "string"
-                                },
-                                "mapType": {
-                                  "type": "string",
-                                  "nullable": true
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "count": {
-                      "type": "integer",
-                      "description": "Total number of entries in data"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid query parameters",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/admin/assets": {
+    "/api/admin/resources": {
       "get": {
         "tags": [
           "Admin"
         ],
-        "summary": "List all assets",
-        "description": "Get a paginated list of assets with optional filtering",
+        "summary": "List resources",
         "parameters": [
           {
             "in": "query",
-            "name": "type",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "material",
-                "texture"
-              ]
-            },
-            "description": "Filter by asset type"
-          },
-          {
-            "in": "query",
-            "name": "category",
+            "name": "kind",
+            "required": false,
             "schema": {
               "type": "string"
             },
-            "description": "Filter by category"
-          },
-          {
-            "in": "query",
-            "name": "tag",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Filter by tag"
-          },
-          {
-            "in": "query",
-            "name": "query",
-            "schema": {
-              "type": "string"
-            },
-            "description": "Search in key and displayName"
-          },
-          {
-            "in": "query",
-            "name": "page",
-            "schema": {
-              "type": "integer",
-              "default": 1
-            },
-            "description": "Page number"
-          },
-          {
-            "in": "query",
-            "name": "limit",
-            "schema": {
-              "type": "integer",
-              "default": 50
-            },
-            "description": "Items per page"
+            "description": "Optional resource kind filter (e.g. standardMaterial)"
           }
         ],
         "responses": {
           "200": {
-            "description": "List of assets",
+            "description": "List of resources",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "required": [
+                    "data",
+                    "count"
+                  ],
                   "properties": {
-                    "assets": {
+                    "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/Asset"
+                        "$ref": "#/components/schemas/ResourceSummary"
                       }
                     },
-                    "total": {
-                      "type": "integer"
-                    },
-                    "page": {
-                      "type": "integer"
-                    },
-                    "limit": {
+                    "count": {
                       "type": "integer"
                     }
                   }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid query parameters",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
                 }
               }
             }
@@ -382,41 +234,52 @@
         "tags": [
           "Admin"
         ],
-        "summary": "Create a new asset",
-        "description": "Creates a new asset with the provided metadata",
+        "summary": "Create a resource",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateAssetRequest"
+                "$ref": "#/components/schemas/CreateResourceRequest"
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "zip"
+                ],
+                "properties": {
+                  "zip": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "ZIP containing resource.json and slot files (<slot>.<ext>)"
+                  }
+                }
               }
             }
           }
         },
         "responses": {
           "201": {
-            "description": "Asset created successfully",
+            "description": "Created resource",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Asset"
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/Resource"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CreateResourceFromZipResponse"
+                    }
+                  ]
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid request body",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Error"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Asset with this key already exists",
+            "description": "Invalid payload",
             "content": {
               "application/json": {
                 "schema": {
@@ -428,53 +291,83 @@
         }
       }
     },
-    "/api/admin/assets/{assetId}": {
+    "/api/admin/resources/{resourceId}": {
       "get": {
         "tags": [
           "Admin"
         ],
-        "summary": "Get asset details",
-        "description": "Get detailed information about a specific asset including all versions",
+        "summary": "Get a resource with versions",
         "parameters": [
           {
             "in": "path",
-            "name": "assetId",
+            "name": "resourceId",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Asset ID"
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Asset details",
+            "description": "Resource",
             "content": {
               "application/json": {
                 "schema": {
-                  "allOf": [
-                    {
-                      "$ref": "#/components/schemas/Asset"
-                    },
-                    {
-                      "type": "object",
-                      "properties": {
-                        "versions": {
-                          "type": "array",
-                          "items": {
-                            "$ref": "#/components/schemas/AssetVersion"
-                          }
-                        }
-                      }
-                    }
-                  ]
+                  "$ref": "#/components/schemas/ResourceWithVersions"
                 }
               }
             }
           },
           "404": {
-            "description": "Asset not found",
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Patch resource fields",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resourceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PatchResourceRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No changes / invalid payload",
             "content": {
               "application/json": {
                 "schema": {
@@ -489,38 +382,31 @@
         "tags": [
           "Admin"
         ],
-        "summary": "Delete an asset",
-        "description": "Archives an asset (soft delete) and removes all associated files from storage",
+        "summary": "Delete a resource",
+        "description": "Hard-deletes the resource (and cascades versions/bindings). Also deletes any now-unreferenced file blobs from disk.",
         "parameters": [
           {
             "in": "path",
-            "name": "assetId",
+            "name": "resourceId",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "Asset ID"
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "Asset deleted successfully",
+            "description": "Deleted resource",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "message": {
-                      "type": "string"
-                    }
-                  }
+                  "$ref": "#/components/schemas/Resource"
                 }
               }
             }
           },
           "404": {
-            "description": "Asset not found",
+            "description": "Not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -532,52 +418,90 @@
         }
       }
     },
-    "/api/admin/assets/{assetId}/versions/{versionId}": {
-      "patch": {
+    "/api/admin/resources/{resourceId}/versions": {
+      "get": {
         "tags": [
           "Admin"
         ],
-        "summary": "Update version metadata",
-        "description": "Update status, notes, or default flag for a version",
+        "summary": "List versions for a resource",
         "parameters": [
           {
             "in": "path",
-            "name": "assetId",
+            "name": "resourceId",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
-          },
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of versions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "data",
+                    "count"
+                  ],
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ResourceVersionWithBindings"
+                      }
+                    },
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Create a new version",
+        "description": "Supports either a ZIP upload (version.json + slot files) or multipart upload (componentData + any file slot fields). The newly created version becomes the active version.",
+        "parameters": [
           {
             "in": "path",
-            "name": "versionId",
+            "name": "resourceId",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "string"
             }
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
-            "application/json": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
+                "description": "If `zip` is provided, it takes precedence over the legacy fields.",
                 "properties": {
-                  "status": {
+                  "zip": {
                     "type": "string",
-                    "enum": [
-                      "draft",
-                      "published"
-                    ]
+                    "format": "binary",
+                    "description": "ZIP containing version.json and slot files (<slot>.<ext>)"
                   },
-                  "notes": {
+                  "version": {
+                    "type": "integer",
+                    "description": "Optional explicit version; if provided must be the next incremental version"
+                  },
+                  "componentData": {
                     "type": "string",
-                    "nullable": true
+                    "description": "JSON string (optional)"
                   },
-                  "isDefault": {
-                    "type": "boolean"
+                  "componentType": {
+                    "type": "string",
+                    "description": "Optional legacy; must match the resource kind when provided"
                   }
                 }
               }
@@ -585,11 +509,104 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Version updated successfully"
+          "201": {
+            "description": "Created version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResourceVersion"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid payload",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           },
           "404": {
-            "description": "Version not found"
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Version already exists",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/admin/resources/{resourceId}/versions/{version}/active": {
+      "put": {
+        "tags": [
+          "Admin"
+        ],
+        "summary": "Set active version for a resource",
+        "description": "Sets the given version number as the active version for the resource.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "resourceId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "version",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Updated resource",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Resource"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid version",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource or version not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
           }
         }
       }
@@ -597,53 +614,54 @@
   },
   "components": {
     "schemas": {
-      "Asset": {
+      "Error": {
         "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "Resource": {
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "displayName",
+          "kind",
+          "activeVersion",
+          "createdAt",
+          "updatedAt"
+        ],
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Unique identifier"
+            "type": "string"
           },
           "key": {
-            "type": "string",
-            "description": "Unique key for the asset",
-            "example": "metal-grid-01"
+            "type": "string"
           },
           "displayName": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "activeVersion": {
+            "type": "integer"
+          },
+          "thumbnailFileAssetId": {
             "type": "string",
-            "description": "Human-readable name",
-            "example": "Metal Grid Material"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "material",
-              "texture"
-            ],
-            "description": "Type of asset"
-          },
-          "category": {
-            "type": "string",
-            "nullable": true,
-            "description": "Category for organization",
-            "example": "metals"
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Tags for searching and filtering",
-            "example": [
-              "metal",
-              "grid",
-              "industrial"
-            ]
-          },
-          "isArchived": {
-            "type": "boolean",
-            "description": "Whether the asset is archived"
+            "nullable": true
           },
           "createdAt": {
             "type": "string",
@@ -655,34 +673,59 @@
           }
         }
       },
-      "AssetVersion": {
+      "ResourceSummary": {
+        "description": "Resource row with Prisma `_count` for versions.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Resource"
+          },
+          {
+            "type": "object",
+            "required": [
+              "_count"
+            ],
+            "properties": {
+              "_count": {
+                "type": "object",
+                "required": [
+                  "versions"
+                ],
+                "properties": {
+                  "versions": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ResourceVersion": {
         "type": "object",
+        "required": [
+          "id",
+          "resourceId",
+          "version",
+          "componentType",
+          "componentData",
+          "createdAt"
+        ],
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
           },
-          "assetId": {
-            "type": "string",
-            "format": "uuid"
+          "resourceId": {
+            "type": "string"
           },
           "version": {
-            "type": "string",
-            "example": "1.0.0"
+            "type": "integer"
           },
-          "status": {
-            "type": "string",
-            "enum": [
-              "draft",
-              "published"
-            ]
+          "componentType": {
+            "type": "string"
           },
-          "isDefault": {
-            "type": "boolean"
-          },
-          "notes": {
+          "componentData": {
             "type": "string",
-            "nullable": true
+            "description": "JSON string"
           },
           "createdAt": {
             "type": "string",
@@ -690,89 +733,255 @@
           }
         }
       },
-      "AssetFile": {
+      "FileAsset": {
         "type": "object",
+        "required": [
+          "id",
+          "fileName",
+          "contentType",
+          "size",
+          "sha256",
+          "storagePath",
+          "createdAt"
+        ],
         "properties": {
           "id": {
-            "type": "string",
-            "format": "uuid"
+            "type": "string"
           },
           "fileName": {
-            "type": "string",
-            "example": "albedo.png"
-          },
-          "fileSize": {
-            "type": "integer",
-            "description": "File size in bytes"
-          },
-          "hash": {
-            "type": "string",
-            "description": "SHA-256 hash of the file"
+            "type": "string"
           },
           "contentType": {
-            "type": "string",
-            "example": "image/png"
+            "type": "string"
           },
-          "mapType": {
+          "size": {
+            "type": "integer"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "storagePath": {
+            "type": "string"
+          },
+          "createdAt": {
             "type": "string",
-            "nullable": true,
-            "enum": [
-              "albedo",
-              "normal",
-              "roughness",
-              "metallic",
-              "ao",
-              "height",
-              "emission"
-            ],
-            "description": "Type of PBR map (for materials)"
+            "format": "date-time"
           }
         }
       },
-      "CreateAssetRequest": {
+      "ResourceBinding": {
+        "type": "object",
+        "required": [
+          "id",
+          "resourceVersionId",
+          "slot",
+          "fileAssetId",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "resourceVersionId": {
+            "type": "string"
+          },
+          "slot": {
+            "type": "string"
+          },
+          "fileAssetId": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ResourceBindingWithFile": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResourceBinding"
+          },
+          {
+            "type": "object",
+            "required": [
+              "fileAsset"
+            ],
+            "properties": {
+              "fileAsset": {
+                "$ref": "#/components/schemas/FileAsset"
+              }
+            }
+          }
+        ]
+      },
+      "ResourceVersionWithBindings": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/ResourceVersion"
+          },
+          {
+            "type": "object",
+            "required": [
+              "bindings"
+            ],
+            "properties": {
+              "bindings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ResourceBindingWithFile"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "ResourceWithVersions": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Resource"
+          },
+          {
+            "type": "object",
+            "required": [
+              "versions"
+            ],
+            "properties": {
+              "versions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ResourceVersionWithBindings"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "CreateResourceRequest": {
+        "type": "object",
+        "required": [
+          "kind",
+          "key",
+          "displayName"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateResourceFromZipResponse": {
+        "type": "object",
+        "required": [
+          "resource",
+          "version"
+        ],
+        "properties": {
+          "resource": {
+            "$ref": "#/components/schemas/Resource"
+          },
+          "version": {
+            "$ref": "#/components/schemas/ResourceVersion"
+          }
+        }
+      },
+      "PatchResourceRequest": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "displayName": {
+            "type": "string"
+          }
+        }
+      },
+      "ResolvedFile": {
+        "type": "object",
+        "required": [
+          "id",
+          "fileName",
+          "contentType",
+          "size",
+          "sha256",
+          "url"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          }
+        }
+      },
+      "ResolvedResource": {
         "type": "object",
         "required": [
           "key",
-          "displayName",
-          "type"
+          "resourceId",
+          "version",
+          "componentType",
+          "componentData",
+          "files"
         ],
         "properties": {
           "key": {
-            "type": "string",
-            "description": "Unique key for the asset"
+            "type": "string"
           },
-          "displayName": {
-            "type": "string",
-            "description": "Human-readable name"
+          "resourceId": {
+            "type": "string"
           },
-          "type": {
-            "type": "string",
-            "enum": [
-              "material",
-              "texture"
-            ]
+          "version": {
+            "type": "integer"
           },
-          "category": {
-            "type": "string",
-            "nullable": true
+          "componentType": {
+            "type": "string"
           },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string"
+          "componentData": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "files": {
+            "type": "object",
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ResolvedFile"
             }
           }
         }
       },
-      "Error": {
+      "ResourceKindsResponse": {
         "type": "object",
+        "required": [
+          "data"
+        ],
         "properties": {
-          "error": {
-            "type": "string",
-            "description": "Error message"
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "description": "Resource kind identifier"
+            }
           }
         }
       }
     }
-  }
+  },
+  "tags": []
 }
