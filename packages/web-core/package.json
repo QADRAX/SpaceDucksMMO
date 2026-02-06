@@ -15,7 +15,7 @@
   "dependencies": {
     "@duckengine/core": "^0.1.0",
     "@duckengine/ecs": "^0.1.0",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^6.19.2",
     "adm-zip": "^0.5.16",
     "next": "^16.1.6",
     "react": "^18.3.0",
@@ -37,7 +37,7 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "postcss": "^8.5.6",
-    "prisma": "^5.22.0",
+    "prisma": "^6.19.2",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.1.17",
     "tsx": "^4.20.3",
