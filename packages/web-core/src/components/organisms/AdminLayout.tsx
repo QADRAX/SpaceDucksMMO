@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { cookies } from 'next/headers';
 
-import { Sidebar, SidebarMenu, SidebarMenuItem } from './Sidebar';
+import { Sidebar } from './Sidebar';
+import { AdminNavTree } from './AdminNavTree';
 import { cn } from '@/lib/utils';
 import { prisma } from '@/lib/db';
 import { getAuthCookieName, getJwtSecret, verifyAuthJwt } from '@/lib/auth';
@@ -30,47 +31,7 @@ export async function AdminLayout({ children, className }: AdminLayoutProps) {
   return (
     <div className="flex min-h-screen bg-gray-50">
       <Sidebar>
-        <SidebarMenu>
-          <SidebarMenuItem href="/admin">
-            <span className="flex items-center gap-3">
-              <span className="text-lg">▣</span>
-              Dashboard
-            </span>
-          </SidebarMenuItem>
-          <SidebarMenuItem href="/admin/materials">
-            <span className="flex items-center gap-3">
-              <span className="text-lg">▦</span>
-              Materials
-            </span>
-          </SidebarMenuItem>
-          <SidebarMenuItem href="/admin/scenes">
-            <span className="flex items-center gap-3">
-              <span className="text-lg">▧</span>
-              Scenes
-            </span>
-          </SidebarMenuItem>
-
-          {showUsers ? (
-            <SidebarMenuItem href="/admin/users">
-              <span className="flex items-center gap-3">
-                <span className="text-lg">▩</span>
-                Users
-              </span>
-            </SidebarMenuItem>
-          ) : null}
-          <SidebarMenuItem href="/api-docs">
-            <span className="flex items-center gap-3">
-              <span className="text-lg">▤</span>
-              API Docs
-            </span>
-          </SidebarMenuItem>
-          <SidebarMenuItem href="/api/auth/logout">
-            <span className="flex items-center gap-3">
-              <span className="text-lg">⎋</span>
-              Logout
-            </span>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <AdminNavTree showUsers={showUsers} />
       </Sidebar>
       <main className={cn('flex-1 p-8', className)}>
         {children}

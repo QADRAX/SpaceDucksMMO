@@ -35,7 +35,7 @@ export default async function AdminDashboard() {
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        <StatCard label="Total Materials" value={stats.materialCount} />
+        <StatCard label="Total Material Resources" value={stats.materialCount} />
         <StatCard label="Total Versions" value={stats.versionCount} />
       </div>
 
@@ -44,8 +44,8 @@ export default async function AdminDashboard() {
           <CardTitle>Quick Actions</CardTitle>
         </CardHeader>
         <CardContent>
-          <Link href="/admin/materials">
-            <Button>View Materials</Button>
+          <Link href="/admin/resources">
+            <Button>View Resources</Button>
           </Link>
         </CardContent>
       </Card>
