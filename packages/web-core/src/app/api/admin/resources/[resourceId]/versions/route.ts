@@ -100,10 +100,11 @@ function coerceComponentData(raw: unknown): Record<string, unknown> {
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { resourceId: string } }
+  context: { params: Promise<{ resourceId: string }> }
 ) {
+  const { resourceId } = await context.params;
   const versions = await prisma.resourceVersion.findMany({
-    where: { resourceId: params.resourceId },
+    where: { resourceId },
     orderBy: { version: 'desc' },
     include: {
       bindings: { include: { fileAsset: true } },
@@ -115,10 +116,11 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { resourceId: string } }
+  context: { params: Promise<{ resourceId: string }> }
 ) {
+  const { resourceId } = await context.params;
   const resource = await prisma.resource.findFirst({
-    where: { id: params.resourceId },
+    where: { id: resourceId },
   });
 
   if (!resource) {

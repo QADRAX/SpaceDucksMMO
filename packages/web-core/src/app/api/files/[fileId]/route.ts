@@ -33,9 +33,9 @@ import { StorageService } from '@/lib/storage';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { fileId: string } }
+  context: { params: Promise<{ fileId: string }> }
 ) {
-  const fileId = params.fileId;
+  const { fileId } = await context.params;
 
   const fileAsset = await prisma.fileAsset.findUnique({
     where: { id: fileId },

@@ -17,7 +17,7 @@
     "@duckengine/ecs": "^0.1.0",
     "@prisma/client": "^5.22.0",
     "adm-zip": "^0.5.16",
-    "next": "^14.2.35",
+    "next": "^16.1.6",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "sharp": "^0.34.5",

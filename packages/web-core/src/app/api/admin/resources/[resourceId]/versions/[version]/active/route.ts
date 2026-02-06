@@ -44,14 +44,15 @@ import { updateResourceThumbnailFromVersion } from '@/lib/resourceThumbnail';
 
 export async function PUT(
   _request: NextRequest,
-  { params }: { params: { resourceId: string; version: string } }
+  context: { params: Promise<{ resourceId: string; version: string }> }
 ) {
-  const versionNumber = Number(params.version);
+  const { resourceId, version } = await context.params;
+  const versionNumber = Number(version);
   if (!Number.isFinite(versionNumber) || versionNumber <= 0 || !Number.isInteger(versionNumber)) {
     return NextResponse.json({ error: 'Invalid version' }, { status: 400 });
   }
 
-  const resource = await prisma.resource.findUnique({ where: { id: params.resourceId } });
+  const resource = await prisma.resource.findUnique({ where: { id: resourceId } });
   if (!resource) {
     return NextResponse.json({ error: 'Resource not found' }, { status: 404 });
   }

@@ -84,10 +84,11 @@ import { StorageService } from '@/lib/storage';
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: { resourceId: string } }
+  context: { params: Promise<{ resourceId: string }> }
 ) {
+  const { resourceId } = await context.params;
   const resource = await prisma.resource.findFirst({
-    where: { id: params.resourceId },
+    where: { id: resourceId },
     include: {
       versions: {
         orderBy: { version: 'desc' },
@@ -109,8 +110,9 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { resourceId: string } }
+  context: { params: Promise<{ resourceId: string }> }
 ) {
+  const { resourceId } = await context.params;
   const body = await request.json().catch(() => null);
   const parsed = PatchResourceSchema.safeParse(body);
 
@@ -126,7 +128,7 @@ export async function PATCH(
   }
 
   const updated = await prisma.resource.update({
-    where: { id: params.resourceId },
+    where: { id: resourceId },
     data: {
       ...(parsed.data.displayName !== undefined ? { displayName: parsed.data.displayName } : {}),
     },
@@ -137,11 +139,12 @@ export async function PATCH(
 
 export async function DELETE(
   _request: NextRequest,
-  { params }: { params: { resourceId: string } }
+  context: { params: Promise<{ resourceId: string }> }
 ) {
+  const { resourceId } = await context.params;
   try {
     const resource = await prisma.resource.findUnique({
-      where: { id: params.resourceId },
+      where: { id: resourceId },
       select: { thumbnailFileAssetId: true },
     });
 
@@ -151,7 +154,7 @@ export async function DELETE(
         bindings: {
           some: {
             resourceVersion: {
-              resourceId: params.resourceId,
+              resourceId,
             },
           },
         },
@@ -170,7 +173,7 @@ export async function DELETE(
     }
 
     const deleted = await prisma.resource.delete({
-      where: { id: params.resourceId },
+      where: { id: resourceId },
     });
 
     if (candidates.length > 0) {
