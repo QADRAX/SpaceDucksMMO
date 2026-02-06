@@ -13,7 +13,7 @@
   },
   "scripts": {
     "clean": "rimraf dist src/generated",
-    "generate": "npm run clean && npm --workspace @duckengine/web-core run openapi:export && npm exec --yes openapi-typescript-codegen -- --input ../duck-asset-service/openapi.json --output src/generated --client fetch",
+    "generate": "npm run clean && npm --workspace @duckengine/web-core run openapi:export && npm exec --yes openapi-typescript-codegen -- --input ../web-core/openapi.json --output src/generated --client fetch",
     "build": "npm run generate && rimraf tsconfig.tsbuildinfo && tsc -b tsconfig.json",
     "test": "node -e \"console.log('No tests')\""
   },
