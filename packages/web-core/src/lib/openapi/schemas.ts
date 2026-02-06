@@ -6,7 +6,139 @@
  *
  * @swagger
  * components:
+ *   securitySchemes:
+ *     cookieAuth:
+ *       type: apiKey
+ *       in: cookie
+ *       name: webcore_auth
  *   schemas:
+ *     UserRole:
+ *       type: string
+ *       enum: [SUPER_ADMIN, ADMIN, USER]
+
+ *     User:
+ *       type: object
+ *       required: [id, email, name, role, isActive, sessionVersion, createdAt, updatedAt]
+ *       properties:
+ *         id:
+ *           type: string
+ *         email:
+ *           type: string
+ *         name:
+ *           type: string
+ *         role:
+ *           $ref: '#/components/schemas/UserRole'
+ *         isActive:
+ *           type: boolean
+ *         sessionVersion:
+ *           type: integer
+ *         lastLoginAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         updatedAt:
+ *           type: string
+ *           format: date-time
+
+ *     PatchUserRequest:
+ *       type: object
+ *       additionalProperties: false
+ *       properties:
+ *         name:
+ *           type: string
+ *         role:
+ *           type: string
+ *           enum: [ADMIN, USER]
+ *         isActive:
+ *           type: boolean
+
+ *     UserInvite:
+ *       type: object
+ *       required: [id, email, name, role, expiresAt, createdAt]
+ *       properties:
+ *         id:
+ *           type: string
+ *         email:
+ *           type: string
+ *         name:
+ *           type: string
+ *         role:
+ *           $ref: '#/components/schemas/UserRole'
+ *         expiresAt:
+ *           type: string
+ *           format: date-time
+ *         createdAt:
+ *           type: string
+ *           format: date-time
+ *         claimedAt:
+ *           type: string
+ *           format: date-time
+ *           nullable: true
+ *         createdByUserId:
+ *           type: string
+ *         claimedByUserId:
+ *           type: string
+ *           nullable: true
+
+ *     CreateUserInviteRequest:
+ *       type: object
+ *       required: [email, name]
+ *       additionalProperties: false
+ *       properties:
+ *         email:
+ *           type: string
+ *           format: email
+ *         name:
+ *           type: string
+ *         role:
+ *           type: string
+ *           enum: [ADMIN, USER]
+ *           default: USER
+ *         expiresInHours:
+ *           type: integer
+ *           description: Time-to-live for the invite link (default 168 hours).
+
+ *     CreateUserInviteResponse:
+ *       type: object
+ *       required: [inviteUrl, expiresAt]
+ *       properties:
+ *         inviteUrl:
+ *           type: string
+ *         expiresAt:
+ *           type: string
+ *           format: date-time
+
+ *     InvitePublic:
+ *       type: object
+ *       required: [email, name, role, expiresAt]
+ *       properties:
+ *         email:
+ *           type: string
+ *         name:
+ *           type: string
+ *         role:
+ *           $ref: '#/components/schemas/UserRole'
+ *         expiresAt:
+ *           type: string
+ *           format: date-time
+
+ *     ClaimInviteRequest:
+ *       type: object
+ *       required: [token, password]
+ *       additionalProperties: false
+ *       properties:
+ *         token:
+ *           type: string
+ *         password:
+ *           type: string
+ *           description: Minimum 10 characters.
+ *         name:
+ *           type: string
+ *           description: Optional display name override.
+
  *     Error:
  *       type: object
  *       required: [error]

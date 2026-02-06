@@ -1,18 +1,17 @@
 import * as React from 'react';
 
 import { Card, CardContent } from '@/components/molecules/Card';
-import { LoginClient } from './login-client';
-import { prisma } from '@/lib/db';
-import { redirect } from 'next/navigation';
+import { InviteClient } from './invite-client';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function LoginPage() {
-  const count = await prisma.user.count();
-  if (count === 0) {
-    redirect('/setup');
-  }
+export default function InvitePage({
+  searchParams,
+}: {
+  searchParams: { token?: string };
+}) {
+  const token = typeof searchParams?.token === 'string' ? searchParams.token : '';
 
   return (
     <React.Suspense
@@ -26,7 +25,7 @@ export default async function LoginPage() {
         </div>
       }
     >
-      <LoginClient />
+      <InviteClient token={token} />
     </React.Suspense>
   );
 }

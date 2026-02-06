@@ -1,47 +1,77 @@
 /**
  * POST /api/auth/login
  *
- * Sets an HttpOnly session cookie for the Admin UI.
+ * Authenticates a local User and sets an HttpOnly JWT cookie.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 
 import {
-  createAdminSessionToken,
-  getSessionCookieName,
-  getSessionSecret,
-  verifyAdminCredentials,
+  createAuthJwt,
+  getAuthCookieName,
+  getDefaultAuthMaxAgeSeconds,
+  getJwtSecret,
+  verifyPassword,
 } from '@/lib/auth';
+import { prisma } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
 
-  const username = typeof body?.username === 'string' ? body.username : '';
+  const identifier = typeof body?.email === 'string' ? body.email : (typeof body?.username === 'string' ? body.username : '');
   const password = typeof body?.password === 'string' ? body.password : '';
 
-  if (!username || !password) {
-    return NextResponse.json({ error: 'Missing username/password' }, { status: 400 });
+  if (!identifier || !password) {
+    return NextResponse.json({ error: 'Missing credentials' }, { status: 400 });
   }
 
-  if (!verifyAdminCredentials(username, password)) {
+  const existingCount = await prisma.user.count();
+  if (existingCount === 0) {
+    return NextResponse.json({ error: 'Setup required' }, { status: 409 });
+  }
+
+  const email = identifier.trim().toLowerCase();
+  const user = await prisma.user.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      isActive: true,
+      passwordHash: true,
+      sessionVersion: true,
+    },
+  });
+
+  if (!user || !user.isActive) {
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
   }
 
-  const now = Date.now();
-  const maxAgeSeconds = 60 * 60 * 24 * 7; // 7 days
+  const ok = await verifyPassword(password, user.passwordHash);
+  if (!ok) {
+    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+  }
 
-  const token = await createAdminSessionToken(
+  const maxAgeSeconds = getDefaultAuthMaxAgeSeconds();
+  const iat = Math.floor(Date.now() / 1000);
+
+  const token = await createAuthJwt(
     {
-      u: username,
-      iat: now,
-      exp: now + maxAgeSeconds * 1000,
+      sub: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      sv: user.sessionVersion,
+      iat,
+      exp: iat + maxAgeSeconds,
     },
-    getSessionSecret()
+    getJwtSecret()
   );
 
   const res = NextResponse.json({ ok: true });
   res.cookies.set({
-    name: getSessionCookieName(),
+    name: getAuthCookieName(),
     value: token,
     httpOnly: true,
     sameSite: 'lax',
@@ -49,6 +79,14 @@ export async function POST(request: NextRequest) {
     path: '/',
     maxAge: maxAgeSeconds,
   });
+
+  await prisma.user
+    .update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+      select: { id: true },
+    })
+    .catch(() => null);
 
   return res;
 }

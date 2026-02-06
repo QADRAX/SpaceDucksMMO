@@ -4,6 +4,8 @@
  *   get:
  *     tags: [Admin]
  *     summary: List resources
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - in: query
  *         name: kind
@@ -26,9 +28,15 @@
  *                     $ref: '#/components/schemas/ResourceSummary'
  *                 count:
  *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  *   post:
  *     tags: [Admin]
  *     summary: Create a resource
+ *     security:
+ *       - cookieAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -59,6 +67,10 @@
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  */
 
 import { NextRequest, NextResponse } from 'next/server';

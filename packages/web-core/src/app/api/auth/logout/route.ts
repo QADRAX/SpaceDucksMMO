@@ -6,13 +6,13 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 
-import { getSessionCookieName } from '@/lib/auth';
+import { getAuthCookieName } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   const res = NextResponse.redirect(new URL('/login', request.url));
 
   res.cookies.set({
-    name: getSessionCookieName(),
+    name: getAuthCookieName(),
     value: '',
     httpOnly: true,
     sameSite: 'lax',

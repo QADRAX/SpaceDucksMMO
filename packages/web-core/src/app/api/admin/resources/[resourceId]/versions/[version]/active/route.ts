@@ -5,6 +5,8 @@
  *     tags: [Admin]
  *     summary: Set active version for a resource
  *     description: Sets the given version number as the active version for the resource.
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: resourceId
@@ -35,6 +37,10 @@
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  */
 
 import { NextRequest, NextResponse } from 'next/server';

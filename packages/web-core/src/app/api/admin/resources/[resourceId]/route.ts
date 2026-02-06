@@ -4,6 +4,8 @@
  *   get:
  *     tags: [Admin]
  *     summary: Get a resource with versions
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: resourceId
@@ -23,9 +25,15 @@
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  *   patch:
  *     tags: [Admin]
  *     summary: Patch resource fields
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: resourceId
@@ -51,10 +59,16 @@
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  *   delete:
  *     tags: [Admin]
  *     summary: Delete a resource
  *     description: Hard-deletes the resource (and cascades versions/bindings). Also deletes any now-unreferenced file blobs from disk.
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: resourceId
@@ -74,6 +88,10 @@
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  */
 
 import { NextRequest, NextResponse } from 'next/server';

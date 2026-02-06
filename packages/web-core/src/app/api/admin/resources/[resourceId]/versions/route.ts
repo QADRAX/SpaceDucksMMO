@@ -4,6 +4,8 @@
  *   get:
  *     tags: [Admin]
  *     summary: List versions for a resource
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: resourceId
@@ -25,10 +27,16 @@
  *                     $ref: '#/components/schemas/ResourceVersionWithBindings'
  *                 count:
  *                   type: integer
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  *   post:
  *     tags: [Admin]
  *     summary: Create a new version
  *     description: Supports either a ZIP upload (version.json + slot files) or multipart upload (componentData + any file slot fields). The newly created version becomes the active version.
+ *     security:
+ *       - cookieAuth: []
  *     parameters:
  *       - in: path
  *         name: resourceId
@@ -81,6 +89,10 @@
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden
  */
 
 import { NextRequest, NextResponse } from 'next/server';

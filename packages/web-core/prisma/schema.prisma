@@ -10,6 +10,55 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  SUPER_ADMIN
+  ADMIN
+  USER
+}
+
+model AppConfig {
+  key       String   @id
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  name           String
+  passwordHash   String
+  role           UserRole @default(ADMIN)
+  isActive       Boolean  @default(true)
+  sessionVersion Int      @default(0)
+  lastLoginAt    DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  invitesCreated UserInvite[] @relation("InvitesCreated")
+  invitesClaimed UserInvite[] @relation("InvitesClaimed")
+}
+
+model UserInvite {
+  id            String   @id @default(uuid())
+  email         String
+  name          String
+  role          UserRole @default(USER)
+  tokenSha256   String   @unique
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  createdByUserId String
+  createdByUser   User   @relation("InvitesCreated", fields: [createdByUserId], references: [id], onDelete: Cascade)
+
+  claimedAt       DateTime?
+  claimedByUserId String?
+  claimedByUser   User?   @relation("InvitesClaimed", fields: [claimedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([expiresAt])
+}
+
 // NOTE: The old Asset/AssetVersion/AssetFile models were intentionally removed.
 // Web Core now models engine-facing Resources (versioned) and FileAssets (single file).
 

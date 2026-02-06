@@ -9,7 +9,7 @@ A monolithic web app that provides core web tooling for Duck Engine projects.
 - ✅ **Bindings**: Bind material slots (albedo/normal/etc) to FileAssets
 - ✅ **Admin UI**: Web-based interface for managing materials
 - ✅ **REST API**: Admin API + engine-facing resolve endpoint
-- ✅ **Basic Auth**: Simple authentication for admin endpoints
+- ✅ **Auth**: Local users + JWT cookie auth + RBAC (ADMIN/USER)
 - ✅ **Docker Support**: Containerized deployment with persistent volumes
 
 ## Architecture
@@ -23,11 +23,11 @@ A monolithic web app that provides core web tooling for Duck Engine projects.
 
 ### Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
+- **Framework**: Next.js 16 (App Router)
 - **Runtime**: Node.js
 - **Database**: SQLite with Prisma ORM
 - **Storage**: Filesystem (volume-mounted in Docker)
-- **Auth**: HTTP Basic Authentication
+- **Auth**: Local users + HttpOnly JWT cookie + RBAC
 
 ## Getting Started
 
@@ -51,8 +51,7 @@ A monolithic web app that provides core web tooling for Duck Engine projects.
   Edit `.env` to configure:
   - `DATABASE_URL`: SQLite database path
   - `WEB_CORE_STORAGE_PATH` (or `ASSET_STORAGE_PATH`): Files storage root (defaults to `/data/web-core`)
-  - `ASSET_ADMIN_USER`: Admin username
-  - `ASSET_ADMIN_PASS`: Admin password
+   - `AUTH_JWT_SECRET`: JWT signing secret (recommended; long random string)
 
 3. **Initialize database**:
    ```bash
@@ -66,7 +65,8 @@ A monolithic web app that provides core web tooling for Duck Engine projects.
 
 5. **Access the application**:
    - Main page: http://localhost:3000
-   - Admin UI: http://localhost:3000/admin (requires Basic Auth)
+   - Admin UI: http://localhost:3000/admin (requires login)
+   - First run: http://localhost:3000/setup (creates the first admin user)
 
 ### Docker Deployment
 
@@ -81,8 +81,7 @@ A monolithic web app that provides core web tooling for Duck Engine projects.
      -p 3000:3000 \
      -v das-data:/data/web-core \
      -v das-db:/app/prisma \
-     -e ASSET_ADMIN_USER=admin \
-     -e ASSET_ADMIN_PASS=your-secure-password \
+   -e AUTH_JWT_SECRET=your-long-random-secret \
      -e BASE_URL=http://your-domain.com \
     --name duck-engine-web-core \
     duck-engine-web-core
@@ -95,7 +94,7 @@ A monolithic web app that provides core web tooling for Duck Engine projects.
 
 ## API Reference
 
-### Admin API (Protected with Basic Auth)
+### Admin API (Protected)
 
 #### Materials
 
@@ -158,15 +157,9 @@ Files are stored on the filesystem at:
 
 ## Authentication
 
-Admin endpoints use HTTP Basic Authentication:
+This app uses local users stored in the database. Authentication is via an HttpOnly cookie containing a signed JWT.
 
-Example (materials):
-
-```bash
-curl -u admin:password http://localhost:3000/api/admin/resources
-```
-
-Or in browser, when accessing `/admin`, you'll be prompted for credentials.
+On first run (empty DB), visit `/setup` to create the first admin user.
 
 ## Environment Variables
 
@@ -175,9 +168,8 @@ Or in browser, when accessing `/admin`, you'll be prompted for credentials.
 | `DATABASE_URL` | `file:./dev.db` | SQLite database location |
 | `WEB_CORE_STORAGE_PATH` | `/data/web-core` | Storage root for file blobs |
 | `ASSET_STORAGE_PATH` | *(deprecated)* | Back-compat alias for `WEB_CORE_STORAGE_PATH` |
-| `ASSET_ADMIN_USER` | `admin` | Admin username |
-| `ASSET_ADMIN_PASS` | `changeme` | Admin password |
-| `BASE_URL` | `http://localhost:3000` | Public base URL for file URLs |
+| `AUTH_JWT_SECRET` | `changeme` | JWT signing secret (set in production) |
+| `BASE_URL` | `http://localhost:3000` | Public base URL (used for file URLs and user invite links) |
 | `PORT` | `3000` | Server port |
 
 ## Development Commands
@@ -226,8 +218,8 @@ npm run prisma:studio     # Open Prisma Studio
 - Ensure files were uploaded successfully
 
 **Authentication fails**:
-- Verify `ASSET_ADMIN_USER` and `ASSET_ADMIN_PASS` environment variables
-- Check Basic Auth header format
+- Verify `AUTH_JWT_SECRET` is set and stable
+- Ensure the first admin user exists (use `/setup` on first run)
 
 ## License
 

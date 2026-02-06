@@ -1,22 +1,14 @@
 /**
  * Authentication utilities
  *
- * - Supports legacy HTTP Basic auth (useful for curl/CLI).
- * - Adds cookie-based sessions (preferred for browser SPAs; avoids relying on the browser Basic Auth prompt).
+ * - Users are stored locally in SQLite via Prisma.
+ * - Auth uses an HttpOnly cookie containing a signed JWT (HS256).
+ * - RBAC is based on the role embedded in the token, validated against DB state.
  */
 
-const SESSION_COOKIE_NAME = 'webcore_admin_session';
+import bcrypt from 'bcryptjs';
 
-function base64ToUtf8(base64: string): string {
-  // Prefer Web APIs (Edge runtime), fallback to Buffer (Node).
-  if (typeof globalThis.atob === 'function') {
-    // atob returns a binary string; credentials are ASCII/utf-8-safe.
-    return globalThis.atob(base64);
-  }
-
-  // eslint-disable-next-line no-undef
-  return Buffer.from(base64, 'base64').toString('utf-8');
-}
+const AUTH_COOKIE_NAME = 'webcore_auth';
 
 function utf8ToBase64Url(input: string): string {
   const bytes = new TextEncoder().encode(input);
@@ -83,100 +75,78 @@ function timingSafeEqual(a: string, b: string): boolean {
   return out === 0;
 }
 
-export function parseBasicAuth(authHeader: string | null): { username: string; password: string } | null {
-  if (!authHeader || !authHeader.startsWith('Basic ')) {
-    return null;
-  }
-
-  try {
-    const base64Credentials = authHeader.slice(6);
-    const credentials = base64ToUtf8(base64Credentials);
-    const [username, password] = credentials.split(':');
-
-    if (!username || !password) {
-      return null;
-    }
-
-    return { username, password };
-  } catch (error) {
-    return null;
-  }
+export function getAuthCookieName(): string {
+  return AUTH_COOKIE_NAME;
 }
 
-export function verifyBasicAuth(authHeader: string | null): boolean {
-  const credentials = parseBasicAuth(authHeader);
-  
-  if (!credentials) {
-    return false;
-  }
-
-  const expectedUsername = process.env.ASSET_ADMIN_USER || 'admin';
-  const expectedPassword = process.env.ASSET_ADMIN_PASS || 'changeme';
-
-  return credentials.username === expectedUsername && credentials.password === expectedPassword;
+export function getJwtSecret(): string {
+  // Recommended: set AUTH_JWT_SECRET to a long random string.
+  // Fallbacks for local dev only.
+  return process.env.AUTH_JWT_SECRET || 'changeme';
 }
 
-export function getAdminAuthUserPass(): { username: string; password: string } {
-  return {
-    username: process.env.ASSET_ADMIN_USER || 'admin',
-    password: process.env.ASSET_ADMIN_PASS || 'changeme',
-  };
-}
-
-export function getSessionCookieName(): string {
-  return SESSION_COOKIE_NAME;
-}
-
-export function getSessionSecret(): string {
-  // Prefer an explicit session secret; fall back to the admin password for convenience.
-  // Recommended: set ASSET_ADMIN_SESSION_SECRET to a long random string.
-  return process.env.ASSET_ADMIN_SESSION_SECRET || process.env.ASSET_ADMIN_PASS || 'changeme';
-}
-
-export function verifyAdminCredentials(username: string, password: string): boolean {
-  const expected = getAdminAuthUserPass();
-  return username === expected.username && password === expected.password;
-}
-
-export type AdminSessionPayload = {
-  u: string;
+export type AuthJwtPayload = {
+  sub: string;
+  email: string;
+  name: string;
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'USER';
+  sv: number;
   iat: number;
   exp: number;
 };
 
-export async function createAdminSessionToken(
-  payload: AdminSessionPayload,
-  secret: string
-): Promise<string> {
-  const payloadB64 = utf8ToBase64Url(JSON.stringify(payload));
-  const sigB64 = await hmacSha256Base64Url(secret, payloadB64);
-  return `${payloadB64}.${sigB64}`;
+function nowSeconds(): number {
+  return Math.floor(Date.now() / 1000);
 }
 
-export async function verifyAdminSessionToken(
+export async function hashPassword(plain: string): Promise<string> {
+  const saltRounds = 12;
+  return bcrypt.hash(plain, saltRounds);
+}
+
+export async function verifyPassword(plain: string, hash: string): Promise<boolean> {
+  return bcrypt.compare(plain, hash);
+}
+
+export async function createAuthJwt(payload: AuthJwtPayload, secret: string): Promise<string> {
+  const headerB64 = utf8ToBase64Url(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payloadB64 = utf8ToBase64Url(JSON.stringify(payload));
+  const signingInput = `${headerB64}.${payloadB64}`;
+  const sigB64 = await hmacSha256Base64Url(secret, signingInput);
+  return `${signingInput}.${sigB64}`;
+}
+
+export async function verifyAuthJwt(
   token: string | null,
   secret: string
-): Promise<AdminSessionPayload | null> {
+): Promise<AuthJwtPayload | null> {
   if (!token) return null;
 
   const parts = token.split('.');
-  if (parts.length !== 2) return null;
-  const [payloadB64, sigB64] = parts;
-  if (!payloadB64 || !sigB64) return null;
+  if (parts.length !== 3) return null;
+  const [headerB64, payloadB64, sigB64] = parts;
+  if (!headerB64 || !payloadB64 || !sigB64) return null;
 
-  const expectedSig = await hmacSha256Base64Url(secret, payloadB64);
+  const expectedSig = await hmacSha256Base64Url(secret, `${headerB64}.${payloadB64}`);
   if (!timingSafeEqual(sigB64, expectedSig)) return null;
 
-  let payload: AdminSessionPayload;
+  let payload: AuthJwtPayload;
   try {
-    payload = JSON.parse(base64UrlToUtf8(payloadB64)) as AdminSessionPayload;
+    payload = JSON.parse(base64UrlToUtf8(payloadB64)) as AuthJwtPayload;
   } catch {
     return null;
   }
 
-  if (!payload || typeof payload.u !== 'string') return null;
+  if (!payload || typeof payload.sub !== 'string') return null;
+  if (typeof payload.email !== 'string' || typeof payload.name !== 'string') return null;
+  if (payload.role !== 'SUPER_ADMIN' && payload.role !== 'ADMIN' && payload.role !== 'USER') return null;
+  if (typeof payload.sv !== 'number') return null;
   if (typeof payload.iat !== 'number' || typeof payload.exp !== 'number') return null;
-  if (Date.now() > payload.exp) return null;
+  if (nowSeconds() > payload.exp) return null;
 
   return payload;
+}
+
+export function getDefaultAuthMaxAgeSeconds(): number {
+  return 60 * 60 * 24 * 7; // 7 days
 }

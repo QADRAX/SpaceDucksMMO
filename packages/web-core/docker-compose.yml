@@ -12,8 +12,7 @@ services:
       - NODE_ENV=production
       - DATABASE_URL=file:/app/prisma/production.db
       - ASSET_STORAGE_PATH=/data/assets
-      - ASSET_ADMIN_USER=admin
-      - ASSET_ADMIN_PASS=changeme
+      - AUTH_JWT_SECRET=changeme
       - BASE_URL=http://localhost:3000
     restart: unless-stopped
 

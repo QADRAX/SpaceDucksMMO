@@ -1,17 +1,17 @@
 import * as React from 'react';
 
 import { Card, CardContent } from '@/components/molecules/Card';
-import { LoginClient } from './login-client';
+import { SetupClient } from './setup-client';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export default async function LoginPage() {
+export default async function SetupPage() {
   const count = await prisma.user.count();
-  if (count === 0) {
-    redirect('/setup');
+  if (count > 0) {
+    redirect('/login');
   }
 
   return (
@@ -26,7 +26,7 @@ export default async function LoginPage() {
         </div>
       }
     >
-      <LoginClient />
+      <SetupClient />
     </React.Suspense>
   );
 }

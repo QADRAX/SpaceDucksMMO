@@ -14,7 +14,7 @@ export function LoginClient() {
 
   const returnTo = searchParams.get('returnTo') || '/admin';
 
-  const [username, setUsername] = React.useState('');
+  const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -28,12 +28,17 @@ export function LoginClient() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ email, password }),
       });
 
       if (!res.ok) {
         const data = await res.json().catch(() => null);
         const message = typeof data?.error === 'string' ? data.error : 'Login failed';
+        if (res.status === 409 && message.toLowerCase().includes('setup')) {
+          router.push('/setup');
+          router.refresh();
+          return;
+        }
         setError(message);
         return;
       }
@@ -58,12 +63,12 @@ export function LoginClient() {
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-heading">Username</label>
+              <label className="text-sm font-heading">Email</label>
               <Input
-                autoComplete="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="admin"
+                autoComplete="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="admin@local"
               />
             </div>
 
@@ -81,7 +86,7 @@ export function LoginClient() {
             {error ? <p className="text-sm text-red-600">{error}</p> : null}
 
             <div className="flex items-center gap-3">
-              <Button type="submit" disabled={submitting || !username || !password}>
+              <Button type="submit" disabled={submitting || !email || !password}>
                 {submitting ? 'Signing in…' : 'Sign in'}
               </Button>
               <a className="text-sm text-neutral-600 underline" href="/">
@@ -93,9 +98,7 @@ export function LoginClient() {
       </Card>
 
       <p className="text-xs text-neutral-500 mt-4">
-        Tip: set <code className="text-xs">ASSET_ADMIN_USER</code>,{' '}
-        <code className="text-xs">ASSET_ADMIN_PASS</code>, and (recommended){' '}
-        <code className="text-xs">ASSET_ADMIN_SESSION_SECRET</code>.
+        Tip: set <code className="text-xs">AUTH_JWT_SECRET</code> in production.
       </p>
     </div>
   );
