@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/db';
+import { getDbReadiness } from '@/lib/dbReadiness';
 
 let cached: { checkedAt: number; setupComplete: boolean } | null = null;
 
@@ -8,8 +9,8 @@ export async function isSetupComplete(): Promise<boolean> {
     return cached.setupComplete;
   }
 
-  const count = await prisma.user.count();
-  const setupComplete = count > 0;
+  const readiness = await getDbReadiness(prisma);
+  const setupComplete = readiness.ready && readiness.userCount > 0;
   cached = { checkedAt: now, setupComplete };
   return setupComplete;
 }

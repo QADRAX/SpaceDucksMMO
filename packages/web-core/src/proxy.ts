@@ -7,6 +7,7 @@ import {
   getJwtSecret,
   verifyAuthJwt,
 } from './lib/auth';
+import { getDbReadiness } from '@/lib/dbReadiness';
 
 type Role = 'USER' | 'ADMIN' | 'SUPER_ADMIN';
 
@@ -43,17 +44,55 @@ export async function proxy(request: NextRequest) {
   }
 
   if (requiresAuth) {
-    const existingCount = await prisma.user.count();
-    if (existingCount === 0) {
+    const readiness = await getDbReadiness(prisma);
+
+    const clearAuthCookie = (res: NextResponse) => {
+      try {
+        res.cookies.set({
+          name: getAuthCookieName(),
+          value: '',
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+          path: '/',
+          maxAge: 0,
+        });
+      } catch {
+        // ignore
+      }
+      return res;
+    };
+
+    if (!readiness.ready) {
       if (pathname.startsWith('/api/admin')) {
-        return NextResponse.json({ error: 'Setup required' }, { status: 503 });
+        return clearAuthCookie(
+          NextResponse.json(
+            {
+              error: 'Setup required',
+              reason: readiness.reason,
+            },
+            { status: 503 }
+          )
+        );
       }
 
       const returnTo = request.nextUrl.pathname + request.nextUrl.search;
       const url = request.nextUrl.clone();
       url.pathname = '/setup';
       url.searchParams.set('returnTo', returnTo);
-      return NextResponse.redirect(url);
+      return clearAuthCookie(NextResponse.redirect(url));
+    }
+
+    if (readiness.userCount === 0) {
+      if (pathname.startsWith('/api/admin')) {
+        return clearAuthCookie(NextResponse.json({ error: 'Setup required' }, { status: 503 }));
+      }
+
+      const returnTo = request.nextUrl.pathname + request.nextUrl.search;
+      const url = request.nextUrl.clone();
+      url.pathname = '/setup';
+      url.searchParams.set('returnTo', returnTo);
+      return clearAuthCookie(NextResponse.redirect(url));
     }
 
     const token = request.cookies.get(getAuthCookieName())?.value ?? null;
@@ -61,14 +100,14 @@ export async function proxy(request: NextRequest) {
 
     if (!payload) {
       if (pathname.startsWith('/api/admin')) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return clearAuthCookie(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
       }
 
       const returnTo = request.nextUrl.pathname + request.nextUrl.search;
       const url = request.nextUrl.clone();
       url.pathname = '/login';
       url.searchParams.set('returnTo', returnTo);
-      return NextResponse.redirect(url);
+      return clearAuthCookie(NextResponse.redirect(url));
     }
 
     // If authenticated via JWT, validate user is still active and enforce RBAC.
@@ -85,14 +124,14 @@ export async function proxy(request: NextRequest) {
 
       if (!valid) {
         if (pathname.startsWith('/api/admin')) {
-          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+          return clearAuthCookie(NextResponse.json({ error: 'Unauthorized' }, { status: 401 }));
         }
 
         const returnTo = request.nextUrl.pathname + request.nextUrl.search;
         const url = request.nextUrl.clone();
         url.pathname = '/login';
         url.searchParams.set('returnTo', returnTo);
-        return NextResponse.redirect(url);
+        return clearAuthCookie(NextResponse.redirect(url));
       }
 
       const requiredRole: Role = pathname.startsWith('/admin/users') || pathname.startsWith('/api/admin/users')

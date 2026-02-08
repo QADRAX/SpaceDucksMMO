@@ -58,9 +58,11 @@ export function DialogTrigger({ children, asChild, ...props }: DialogTriggerProp
   );
 }
 
-interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  fullscreen?: boolean;
+}
 
-export function DialogContent({ className, children, ...props }: DialogContentProps) {
+export function DialogContent({ className, children, fullscreen = false, ...props }: DialogContentProps) {
   const { open, setOpen } = useDialog();
 
   React.useEffect(() => {
@@ -76,7 +78,12 @@ export function DialogContent({ className, children, ...props }: DialogContentPr
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-10000 flex items-center justify-center p-4">
+    <div
+      className={cn(
+        'fixed inset-0 z-10000 flex',
+        fullscreen ? 'items-stretch justify-stretch p-0' : 'items-center justify-center p-4'
+      )}
+    >
       {/* Overlay */}
       <div
         className="fixed inset-0 bg-black/50"
@@ -86,8 +93,10 @@ export function DialogContent({ className, children, ...props }: DialogContentPr
       {/* Dialog */}
       <div
         className={cn(
-          'relative z-10001 w-full max-w-lg bg-white border-4 border-black rounded-base shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]',
-          'max-h-[90vh] overflow-auto scrollbar p-6',
+          'relative z-10001 bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]',
+          fullscreen
+            ? 'w-full h-full max-w-none max-h-none overflow-hidden rounded-none border-0 shadow-none'
+            : 'w-full max-w-lg max-h-[90vh] overflow-auto scrollbar rounded-base p-6',
           className
         )}
         {...props}

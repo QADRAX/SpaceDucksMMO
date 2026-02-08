@@ -141,18 +141,52 @@ export async function PATCH(
     );
   }
 
-  if (parsed.data.displayName === undefined) {
+  if (
+    parsed.data.displayName === undefined &&
+    parsed.data.key === undefined &&
+    parsed.data.activeVersion === undefined
+  ) {
     return NextResponse.json({ error: 'No changes' }, { status: 400 });
   }
 
-  const updated = await prisma.resource.update({
-    where: { id: resourceId },
-    data: {
-      ...(parsed.data.displayName !== undefined ? { displayName: parsed.data.displayName } : {}),
-    },
-  });
+  if (parsed.data.activeVersion !== undefined) {
+    const exists = await prisma.resourceVersion.findUnique({
+      where: {
+        resourceId_version: { resourceId, version: parsed.data.activeVersion },
+      },
+      select: { id: true },
+    });
 
-  return NextResponse.json(updated);
+    if (!exists) {
+      return NextResponse.json(
+        { error: `Version ${parsed.data.activeVersion} does not exist for this resource` },
+        { status: 400 }
+      );
+    }
+  }
+
+  try {
+    const updated = await prisma.resource.update({
+      where: { id: resourceId },
+      data: {
+        ...(parsed.data.displayName !== undefined ? { displayName: parsed.data.displayName } : {}),
+        ...(parsed.data.key !== undefined ? { key: parsed.data.key } : {}),
+        ...(parsed.data.activeVersion !== undefined ? { activeVersion: parsed.data.activeVersion } : {}),
+      },
+    });
+
+    return NextResponse.json(updated);
+  } catch (error: any) {
+    // Unique constraint on key
+    if (error && typeof error === 'object' && error.code === 'P2002') {
+      return NextResponse.json(
+        { error: 'Resource key already exists' },
+        { status: 409 }
+      );
+    }
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 400 });
+  }
 }
 
 export async function DELETE(

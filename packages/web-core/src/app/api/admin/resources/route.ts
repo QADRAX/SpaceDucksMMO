@@ -74,11 +74,19 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import * as crypto from 'crypto';
 
 import { prisma } from '@/lib/db';
 import { createResourceFromZip } from '@/lib/resourceUpload/resourceZip';
 import { updateResourceThumbnailFromVersion } from '@/lib/resourceThumbnail';
-import { CreateResourceSchema, ResourceKindSchema } from '@/lib/types';
+import { CreateResourceSchema, MaterialComponentSchema, ResourceKindSchema } from '@/lib/types';
+import { StorageService } from '@/lib/storage';
+
+function coerceComponentData(raw: unknown): Record<string, unknown> {
+  if (raw === undefined || raw === null) return {};
+  if (typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, unknown>;
+  return {};
+}
 
 export async function GET(request: NextRequest) {
   const kindParam = request.nextUrl.searchParams.get('kind');
@@ -105,11 +113,164 @@ export async function POST(request: NextRequest) {
       const formData = await request.formData();
       const zip = formData.get('zip');
 
-      if (!(zip instanceof File) || zip.size === 0) {
-        return NextResponse.json({ error: 'zip file is required' }, { status: 400 });
+      // ZIP-based create (preferred when available)
+      if (zip instanceof File && zip.size > 0) {
+        const created = await createResourceFromZip(prisma, zip);
+
+        // Best-effort thumbnail generation.
+        try {
+          await updateResourceThumbnailFromVersion(prisma, created.resource.id, created.version.version);
+        } catch {
+          // ignore
+        }
+
+        return NextResponse.json(created, { status: 201 });
       }
 
-      const created = await createResourceFromZip(prisma, zip);
+      // Non-zip multipart create: key/displayName/kind + componentData + slot files.
+      const key = formData.get('key');
+      const displayName = formData.get('displayName');
+      const kindRaw = formData.get('kind');
+      const componentDataRaw = formData.get('componentData');
+
+      const parsedCreate = CreateResourceSchema.safeParse({
+        key,
+        displayName,
+        kind: kindRaw,
+      });
+
+      if (!parsedCreate.success) {
+        return NextResponse.json(
+          { error: 'Invalid payload', details: parsedCreate.error.flatten() },
+          { status: 400 }
+        );
+      }
+
+      const componentDataObj = (() => {
+        if (typeof componentDataRaw !== 'string' || !componentDataRaw.trim()) return {};
+        try {
+          return JSON.parse(componentDataRaw);
+        } catch {
+          return null;
+        }
+      })();
+
+      if (componentDataObj === null) {
+        return NextResponse.json(
+          { error: 'componentData must be valid JSON (or omitted)' },
+          { status: 400 }
+        );
+      }
+
+      // Validate per-kind. For now, only material kinds are supported.
+      const componentPayloadParsed = MaterialComponentSchema.safeParse({
+        componentType: parsedCreate.data.kind as any,
+        componentData: coerceComponentData(componentDataObj),
+      });
+
+      if (!componentPayloadParsed.success) {
+        return NextResponse.json(
+          {
+            error: 'Invalid component data',
+            details: componentPayloadParsed.error.flatten(),
+          },
+          { status: 400 }
+        );
+      }
+
+      const created = await prisma.$transaction(async (tx) => {
+        const resource = await tx.resource.create({
+          data: {
+            key: parsedCreate.data.key,
+            displayName: parsedCreate.data.displayName,
+            kind: parsedCreate.data.kind,
+            activeVersion: 1,
+          },
+        });
+
+        const componentDataToStore: Record<string, unknown> = {
+          ...(componentPayloadParsed.data.componentData ?? {}),
+        };
+
+        const version = await tx.resourceVersion.create({
+          data: {
+            resourceId: resource.id,
+            version: 1,
+            componentType: resource.kind,
+            componentData: JSON.stringify(componentDataToStore),
+          },
+        });
+
+        // Bind any file fields except known metadata.
+        const reserved = new Set(['zip', 'key', 'displayName', 'kind', 'componentData', 'componentType']);
+        const seenSlots = new Set<string>();
+
+        for (const [slot, value] of formData.entries()) {
+          if (reserved.has(slot)) continue;
+          if (!(value instanceof File) || value.size === 0) continue;
+
+          if (seenSlots.has(slot)) {
+            throw new Error(`Duplicate file field for slot: ${slot}`);
+          }
+          seenSlots.add(slot);
+
+          const fileId = crypto.randomUUID();
+          const saved = await StorageService.saveFile(value, value.name, {
+            fileId,
+            contentType: value.type || undefined,
+          });
+
+          const fileAsset = await tx.fileAsset.create({
+            data: {
+              id: fileId,
+              fileName: saved.fileName,
+              contentType: saved.contentType,
+              size: saved.size,
+              sha256: saved.sha256,
+              storagePath: saved.storagePath,
+            },
+          });
+
+          await tx.resourceBinding.create({
+            data: {
+              resourceVersionId: version.id,
+              slot,
+              fileAssetId: fileAsset.id,
+            },
+          });
+
+          const supportedTextureFields = new Set([
+            // componentData fields
+            'texture',
+            'normalMap',
+            'envMap',
+            'aoMap',
+            'roughnessMap',
+            'metalnessMap',
+            'specularMap',
+            'bumpMap',
+            // friendly binding aliases -> componentData.texture
+            'baseColor',
+            'albedo',
+          ]);
+
+          if (supportedTextureFields.has(slot)) {
+            const url = `/api/files/${fileId}`;
+            if (slot === 'baseColor' || slot === 'albedo') {
+              componentDataToStore.texture = url;
+            } else {
+              componentDataToStore[slot] = url;
+            }
+          }
+        }
+
+        await tx.resourceVersion.update({
+          where: { id: version.id },
+          data: { componentData: JSON.stringify(componentDataToStore) },
+        });
+
+        return { resource, version };
+      });
 
       // Best-effort thumbnail generation.
       try {

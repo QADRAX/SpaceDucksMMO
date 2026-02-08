@@ -17,6 +17,11 @@ function stripExt(fileName: string): string {
   return path.posix.basename(fileName, path.posix.extname(fileName));
 }
 
+function toZipBasename(fileName: string): string {
+  const normalized = fileName.replace(/\\/g, '/');
+  return path.posix.basename(normalized);
+}
+
 function coerceComponentData(raw: unknown): Record<string, unknown> {
   if (raw === undefined || raw === null) return {};
   if (typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, unknown>;
@@ -47,7 +52,41 @@ function validateComponentDataForKind(kind: string, rawComponentData: unknown) {
 
 type SlotFile = { slot: string; fileName: string; data: Buffer };
 
-function collectSlotFilesFromZip(files: Map<string, { name: string; data: Buffer }>): SlotFile[] {
+function collectSlotFilesFromZip(
+  files: Map<string, { name: string; data: Buffer }>,
+  bindings?: Array<{ slot: string; file: string }>
+): SlotFile[] {
+  if (bindings && bindings.length) {
+    const slotFiles: SlotFile[] = [];
+    const seenSlots = new Set<string>();
+
+    for (const b of bindings) {
+      const slot = String(b.slot || '').trim();
+      const fileBase = toZipBasename(String(b.file || ''));
+
+      if (!slot) throw new Error('Invalid manifest: files[].slot must be a non-empty string');
+      if (!fileBase) throw new Error('Invalid manifest: files[].file must be a non-empty string');
+
+      if (seenSlots.has(slot)) {
+        throw new Error(`Duplicate slot in manifest: ${slot}`);
+      }
+      seenSlots.add(slot);
+
+      const entry = files.get(fileBase);
+      if (!entry) {
+        throw new Error(`Missing file in zip referenced by manifest: ${fileBase}`);
+      }
+      if (entry.name === 'resource.json' || entry.name === 'version.json') {
+        throw new Error(`Invalid manifest file reference: ${fileBase}`);
+      }
+
+      slotFiles.push({ slot, fileName: entry.name, data: entry.data });
+    }
+
+    return slotFiles;
+  }
+
+  // Legacy behavior: infer slot name from filename (basename without extension).
   const slotFiles: SlotFile[] = [];
   const seenSlots = new Set<string>();
 
@@ -97,7 +136,11 @@ export async function createResourceFromZip(prisma: PrismaClient, zipFile: File)
 
   const component = validateComponentDataForKind(kind, versionPayload.componentData);
 
-  const slotFiles = collectSlotFilesFromZip(files);
+  const componentDataToStore: Record<string, unknown> = {
+    ...(component.componentData ?? {}),
+  };
+
+  const slotFiles = collectSlotFilesFromZip(files, versionPayload.files);
 
   const created = await prisma.$transaction(async (tx) => {
     const resource = await tx.resource.create({
@@ -114,7 +157,7 @@ export async function createResourceFromZip(prisma: PrismaClient, zipFile: File)
         resourceId: resource.id,
         version: 1,
         componentType: component.componentType,
-        componentData: JSON.stringify(component.componentData ?? {}),
+        componentData: JSON.stringify(componentDataToStore),
       },
     });
 
@@ -145,7 +188,34 @@ export async function createResourceFromZip(prisma: PrismaClient, zipFile: File)
           fileAssetId: fileAsset.id,
         },
       });
+
+      const supportedTextureFields = new Set([
+        'texture',
+        'normalMap',
+        'envMap',
+        'aoMap',
+        'roughnessMap',
+        'metalnessMap',
+        'specularMap',
+        'bumpMap',
+        'baseColor',
+        'albedo',
+      ]);
+
+      if (supportedTextureFields.has(slot.slot)) {
+        const url = `/api/files/${fileId}`;
+        if (slot.slot === 'baseColor' || slot.slot === 'albedo') {
+          componentDataToStore.texture = url;
+        } else {
+          componentDataToStore[slot.slot] = url;
+        }
+      }
     }
+
+    await tx.resourceVersion.update({
+      where: { id: version.id },
+      data: { componentData: JSON.stringify(componentDataToStore) },
+    });
 
     return { resource, version };
   });
@@ -184,7 +254,11 @@ export async function createResourceVersionFromZip(
 
   const component = validateComponentDataForKind(resourceKind, parsed.data.componentData);
 
-  const slotFiles = collectSlotFilesFromZip(files);
+  const componentDataToStore: Record<string, unknown> = {
+    ...(component.componentData ?? {}),
+  };
+
+  const slotFiles = collectSlotFilesFromZip(files, parsed.data.files);
 
   const created = await prisma.$transaction(async (tx) => {
     const nextVersion = await (async () => {
@@ -218,7 +292,7 @@ export async function createResourceVersionFromZip(
         resourceId,
         version: nextVersion,
         componentType: component.componentType,
-        componentData: JSON.stringify(component.componentData ?? {}),
+        componentData: JSON.stringify(componentDataToStore),
       },
     });
 
@@ -254,7 +328,34 @@ export async function createResourceVersionFromZip(
           fileAssetId: fileAsset.id,
         },
       });
+
+      const supportedTextureFields = new Set([
+        'texture',
+        'normalMap',
+        'envMap',
+        'aoMap',
+        'roughnessMap',
+        'metalnessMap',
+        'specularMap',
+        'bumpMap',
+        'baseColor',
+        'albedo',
+      ]);
+
+      if (supportedTextureFields.has(slot.slot)) {
+        const url = `/api/files/${fileId}`;
+        if (slot.slot === 'baseColor' || slot.slot === 'albedo') {
+          componentDataToStore.texture = url;
+        } else {
+          componentDataToStore[slot.slot] = url;
+        }
+      }
     }
+
+    await tx.resourceVersion.update({
+      where: { id: version.id },
+      data: { componentData: JSON.stringify(componentDataToStore) },
+    });
 
     return version;
   });

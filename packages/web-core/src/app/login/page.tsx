@@ -4,13 +4,14 @@ import { Card, CardContent } from '@/components/molecules/Card';
 import { LoginClient } from './login-client';
 import { prisma } from '@/lib/db';
 import { redirect } from 'next/navigation';
+import { getDbReadiness } from '@/lib/dbReadiness';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function LoginPage() {
-  const count = await prisma.user.count();
-  if (count === 0) {
+  const readiness = await getDbReadiness(prisma);
+  if (!readiness.ready || readiness.userCount === 0) {
     redirect('/setup');
   }
 

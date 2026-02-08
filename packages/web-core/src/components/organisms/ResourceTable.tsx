@@ -33,12 +33,14 @@ export function ResourceTable({
   rows,
   emptyTitle,
   emptyHint,
+  toolbar,
   viewHref,
   pagination,
 }: {
   rows: ResourceTableRow[];
   emptyTitle: string;
   emptyHint?: React.ReactNode;
+  toolbar?: React.ReactNode;
   viewHref?: (resourceId: string) => string;
   pagination?: ResourceTablePagination;
 }) {
@@ -46,6 +48,11 @@ export function ResourceTable({
 
   return (
     <Card className="p-0">
+      {toolbar ? (
+        <div className="flex items-center justify-end gap-2 border-b border-border px-6 py-4">
+          {toolbar}
+        </div>
+      ) : null}
       <Table>
         <TableHeader>
           <TableRow>

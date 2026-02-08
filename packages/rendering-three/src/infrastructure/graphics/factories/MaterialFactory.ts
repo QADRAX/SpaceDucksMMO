@@ -21,6 +21,17 @@ export class MaterialFactory {
   ): THREE.Material {
     let material: THREE.Material;
 
+    function normalizeHexColor(
+      v: THREE.ColorRepresentation | undefined
+    ): THREE.ColorRepresentation | undefined {
+      if (typeof v !== 'string') return v;
+      // THREE.Color supports '#RRGGBB' but not '#RRGGBBAA'.
+      if (/^#[0-9a-fA-F]{8}$/.test(v)) {
+        return v.slice(0, 7);
+      }
+      return v;
+    }
+
     // Remove undefined keys to avoid THREE warnings about undefined params
     function cleanParams<T extends object>(params: T): T {
       Object.keys(params).forEach((key) => {
@@ -35,6 +46,8 @@ export class MaterialFactory {
     function looksLikeDirectPath(url: string | undefined): boolean {
       if (!url) return false;
       return (
+        url.startsWith("blob:") ||
+        url.startsWith("data:") ||
         url.startsWith("/") ||
         url.startsWith("http://") ||
         url.startsWith("https://") ||
@@ -79,10 +92,10 @@ export class MaterialFactory {
     switch (comp.type) {
       case "standardMaterial": {
         const opts: THREE.MeshStandardMaterialParameters = {
-          color: comp.color ?? 0xffffff,
+          color: normalizeHexColor(comp.color) ?? 0xffffff,
           metalness: comp.metalness,
           roughness: comp.roughness,
-          emissive: comp.emissive,
+          emissive: normalizeHexColor(comp.emissive),
           emissiveIntensity: comp.emissiveIntensity,
           transparent: comp.transparent,
           opacity: comp.opacity,
@@ -93,7 +106,7 @@ export class MaterialFactory {
       case "basicMaterial": {
         const basic = comp as BasicMaterialComponent;
         const opts: THREE.MeshBasicMaterialParameters = {
-          color: basic.color ?? 0xffffff,
+          color: normalizeHexColor(basic.color) ?? 0xffffff,
           transparent: basic.transparent,
           opacity: basic.opacity,
           wireframe: basic.wireframe,
@@ -104,10 +117,10 @@ export class MaterialFactory {
       case "phongMaterial": {
         const phong = comp as PhongMaterialComponent;
         const opts: THREE.MeshPhongMaterialParameters = {
-          color: phong.color ?? 0xffffff,
-          specular: phong.specular,
+          color: normalizeHexColor(phong.color) ?? 0xffffff,
+          specular: normalizeHexColor(phong.specular),
           shininess: phong.shininess,
-          emissive: phong.emissive,
+          emissive: normalizeHexColor(phong.emissive),
           transparent: phong.transparent,
           opacity: phong.opacity,
         };
@@ -117,8 +130,8 @@ export class MaterialFactory {
       case "lambertMaterial": {
         const lambert = comp as LambertMaterialComponent;
         const opts: THREE.MeshLambertMaterialParameters = {
-          color: lambert.color ?? 0xffffff,
-          emissive: lambert.emissive,
+          color: normalizeHexColor(lambert.color) ?? 0xffffff,
+          emissive: normalizeHexColor(lambert.emissive),
           transparent: lambert.transparent,
           opacity: lambert.opacity,
         };

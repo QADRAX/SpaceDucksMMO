@@ -201,10 +201,20 @@ export type CreateResourceInput = z.infer<typeof CreateResourceSchema>;
 export const PatchResourceSchema = z
   .object({
     displayName: z.string().min(1).optional(),
+    key: z.string().min(1).optional(),
+    activeVersion: z.number().int().positive().optional(),
   })
   .strict();
 
 export type PatchResourceInput = z.infer<typeof PatchResourceSchema>;
+
+export const PatchResourceVersionSchema = z
+  .object({
+    componentData: z.unknown().optional(),
+  })
+  .strict();
+
+export type PatchResourceVersionInput = z.infer<typeof PatchResourceVersionSchema>;
 
 export const CreateResourceVersionSchema = z
   .object({
@@ -217,6 +227,18 @@ export const CreateResourceVersionSchema = z
     componentData: z.unknown().optional(),
     // Optional legacy field: if provided, must match the resource kind.
     componentType: z.string().optional(),
+    // Optional ZIP helper: explicit mapping from zip filenames to binding slots.
+    // When provided, zip uploads do not require files to be named after slots.
+    files: z
+      .array(
+        z
+          .object({
+            slot: z.string().min(1),
+            file: z.string().min(1),
+          })
+          .strict()
+      )
+      .optional(),
   })
   .strict();
 

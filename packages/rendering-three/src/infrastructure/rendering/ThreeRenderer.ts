@@ -16,6 +16,7 @@ export class ThreeRenderer implements IRenderingEngine {
   private resolutionPolicy: "auto" | "scale" = "auto";
   private resolutionScale = 1.0;
   private rafId: number | null = null;
+  private resizeRafId: number | null = null;
   private activeIScene: IScene | null = null;
   private antialias = true;
   private shadows = true;
@@ -23,6 +24,7 @@ export class ThreeRenderer implements IRenderingEngine {
   private fpsController: IFpsController;
   private textureResolver?: ITextureResolver;
   private textureCatalog?: TextureCatalogService;
+  private onResize?: () => void;
 
   constructor(fpsController: IFpsController) {
     this.fpsController = fpsController;
@@ -57,8 +59,59 @@ export class ThreeRenderer implements IRenderingEngine {
     this.scene = new THREE.Scene();
     this.initializeRenderer();
     this.applyResolutionScale();
+    try {
+      // Ensure the canvas always fits and responds to container resizing.
+      this.renderer.domElement.style.display = 'block';
+      this.renderer.domElement.style.width = '100%';
+      this.renderer.domElement.style.height = '100%';
+    } catch {
+      // ignore
+    }
     container.appendChild(this.renderer.domElement);
-    window.addEventListener("resize", () => this.handleResize());
+    this.onResize = () => this.handleResize();
+    window.addEventListener('resize', this.onResize);
+  }
+
+  /**
+   * Best-effort cleanup for short-lived renderers (eg. admin previews).
+   * Stops RAF, removes resize listener, and disposes WebGL resources.
+   */
+  dispose(): void {
+    try {
+      this.stop();
+    } catch {}
+
+    try {
+      if (this.resizeRafId !== null) cancelAnimationFrame(this.resizeRafId);
+    } catch {}
+    this.resizeRafId = null;
+
+    try {
+      if (this.onResize) window.removeEventListener('resize', this.onResize);
+    } catch {}
+    this.onResize = undefined;
+
+    try {
+      this.disablePostProcessing();
+    } catch {}
+
+    try {
+      // Teardown any active scene
+      this.teardownPreviousScene();
+    } catch {}
+
+    try {
+      const el = this.renderer?.domElement as any;
+      if (el && el.parentNode) el.parentNode.removeChild(el);
+    } catch {}
+
+    try {
+      this.renderer?.dispose?.();
+    } catch {}
+
+    try {
+      this.fpsController?.dispose?.();
+    } catch {}
   }
 
   private initializeRenderer(): void {
@@ -98,7 +151,10 @@ export class ThreeRenderer implements IRenderingEngine {
 
   private applyResolutionScale(): void {
     if (!this.renderer || !this.container) return;
-    const { clientWidth: w, clientHeight: h } = this.container;
+    // clientWidth/clientHeight can lag during responsive reflow; rect is more reliable.
+    const rect = this.container.getBoundingClientRect();
+    const w = Math.max(1, Math.floor(rect.width) || this.container.clientWidth);
+    const h = Math.max(1, Math.floor(rect.height) || this.container.clientHeight);
     this.renderer.setSize(w, h, false);
     const ratio =
       this.resolutionPolicy === "scale"
@@ -134,6 +190,13 @@ export class ThreeRenderer implements IRenderingEngine {
     this.renderer.domElement.remove();
     this.renderer.dispose();
     this.initializeRenderer();
+    try {
+      this.renderer.domElement.style.display = 'block';
+      this.renderer.domElement.style.width = '100%';
+      this.renderer.domElement.style.height = '100%';
+    } catch {
+      // ignore
+    }
     this.container.appendChild(this.renderer.domElement);
     this.applyResolutionScale();
   }
@@ -274,7 +337,12 @@ export class ThreeRenderer implements IRenderingEngine {
   }
 
   handleResize(): void {
-    this.applyResolutionScale();
+    // Debounce to next frame so layout has settled (helps on viewport shrink).
+    if (this.resizeRafId !== null) return;
+    this.resizeRafId = requestAnimationFrame(() => {
+      this.resizeRafId = null;
+      this.applyResolutionScale();
+    });
   }
 
   onActiveCameraChanged(): void {

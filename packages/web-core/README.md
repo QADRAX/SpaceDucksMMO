@@ -58,6 +58,11 @@ A monolithic web app that provides core web tooling for Duck Engine projects.
    npx prisma migrate dev
    ```
 
+   If you deleted `prisma/dev.db` (borrón y cuenta nueva), run:
+   ```bash
+   npm run db:reset
+   ```
+
 4. **Run development server**:
    ```bash
    npm run dev
@@ -189,6 +194,7 @@ npm start
 
 # Prisma commands
 npm run prisma:migrate    # Create and apply migrations
+npm run db:reset          # Drop + recreate DB schema from migrations (local dev)
 npm run prisma:generate   # Generate Prisma client
 npm run prisma:studio     # Open Prisma Studio
 ```

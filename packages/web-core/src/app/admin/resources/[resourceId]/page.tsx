@@ -3,14 +3,9 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { Card } from '@/components/molecules/Card';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@/components/organisms/Table';
+import { MaterialResourcePreview } from '@/components/organisms/MaterialResourcePreview';
+import { ResourceDetailAdminPanel } from '@/components/organisms/ResourceDetailAdminPanel';
+import { ResourceKindSchema } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -18,10 +13,28 @@ export const revalidate = 0;
 export default async function ResourceDetailPage({
   params,
 }: {
-  params: { resourceId: string };
+  params: Promise<{ resourceId: string }>;
 }) {
+  const { resourceId } = await params;
+
+  if (!resourceId) {
+    return (
+      <div>
+        <PageHeader title="Resource not found" />
+        <Card>
+          <p className="text-neutral-600">Missing resource id.</p>
+          <p className="text-neutral-600 text-sm mt-2">
+            <Link href="/admin/resources" className="text-main underline">
+              Back to Resources
+            </Link>
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   const resource = await prisma.resource.findUnique({
-    where: { id: params.resourceId },
+    where: { id: resourceId },
   });
 
   if (!resource) {
@@ -45,6 +58,53 @@ export default async function ResourceDetailPage({
     orderBy: { version: 'desc' },
     include: { bindings: { include: { fileAsset: true } } },
   });
+
+  const activeVersion =
+    versions.find((v) => v.version === resource.activeVersion) ?? (versions.length > 0 ? versions[0] : null);
+
+  const kindParsed = ResourceKindSchema.safeParse(resource.kind);
+  const canPreviewMaterial = kindParsed.success && activeVersion;
+
+  let previewComponentData: Record<string, unknown> = {};
+  if (canPreviewMaterial && activeVersion) {
+    try {
+      const parsed = JSON.parse(activeVersion.componentData ?? '{}');
+      previewComponentData = (typeof parsed === 'object' && parsed && !Array.isArray(parsed)) ? parsed : {};
+    } catch {
+      previewComponentData = {};
+    }
+
+    // Best-effort: if componentData is missing texture URLs, fill them from bindings.
+    const supportedTextureFields = new Set([
+      'texture',
+      'normalMap',
+      'envMap',
+      'aoMap',
+      'roughnessMap',
+      'metalnessMap',
+      'specularMap',
+      'bumpMap',
+      'baseColor',
+      'albedo',
+    ]);
+
+    for (const b of activeVersion.bindings ?? []) {
+      if (!supportedTextureFields.has(b.slot)) continue;
+      const url = `/api/files/${b.fileAssetId}`;
+
+      if ((b.slot === 'baseColor' || b.slot === 'albedo')) {
+        if (typeof previewComponentData.texture !== 'string' || previewComponentData.texture.length === 0) {
+          previewComponentData.texture = url;
+        }
+        continue;
+      }
+
+      const current = previewComponentData[b.slot];
+      if (typeof current !== 'string' || current.length === 0) {
+        previewComponentData[b.slot] = url;
+      }
+    }
+  }
 
   return (
     <div>
@@ -90,44 +150,66 @@ export default async function ResourceDetailPage({
         </div>
       </Card>
 
-      <div className="h-6" />
+      {canPreviewMaterial ? (
+        <>
+          <div className="h-6" />
+          <Card>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="font-heading">Preview</div>
+                <div className="text-sm text-neutral-600">
+                  Using version <span className="font-bold text-black">v{activeVersion?.version}</span>
+                </div>
+              </div>
+            </div>
 
-      <Card className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Version</TableHead>
-              <TableHead>Active</TableHead>
-              <TableHead>Component</TableHead>
-              <TableHead>Bindings</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {versions.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={4}>
-                  <p className="text-neutral-600">No versions yet.</p>
-                  <p className="text-neutral-600 text-sm mt-1">
-                    Upload via{' '}
-                    <code className="text-xs">POST /api/admin/resources/{resource.id}/versions</code>.
-                  </p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              versions.map((v) => (
-                <TableRow key={v.id}>
-                  <TableCell>{v.version}</TableCell>
-                  <TableCell>{resource.activeVersion === v.version ? '✓' : ''}</TableCell>
-                  <TableCell>
-                    <code className="text-xs">{v.componentType}</code>
-                  </TableCell>
-                  <TableCell>{v.bindings.length}</TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+            <div className="h-4" />
+
+            <MaterialResourcePreview
+              kind={kindParsed.data}
+              componentData={previewComponentData}
+              className="w-full h-90"
+            />
+          </Card>
+        </>
+      ) : null}
+
+      {kindParsed.success ? (
+        <>
+          <div className="h-6" />
+          <ResourceDetailAdminPanel
+            resource={{
+              id: resource.id,
+              key: resource.key,
+              displayName: resource.displayName,
+              kind: kindParsed.data,
+              activeVersion: resource.activeVersion,
+            }}
+            versions={versions.map((v) => ({
+              id: v.id,
+              version: v.version,
+              componentType: v.componentType,
+              componentData: v.componentData,
+              bindings: (v.bindings ?? []).map((b) => ({
+                id: b.id,
+                slot: b.slot,
+                fileAssetId: b.fileAssetId,
+                fileName: b.fileAsset.fileName,
+              })),
+            }))}
+          />
+        </>
+      ) : (
+        <>
+          <div className="h-6" />
+          <Card>
+            <div className="font-heading">Resource management</div>
+            <div className="text-sm text-neutral-600 mt-2">
+              This UI currently supports material resource kinds only.
+            </div>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

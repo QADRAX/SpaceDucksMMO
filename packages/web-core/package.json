@@ -11,15 +11,18 @@
     "test:watch": "jest --watch",
     "openapi:export": "tsx scripts/export-openapi.ts",
     "prisma:migrate": "prisma migrate dev",
+    "db:reset": "prisma migrate reset --force --skip-seed",
     "prisma:generate": "prisma generate",
     "prisma:studio": "prisma studio"
   },
   "dependencies": {
     "@duckengine/core": "^0.1.0",
     "@duckengine/ecs": "^0.1.0",
+    "@duckengine/rendering-three": "^0.1.0",
     "@prisma/client": "^6.19.2",
     "adm-zip": "^0.5.16",
     "bcryptjs": "^3.0.2",
+    "jszip": "^3.10.1",
     "next": "^16.1.6",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",

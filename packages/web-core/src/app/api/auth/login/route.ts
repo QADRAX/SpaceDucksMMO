@@ -14,6 +14,7 @@ import {
   verifyPassword,
 } from '@/lib/auth';
 import { prisma } from '@/lib/db';
+import { getDbReadiness } from '@/lib/dbReadiness';
 
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -25,8 +26,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Missing credentials' }, { status: 400 });
   }
 
-  const existingCount = await prisma.user.count();
-  if (existingCount === 0) {
+  const readiness = await getDbReadiness(prisma);
+  if (!readiness.ready) {
+    return NextResponse.json(
+      { error: 'Database not initialized. Run Prisma migrations first (npm run prisma:migrate).' },
+      { status: 503 }
+    );
+  }
+
+  if (readiness.userCount === 0) {
     return NextResponse.json({ error: 'Setup required' }, { status: 409 });
   }
 

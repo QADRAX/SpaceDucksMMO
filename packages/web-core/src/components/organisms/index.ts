@@ -5,4 +5,6 @@ export * from './AdminLayout';
 export * from './AdminNavTree';
 export * from './PageHeader';
 export * from './ResourceTable';
+export * from './CreateMaterialResourceDialog';
+export * from './MaterialResourcePreview';
 

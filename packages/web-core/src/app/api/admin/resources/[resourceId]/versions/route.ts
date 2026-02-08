@@ -263,12 +263,16 @@ export async function POST(
 
   try {
     const created = await prisma.$transaction(async (tx) => {
+      const componentDataToStore: Record<string, unknown> = {
+        ...(componentPayloadParsed.data.componentData ?? {}),
+      };
+
       const version = await tx.resourceVersion.create({
         data: {
           resourceId: resource.id,
           version: nextVersion,
           componentType: resource.kind,
-          componentData: JSON.stringify(componentPayloadParsed.data.componentData ?? {}),
+          componentData: JSON.stringify(componentDataToStore),
         },
       });
 
@@ -316,7 +320,40 @@ export async function POST(
             fileAssetId: fileAsset.id,
           },
         });
+
+        // If the uploaded slot name matches a known material texture field,
+        // store a direct URL in componentData so renderers can load it.
+        // This avoids relying on a texture catalog for admin-authored materials.
+        const supportedTextureFields = new Set([
+          // componentData fields
+          'texture',
+          'normalMap',
+          'envMap',
+          'aoMap',
+          'roughnessMap',
+          'metalnessMap',
+          'specularMap',
+          'bumpMap',
+          // friendly binding aliases -> componentData.texture
+          'baseColor',
+          'albedo',
+        ]);
+
+        if (supportedTextureFields.has(key)) {
+          const url = `/api/files/${fileId}`;
+          if (key === 'baseColor' || key === 'albedo') {
+            componentDataToStore.texture = url;
+          } else {
+            componentDataToStore[key] = url;
+          }
+        }
       }
+
+      // Persist any componentData updates produced by uploaded files.
+      await tx.resourceVersion.update({
+        where: { id: version.id },
+        data: { componentData: JSON.stringify(componentDataToStore) },
+      });
 
       // Newly created version becomes active.
       await tx.resource.update({
