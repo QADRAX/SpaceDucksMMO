@@ -31,6 +31,7 @@ import {
 
 import { Button } from '@/components/atoms/Button';
 import { Dialog, DialogContent } from '@/components/molecules/Dialog';
+import { cn } from '@/lib/utils';
 
 import type { MaterialResourceKind } from '@/lib/types';
 
@@ -597,9 +598,9 @@ export function MaterialResourcePreview({ kind, componentData, className }: Prop
   }, [kind, componentData]);
 
   return (
-    <div className={className}>
-      <div className="relative">
-        <div ref={containerRef} className="w-full h-full min-h-90 bg-neutral-950" />
+    <div className={cn('h-full w-full min-h-0', className)}>
+      <div className="relative h-full w-full min-h-0">
+        <div ref={containerRef} className="w-full h-full min-h-0 bg-neutral-950" />
 
         <div className="absolute top-3 right-3 flex items-center gap-2">
           <Button

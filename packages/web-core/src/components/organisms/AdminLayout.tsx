@@ -29,11 +29,11 @@ export async function AdminLayout({ children, className }: AdminLayoutProps) {
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <Sidebar>
+    <div className="flex h-screen overflow-hidden bg-gray-50">
+      <Sidebar className="h-screen overflow-auto">
         <AdminNavTree showUsers={showUsers} />
       </Sidebar>
-      <main className={cn('flex-1 p-8', className)}>
+      <main className={cn('flex-1 p-8 min-w-0 min-h-0 overflow-hidden', className)}>
         {children}
       </main>
     </div>

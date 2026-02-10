@@ -15,7 +15,6 @@ import type { MaterialResourceKind } from '@/lib/types';
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Label } from '@/components/atoms/Label';
-import { Card } from '@/components/molecules/Card';
 import { Dialog, DialogContent } from '@/components/molecules/Dialog';
 import { EcsInspectorFieldsForm } from '@/components/molecules/EcsInspectorFieldsForm';
 import {
@@ -45,8 +44,6 @@ type VersionSummary = {
 
 type ResourceSummary = {
   id: string;
-  key: string;
-  displayName: string;
   kind: MaterialResourceKind;
   activeVersion: number;
 };
@@ -89,16 +86,13 @@ export function ResourceDetailAdminPanel({
 }) {
   const router = useRouter();
 
+  const [versionsOpen, setVersionsOpen] = React.useState(false);
+
   const inspectorFields = React.useMemo(() => getMaterialInspectorFields(resource.kind), [resource.kind]);
   const textureFields = React.useMemo(
     () => inspectorFields.filter((f) => f.type === 'texture'),
     [inspectorFields]
   );
-
-  const [displayName, setDisplayName] = React.useState(resource.displayName);
-  const [key, setKey] = React.useState(resource.key);
-  const [savingResource, setSavingResource] = React.useState(false);
-  const [resourceError, setResourceError] = React.useState<string | null>(null);
 
   const [creatingOpen, setCreatingOpen] = React.useState(false);
   const [editingVersion, setEditingVersion] = React.useState<VersionSummary | null>(null);
@@ -167,12 +161,6 @@ export function ResourceDetailAdminPanel({
   );
 
   React.useEffect(() => {
-    // Keep local inputs in sync when navigating.
-    setDisplayName(resource.displayName);
-    setKey(resource.key);
-  }, [resource.displayName, resource.key]);
-
-  React.useEffect(() => {
     if (!editingVersion) return;
 
     setEditError(null);
@@ -205,32 +193,6 @@ export function ResourceDetailAdminPanel({
     };
   }, []);
 
-  const patchResource = async () => {
-    setResourceError(null);
-    setSavingResource(true);
-    try {
-      const res = await fetch(`/api/admin/resources/${resource.id}`, {
-        method: 'PATCH',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          displayName: displayName.trim() || undefined,
-          key: key.trim() || undefined,
-        }),
-      });
-
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        throw new Error((json && (json.error as string)) || `Failed to update resource (${res.status})`);
-      }
-
-      router.refresh();
-    } catch (err) {
-      setResourceError(err instanceof Error ? err.message : 'Unknown error');
-    } finally {
-      setSavingResource(false);
-    }
-  };
-
   const setActiveVersion = async (version: number) => {
     try {
       const res = await fetch(`/api/admin/resources/${resource.id}`, {
@@ -242,24 +204,6 @@ export function ResourceDetailAdminPanel({
       if (!res.ok) {
         throw new Error((json && (json.error as string)) || `Failed to set active version (${res.status})`);
       }
-      router.refresh();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : 'Unknown error');
-    }
-  };
-
-  const deleteResource = async () => {
-    const ok = confirm('Delete this resource? This will delete all its versions.');
-    if (!ok) return;
-
-    try {
-      const res = await fetch(`/api/admin/resources/${resource.id}`, { method: 'DELETE' });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        throw new Error((json && (json.error as string)) || `Failed to delete resource (${res.status})`);
-      }
-
-      router.push('/admin/resources');
       router.refresh();
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Unknown error');
@@ -356,108 +300,117 @@ export function ResourceDetailAdminPanel({
 
   return (
     <div className="space-y-6">
-      <Card>
-        <div className="flex items-start justify-between gap-6">
-          <div className="w-full max-w-xl space-y-4">
-            <div className="font-heading">Edit resource</div>
-
-            {resourceError ? (
-              <div className="p-3 bg-red-100 border-2 border-border text-red-800 rounded-base text-sm">
-                <strong>Error:</strong> {resourceError}
-              </div>
-            ) : null}
-
-            <div className="space-y-2">
-              <Label>Display Name</Label>
-              <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Key</Label>
-              <Input value={key} onChange={(e) => setKey(e.target.value)} />
-              <p className="text-xs text-neutral-600">Changing the key affects engine resolve lookups.</p>
-            </div>
-
-            <div className="flex items-center justify-between gap-3 pt-2">
-              <Button type="button" onClick={patchResource} disabled={savingResource}>
-                {savingResource ? 'Saving…' : 'Save'}
-              </Button>
-              <Button type="button" variant="secondary" onClick={deleteResource}>
-                Delete resource
-              </Button>
-            </div>
-          </div>
-
-          <div className="w-full max-w-sm">
-            <div className="font-heading">New version</div>
-            <div className="text-sm text-neutral-600 mt-1">
-              Create a new version from ZIP or from edited fields.
-            </div>
-            <div className="h-3" />
-            <Button type="button" onClick={() => setCreatingOpen(true)}>
-              + Create / Upload version
-            </Button>
-          </div>
+      <section className="space-y-3">
+        <div className="font-heading">Versions</div>
+        <div className="text-sm text-neutral-600">
+          Create a new version from ZIP or from edited fields.
         </div>
-      </Card>
+        <div className="flex flex-col gap-2">
+          <Button type="button" onClick={() => setCreatingOpen(true)}>
+            + Create / Upload version
+          </Button>
+          <Button type="button" variant="secondary" onClick={() => setVersionsOpen(true)}>
+            Manage versions
+          </Button>
+        </div>
+        <div className="text-xs text-neutral-600">
+          Active: <span className="font-bold text-black">v{resource.activeVersion}</span> · Total: {versions.length}
+        </div>
+      </section>
 
-      <Card className="p-0">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Version</TableHead>
-              <TableHead>Active</TableHead>
-              <TableHead>Component</TableHead>
-              <TableHead>Bindings</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {versions.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={5}>
-                  <p className="text-neutral-600">No versions yet.</p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              versions.map((v) => (
-                <TableRow key={v.id}>
-                  <TableCell>v{v.version}</TableCell>
-                  <TableCell>{resource.activeVersion === v.version ? '✓' : ''}</TableCell>
-                  <TableCell>
-                    <code className="text-xs">{v.componentType}</code>
-                  </TableCell>
-                  <TableCell>{v.bindings.length}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {resource.activeVersion !== v.version ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          onClick={() => setActiveVersion(v.version)}
-                        >
-                          Set active
-                        </Button>
-                      ) : (
-                        <Button type="button" size="sm" variant="secondary" disabled>
-                          Active
-                        </Button>
-                      )}
-                      <Button type="button" size="sm" variant="secondary" onClick={() => setEditingVersion(v)}>
-                        Edit
-                      </Button>
-                      <Button type="button" size="sm" variant="secondary" onClick={() => deleteVersion(v.version)}>
-                        Delete
-                      </Button>
-                    </div>
-                  </TableCell>
+      <Dialog open={versionsOpen} onOpenChange={setVersionsOpen}>
+        <DialogContent className="p-0 w-full max-w-5xl">
+          <div className="p-6 border-b border-border">
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <div className="text-xl font-heading">Versions</div>
+                <div className="text-sm text-neutral-600 mt-1">
+                  Active: <span className="font-bold text-black">v{resource.activeVersion}</span> · Total: {versions.length}
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button type="button" size="sm" onClick={() => { setVersionsOpen(false); setCreatingOpen(true); }}>
+                  + Create / Upload
+                </Button>
+                <Button type="button" size="sm" variant="secondary" onClick={() => setVersionsOpen(false)}>
+                  Close
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          <div className="max-h-[75vh] overflow-auto scrollbar">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Version</TableHead>
+                  <TableHead>Active</TableHead>
+                  <TableHead>Component</TableHead>
+                  <TableHead>Bindings</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {versions.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5}>
+                      <p className="text-neutral-600">No versions yet.</p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  versions.map((v) => (
+                    <TableRow key={v.id}>
+                      <TableCell>v{v.version}</TableCell>
+                      <TableCell>{resource.activeVersion === v.version ? '✓' : ''}</TableCell>
+                      <TableCell>
+                        <code className="text-xs">{v.componentType}</code>
+                      </TableCell>
+                      <TableCell>{v.bindings.length}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {resource.activeVersion !== v.version ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => setActiveVersion(v.version)}
+                            >
+                              Set active
+                            </Button>
+                          ) : (
+                            <Button type="button" size="sm" variant="secondary" disabled>
+                              Active
+                            </Button>
+                          )}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => {
+                              setVersionsOpen(false);
+                              setEditingVersion(v);
+                            }}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => deleteVersion(v.version)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Create version dialog */}
       <Dialog open={creatingOpen} onOpenChange={setCreatingOpen}>

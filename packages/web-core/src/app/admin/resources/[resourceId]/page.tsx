@@ -1,10 +1,11 @@
 import Link from 'next/link';
 
 import { prisma } from '@/lib/db';
-import { PageHeader } from '@/components/organisms/PageHeader';
 import { Card } from '@/components/molecules/Card';
 import { MaterialResourcePreview } from '@/components/organisms/MaterialResourcePreview';
 import { ResourceDetailAdminPanel } from '@/components/organisms/ResourceDetailAdminPanel';
+import { ResourceDetailShell } from '@/components/organisms/ResourceDetailShell';
+import { ResourceDetailHeaderEditor } from '@/components/organisms/ResourceDetailHeaderEditor';
 import { ResourceKindSchema } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -20,7 +21,9 @@ export default async function ResourceDetailPage({
   if (!resourceId) {
     return (
       <div>
-        <PageHeader title="Resource not found" />
+        <div className="mb-6">
+          <div className="text-2xl font-heading">Resource not found</div>
+        </div>
         <Card>
           <p className="text-neutral-600">Missing resource id.</p>
           <p className="text-neutral-600 text-sm mt-2">
@@ -40,7 +43,9 @@ export default async function ResourceDetailPage({
   if (!resource) {
     return (
       <div>
-        <PageHeader title="Resource not found" />
+        <div className="mb-6">
+          <div className="text-2xl font-heading">Resource not found</div>
+        </div>
         <Card>
           <p className="text-neutral-600">This resource does not exist.</p>
           <p className="text-neutral-600 text-sm mt-2">
@@ -107,109 +112,77 @@ export default async function ResourceDetailPage({
   }
 
   return (
-    <div>
-      <PageHeader
-        title={resource.displayName}
-        description={resource.key}
-        actions={
-          <Link href="/admin/resources" className="text-main underline">
-            Back
-          </Link>
-        }
-      />
-
-      <Card>
-        <div className="flex items-start justify-between gap-6">
-          <div className="space-y-2">
-            <div>
-              <span className="font-heading">Resource ID:</span> {resource.id}
-            </div>
-            <div>
-              <span className="font-heading">Kind:</span> <code className="text-xs">{resource.kind}</code>
-            </div>
-            <div>
-              <span className="font-heading">Engine resolve:</span>{' '}
-              <code className="text-xs bg-bg px-2 py-1 rounded-base border border-border">
-                /api/engine/resources/resolve?key={resource.key}
-              </code>
-            </div>
-          </div>
-
-          <div>
-            {resource.thumbnailFileAssetId ? (
-              <img
-                src={`/api/files/${resource.thumbnailFileAssetId}`}
-                alt={`${resource.displayName} thumbnail`}
-                className="w-24 h-24 rounded-base border border-border object-cover bg-bg"
-                loading="lazy"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-base border border-border bg-bg" />
-            )}
-          </div>
-        </div>
-      </Card>
-
-      {canPreviewMaterial ? (
-        <>
-          <div className="h-6" />
-          <Card>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="font-heading">Preview</div>
-                <div className="text-sm text-neutral-600">
-                  Using version <span className="font-bold text-black">v{activeVersion?.version}</span>
-                </div>
+    <ResourceDetailShell
+      header={
+        <ResourceDetailHeaderEditor
+          resourceId={resource.id}
+          initialDisplayName={resource.displayName}
+          initialKey={resource.key}
+          kind={resource.kind}
+          activeVersion={resource.activeVersion}
+          thumbnailFileAssetId={resource.thumbnailFileAssetId}
+        />
+      }
+      title={resource.displayName}
+      left={
+        <div className="space-y-6">
+          {kindParsed.success ? (
+            <ResourceDetailAdminPanel
+              resource={{
+                id: resource.id,
+                kind: kindParsed.data,
+                activeVersion: resource.activeVersion,
+              }}
+              versions={versions.map((v) => ({
+                id: v.id,
+                version: v.version,
+                componentType: v.componentType,
+                componentData: v.componentData,
+                bindings: (v.bindings ?? []).map((b) => ({
+                  id: b.id,
+                  slot: b.slot,
+                  fileAssetId: b.fileAssetId,
+                  fileName: b.fileAsset.fileName,
+                })),
+              }))}
+            />
+          ) : (
+            <div className="space-y-2">
+              <div className="font-heading">Resource management</div>
+              <div className="text-sm text-neutral-600">
+                This UI currently supports material resource kinds only.
               </div>
             </div>
-
-            <div className="h-4" />
-
-            <MaterialResourcePreview
-              kind={kindParsed.data}
-              componentData={previewComponentData}
-              className="w-full h-90"
-            />
-          </Card>
-        </>
-      ) : null}
-
-      {kindParsed.success ? (
-        <>
-          <div className="h-6" />
-          <ResourceDetailAdminPanel
-            resource={{
-              id: resource.id,
-              key: resource.key,
-              displayName: resource.displayName,
-              kind: kindParsed.data,
-              activeVersion: resource.activeVersion,
-            }}
-            versions={versions.map((v) => ({
-              id: v.id,
-              version: v.version,
-              componentType: v.componentType,
-              componentData: v.componentData,
-              bindings: (v.bindings ?? []).map((b) => ({
-                id: b.id,
-                slot: b.slot,
-                fileAssetId: b.fileAssetId,
-                fileName: b.fileAsset.fileName,
-              })),
-            }))}
+          )}
+        </div>
+      }
+      right={
+        canPreviewMaterial ? (
+          <MaterialResourcePreview
+            kind={kindParsed.data}
+            componentData={previewComponentData}
+            className="h-full w-full"
           />
-        </>
-      ) : (
-        <>
-          <div className="h-6" />
-          <Card>
-            <div className="font-heading">Resource management</div>
-            <div className="text-sm text-neutral-600 mt-2">
-              This UI currently supports material resource kinds only.
-            </div>
-          </Card>
-        </>
-      )}
-    </div>
+        ) : (
+          <div className="h-full w-full flex items-center justify-center bg-bg">
+            <div className="text-sm text-neutral-600">No preview available for this resource kind.</div>
+          </div>
+        )
+      }
+      footer={
+        <div className="flex items-center justify-between gap-4 text-sm">
+          <div className="text-neutral-600">
+            {activeVersion ? (
+              <>
+                Using version <span className="font-bold text-black">v{activeVersion.version}</span>
+              </>
+            ) : (
+              'No versions yet'
+            )}
+          </div>
+          <div className="text-neutral-600">Total versions: {versions.length}</div>
+        </div>
+      }
+    />
   );
 }

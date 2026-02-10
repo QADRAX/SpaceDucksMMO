@@ -7,4 +7,6 @@ export * from './PageHeader';
 export * from './ResourceTable';
 export * from './CreateMaterialResourceDialog';
 export * from './MaterialResourcePreview';
+export * from './ResourceDetailShell';
+export * from './ResourceDetailHeaderEditor';
 
