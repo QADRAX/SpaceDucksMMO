@@ -6,20 +6,9 @@ import { useRouter } from 'next/navigation';
 
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
+import { TrashIcon } from '@/components/icons';
 import { ConfirmDialog } from '@/components/molecules/ConfirmDialog';
 import { getKindLabel, isKindInGroup, RESOURCE_GROUPS } from '@/lib/resourceGroups';
-
-function TrashIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M3 6h18" />
-      <path d="M8 6V4h8v2" />
-      <path d="M6 6l1 16h10l1-16" />
-      <path d="M10 11v6" />
-      <path d="M14 11v6" />
-    </svg>
-  );
-}
 
 type Props = {
   resourceId: string;

@@ -1,11 +1,15 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
+type TableProps = React.HTMLAttributes<HTMLTableElement> & {
+  containerClassName?: string;
+};
+
 const Table = React.forwardRef<
   HTMLTableElement,
-  React.HTMLAttributes<HTMLTableElement>
->(({ className, ...props }, ref) => (
-  <div className="w-full overflow-auto">
+  TableProps
+>(({ className, containerClassName, ...props }, ref) => (
+  <div className={cn('w-full overflow-auto', containerClassName)}>
     <table
       ref={ref}
       className={cn('w-full border-collapse bg-white', className)}

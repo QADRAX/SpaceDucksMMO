@@ -125,36 +125,32 @@ export default async function ResourceDetailPage({
       }
       title={resource.displayName}
       left={
-        <div className="space-y-6">
-          {kindParsed.success ? (
-            <ResourceDetailAdminPanel
-              resource={{
-                id: resource.id,
-                kind: kindParsed.data,
-                activeVersion: resource.activeVersion,
-              }}
-              versions={versions.map((v) => ({
-                id: v.id,
-                version: v.version,
-                componentType: v.componentType,
-                componentData: v.componentData,
-                bindings: (v.bindings ?? []).map((b) => ({
-                  id: b.id,
-                  slot: b.slot,
-                  fileAssetId: b.fileAssetId,
-                  fileName: b.fileAsset.fileName,
-                })),
-              }))}
-            />
-          ) : (
-            <div className="space-y-2">
-              <div className="font-heading">Resource management</div>
-              <div className="text-sm text-neutral-600">
-                This UI currently supports material resource kinds only.
-              </div>
-            </div>
-          )}
-        </div>
+        kindParsed.success ? (
+          <ResourceDetailAdminPanel
+            resource={{
+              id: resource.id,
+              kind: kindParsed.data,
+              activeVersion: resource.activeVersion,
+            }}
+            versions={versions.map((v) => ({
+              id: v.id,
+              version: v.version,
+              componentType: v.componentType,
+              componentData: v.componentData,
+              bindings: (v.bindings ?? []).map((b) => ({
+                id: b.id,
+                slot: b.slot,
+                fileAssetId: b.fileAssetId,
+                fileName: b.fileAsset.fileName,
+              })),
+            }))}
+          />
+        ) : (
+          <div className="p-6 space-y-2">
+            <div className="font-heading">Resource management</div>
+            <div className="text-sm text-neutral-600">This UI currently supports material resource kinds only.</div>
+          </div>
+        )
       }
       right={
         canPreviewMaterial ? (

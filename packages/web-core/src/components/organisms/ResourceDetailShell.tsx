@@ -46,7 +46,7 @@ export function ResourceDetailShell({
 
       <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(380px,520px)_1fr] gap-4">
         <section className="min-h-0 rounded-base border-2 border-border bg-white shadow-base overflow-hidden">
-          <div className="h-full min-h-0 overflow-auto scrollbar p-6">{left}</div>
+          <div className="h-full min-h-0 flex flex-col overflow-hidden">{left}</div>
         </section>
 
         <section className="min-h-0 rounded-base border-2 border-border bg-white shadow-base overflow-hidden">

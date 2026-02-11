@@ -150,6 +150,7 @@ describe('resource versions', () => {
         const tx = {
           resourceVersion: {
             create: jest.fn().mockResolvedValue({ id: 'v2' }),
+            update: jest.fn().mockResolvedValue({ id: 'v2' }),
           },
           fileAsset: {
             create: jest.fn().mockResolvedValue({ id: 'file1' }),
@@ -169,7 +170,10 @@ describe('resource versions', () => {
       fd.set('albedoMap', new File([new Uint8Array([1, 2, 3])], 'albedo.png', { type: 'image/png' }));
 
       const res = await POST(makeFormDataRequest(fd), makeContext({ resourceId: 'r1' }));
-      expect(res.status).toBe(201);
+      if (res.status !== 201) {
+        const body = await res.json().catch(() => null);
+        throw new Error(`Expected 201, got ${res.status}: ${JSON.stringify(body)}`);
+      }
       expect(storageSaveFileMock).toHaveBeenCalled();
       expect(prismaTransactionMock).toHaveBeenCalled();
     });

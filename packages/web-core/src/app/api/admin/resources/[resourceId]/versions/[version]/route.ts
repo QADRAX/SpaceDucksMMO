@@ -320,6 +320,25 @@ export async function DELETE(
     return NextResponse.json({ error: 'Version not found' }, { status: 404 });
   }
 
+  // Invariants:
+  // - You cannot delete the active version (it is in use).
+  // - You cannot delete the only remaining version.
+  const totalVersions = await prisma.resourceVersion.count({
+    where: { resourceId: resource.id },
+  });
+  if (totalVersions <= 1) {
+    return NextResponse.json(
+      { error: 'Cannot delete the only version of a resource' },
+      { status: 400 }
+    );
+  }
+  if (resource.activeVersion === versionNumber) {
+    return NextResponse.json(
+      { error: 'Cannot delete the active version of a resource' },
+      { status: 400 }
+    );
+  }
+
   try {
     const result = await prisma.$transaction(async (tx) => {
       const candidates = await tx.fileAsset.findMany({
@@ -334,20 +353,6 @@ export async function DELETE(
       const deleted = await tx.resourceVersion.delete({
         where: { id: existingVersion.id },
       });
-
-      // If active version was deleted, move active to latest remaining.
-      if (resource.activeVersion === versionNumber) {
-        const latest = await tx.resourceVersion.findFirst({
-          where: { resourceId: resource.id },
-          orderBy: { version: 'desc' },
-          select: { version: true },
-        });
-
-        await tx.resource.update({
-          where: { id: resource.id },
-          data: { activeVersion: latest?.version ?? 1 },
-        });
-      }
 
       if (candidates.length) {
         const candidateIds = Array.from(new Set(candidates.map((c) => c.id)));
