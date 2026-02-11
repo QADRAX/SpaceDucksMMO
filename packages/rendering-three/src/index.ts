@@ -24,3 +24,12 @@ export type { RenderViewId, RenderViewOptions, RenderViewDebugOptions } from '@d
 
 export type { IFpsController } from './infrastructure/ui/dev/FpsController';
 export { NoopFpsController } from './infrastructure/ui/dev/FpsController';
+
+export type {
+	EngineResourceResolver,
+	EngineResolvedResource,
+	EngineResolvedFile,
+	EngineResourceVersionSelector,
+} from './infrastructure/resources/EngineResourceResolver';
+
+export { createWebCoreEngineResourceResolver } from './infrastructure/resources/EngineResourceResolver';

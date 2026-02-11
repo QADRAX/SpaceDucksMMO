@@ -5,6 +5,7 @@ import type { PrismaClient } from '@prisma/client';
 
 import { StorageService } from '@/lib/storage';
 import {
+  CustomMeshComponentDataSchema,
   MaterialComponentSchema,
   MaterialComponentTypeSchema,
   ResourceKindSchema,
@@ -12,6 +13,7 @@ import {
   ResourceVersionZipManifestSchema,
 } from '@/lib/types';
 import { parseZipJson, readZipBasenameMap } from '@/lib/zip';
+import { assertCustomMeshGlbProfile } from '@/lib/glb/validateCustomMeshGlb';
 
 function stripExt(fileName: string): string {
   return path.posix.basename(fileName, path.posix.extname(fileName));
@@ -29,25 +31,36 @@ function coerceComponentData(raw: unknown): Record<string, unknown> {
 }
 
 function validateComponentDataForKind(kind: string, rawComponentData: unknown) {
-  // Currently only material kinds are supported.
-  const materialKind = MaterialComponentTypeSchema.safeParse(kind);
-  if (!materialKind.success) {
-    throw new Error(`Unsupported resource kind: ${kind}`);
-  }
-
   const componentDataObj = coerceComponentData(rawComponentData);
-  const parsed = MaterialComponentSchema.safeParse({
-    componentType: materialKind.data,
-    componentData: componentDataObj,
-  });
-  if (!parsed.success) {
-    throw new Error('Invalid componentData for resource kind');
+
+  const materialKind = MaterialComponentTypeSchema.safeParse(kind);
+  if (materialKind.success) {
+    const parsed = MaterialComponentSchema.safeParse({
+      componentType: materialKind.data,
+      componentData: componentDataObj,
+    });
+    if (!parsed.success) {
+      throw new Error('Invalid componentData for resource kind');
+    }
+
+    return {
+      componentType: parsed.data.componentType,
+      componentData: parsed.data.componentData ?? {},
+    };
   }
 
-  return {
-    componentType: parsed.data.componentType,
-    componentData: parsed.data.componentData ?? {},
-  };
+  if (kind === 'customMesh') {
+    const parsed = CustomMeshComponentDataSchema.safeParse(componentDataObj);
+    if (!parsed.success) {
+      throw new Error('Invalid componentData for resource kind');
+    }
+    return {
+      componentType: 'customMesh',
+      componentData: parsed.data ?? {},
+    };
+  }
+
+  throw new Error(`Unsupported resource kind: ${kind}`);
 }
 
 type SlotFile = { slot: string; fileName: string; data: Buffer };
@@ -142,6 +155,21 @@ export async function createResourceFromZip(prisma: PrismaClient, zipFile: File)
 
   const slotFiles = collectSlotFilesFromZip(files, versionPayload.files);
 
+  // Enforce custom mesh profile (single mesh GLB file).
+  if (kind === 'customMesh') {
+    const mesh = slotFiles.find((s) => s.slot.toLowerCase() === 'mesh');
+    if (!mesh) throw new Error("customMesh requires a 'mesh' file binding");
+    if (slotFiles.length !== 1) {
+      throw new Error("customMesh only supports a single file binding ('mesh')");
+    }
+    if (!mesh.fileName.toLowerCase().endsWith('.glb')) {
+      throw new Error("customMesh 'mesh' file must be a .glb");
+    }
+
+    // Strict GLB contents validation.
+    assertCustomMeshGlbProfile(mesh.data);
+  }
+
   const created = await prisma.$transaction(async (tx) => {
     const resource = await tx.resource.create({
       data: {
@@ -189,26 +217,34 @@ export async function createResourceFromZip(prisma: PrismaClient, zipFile: File)
         },
       });
 
-      const supportedTextureFields = new Set([
-        'texture',
-        'normalMap',
-        'envMap',
-        'aoMap',
-        'roughnessMap',
-        'metalnessMap',
-        'specularMap',
-        'bumpMap',
-        'baseColor',
-        'albedo',
-      ]);
+      // Material convenience: map texture bindings into componentData fields.
+      if (MaterialComponentTypeSchema.safeParse(kind).success) {
+        const supportedTextureFields = new Set([
+          'texture',
+          'normalMap',
+          'envMap',
+          'aoMap',
+          'roughnessMap',
+          'metalnessMap',
+          'specularMap',
+          'bumpMap',
+          'baseColor',
+          'albedo',
+        ]);
 
-      if (supportedTextureFields.has(slot.slot)) {
-        const url = `/api/files/${fileId}`;
-        if (slot.slot === 'baseColor' || slot.slot === 'albedo') {
-          componentDataToStore.texture = url;
-        } else {
-          componentDataToStore[slot.slot] = url;
+        if (supportedTextureFields.has(slot.slot)) {
+          const url = `/api/files/${fileId}`;
+          if (slot.slot === 'baseColor' || slot.slot === 'albedo') {
+            componentDataToStore.texture = url;
+          } else {
+            componentDataToStore[slot.slot] = url;
+          }
         }
+      }
+
+      // Custom mesh convenience: expose resolved mesh URL in componentData as well.
+      if (kind === 'customMesh' && slot.slot.toLowerCase() === 'mesh') {
+        componentDataToStore.mesh = `/api/files/${fileId}`;
       }
     }
 
@@ -259,6 +295,21 @@ export async function createResourceVersionFromZip(
   };
 
   const slotFiles = collectSlotFilesFromZip(files, parsed.data.files);
+
+  // Enforce custom mesh profile (single mesh GLB file).
+  if (resourceKind === 'customMesh') {
+    const mesh = slotFiles.find((s) => s.slot.toLowerCase() === 'mesh');
+    if (!mesh) throw new Error("customMesh requires a 'mesh' file binding");
+    if (slotFiles.length !== 1) {
+      throw new Error("customMesh only supports a single file binding ('mesh')");
+    }
+    if (!mesh.fileName.toLowerCase().endsWith('.glb')) {
+      throw new Error("customMesh 'mesh' file must be a .glb");
+    }
+
+    // Strict GLB contents validation.
+    assertCustomMeshGlbProfile(mesh.data);
+  }
 
   const created = await prisma.$transaction(async (tx) => {
     const nextVersion = await (async () => {
@@ -329,26 +380,34 @@ export async function createResourceVersionFromZip(
         },
       });
 
-      const supportedTextureFields = new Set([
-        'texture',
-        'normalMap',
-        'envMap',
-        'aoMap',
-        'roughnessMap',
-        'metalnessMap',
-        'specularMap',
-        'bumpMap',
-        'baseColor',
-        'albedo',
-      ]);
+      // Material convenience: map texture bindings into componentData fields.
+      if (MaterialComponentTypeSchema.safeParse(resourceKind).success) {
+        const supportedTextureFields = new Set([
+          'texture',
+          'normalMap',
+          'envMap',
+          'aoMap',
+          'roughnessMap',
+          'metalnessMap',
+          'specularMap',
+          'bumpMap',
+          'baseColor',
+          'albedo',
+        ]);
 
-      if (supportedTextureFields.has(slot.slot)) {
-        const url = `/api/files/${fileId}`;
-        if (slot.slot === 'baseColor' || slot.slot === 'albedo') {
-          componentDataToStore.texture = url;
-        } else {
-          componentDataToStore[slot.slot] = url;
+        if (supportedTextureFields.has(slot.slot)) {
+          const url = `/api/files/${fileId}`;
+          if (slot.slot === 'baseColor' || slot.slot === 'albedo') {
+            componentDataToStore.texture = url;
+          } else {
+            componentDataToStore[slot.slot] = url;
+          }
         }
+      }
+
+      // Custom mesh convenience: expose resolved mesh URL in componentData as well.
+      if (resourceKind === 'customMesh' && slot.slot.toLowerCase() === 'mesh') {
+        componentDataToStore.mesh = `/api/files/${fileId}`;
       }
     }
 

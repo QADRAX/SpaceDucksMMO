@@ -6,6 +6,8 @@ describe('GET /api/resources/kinds', () => {
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(Array.isArray(json.data)).toBe(true);
-    expect(json.data).toEqual(expect.arrayContaining(['standardMaterial']));
+    expect(json.data).toEqual(
+      expect.arrayContaining(['standardMaterial', 'customMesh'])
+    );
   });
 });

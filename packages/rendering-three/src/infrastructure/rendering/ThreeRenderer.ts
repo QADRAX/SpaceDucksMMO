@@ -5,6 +5,7 @@ import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import type { IFpsController } from "../ui/dev/FpsController";
 import RenderSyncSystem from "../graphics/sync/RenderSyncSystem";
 import { DEBUG_LAYERS } from "../graphics/debug/DebugLayers";
+import type { EngineResourceResolver } from "../resources/EngineResourceResolver";
 
 export class ThreeRenderer implements IRenderingEngine {
   private scene!: THREE.Scene;
@@ -24,6 +25,7 @@ export class ThreeRenderer implements IRenderingEngine {
   private fpsController: IFpsController;
   private textureResolver?: ITextureResolver;
   private textureCatalog?: TextureCatalogService;
+  private engineResourceResolver?: EngineResourceResolver;
   private onResize?: () => void;
 
   constructor(fpsController: IFpsController) {
@@ -46,12 +48,25 @@ export class ThreeRenderer implements IRenderingEngine {
     return this.textureCatalog;
   }
 
+  setEngineResourceResolver(resolver: EngineResourceResolver): void {
+    this.engineResourceResolver = resolver;
+  }
+
+  getEngineResourceResolver(): EngineResourceResolver | undefined {
+    return this.engineResourceResolver;
+  }
+
   createRenderSyncSystem(
     renderScene: any,
     catalog?: TextureCatalogService,
     resolver?: ITextureResolver
   ): IRenderSyncSystem {
-    return new RenderSyncSystem(renderScene, catalog, resolver);
+    return new RenderSyncSystem(
+      renderScene,
+      catalog,
+      resolver,
+      this.engineResourceResolver
+    );
   }
 
   init(container: HTMLElement): void {

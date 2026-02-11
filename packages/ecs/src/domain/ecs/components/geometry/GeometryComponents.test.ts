@@ -50,6 +50,12 @@ describe('Geometry components bounding radius', () => {
     expect(u.getBoundingRadius({ x:1,y:1,z:1 })).toBeCloseTo(1, 8);
     expect(u.getBoundingRadius({ x:2,y:1,z:1 })).toBeCloseTo(2, 8);
   });
+
+  test('CustomGeometryComponent bounding radius override', () => {
+    const u = new CustomGeometryComponent({ key: 'foo', boundingRadius: 3.5 });
+    expect(u.getBoundingRadius({ x:1,y:1,z:1 })).toBeCloseTo(3.5, 8);
+    expect(u.getBoundingRadius({ x:2,y:1,z:1 })).toBeCloseTo(7, 8);
+  });
 });
 
 describe('Entity geometry removal protection', () => {

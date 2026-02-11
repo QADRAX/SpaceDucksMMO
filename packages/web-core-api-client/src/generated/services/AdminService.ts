@@ -297,6 +297,64 @@ export class AdminService {
         });
     }
     /**
+     * Patch a specific resource version
+     * Updates componentData and optionally replaces/creates file bindings via multipart upload.
+     * @param resourceId
+     * @param version
+     * @param requestBody
+     * @returns any Updated version
+     * @throws ApiError
+     */
+    public static patchApiAdminResourcesVersions(
+        resourceId: string,
+        version: number,
+        requestBody: {
+            /**
+             * Object with component properties
+             */
+            componentData?: any;
+        },
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/admin/resources/{resourceId}/versions/{version}',
+            path: {
+                'resourceId': resourceId,
+                'version': version,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+            errors: {
+                400: `Invalid payload`,
+                404: `Not found`,
+            },
+        });
+    }
+    /**
+     * Delete a specific resource version
+     * @param resourceId
+     * @param version
+     * @returns any Deleted version
+     * @throws ApiError
+     */
+    public static deleteApiAdminResourcesVersions(
+        resourceId: string,
+        version: number,
+    ): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/admin/resources/{resourceId}/versions/{version}',
+            path: {
+                'resourceId': resourceId,
+                'version': version,
+            },
+            errors: {
+                400: `Cannot delete`,
+                404: `Not found`,
+            },
+        });
+    }
+    /**
      * Set active version for a resource
      * Sets the given version number as the active version for the resource.
      * @param resourceId

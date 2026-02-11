@@ -23,6 +23,7 @@ import DebugMeshSystem from "../debug/DebugMeshSystem";
 import DebugColliderSystem from "../debug/DebugColliderSystem";
 import { TextureCache } from "../factories/TextureCache";
 import type { AnyLightComponent } from "../factories/LightFactory";
+import type { EngineResourceResolver } from "../../resources/EngineResourceResolver";
 
 export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
   private readonly scene: THREE.Scene;
@@ -40,6 +41,7 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
   private readonly colliderDebugSystem: DebugColliderSystem;
   private readonly textureCatalog?: TextureCatalogService;
   private readonly textureResolver?: ITextureResolver;
+  private readonly engineResourceResolver?: EngineResourceResolver;
   private sceneDebugMaster = false;
   private sceneMeshDebugMaster = false;
   private sceneColliderDebugMaster = false;
@@ -51,17 +53,20 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
   constructor(
     scene: THREE.Scene,
     textureCatalog?: TextureCatalogService,
-    textureResolver?: ITextureResolver
+    textureResolver?: ITextureResolver,
+    engineResourceResolver?: EngineResourceResolver
   ) {
     this.scene = scene;
     this.textureCatalog = textureCatalog;
     this.textureResolver = textureResolver;
+    this.engineResourceResolver = engineResourceResolver;
 
     this.meshSystem = new MeshSyncSystem(
       this.scene,
       this.registry,
       this.textureCache,
-      this.textureCatalog
+      this.textureCatalog,
+      this.engineResourceResolver
     );
     this.cameraSystem = new CameraSyncSystem(this.scene, this.registry);
     this.lightSystem = new LightSyncSystem(this.scene, this.registry);

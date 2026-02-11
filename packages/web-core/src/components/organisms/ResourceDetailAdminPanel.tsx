@@ -18,15 +18,8 @@ import { Label } from '@/components/atoms/Label';
 import { CheckIcon, PencilIcon, TrashIcon } from '@/components/icons';
 import { Dialog, DialogContent } from '@/components/molecules/Dialog';
 import { EcsInspectorFieldsForm } from '@/components/molecules/EcsInspectorFieldsForm';
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from '@/components/organisms/Table';
 import { MaterialResourcePreview } from '@/components/organisms/MaterialResourcePreview';
+import { ResourceVersionsTable } from '@/components/organisms/ResourceVersionsTable';
 
 type VersionBindingSummary = {
   id: string;
@@ -45,6 +38,7 @@ type VersionSummary = {
 
 type ResourceSummary = {
   id: string;
+  key: string;
   kind: MaterialResourceKind;
   activeVersion: number;
 };
@@ -314,89 +308,22 @@ export function ResourceDetailAdminPanel({
       </section>
 
       <section className="flex-1 min-h-0">
-        <Table containerClassName="h-full">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Version</TableHead>
-              <TableHead>Active</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {versions.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={3}>
-                  <p className="text-neutral-600">No versions yet.</p>
-                </TableCell>
-              </TableRow>
-            ) : (
-              versions.map((v) => (
-                <TableRow key={v.id}>
-                  <TableCell>v{v.version}</TableCell>
-                  <TableCell>{resource.activeVersion === v.version ? '✓' : ''}</TableCell>
-                  <TableCell>
-                    <div className="flex flex-nowrap items-center gap-1">
-                      {resource.activeVersion !== v.version ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          className="h-8 w-8 p-0"
-                          onClick={() => setActiveVersion(v.version)}
-                          aria-label={`Set v${v.version} as active`}
-                          title="Set active"
-                        >
-                          <CheckIcon className="h-4 w-4" />
-                        </Button>
-                      ) : (
-                        <Button
-                          type="button"
-                          size="sm"
-                          variant="secondary"
-                          className="h-8 w-8 p-0"
-                          disabled
-                          aria-label="Active version"
-                          title="Active"
-                        >
-                          <CheckIcon className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        className="h-8 w-8 p-0"
-                        onClick={() => setEditingVersion(v)}
-                        aria-label={`Edit v${v.version}`}
-                        title="Edit"
-                      >
-                        <PencilIcon className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="secondary"
-                        className="h-8 w-8 p-0 text-red-600 hover:bg-red-50"
-                        onClick={() => deleteVersion(v.version)}
-                        aria-label={`Delete v${v.version}`}
-                        title={
-                          versions.length <= 1
-                            ? 'Cannot delete the only version'
-                            : resource.activeVersion === v.version
-                              ? 'Cannot delete the active version'
-                              : 'Delete'
-                        }
-                        disabled={versions.length <= 1 || resource.activeVersion === v.version}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+        <ResourceVersionsTable
+          versions={versions}
+          activeVersion={resource.activeVersion}
+          onSetActive={setActiveVersion}
+          onEdit={(v) => setEditingVersion(v)}
+          onDelete={deleteVersion}
+          deleteDisabled={(v) => versions.length <= 1 || resource.activeVersion === v.version}
+          deleteTitle={(v) =>
+            versions.length <= 1
+              ? 'Cannot delete the only version'
+              : resource.activeVersion === v.version
+                ? 'Cannot delete the active version'
+                : 'Delete'
+          }
+          containerClassName="h-full"
+        />
       </section>
 
       {/* Create version dialog */}
@@ -509,7 +436,12 @@ export function ResourceDetailAdminPanel({
             </div>
 
             <div className="min-w-0 flex-1 bg-bg">
-              <MaterialResourcePreview kind={resource.kind} componentData={createComponentData} className="h-full w-full" />
+              <MaterialResourcePreview
+                resourceKey={resource.key}
+                kind={resource.kind}
+                componentData={createComponentData}
+                className="h-full w-full"
+              />
             </div>
           </div>
         </DialogContent>
@@ -618,7 +550,12 @@ export function ResourceDetailAdminPanel({
             </div>
 
             <div className="min-w-0 flex-1 bg-bg">
-              <MaterialResourcePreview kind={resource.kind} componentData={editComponentData} className="h-full w-full" />
+              <MaterialResourcePreview
+                resourceKey={resource.key}
+                kind={resource.kind}
+                componentData={editComponentData}
+                className="h-full w-full"
+              />
             </div>
           </div>
         </DialogContent>

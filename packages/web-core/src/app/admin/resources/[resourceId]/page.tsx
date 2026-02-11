@@ -3,10 +3,12 @@ import Link from 'next/link';
 import { prisma } from '@/lib/db';
 import { Card } from '@/components/molecules/Card';
 import { MaterialResourcePreview } from '@/components/organisms/MaterialResourcePreview';
+import { CustomMeshResourcePreview } from '@/components/organisms/CustomMeshResourcePreview';
 import { ResourceDetailAdminPanel } from '@/components/organisms/ResourceDetailAdminPanel';
+import { ResourceDetailCustomMeshPanel } from '@/components/organisms/ResourceDetailCustomMeshPanel';
 import { ResourceDetailShell } from '@/components/organisms/ResourceDetailShell';
 import { ResourceDetailHeaderEditor } from '@/components/organisms/ResourceDetailHeaderEditor';
-import { ResourceKindSchema } from '@/lib/types';
+import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -68,13 +70,16 @@ export default async function ResourceDetailPage({
     versions.find((v) => v.version === resource.activeVersion) ?? (versions.length > 0 ? versions[0] : null);
 
   const kindParsed = ResourceKindSchema.safeParse(resource.kind);
-  const canPreviewMaterial = kindParsed.success && activeVersion;
+  const materialKindParsed = kindParsed.success
+    ? MaterialComponentTypeSchema.safeParse(kindParsed.data)
+    : MaterialComponentTypeSchema.safeParse(resource.kind);
+  const canPreviewMaterial = materialKindParsed.success && !!activeVersion;
 
   let previewComponentData: Record<string, unknown> = {};
   if (canPreviewMaterial && activeVersion) {
     try {
       const parsed = JSON.parse(activeVersion.componentData ?? '{}');
-      previewComponentData = (typeof parsed === 'object' && parsed && !Array.isArray(parsed)) ? parsed : {};
+      previewComponentData = typeof parsed === 'object' && parsed && !Array.isArray(parsed) ? parsed : {};
     } catch {
       previewComponentData = {};
     }
@@ -125,11 +130,32 @@ export default async function ResourceDetailPage({
       }
       title={resource.displayName}
       left={
-        kindParsed.success ? (
+        materialKindParsed.success ? (
           <ResourceDetailAdminPanel
             resource={{
               id: resource.id,
-              kind: kindParsed.data,
+              key: resource.key,
+              kind: materialKindParsed.data,
+              activeVersion: resource.activeVersion,
+            }}
+            versions={versions.map((v) => ({
+              id: v.id,
+              version: v.version,
+              componentType: v.componentType,
+              componentData: v.componentData,
+              bindings: (v.bindings ?? []).map((b) => ({
+                id: b.id,
+                slot: b.slot,
+                fileAssetId: b.fileAssetId,
+                fileName: b.fileAsset.fileName,
+              })),
+            }))}
+          />
+        ) : kindParsed.success && kindParsed.data === 'customMesh' ? (
+          <ResourceDetailCustomMeshPanel
+            resource={{
+              id: resource.id,
+              kind: 'customMesh',
               activeVersion: resource.activeVersion,
             }}
             versions={versions.map((v) => ({
@@ -148,17 +174,22 @@ export default async function ResourceDetailPage({
         ) : (
           <div className="p-6 space-y-2">
             <div className="font-heading">Resource management</div>
-            <div className="text-sm text-neutral-600">This UI currently supports material resource kinds only.</div>
+            <div className="text-sm text-neutral-600">
+              This UI currently supports material resource kinds only.
+            </div>
           </div>
         )
       }
       right={
         canPreviewMaterial ? (
           <MaterialResourcePreview
-            kind={kindParsed.data}
+            resourceKey={resource.key}
+            kind={materialKindParsed.data}
             componentData={previewComponentData}
             className="h-full w-full"
           />
+        ) : kindParsed.success && kindParsed.data === 'customMesh' && activeVersion ? (
+          <CustomMeshResourcePreview resourceKey={resource.key} className="h-full w-full" />
         ) : (
           <div className="h-full w-full flex items-center justify-center bg-bg">
             <div className="text-sm text-neutral-600">No preview available for this resource kind.</div>

@@ -177,6 +177,8 @@ export class StorageService {
       '.xml': 'application/xml',
       '.txt': 'text/plain',
       '.glsl': 'text/plain',
+      '.glb': 'model/gltf-binary',
+      '.gltf': 'model/gltf+json',
       '.js': 'application/javascript',
       '.ts': 'application/typescript',
     };

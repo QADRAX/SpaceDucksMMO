@@ -19,6 +19,8 @@ export type AnyGeometryComponent =
   | CustomGeometryComponent;
 
 export class GeometryFactory {
+  private static warnedCustomKeys = new Set<string>();
+
   // Accept either a concrete geometry component (classes used in ECS)
   // or a legacy parameter object (e.g. { type: 'sphere', radius: 1, ... }).
   static build(
@@ -74,11 +76,15 @@ export class GeometryFactory {
         );
       case "custom":
       case "customgeometry":
-        console.warn(
-          `[GeometryFactory] custom geometry key='${
-            (comp as any).key
-          }' not implemented; using unit box`
-        );
+        {
+          const key = String((comp as any).key ?? "");
+          if (key && !GeometryFactory.warnedCustomKeys.has(key)) {
+            GeometryFactory.warnedCustomKeys.add(key);
+            console.warn(
+              `[GeometryFactory] custom geometry key='${key}' uses placeholder unit box (real geometry loaded asynchronously)`
+            );
+          }
+        }
         return new THREE.BoxGeometry(1, 1, 1);
       default:
         return new THREE.BoxGeometry(1, 1, 1);

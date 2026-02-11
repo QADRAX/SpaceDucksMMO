@@ -27,6 +27,7 @@ import { TextureCache } from "../factories/TextureCache";
 import { RenderObjectRegistry } from "./RenderObjectRegistry";
 import { syncTransformToObject3D } from "./TransformSync";
 import type { TextureCatalogService } from "@duckengine/core";
+import type { EngineResourceResolver } from "../../resources/EngineResourceResolver";
 
 /**
  * Handles creation and updating of THREE.Mesh instances for ECS entities:
@@ -36,11 +37,22 @@ import type { TextureCatalogService } from "@duckengine/core";
  * - texture tiling application
  */
 export class MeshSyncSystem {
+  private gltfLoader: any | null = null;
+  private readonly customGeometryRequestByEntityId = new Map<
+    string,
+    { key: string; requestId: number }
+  >();
+  private readonly customGeometryCacheByUrl = new Map<
+    string,
+    Promise<THREE.BufferGeometry>
+  >();
+
   constructor(
     private readonly scene: THREE.Scene,
     private readonly registry: RenderObjectRegistry,
     private readonly textureCache: TextureCache,
-    private readonly textureCatalog?: TextureCatalogService
+    private readonly textureCatalog?: TextureCatalogService,
+    private readonly engineResourceResolver?: EngineResourceResolver
   ) {}
 
   /**
@@ -123,7 +135,7 @@ export class MeshSyncSystem {
       materialComp,
       this.textureCache,
       (tex) => {
-        this.applyTextureTiling(entity, tex);
+        this.applyTextureSettings(entity, tex);
       }
     );
 
@@ -223,7 +235,7 @@ export class MeshSyncSystem {
     } else {
       const compToUse = materialComp as AnyMaterialComponent;
       material = MaterialFactory.build(compToUse, this.textureCache, (tex) => {
-        this.applyTextureTiling(entity, tex);
+        this.applyTextureSettings(entity, tex);
       });
     }
 
@@ -240,11 +252,331 @@ export class MeshSyncSystem {
       material,
     });
 
+    // Async custom mesh loading (best-effort). Keeps placeholder until resolved.
+    if (geometryComp.type === "customGeometry") {
+      const key = (geometryComp as unknown as CustomGeometryComponent).key;
+      if (typeof key === "string" && key.trim().length > 0) {
+        this.loadAndApplyCustomGeometry(entity.id, key.trim()).catch(() => {});
+      }
+    }
+
     if (materialComp) {
       this.resolveAndApplyTextures(entity, material, materialComp).catch(
         () => {}
       );
     }
+  }
+
+  private async loadAndApplyCustomGeometry(
+    entityId: string,
+    resourceKey: string
+  ): Promise<void> {
+    if (!this.engineResourceResolver) {
+      // Silent by default: engine can run without web-core.
+      return;
+    }
+
+    const prev = this.customGeometryRequestByEntityId.get(entityId);
+    const requestId = (prev?.requestId ?? 0) + 1;
+    this.customGeometryRequestByEntityId.set(entityId, {
+      key: resourceKey,
+      requestId,
+    });
+
+    const resolved = await this.engineResourceResolver.resolve(resourceKey, "active");
+    const meshFile = resolved?.files?.mesh;
+    const url = meshFile?.url;
+    if (typeof url !== "string" || !url.length) return;
+
+    const geomPromise = this.customGeometryCacheByUrl.get(url) ??
+      this.loadGlbGeometry(url);
+    this.customGeometryCacheByUrl.set(url, geomPromise);
+
+    const loadedGeometry = await geomPromise;
+
+    // Ensure entity still exists and still wants this key.
+    const current = this.customGeometryRequestByEntityId.get(entityId);
+    if (!current || current.requestId !== requestId || current.key !== resourceKey) return;
+
+    const rc = this.registry.get(entityId);
+    if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) return;
+
+    const mesh = rc.object3D as THREE.Mesh;
+
+    try {
+      if (rc.geometry) rc.geometry.dispose();
+    } catch {}
+
+    const nextGeometry = loadedGeometry.clone();
+
+    // Normalize UV channels for glTF/custom geometry.
+    this.normalizeGlbUvs(nextGeometry);
+
+    // If the geometry has no UVs, any texture maps won't render. Emit a warning to make
+    // the root cause obvious during preview/runtime debugging.
+    try {
+      const uv = (nextGeometry as any).getAttribute?.('uv') as THREE.BufferAttribute | undefined;
+      if (!uv) {
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        const usesMaps = materials.some((m) => {
+          const mm = m as any;
+          return !!(
+            mm?.map ||
+            mm?.normalMap ||
+            mm?.aoMap ||
+            mm?.roughnessMap ||
+            mm?.metalnessMap ||
+            mm?.bumpMap ||
+            mm?.specularMap
+          );
+        });
+        if (usesMaps) {
+          console.warn(
+            '[MeshSyncSystem] Custom mesh geometry has no UVs (TEXCOORD_0). Texture maps will not render.',
+            { entityId, resourceKey }
+          );
+        }
+      }
+    } catch {}
+
+    mesh.geometry = nextGeometry;
+    rc.geometry = nextGeometry;
+  }
+
+  private async loadGlbGeometry(url: string): Promise<THREE.BufferGeometry> {
+    const loader = await this.getGltfLoader();
+    const gltf = await loader.loadAsync(url);
+    let found: THREE.Mesh | null = null;
+
+    gltf.scene.traverse((obj: THREE.Object3D) => {
+      if (found) return;
+      if ((obj as any) instanceof THREE.Mesh) {
+        found = obj as THREE.Mesh;
+      }
+    });
+
+    if (!found) {
+      throw new Error("GLB did not contain a mesh");
+    }
+
+    const geometry = (found as any).geometry as unknown;
+    if (!(geometry instanceof THREE.BufferGeometry)) {
+      throw new Error("GLB mesh did not contain a BufferGeometry");
+    }
+
+    // Normalize: ensure normals exist so lighting/PBR materials shade correctly.
+    // Many exporters can omit normals; Three will then render with invalid lighting
+    // making it look like the material isn't applied.
+    try {
+      const hasNormals = (geometry as any).getAttribute?.('normal');
+      if (!hasNormals) {
+        geometry.computeVertexNormals();
+        try {
+          (geometry as any).normalizeNormals?.();
+        } catch {}
+      }
+    } catch {}
+
+    // Normalize: ensure bounds exist for raycasting/culling.
+    try {
+      geometry.computeBoundingBox();
+      geometry.computeBoundingSphere();
+    } catch {}
+
+    // Normalize UV channels early so cached geometry is consistent.
+    this.normalizeGlbUvs(geometry);
+
+    return geometry;
+  }
+
+  /**
+   * Best-effort normalization for UV channels coming from GLB/glTF.
+   *
+   * Why: Three.js samples baseColor/normal/roughness/metalness/etc. using the `uv` attribute.
+   * Some GLBs ship only TEXCOORD_1 (mapped to `uv2`) or provide an unexpected itemSize.
+   *
+   * This keeps behavior conservative:
+   * - If `uv` is missing but `uv2` exists, copy `uv2 -> uv`
+   * - If `uv2` is missing but `uv` exists, copy `uv -> uv2` (helps aoMap)
+   * - If any uv attribute has itemSize > 2, truncate to vec2
+   */
+  private normalizeGlbUvs(geometry: THREE.BufferGeometry): void {
+    try {
+      const g: any = geometry as any;
+      if (!g?.getAttribute || !g?.setAttribute) return;
+
+      const getUvAttr = (name: string): any => {
+        try {
+          return g.getAttribute(name);
+        } catch {
+          return undefined;
+        }
+      };
+
+      const truncateToVec2 = (attr: any): THREE.BufferAttribute | undefined => {
+        if (!attr) return undefined;
+        const itemSize = attr.itemSize ?? 0;
+        const count = attr.count ?? 0;
+        if (itemSize === 2) return attr as THREE.BufferAttribute;
+        if (itemSize < 2 || !count) return undefined;
+
+        const array = attr.array as ArrayLike<number> | undefined;
+        if (!array) return undefined;
+
+        const out = new Float32Array(count * 2);
+        for (let i = 0; i < count; i++) {
+          out[i * 2 + 0] = (array as any)[i * itemSize + 0] ?? 0;
+          out[i * 2 + 1] = (array as any)[i * itemSize + 1] ?? 0;
+        }
+        return new THREE.BufferAttribute(out, 2);
+      };
+
+      let uv: any = getUvAttr("uv");
+      let uv2: any = getUvAttr("uv2");
+
+      // Some pipelines may expose alternative UV names; pick first match.
+      if (!uv) {
+        uv =
+          getUvAttr("uv0") ??
+          getUvAttr("uv1") ??
+          getUvAttr("TEXCOORD_0") ??
+          undefined;
+      }
+
+      // If we found an alternative UV attr, remap it to `uv`.
+      if (uv && !getUvAttr("uv")) {
+        g.setAttribute("uv", uv);
+      }
+
+      // Re-read after potential remap.
+      uv = getUvAttr("uv");
+      uv2 = getUvAttr("uv2");
+
+      // If base `uv` missing but `uv2` exists, copy uv2 -> uv.
+      if (!uv && uv2) {
+        try {
+          g.setAttribute("uv", uv2.clone ? uv2.clone() : uv2);
+        } catch {
+          g.setAttribute("uv", uv2);
+        }
+      }
+
+      // If `uv2` missing but `uv` exists, copy uv -> uv2 (for aoMap/lightMap).
+      uv = getUvAttr("uv");
+      uv2 = getUvAttr("uv2");
+      if (uv && !uv2) {
+        try {
+          g.setAttribute("uv2", uv.clone ? uv.clone() : uv);
+        } catch {
+          g.setAttribute("uv2", uv);
+        }
+      }
+
+      // Ensure uv/uv2 are vec2.
+      const uvFixed = truncateToVec2(getUvAttr("uv"));
+      if (uvFixed) g.setAttribute("uv", uvFixed);
+
+      const uv2Fixed = truncateToVec2(getUvAttr("uv2"));
+      if (uv2Fixed) g.setAttribute("uv2", uv2Fixed);
+
+      // Fallback: some GLBs truly ship without TEXCOORD_0. In that case, generate a
+      // simple planar UV projection so texture maps can still render (preview-friendly).
+      // This is best-effort and won't match authored UV unwraps.
+      if (!getUvAttr("uv")) {
+        const pos: any = getUvAttr("position");
+        const count = pos?.count ?? 0;
+        const itemSize = pos?.itemSize ?? 0;
+        const array = pos?.array as ArrayLike<number> | undefined;
+
+        if (count > 0 && itemSize >= 3 && array) {
+          let minX = Infinity,
+            minY = Infinity,
+            minZ = Infinity;
+          let maxX = -Infinity,
+            maxY = -Infinity,
+            maxZ = -Infinity;
+
+          for (let i = 0; i < count; i++) {
+            const x = (array as any)[i * itemSize + 0] ?? 0;
+            const y = (array as any)[i * itemSize + 1] ?? 0;
+            const z = (array as any)[i * itemSize + 2] ?? 0;
+            if (x < minX) minX = x;
+            if (y < minY) minY = y;
+            if (z < minZ) minZ = z;
+            if (x > maxX) maxX = x;
+            if (y > maxY) maxY = y;
+            if (z > maxZ) maxZ = z;
+          }
+
+          const dx = maxX - minX;
+          const dy = maxY - minY;
+          const dz = maxZ - minZ;
+
+          type Axis = {
+            name: "x" | "y" | "z";
+            range: number;
+            min: number;
+            read: (i: number) => number;
+          };
+
+          const axes: Axis[] = [
+            {
+              name: "x",
+              range: dx,
+              min: minX,
+              read: (i) => (array as any)[i * itemSize + 0] ?? 0,
+            },
+            {
+              name: "y",
+              range: dy,
+              min: minY,
+              read: (i) => (array as any)[i * itemSize + 1] ?? 0,
+            },
+            {
+              name: "z",
+              range: dz,
+              min: minZ,
+              read: (i) => (array as any)[i * itemSize + 2] ?? 0,
+            },
+          ];
+
+          axes.sort((a, b) => (b.range ?? 0) - (a.range ?? 0));
+          const uAxis = axes[0];
+          const vAxis = axes[1] ?? axes[0];
+
+          const uRange = uAxis.range || 1;
+          const vRange = vAxis.range || 1;
+
+          const out = new Float32Array(count * 2);
+          for (let i = 0; i < count; i++) {
+            const u = (uAxis.read(i) - uAxis.min) / uRange;
+            const v = (vAxis.read(i) - vAxis.min) / vRange;
+            out[i * 2 + 0] = Number.isFinite(u) ? u : 0;
+            out[i * 2 + 1] = Number.isFinite(v) ? v : 0;
+          }
+
+          const uvGenerated = new THREE.BufferAttribute(out, 2);
+          g.setAttribute("uv", uvGenerated);
+          if (!getUvAttr("uv2")) {
+            try {
+              g.setAttribute("uv2", uvGenerated.clone());
+            } catch {
+              g.setAttribute("uv2", uvGenerated);
+            }
+          }
+        }
+      }
+    } catch {
+      // best-effort only
+    }
+  }
+
+  private async getGltfLoader(): Promise<any> {
+    if (this.gltfLoader) return this.gltfLoader;
+    // Lazy-load to avoid Jest failing on ESM imports from three/addons.
+    const mod: any = await import("three/addons/loaders/GLTFLoader.js");
+    this.gltfLoader = new mod.GLTFLoader();
+    return this.gltfLoader;
   }
 
   private applyTextureTiling(entity: Entity, texture: THREE.Texture): void {
@@ -261,6 +593,29 @@ export class MeshSyncSystem {
     texture.repeat.set(repeatU, repeatV);
     texture.offset.set(offsetU, offsetV);
     texture.needsUpdate = true;
+  }
+
+  /**
+   * Apply per-entity texture settings (tiling + any geometry-specific conventions).
+   *
+   * Important: glTF UV convention expects textures with flipY=false. If we apply a
+   * TextureLoader texture (default flipY=true) onto a GLB geometry, the texture will
+   * look wrong / appear not to match. Built-in Three geometries typically expect flipY=true.
+   */
+  private applyTextureSettings(entity: Entity, texture: THREE.Texture): void {
+    // Keep existing tiling behavior.
+    try {
+      this.applyTextureTiling(entity, texture);
+    } catch {}
+
+    // If this entity uses custom GLB geometry, align to glTF conventions.
+    try {
+      const isCustom = !!entity.getComponent<CustomGeometryComponent>("customGeometry");
+      if (isCustom) {
+        (texture as any).flipY = false;
+        texture.needsUpdate = true;
+      }
+    } catch {}
   }
 
   /**
@@ -324,15 +679,21 @@ export class MeshSyncSystem {
         if (!chosen || !chosen.path) return;
 
         const tex = await this.textureCache.load(chosen.path);
-        // Clone the texture so modifications (repeat/offset) won't affect other users
-        const clone = tex.clone();
-        setter(clone);
-        // Apply tiling for this specific entity (if it has a TextureTilingComponent)
+        // Clone the texture so per-entity modifications (repeat/offset/flipY) won't affect
+        // other users of the cached texture. If clone fails (some runtimes), fall back.
+        let t: THREE.Texture;
         try {
-          this.applyTextureTiling(entity, clone);
-        } catch {
-          // ignore errors applying tiling
+          t = (tex as THREE.Texture).clone();
+        } catch (cloneErr) {
+          console.warn('[MeshSyncSystem] Texture.clone() failed, using original texture', cloneErr);
+          t = tex;
         }
+
+        setter(t);
+        // Apply per-entity texture settings (tiling + glTF custom-mesh conventions)
+        try {
+          this.applyTextureSettings(entity, t);
+        } catch {}
         material.needsUpdate = true;
       } catch {
         // ignore

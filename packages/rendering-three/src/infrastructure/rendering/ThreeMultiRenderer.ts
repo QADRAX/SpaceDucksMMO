@@ -14,6 +14,7 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import type { IFpsController } from '../ui/dev/FpsController';
 import RenderSyncSystem from '../graphics/sync/RenderSyncSystem';
 import { DEBUG_LAYERS } from '../graphics/debug/DebugLayers';
+import type { EngineResourceResolver } from '../resources/EngineResourceResolver';
 
 type ResolutionPolicy = 'auto' | 'scale';
 
@@ -75,6 +76,7 @@ export class ThreeMultiRenderer implements IRenderingEngine {
   private fpsController: IFpsController;
   private textureResolver?: ITextureResolver;
   private textureCatalog?: TextureCatalogService;
+  private engineResourceResolver?: EngineResourceResolver;
 
   private viewSeq = 0;
 
@@ -98,12 +100,25 @@ export class ThreeMultiRenderer implements IRenderingEngine {
     return this.textureCatalog;
   }
 
+  setEngineResourceResolver(resolver: EngineResourceResolver): void {
+    this.engineResourceResolver = resolver;
+  }
+
+  getEngineResourceResolver(): EngineResourceResolver | undefined {
+    return this.engineResourceResolver;
+  }
+
   createRenderSyncSystem(
     renderScene: any,
     catalog?: TextureCatalogService,
     resolver?: ITextureResolver
   ): IRenderSyncSystem {
-    return new RenderSyncSystem(renderScene, catalog, resolver);
+    return new RenderSyncSystem(
+      renderScene,
+      catalog,
+      resolver,
+      this.engineResourceResolver
+    );
   }
 
   /**

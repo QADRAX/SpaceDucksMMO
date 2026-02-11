@@ -1,4 +1,8 @@
-import { MATERIAL_RESOURCE_KINDS, type MaterialResourceKind } from '@/lib/types';
+import {
+  CUSTOM_MESH_RESOURCE_KINDS,
+  MATERIAL_RESOURCE_KINDS,
+  type MaterialResourceKind,
+} from '@/lib/types';
 
 export type ResourceGroup = {
   id: string;
@@ -20,6 +24,14 @@ export const RESOURCE_GROUPS: readonly ResourceGroup[] = [
       phongMaterial: 'Phong Material',
       standardMaterial: 'Standard Material',
     } satisfies Record<MaterialResourceKind, string>,
+  },
+  {
+    id: 'meshes',
+    label: 'Meshes',
+    kinds: CUSTOM_MESH_RESOURCE_KINDS,
+    kindLabels: {
+      customMesh: 'Custom Mesh (GLB)',
+    },
   },
 ] as const;
 

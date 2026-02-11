@@ -128,7 +128,9 @@ describe('admin resources', () => {
       const fd = new FormData();
       const res = await POST(makeFormDataRequest(fd));
       expect(res.status).toBe(400);
-      await expect(res.json()).resolves.toEqual({ error: 'zip file is required' });
+      const json = await res.json();
+      expect(json).toMatchObject({ error: 'Invalid payload' });
+      expect(json.details).toBeDefined();
     });
 
     it('returns 400 when createResourceFromZip throws', async () => {

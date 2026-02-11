@@ -17,9 +17,19 @@ export const MATERIAL_RESOURCE_KINDS = [
   'standardMaterial',
 ] as const;
 
+// Custom mesh resources (single-mesh GLB profile)
+export const CUSTOM_MESH_RESOURCE_KINDS = ['customMesh'] as const;
+
+export const RESOURCE_KINDS = [
+  ...MATERIAL_RESOURCE_KINDS,
+  ...CUSTOM_MESH_RESOURCE_KINDS,
+] as const;
+
 export type MaterialResourceKind = (typeof MATERIAL_RESOURCE_KINDS)[number];
 
-export const ResourceKindSchema = z.enum(MATERIAL_RESOURCE_KINDS);
+export type CustomMeshResourceKind = (typeof CUSTOM_MESH_RESOURCE_KINDS)[number];
+
+export const ResourceKindSchema = z.enum(RESOURCE_KINDS);
 export type ResourceKind = z.infer<typeof ResourceKindSchema>;
 
 // Legacy compatibility (assets UI/API are being retired).
@@ -32,6 +42,14 @@ export type MaterialComponentType =
   | StandardMaterialComponent['type'];
 
 export const MaterialComponentTypeSchema = z.enum(MATERIAL_RESOURCE_KINDS);
+
+// Custom mesh component data (version metadata stored alongside the mesh file binding)
+export const CustomMeshComponentDataSchema = z
+  .object({
+    // Optional bounding radius in local units (editor/runtime hint)
+    boundingRadius: z.number().positive().optional(),
+  })
+  .strict();
 
 const ColorSchema = z.union([z.string(), z.number()]);
 
@@ -279,7 +297,7 @@ export type ResolvedResource = {
   key: string;
   resourceId: string;
   version: number;
-  componentType: MaterialComponentType;
+  componentType: ResourceKind;
   componentData: Record<string, unknown>;
   files: Record<string, ResolvedFile>;
 };

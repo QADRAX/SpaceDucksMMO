@@ -16,8 +16,8 @@
 
 import { NextResponse } from 'next/server';
 
-import { MATERIAL_RESOURCE_KINDS } from '@/lib/types';
+import { RESOURCE_KINDS } from '@/lib/types';
 
 export async function GET() {
-  return NextResponse.json({ data: [...MATERIAL_RESOURCE_KINDS] });
+  return NextResponse.json({ data: [...RESOURCE_KINDS] });
 }

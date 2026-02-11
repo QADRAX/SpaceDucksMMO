@@ -14,6 +14,7 @@ import {
   PhongMaterialComponent,
   StandardMaterialComponent,
   ThreeRenderer,
+  createWebCoreEngineResourceResolver,
   type GameSettings,
   type ISettingsService,
 } from '@duckengine/rendering-three';
@@ -22,10 +23,12 @@ import { getInputServices } from '@duckengine/rendering-three/ecs';
 
 import {
   BoxGeometryComponent,
+  CustomGeometryComponent,
   ConeGeometryComponent,
   CylinderGeometryComponent,
   PlaneGeometryComponent,
   SphereGeometryComponent,
+  TextureTilingComponent,
   TorusGeometryComponent,
 } from '@duckengine/ecs';
 
@@ -37,7 +40,15 @@ import type { MaterialResourceKind } from '@/lib/types';
 
 type MaterialComponentData = Record<string, unknown>;
 
+type ResourceListItem = {
+  id: string;
+  key: string;
+  displayName: string;
+  kind: string;
+};
+
 type Props = {
+  resourceKey: string;
   kind: MaterialResourceKind;
   componentData: MaterialComponentData;
   className?: string;
@@ -49,13 +60,20 @@ type GeometryType =
   | 'planeGeometry'
   | 'cylinderGeometry'
   | 'coneGeometry'
-  | 'torusGeometry';
+  | 'torusGeometry'
+  | 'customMesh';
 
 type PreviewSettings = {
   camera: {
     x: number;
     y: number;
     z: number;
+  };
+  tiling: {
+    repeatU: number;
+    repeatV: number;
+    offsetU: number;
+    offsetV: number;
   };
   lights: {
     ambientIntensity: number;
@@ -71,6 +89,9 @@ type PreviewSettings = {
   };
   geometry: {
     type: GeometryType;
+    customMesh: {
+      key: string;
+    };
     sphere: {
       radius: number;
       widthSegments: number;
@@ -107,11 +128,19 @@ type PreviewSettings = {
   };
 };
 
-const PREVIEW_SETTINGS_STORAGE_KEY = 'webcore.materialPreview.settings.v1';
-const PREVIEW_SETTINGS_EVENT = 'webcore:materialPreviewSettingsChanged';
+function getPreviewStorageKey(resourceKey: string): string {
+  const normalized = resourceKey.trim() || 'draft';
+  return `webcore.preview.material.${normalized}.v1`;
+}
+
+function getPreviewSettingsEvent(resourceKey: string): string {
+  const normalized = resourceKey.trim() || 'draft';
+  return `webcore:previewSettingsChanged:material:${normalized}`;
+}
 
 const defaultPreviewSettings: PreviewSettings = {
   camera: { x: 0, y: 0, z: 3.25 },
+  tiling: { repeatU: 1, repeatV: 1, offsetU: 0, offsetV: 0 },
   lights: {
     ambientIntensity: 0.9,
     directionalIntensity: 1.25,
@@ -122,6 +151,7 @@ const defaultPreviewSettings: PreviewSettings = {
   rotation: { enabled: true, speed: 0.5, axis: 'y' },
   geometry: {
     type: 'sphereGeometry',
+    customMesh: { key: '' },
     sphere: { radius: 1, widthSegments: 32, heightSegments: 16 },
     box: { width: 1.6, height: 1.6, depth: 1.6 },
     plane: { width: 2, height: 2, widthSegments: 1, heightSegments: 1 },
@@ -143,10 +173,21 @@ function safeParseSettings(raw: unknown): PreviewSettings | null {
   const merged: PreviewSettings = {
     ...defaultPreviewSettings,
     camera: { ...defaultPreviewSettings.camera, ...(r.camera ?? {}) },
+    tiling: { ...defaultPreviewSettings.tiling, ...(r.tiling ?? {}) },
     lights: { ...defaultPreviewSettings.lights, ...(r.lights ?? {}) },
     rotation: { ...defaultPreviewSettings.rotation, ...(r.rotation ?? {}) },
     geometry: { ...defaultPreviewSettings.geometry, ...(r.geometry ?? {}) },
   };
+
+  merged.geometry.customMesh = {
+    ...defaultPreviewSettings.geometry.customMesh,
+    ...((r.geometry?.customMesh as any) ?? {}),
+  };
+
+  merged.tiling.repeatU = clampNumber(merged.tiling.repeatU, 0, 100);
+  merged.tiling.repeatV = clampNumber(merged.tiling.repeatV, 0, 100);
+  merged.tiling.offsetU = clampNumber(merged.tiling.offsetU, -100, 100);
+  merged.tiling.offsetV = clampNumber(merged.tiling.offsetV, -100, 100);
 
   // Clamp a few values to avoid weird rendering states.
   merged.camera.z = clampNumber(merged.camera.z, 0.25, 50);
@@ -157,10 +198,10 @@ function safeParseSettings(raw: unknown): PreviewSettings | null {
   return merged;
 }
 
-function loadPreviewSettings(): PreviewSettings {
+function loadPreviewSettings(resourceKey: string): PreviewSettings {
   if (typeof window === 'undefined') return defaultPreviewSettings;
   try {
-    const raw = window.localStorage.getItem(PREVIEW_SETTINGS_STORAGE_KEY);
+    const raw = window.localStorage.getItem(getPreviewStorageKey(resourceKey));
     if (!raw) return defaultPreviewSettings;
     const parsed = JSON.parse(raw);
     return safeParseSettings(parsed) ?? defaultPreviewSettings;
@@ -169,14 +210,14 @@ function loadPreviewSettings(): PreviewSettings {
   }
 }
 
-function persistPreviewSettings(next: PreviewSettings): void {
+function persistPreviewSettings(resourceKey: string, next: PreviewSettings): void {
   try {
-    window.localStorage.setItem(PREVIEW_SETTINGS_STORAGE_KEY, JSON.stringify(next));
+    window.localStorage.setItem(getPreviewStorageKey(resourceKey), JSON.stringify(next));
   } catch {
     // ignore
   }
   try {
-    window.dispatchEvent(new Event(PREVIEW_SETTINGS_EVENT));
+    window.dispatchEvent(new Event(getPreviewSettingsEvent(resourceKey)));
   } catch {
     // ignore
   }
@@ -231,6 +272,11 @@ function createMaterialComponent(kind: MaterialResourceKind, data: MaterialCompo
 
 function createGeometryComponent(settings: PreviewSettings) {
   switch (settings.geometry.type) {
+    case 'customMesh': {
+      const key = String(settings.geometry.customMesh?.key ?? '').trim();
+      if (!key) return new SphereGeometryComponent({ radius: 1 } as any);
+      return new CustomGeometryComponent({ key });
+    }
     case 'sphereGeometry':
       return new SphereGeometryComponent({
         radius: settings.geometry.sphere.radius,
@@ -327,6 +373,15 @@ class MaterialPreviewScene extends BaseScene {
     this.mesh = new Entity('mesh');
     this.mesh.addComponent(createGeometryComponent(this.previewSettings));
     this.mesh.addComponent(createMaterialComponent(this.kind, this.initialComponentData));
+    // Apply tiling via ECS so it matches real runtime behavior.
+    this.mesh.addComponent(
+      new TextureTilingComponent({
+        repeatU: this.previewSettings.tiling.repeatU,
+        repeatV: this.previewSettings.tiling.repeatV,
+        offsetU: this.previewSettings.tiling.offsetU,
+        offsetV: this.previewSettings.tiling.offsetV,
+      } as any)
+    );
     this.addEntity(this.mesh);
 
     this.applyPreviewSettings(this.previewSettings);
@@ -349,6 +404,20 @@ class MaterialPreviewScene extends BaseScene {
       this.dir.transform.setPosition(next.lights.directionalX, next.lights.directionalY, next.lights.directionalZ);
       const c = this.dir.getComponent<any>('directionalLight');
       if (c) c.intensity = next.lights.directionalIntensity;
+    }
+
+    if (this.mesh) {
+      let tiling = this.mesh.getComponent<any>('textureTiling');
+      if (!tiling) {
+        this.mesh.addComponent(new TextureTilingComponent() as any);
+        tiling = this.mesh.getComponent<any>('textureTiling');
+      }
+      if (tiling) {
+        tiling.repeatU = next.tiling.repeatU;
+        tiling.repeatV = next.tiling.repeatV;
+        tiling.offsetU = next.tiling.offsetU;
+        tiling.offsetV = next.tiling.offsetV;
+      }
     }
 
     this.setGeometry(next);
@@ -392,11 +461,15 @@ class MaterialPreviewScene extends BaseScene {
       'cylinderGeometry',
       'coneGeometry',
       'torusGeometry',
+      'customMesh',
     ];
     for (const t of geometryTypes) {
       if (this.mesh.hasComponent(t)) {
         this.mesh.removeComponent(t);
       }
+    }
+    if (this.mesh.hasComponent('customGeometry')) {
+      this.mesh.removeComponent('customGeometry');
     }
     this.mesh.addComponent(createGeometryComponent(next));
 
@@ -432,7 +505,7 @@ class MaterialPreviewScene extends BaseScene {
   }
 }
 
-export function MaterialResourcePreview({ kind, componentData, className }: Props) {
+export function MaterialResourcePreview({ resourceKey, kind, componentData, className }: Props) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const rendererRef = React.useRef<ThreeRenderer | null>(null);
   const sceneRef = React.useRef<MaterialPreviewScene | null>(null);
@@ -440,14 +513,57 @@ export function MaterialResourcePreview({ kind, componentData, className }: Prop
   const resizeObserverRef = React.useRef<ResizeObserver | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
-  const [previewSettings, setPreviewSettings] = React.useState<PreviewSettings>(() => loadPreviewSettings());
+  const [previewSettings, setPreviewSettings] = React.useState<PreviewSettings>(() => loadPreviewSettings(resourceKey));
   const lastPersistedJsonRef = React.useRef<string | null>(null);
+
+  const [systemMeshes, setSystemMeshes] = React.useState<ResourceListItem[] | null>(null);
+  const [systemMeshesError, setSystemMeshesError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    setPreviewSettings(loadPreviewSettings(resourceKey));
+    lastPersistedJsonRef.current = null;
+  }, [resourceKey]);
+
+  React.useEffect(() => {
+    if (!settingsOpen) return;
+    if (previewSettings.geometry.type !== 'customMesh') return;
+    if (systemMeshes) return;
+
+    let cancelled = false;
+    (async () => {
+      try {
+        setSystemMeshesError(null);
+        const res = await fetch('/api/admin/resources?kind=customMesh');
+        if (!res.ok) throw new Error(`Failed to list system meshes (${res.status})`);
+        const json = (await res.json()) as any;
+        const data = Array.isArray(json?.data) ? (json.data as ResourceListItem[]) : [];
+        const normalized = data
+          .filter((r) => r && typeof r.key === 'string')
+          .map((r) => ({
+            id: String((r as any).id ?? r.key),
+            key: String((r as any).key ?? ''),
+            displayName: String((r as any).displayName ?? (r as any).key ?? ''),
+            kind: String((r as any).kind ?? ''),
+          }));
+        if (cancelled) return;
+        setSystemMeshes(normalized);
+      } catch (e) {
+        if (cancelled) return;
+        setSystemMeshesError(e instanceof Error ? e.message : 'Failed to load system meshes');
+        setSystemMeshes([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [settingsOpen, previewSettings.geometry.type, systemMeshes]);
 
   // Keep multiple previews in sync (same page or different tabs).
   React.useEffect(() => {
     const onChanged = () => {
       setPreviewSettings((prev) => {
-        const next = loadPreviewSettings();
+        const next = loadPreviewSettings(resourceKey);
         try {
           const prevJson = JSON.stringify(prev);
           const nextJson = JSON.stringify(next);
@@ -457,13 +573,18 @@ export function MaterialResourcePreview({ kind, componentData, className }: Prop
         }
       });
     };
-    window.addEventListener('storage', onChanged);
-    window.addEventListener(PREVIEW_SETTINGS_EVENT, onChanged as any);
-    return () => {
-      window.removeEventListener('storage', onChanged);
-      window.removeEventListener(PREVIEW_SETTINGS_EVENT, onChanged as any);
+    const onStorage = (e: StorageEvent) => {
+      if (!e.key) return;
+      if (e.key !== getPreviewStorageKey(resourceKey)) return;
+      onChanged();
     };
-  }, []);
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(getPreviewSettingsEvent(resourceKey), onChanged as any);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(getPreviewSettingsEvent(resourceKey), onChanged as any);
+    };
+  }, [resourceKey]);
 
   React.useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -477,10 +598,10 @@ export function MaterialResourcePreview({ kind, componentData, className }: Prop
       // no-op
     } else {
       lastPersistedJsonRef.current = json || null;
-      persistPreviewSettings(previewSettings);
+      persistPreviewSettings(resourceKey, previewSettings);
     }
     sceneRef.current?.applyPreviewSettings(previewSettings);
-  }, [previewSettings]);
+  }, [previewSettings, resourceKey]);
 
   React.useEffect(() => {
     const container = containerRef.current;
@@ -502,6 +623,10 @@ export function MaterialResourcePreview({ kind, componentData, className }: Prop
       const fps = new NoopFpsController();
       renderer = new ThreeRenderer(fps);
       renderer.init(container);
+
+      // Needed for CustomGeometryComponent (system mesh) preview.
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+      renderer.setEngineResourceResolver(createWebCoreEngineResourceResolver({ baseUrl }));
 
       const settings = new InlineSettingsService();
       scene = new MaterialPreviewScene(settings, kind, componentData, previewSettings);
@@ -621,7 +746,7 @@ export function MaterialResourcePreview({ kind, componentData, className }: Prop
               <div>
                 <div className="text-xl font-heading">Preview settings</div>
                 <div className="text-sm text-neutral-600 mt-1">
-                  Saved for all material previews
+                  Saved locally per material resource
                 </div>
               </div>
               <Button type="button" size="sm" variant="secondary" onClick={() => setSettingsOpen(false)}>
@@ -762,6 +887,77 @@ export function MaterialResourcePreview({ kind, componentData, className }: Prop
                     />
                   </label>
                 </div>
+
+                <div>
+                  <div className="font-bold">Texture Tiling</div>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-neutral-600">Repeat U</span>
+                      <input
+                        type="number"
+                        step={0.1}
+                        min={0}
+                        value={previewSettings.tiling.repeatU}
+                        onChange={(e) =>
+                          setPreviewSettings((s) => ({
+                            ...s,
+                            tiling: { ...s.tiling, repeatU: Number(e.target.value) },
+                          }))
+                        }
+                        className="border border-border rounded-base px-2 py-1"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-neutral-600">Repeat V</span>
+                      <input
+                        type="number"
+                        step={0.1}
+                        min={0}
+                        value={previewSettings.tiling.repeatV}
+                        onChange={(e) =>
+                          setPreviewSettings((s) => ({
+                            ...s,
+                            tiling: { ...s.tiling, repeatV: Number(e.target.value) },
+                          }))
+                        }
+                        className="border border-border rounded-base px-2 py-1"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-neutral-600">Offset U</span>
+                      <input
+                        type="number"
+                        step={0.01}
+                        value={previewSettings.tiling.offsetU}
+                        onChange={(e) =>
+                          setPreviewSettings((s) => ({
+                            ...s,
+                            tiling: { ...s.tiling, offsetU: Number(e.target.value) },
+                          }))
+                        }
+                        className="border border-border rounded-base px-2 py-1"
+                      />
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-neutral-600">Offset V</span>
+                      <input
+                        type="number"
+                        step={0.01}
+                        value={previewSettings.tiling.offsetV}
+                        onChange={(e) =>
+                          setPreviewSettings((s) => ({
+                            ...s,
+                            tiling: { ...s.tiling, offsetV: Number(e.target.value) },
+                          }))
+                        }
+                        className="border border-border rounded-base px-2 py-1"
+                      />
+                    </label>
+                  </div>
+                  <div className="text-xs text-neutral-600 mt-1">
+                    Applies to all material maps, including system custom meshes.
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -785,8 +981,61 @@ export function MaterialResourcePreview({ kind, componentData, className }: Prop
                       <option value="cylinderGeometry">Cylinder</option>
                       <option value="coneGeometry">Cone</option>
                       <option value="torusGeometry">Torus</option>
+                      <option value="customMesh">System mesh</option>
                     </select>
                   </label>
+
+                  {previewSettings.geometry.type === 'customMesh' ? (
+                    <label className="flex flex-col gap-1 mt-2">
+                      <span className="text-neutral-600">Mesh key</span>
+                      {systemMeshes ? (
+                        <select
+                          value={previewSettings.geometry.customMesh.key}
+                          onChange={(e) =>
+                            setPreviewSettings((s) => ({
+                              ...s,
+                              geometry: {
+                                ...s.geometry,
+                                customMesh: { ...s.geometry.customMesh, key: e.target.value },
+                              },
+                            }))
+                          }
+                          className="border border-border rounded-base px-2 py-1"
+                        >
+                          <option value="">Select a system mesh…</option>
+                          {systemMeshes.map((m) => (
+                            <option key={m.key} value={m.key}>
+                              {m.displayName}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="text-xs text-neutral-600">Loading system meshes…</div>
+                      )}
+
+                      {systemMeshesError ? <div className="text-xs text-red-600">{systemMeshesError}</div> : null}
+
+                      <div className="text-xs text-neutral-600">Or type a key manually:</div>
+                      <input
+                        type="text"
+                        value={previewSettings.geometry.customMesh.key}
+                        onChange={(e) =>
+                          setPreviewSettings((s) => ({
+                            ...s,
+                            geometry: {
+                              ...s.geometry,
+                              customMesh: { ...s.geometry.customMesh, key: e.target.value },
+                            },
+                          }))
+                        }
+                        placeholder="e.g. meshes/ship/glider"
+                        className="border border-border rounded-base px-2 py-1"
+                      />
+                      <span className="text-xs text-neutral-600 mt-1">
+                        Uses a system custom mesh (customMesh resource) via resolver.
+                      </span>
+                    </label>
+                  ) : null}
 
                   {/* Params per geometry */}
                   {previewSettings.geometry.type === 'sphereGeometry' ? (

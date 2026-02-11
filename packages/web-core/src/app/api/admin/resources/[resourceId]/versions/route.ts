@@ -102,7 +102,13 @@ import { prisma } from '@/lib/db';
 import { createResourceVersionFromZip } from '@/lib/resourceUpload/resourceZip';
 import { updateResourceThumbnailFromVersion } from '@/lib/resourceThumbnail';
 import { StorageService } from '@/lib/storage';
-import { CreateResourceVersionSchema, MaterialComponentSchema } from '@/lib/types';
+import {
+  CreateResourceVersionSchema,
+  CustomMeshComponentDataSchema,
+  MaterialComponentSchema,
+  MaterialComponentTypeSchema,
+} from '@/lib/types';
+import { assertCustomMeshGlbProfile } from '@/lib/glb/validateCustomMeshGlb';
 
 function coerceComponentData(raw: unknown): Record<string, unknown> {
   if (raw === undefined || raw === null) return {};
@@ -216,20 +222,56 @@ export async function POST(
     );
   }
 
-  // Validate per-kind. For now, only material kinds are supported.
-  const componentPayloadParsed = MaterialComponentSchema.safeParse({
-    componentType: resource.kind as any,
-    componentData: coerceComponentData(componentDataObj),
-  });
+  // Validate per-kind.
+  const kind = resource.kind;
+  const componentDataCoerced = coerceComponentData(componentDataObj);
+  const componentPayloadParsed = (() => {
+    const materialKind = MaterialComponentTypeSchema.safeParse(kind);
+    if (materialKind.success) {
+      return MaterialComponentSchema.safeParse({
+        componentType: materialKind.data,
+        componentData: componentDataCoerced,
+      });
+    }
+    if (kind === 'customMesh') {
+      const parsed = CustomMeshComponentDataSchema.safeParse(componentDataCoerced);
+      return parsed.success
+        ? ({ success: true, data: { componentData: parsed.data } } as const)
+        : parsed;
+    }
+    return { success: false } as any;
+  })();
 
   if (!componentPayloadParsed.success) {
     return NextResponse.json(
       {
         error: 'Invalid component data',
-        details: componentPayloadParsed.error.flatten(),
+        details: (componentPayloadParsed as any).error?.flatten?.() ?? undefined,
       },
       { status: 400 }
     );
+  }
+
+  // Strict customMesh validation should happen before opening a DB transaction.
+  if (kind === 'customMesh') {
+    const meshFile = Array.from(formData.entries()).find(
+      ([slot, value]) => slot.toLowerCase() === 'mesh' && value instanceof File
+    )?.[1] as File | undefined;
+
+    if (!meshFile || meshFile.size === 0) {
+      return NextResponse.json({ error: "customMesh requires a 'mesh' file field" }, { status: 400 });
+    }
+    if (!meshFile.name.toLowerCase().endsWith('.glb')) {
+      return NextResponse.json({ error: "customMesh 'mesh' file must be a .glb" }, { status: 400 });
+    }
+
+    try {
+      const bytes = await meshFile.arrayBuffer();
+      assertCustomMeshGlbProfile(bytes);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Invalid GLB';
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
   }
 
   const nextVersion = await (async () => {
@@ -264,7 +306,7 @@ export async function POST(
   try {
     const created = await prisma.$transaction(async (tx) => {
       const componentDataToStore: Record<string, unknown> = {
-        ...(componentPayloadParsed.data.componentData ?? {}),
+        ...((componentPayloadParsed as any).data?.componentData ?? {}),
       };
 
       const version = await tx.resourceVersion.create({
@@ -321,31 +363,60 @@ export async function POST(
           },
         });
 
-        // If the uploaded slot name matches a known material texture field,
-        // store a direct URL in componentData so renderers can load it.
-        // This avoids relying on a texture catalog for admin-authored materials.
-        const supportedTextureFields = new Set([
-          // componentData fields
-          'texture',
-          'normalMap',
-          'envMap',
-          'aoMap',
-          'roughnessMap',
-          'metalnessMap',
-          'specularMap',
-          'bumpMap',
-          // friendly binding aliases -> componentData.texture
-          'baseColor',
-          'albedo',
-        ]);
+        // Material convenience: map texture bindings into componentData fields.
+        if (MaterialComponentTypeSchema.safeParse(kind).success) {
+          // If the uploaded slot name matches a known material texture field,
+          // store a direct URL in componentData so renderers can load it.
+          // This avoids relying on a texture catalog for admin-authored materials.
+          const supportedTextureFields = new Set([
+            // componentData fields
+            'texture',
+            'normalMap',
+            'envMap',
+            'aoMap',
+            'roughnessMap',
+            'metalnessMap',
+            'specularMap',
+            'bumpMap',
+            // friendly binding aliases -> componentData.texture
+            'baseColor',
+            'albedo',
+          ]);
 
-        if (supportedTextureFields.has(key)) {
-          const url = `/api/files/${fileId}`;
-          if (key === 'baseColor' || key === 'albedo') {
-            componentDataToStore.texture = url;
-          } else {
-            componentDataToStore[key] = url;
+          if (supportedTextureFields.has(key)) {
+            const url = `/api/files/${fileId}`;
+            if (key === 'baseColor' || key === 'albedo') {
+              componentDataToStore.texture = url;
+            } else {
+              componentDataToStore[key] = url;
+            }
           }
+        }
+
+        // Custom mesh convenience: store mesh URL.
+        if (kind === 'customMesh' && key.toLowerCase() === 'mesh') {
+          componentDataToStore.mesh = `/api/files/${fileId}`;
+        }
+      }
+
+      // Enforce custom mesh profile (single mesh GLB file).
+      if (kind === 'customMesh') {
+        const meshUrl = componentDataToStore.mesh;
+        if (typeof meshUrl !== 'string' || !meshUrl.length) {
+          throw new Error("customMesh requires a 'mesh' file field");
+        }
+
+        const hasMeshSlot = Array.from(seenSlots).some((s) => s.toLowerCase() === 'mesh');
+        if (seenSlots.size !== 1 || !hasMeshSlot) {
+          throw new Error("customMesh only supports a single file binding ('mesh')");
+        }
+
+        const meshFile = Array.from(formData.entries()).find(
+          ([slot, value]) => slot.toLowerCase() === 'mesh' && value instanceof File
+        )?.[1] as File | undefined;
+
+        if (!meshFile || !meshFile.name.toLowerCase().endsWith('.glb')) {
+          throw new Error("customMesh 'mesh' file must be a .glb");
         }
       }
 

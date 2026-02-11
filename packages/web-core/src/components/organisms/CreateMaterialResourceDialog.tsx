@@ -77,6 +77,10 @@ export function CreateMaterialResourceDialog({
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
 
+  const draftPreviewKeyRef = React.useRef(
+    `draft:${kind}:${typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : String(Date.now())}`
+  );
+
   const [key, setKey] = React.useState('');
   const [displayName, setDisplayName] = React.useState('');
 
@@ -329,7 +333,12 @@ export function CreateMaterialResourceDialog({
 
             <div className="min-w-0 flex-1 bg-bg">
               <div className="h-full w-full">
-                <MaterialResourcePreview kind={kind} componentData={componentData} className="h-full w-full" />
+                <MaterialResourcePreview
+                  resourceKey={key.trim() ? key : draftPreviewKeyRef.current}
+                  kind={kind}
+                  componentData={componentData}
+                  className="h-full w-full"
+                />
               </div>
             </div>
           </div>

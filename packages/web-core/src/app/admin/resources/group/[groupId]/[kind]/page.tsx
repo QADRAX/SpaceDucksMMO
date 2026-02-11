@@ -5,8 +5,9 @@ import { prisma } from '@/lib/db';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { ResourceTable } from '@/components/organisms/ResourceTable';
 import { CreateMaterialResourceDialog } from '@/components/organisms/CreateMaterialResourceDialog';
+import { CreateCustomMeshResourceDialog } from '@/components/organisms/CreateCustomMeshResourceDialog';
 import { getKindLabel, getResourceGroup, isKindInGroup } from '@/lib/resourceGroups';
-import { ResourceKindSchema } from '@/lib/types';
+import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -81,10 +82,26 @@ export default async function ResourceGroupKindPage({
         rows={rows}
         emptyTitle="No resources of this kind yet."
         toolbar={(() => {
-          // Currently, all supported kinds are material kinds.
           const parsed = ResourceKindSchema.safeParse(kind);
           if (!parsed.success) return null;
-          return <CreateMaterialResourceDialog kind={parsed.data} kindLabel={getKindLabel(group, kind)} />;
+
+          if (parsed.data === 'customMesh') {
+            return (
+              <CreateCustomMeshResourceDialog
+                kindLabel={getKindLabel(group, kind)}
+              />
+            );
+          }
+
+          const materialKind = MaterialComponentTypeSchema.safeParse(parsed.data);
+          if (!materialKind.success) return null;
+
+          return (
+            <CreateMaterialResourceDialog
+              kind={materialKind.data}
+              kindLabel={getKindLabel(group, kind)}
+            />
+          );
         })()}
         pagination={{
           page,

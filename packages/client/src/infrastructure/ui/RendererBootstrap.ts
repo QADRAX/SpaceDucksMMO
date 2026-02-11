@@ -3,6 +3,7 @@ import RenderingBootstrap from "@client/infrastructure/rendering/RenderingBootst
 import UIBootstrap from "./UIBootstrap";
 import DevToolsBootstrap from './dev/DevToolsBootstrap';
 import { setInputServices } from "@duckengine/rendering-three/ecs";
+import { createWebCoreEngineResourceResolver } from "@duckengine/rendering-three";
 
 /**
  * Renderer Bootstrap - Main Application Orchestrator
@@ -29,6 +30,22 @@ export class RendererBootstrap {
     const renderingBootstrap = new RenderingBootstrap(services.settings, services.fpsController);
     // Texture catalog is required in Services; wire it into renderer unconditionally
     renderingBootstrap.getRenderer().setTextureCatalog(services.textureCatalog);
+
+    // Optional: resolve runtime resources (e.g. customMesh GLBs) from web-core.
+    try {
+      const baseUrl =
+        ((import.meta as any).env?.VITE_WEB_CORE_BASE_URL as string | undefined) ??
+        'http://localhost:3000';
+      if (typeof baseUrl === 'string' && baseUrl.trim().length > 0) {
+        renderingBootstrap
+          .getRenderer()
+          .setEngineResourceResolver(
+            createWebCoreEngineResourceResolver({ baseUrl: baseUrl.trim() })
+          );
+      }
+    } catch {
+      // ignore
+    }
     await renderingBootstrap.initialize(container);
 
     // Expose single renderer and scene manager instances from RenderingBootstrap into services
