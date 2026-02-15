@@ -16,6 +16,10 @@ export class ShaderMaterialComponent extends Component {
   readonly type = "shaderMaterial";
   readonly metadata: ComponentMetadata = {
     type: "shaderMaterial",
+    label: "Shader Material",
+    description: "Applies custom shader materials for advanced visual effects and rendering techniques.",
+    category: "Rendering",
+    icon: "Code",
     unique: true,
     requires: ["geometry"],
     conflicts: [
@@ -29,11 +33,13 @@ export class ShaderMaterialComponent extends Component {
         {
           key: "shaderType",
           label: "Shader",
+          description: "Type of shader to use for rendering.",
           get: (c: ShaderMaterialComponent) => c.shaderType,
         },
         {
           key: "transparent",
           label: "Transparent",
+          description: "Whether the material supports transparency.",
           get: (c: ShaderMaterialComponent) => c.transparent,
           set: (c, v) => {
             c.transparent = Boolean(v);
@@ -42,6 +48,7 @@ export class ShaderMaterialComponent extends Component {
         {
           key: "depthWrite",
           label: "Depth Write",
+          description: "Whether the material writes to the depth buffer.",
           get: (c: ShaderMaterialComponent) => c.depthWrite,
           set: (c, v) => {
             c._depthWrite = Boolean(v);
@@ -51,6 +58,7 @@ export class ShaderMaterialComponent extends Component {
         {
           key: "blending",
           label: "Blending",
+          description: "Blending mode for transparency and compositing.",
           get: (c: ShaderMaterialComponent) => c.blending,
           set: (c, v) => {
             c._blending = String(v);
@@ -60,6 +68,7 @@ export class ShaderMaterialComponent extends Component {
         {
           key: "uniformKeys",
           label: "Uniforms",
+          description: "List of shader uniform parameters.",
           get: (c: ShaderMaterialComponent) => Object.keys(c.uniforms || {}),
           set: () => { /** read only */ },
 

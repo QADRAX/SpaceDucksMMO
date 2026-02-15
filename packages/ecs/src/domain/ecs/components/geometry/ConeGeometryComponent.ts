@@ -5,6 +5,10 @@ export class ConeGeometryComponent extends BaseGeometryComponent {
   readonly type = "coneGeometry";
   readonly metadata: ComponentMetadata = {
     type: "coneGeometry",
+    label: "Cone Geometry",
+    description: "Creates a conical shape. Maps to THREE.ConeGeometry.",
+    category: "Rendering",
+    icon: "Triangle",
     unique: true,
     requires: [],
     conflicts: ["skybox"],
@@ -13,6 +17,7 @@ export class ConeGeometryComponent extends BaseGeometryComponent {
         {
           key: "radius",
           label: "Radius",
+          description: "The radius of the cone base.",
           min: 0.01,
           max: 1000,
           step: 0.01,
@@ -26,6 +31,7 @@ export class ConeGeometryComponent extends BaseGeometryComponent {
         {
           key: "height",
           label: "Height",
+          description: "The height of the cone along the Y-axis.",
           min: 0.01,
           max: 1000,
           step: 0.01,
@@ -39,6 +45,7 @@ export class ConeGeometryComponent extends BaseGeometryComponent {
         { 
           key: "radialSegments", 
           label: "Radial Segments",
+          description: "Number of segments around the base circumference. Higher values create smoother cones.",
           default: 16,
           get: (c: ConeGeometryComponent) => c.radialSegments,
           set: (c, v) => {

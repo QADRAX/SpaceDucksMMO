@@ -7,6 +7,10 @@ export class MouseLookComponent extends Component {
   readonly type = "mouseLook";
   readonly metadata: ComponentMetadata = {
     type: "mouseLook",
+    label: "Mouse Look",
+    description: "Controls camera rotation based on mouse movement, enabling first-person camera controls.",
+    category: "Movement & Controls",
+    icon: "MousePointer",
     unique: true,
     requires: ["cameraView"],
     conflicts: [],
@@ -15,6 +19,7 @@ export class MouseLookComponent extends Component {
         {
           key: "sensitivityX",
           label: "Sensitivity X",
+          description: "Horizontal mouse sensitivity for camera rotation.",
           type: "number",
           min: 0.0001,
           max: 0.02,
@@ -25,6 +30,7 @@ export class MouseLookComponent extends Component {
         {
           key: "sensitivityY",
           label: "Sensitivity Y",
+          description: "Vertical mouse sensitivity for camera rotation.",
           type: "number",
           min: 0.0001,
           max: 0.02,
@@ -35,6 +41,7 @@ export class MouseLookComponent extends Component {
         {
           key: "invertY",
           label: "Invert Y",
+          description: "Invert vertical mouse movement direction.",
           type: "boolean",
           get: (c: MouseLookComponent) => c.invertY,
           set: (c, v) => { c.invertY = Boolean(v); c.notifyChanged(); }

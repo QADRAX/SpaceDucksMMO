@@ -1,0 +1,144 @@
+'use client';
+
+import * as React from 'react';
+
+import { Select } from '@/components/atoms/Select';
+import {
+  BoxIcon,
+  CameraIcon,
+  CircleIcon,
+  CodeIcon,
+  CrosshairIcon,
+  CylinderIcon,
+  File3dIcon,
+  FilterIcon,
+  FlashlightIcon,
+  Gamepad2Icon,
+  Grid3x3Icon,
+  LightbulbIcon,
+  MousePointerIcon,
+  PaintBucketIcon,
+  PaletteIcon,
+  RotateCcwIcon,
+  SparklesIcon,
+  SquareIcon,
+  SunIcon,
+  TagIcon,
+  TargetIcon,
+  TriangleIcon,
+  ZapIcon,
+  ArrowDownIcon,
+} from '@/components/icons';
+
+interface ComponentDefinition {
+  type: string;
+  label: string;
+  category: string;
+  icon: string;
+}
+
+interface ComponentSelectorProps {
+  components: ComponentDefinition[];
+  onSelect: (componentType: string) => void;
+  disabled?: boolean;
+  placeholder?: string;
+}
+
+const iconMap = {
+  Tag: TagIcon,
+  Camera: CameraIcon,
+  Gamepad2: Gamepad2Icon,
+  MousePointer: MousePointerIcon,
+  RotateCcw: RotateCcwIcon,
+  Zap: ZapIcon,
+  ArrowDown: ArrowDownIcon,
+  Sun: SunIcon,
+  Lightbulb: LightbulbIcon,
+  Flashlight: FlashlightIcon,
+  Box: BoxIcon,
+  Circle: CircleIcon,
+  Square: SquareIcon,
+  Cylinder: CylinderIcon,
+  Triangle: TriangleIcon,
+  File3d: File3dIcon,
+  Palette: PaletteIcon,
+  PaintBucket: PaintBucketIcon,
+  Sparkles: SparklesIcon,
+  Grid3x3: Grid3x3Icon,
+  Code: CodeIcon,
+  Filter: FilterIcon,
+  Crosshair: CrosshairIcon,
+  Target: TargetIcon,
+} as const;
+
+const categoryOrder = [
+  'Identity',
+  'Camera',
+  'Movement & Controls',
+  'Physics',
+  'Lighting',
+  'Rendering',
+  'Behavior',
+];
+
+export function ComponentSelector({
+  components,
+  onSelect,
+  disabled = false,
+  placeholder = 'Add component...',
+}: ComponentSelectorProps) {
+  // Group components by category
+  const groupedComponents = React.useMemo(() => {
+    const groups: Record<string, ComponentDefinition[]> = {};
+
+    components.forEach((component) => {
+      const category = component.category || 'Other';
+      if (!groups[category]) {
+        groups[category] = [];
+      }
+      groups[category].push(component);
+    });
+
+    // Sort categories according to predefined order
+    const sortedGroups: Record<string, ComponentDefinition[]> = {};
+    categoryOrder.forEach((category) => {
+      if (groups[category]) {
+        sortedGroups[category] = groups[category].sort((a, b) => a.label.localeCompare(b.label));
+      }
+    });
+
+    // Add any remaining categories not in the predefined order
+    Object.keys(groups).forEach((category) => {
+      if (!sortedGroups[category]) {
+        sortedGroups[category] = groups[category].sort((a, b) => a.label.localeCompare(b.label));
+      }
+    });
+
+    return sortedGroups;
+  }, [components]);
+
+  return (
+    <Select
+      defaultValue=""
+      onChange={(e) => {
+        const value = e.target.value;
+        if (value) {
+          onSelect(value);
+          e.target.value = '';
+        }
+      }}
+      disabled={disabled}
+    >
+      <option value="">{placeholder}</option>
+      {Object.entries(groupedComponents).map(([category, categoryComponents]) => (
+        <optgroup key={category} label={category}>
+          {categoryComponents.map((component) => (
+            <option key={component.type} value={component.type}>
+              {component.label}
+            </option>
+          ))}
+        </optgroup>
+      ))}
+    </Select>
+  );
+}

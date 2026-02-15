@@ -263,7 +263,18 @@ export function useEcsEditorActions(args: {
     mutateSelectedEntity((_scene, ent) => {
       const comp = ent.getComponent(type) as any;
       if (!comp) throw new Error(`Component '${type}' not found`);
-      for (const [k, v] of Object.entries(data)) (comp as any)[k] = v;
+
+      const fields = (comp.metadata?.inspector?.fields ?? []) as Array<{ key: string; set?: (c: any, v: any) => void }>;
+      const fieldByKey = new Map(fields.map((f) => [f.key, f] as const));
+
+      for (const [k, v] of Object.entries(data)) {
+        const f = fieldByKey.get(k);
+        if (f?.set) {
+          f.set(comp, v);
+        } else {
+          (comp as any)[k] = v;
+        }
+      }
     }, `edit-component:${type}`);
   });
 

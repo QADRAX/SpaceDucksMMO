@@ -1,7 +1,6 @@
 import { notFound } from 'next/navigation';
 
 import { prisma } from '@/lib/db';
-import { PageHeader } from '@/components/organisms/PageHeader';
 import { EcsTreeEditor } from '@/components/organisms/ecsTreeEditor';
 
 export const dynamic = 'force-dynamic';
@@ -30,12 +29,7 @@ export default async function PrefabEditorPage({
   const initialComponentDataJson = activeVersion?.componentData ?? null;
 
   return (
-    <div>
-      <PageHeader
-        title={resource.displayName}
-        description="Unity-like prefab editor MVP (Hierarchy + Inspector + Undo/Redo + Play Mode)."
-      />
-
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <EcsTreeEditor resource={resource} initialComponentDataJson={initialComponentDataJson} />
     </div>
   );

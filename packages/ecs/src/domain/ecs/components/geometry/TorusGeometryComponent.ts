@@ -5,6 +5,10 @@ export class TorusGeometryComponent extends BaseGeometryComponent {
   readonly type = "torusGeometry";
   readonly metadata: ComponentMetadata = {
     type: "torusGeometry",
+    label: "Torus Geometry",
+    description: "Creates a doughnut-shaped geometry. Maps to THREE.TorusGeometry.",
+    category: "Rendering",
+    icon: "Circle",
     unique: true,
     requires: [],
     conflicts: ["skybox"],
@@ -13,6 +17,7 @@ export class TorusGeometryComponent extends BaseGeometryComponent {
         {
           key: "radius",
           label: "Radius",
+          description: "The radius from the center of the torus to the center of the tube.",
           min: 0.01,
           max: 1000,
           step: 0.01,
@@ -26,6 +31,7 @@ export class TorusGeometryComponent extends BaseGeometryComponent {
         {
           key: "tube",
           label: "Tube",
+          description: "The radius of the tube itself.",
           min: 0.01,
           max: 1000,
           step: 0.01,
@@ -39,6 +45,7 @@ export class TorusGeometryComponent extends BaseGeometryComponent {
         {
           key: "radialSegments",
           label: "Radial Segments",
+          description: "Number of segments along the radius of the torus.",
           default: 16,
           get: (c: TorusGeometryComponent) => c.radialSegments,
           set: (c, v) => {
@@ -49,6 +56,7 @@ export class TorusGeometryComponent extends BaseGeometryComponent {
         {
           key: "tubularSegments",
           label: "Tubular Segments",
+          description: "Number of segments around the circumference of the tube.",
           default: 48,
           get: (c: TorusGeometryComponent) => c.tubularSegments,
           set: (c, v) => {

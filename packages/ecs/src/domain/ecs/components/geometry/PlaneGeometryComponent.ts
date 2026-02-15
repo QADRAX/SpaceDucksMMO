@@ -5,6 +5,10 @@ export class PlaneGeometryComponent extends BaseGeometryComponent {
   readonly type = "planeGeometry";
   readonly metadata: ComponentMetadata = {
     type: "planeGeometry",
+    label: "Plane Geometry",
+    description: "Creates a flat rectangular surface. Maps to THREE.PlaneGeometry.",
+    category: "Rendering",
+    icon: "Square",
     unique: true,
     requires: [],
     conflicts: ["skybox"],
@@ -13,6 +17,7 @@ export class PlaneGeometryComponent extends BaseGeometryComponent {
         {
           key: "width",
           label: "Width",
+          description: "The width of the plane along the X-axis.",
           type: "number",
           default: 1,
           min: 0.01,
@@ -27,6 +32,7 @@ export class PlaneGeometryComponent extends BaseGeometryComponent {
         {
           key: "height",
           label: "Height",
+          description: "The height of the plane along the Y-axis.",
           type: "number",
           default: 1,
           min: 0.01,
@@ -41,6 +47,7 @@ export class PlaneGeometryComponent extends BaseGeometryComponent {
         {
           key: "widthSegments",
           label: "Width Segments",
+          description: "Number of horizontal segments. Higher values allow for more detailed deformation.",
           type: "number",
           default: 1,
           min: 1,
@@ -55,6 +62,7 @@ export class PlaneGeometryComponent extends BaseGeometryComponent {
         {
           key: "heightSegments",
           label: "Height Segments",
+          description: "Number of vertical segments. Higher values allow for more detailed deformation.",
           type: "number",
           default: 1,
           min: 1,

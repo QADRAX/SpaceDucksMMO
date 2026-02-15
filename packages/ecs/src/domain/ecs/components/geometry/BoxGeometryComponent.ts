@@ -5,6 +5,10 @@ export class BoxGeometryComponent extends BaseGeometryComponent {
   readonly type = "boxGeometry";
   readonly metadata: ComponentMetadata = {
     type: "boxGeometry",
+    label: "Box Geometry",
+    description: "Creates a rectangular box shape. Maps to THREE.BoxGeometry.",
+    category: "Rendering",
+    icon: "Box",
     unique: true,
     requires: [],
     conflicts: ["skybox"],
@@ -13,6 +17,7 @@ export class BoxGeometryComponent extends BaseGeometryComponent {
         {
           key: "width",
           label: "Width",
+          description: "The width of the box along the X-axis.",
           type: "number",
           default: 1,
           min: 0.01,
@@ -27,6 +32,7 @@ export class BoxGeometryComponent extends BaseGeometryComponent {
         {
           key: "height",
           label: "Height",
+          description: "The height of the box along the Y-axis.",
           type: "number",
           default: 1,
           min: 0.01,
@@ -41,6 +47,7 @@ export class BoxGeometryComponent extends BaseGeometryComponent {
         {
           key: "depth",
           label: "Depth",
+          description: "The depth of the box along the Z-axis.",
           type: "number",
           default: 1,
           min: 0.01,

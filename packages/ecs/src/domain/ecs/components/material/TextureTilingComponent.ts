@@ -5,6 +5,10 @@ export class TextureTilingComponent extends Component {
   readonly type = 'textureTiling';
   readonly metadata: ComponentMetadata = {
     type: 'textureTiling',
+    label: 'Texture Tiling',
+    description: 'Controls how textures are repeated and scaled on geometry surfaces.',
+    category: 'Rendering',
+    icon: 'Grid3x3',
     unique: false,
     requires: [],
     conflicts: [],
@@ -13,6 +17,7 @@ export class TextureTilingComponent extends Component {
         {
           key: 'repeatU',
           label: 'Repeat U',
+          description: 'How many times the texture repeats horizontally (U coordinate).',
           type: 'number',
           default: 1,
           min: 0,
@@ -26,6 +31,7 @@ export class TextureTilingComponent extends Component {
         {
           key: 'repeatV',
           label: 'Repeat V',
+          description: 'How many times the texture repeats vertically (V coordinate).',
           type: 'number',
           default: 1,
           min: 0,
@@ -39,6 +45,7 @@ export class TextureTilingComponent extends Component {
         {
           key: 'offsetU',
           label: 'Offset U',
+          description: 'Horizontal offset for the texture (U coordinate).',
           type: 'number',
           default: 0,
           step: 0.01,
@@ -51,6 +58,7 @@ export class TextureTilingComponent extends Component {
         {
           key: 'offsetV',
           label: 'Offset V',
+          description: 'Vertical offset for the texture (V coordinate).',
           type: 'number',
           default: 0,
           step: 0.01,
@@ -62,8 +70,6 @@ export class TextureTilingComponent extends Component {
         },
       ],
     },
-    description:
-      'Applies UV tiling and offset to all material textures that use UVs (map, normalMap, aoMap, roughnessMap, etc.).',
   };
 
   private _repeatU?: number;

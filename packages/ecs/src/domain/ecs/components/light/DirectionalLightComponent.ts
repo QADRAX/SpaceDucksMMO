@@ -5,6 +5,10 @@ export class DirectionalLightComponent extends BaseLightComponent {
   readonly type = "directionalLight";
   readonly metadata: ComponentMetadata = {
     type: "directionalLight",
+    label: "Directional Light",
+    description: "Simulates sunlight or distant light sources. All light rays are parallel and come from the same direction. Position affects the light direction.",
+    category: "Lighting",
+    icon: "Sun",
     unique: true,
     requires: [],
     conflicts: ["ambientLight", "pointLight", "spotLight", "light"],
@@ -13,6 +17,7 @@ export class DirectionalLightComponent extends BaseLightComponent {
         {
           key: "color",
           label: "Color",
+          description: "The color of the directional light.",
           type: "color",
           default: "#ffffff",
           get: (c: DirectionalLightComponent) => c.color,
@@ -23,6 +28,7 @@ export class DirectionalLightComponent extends BaseLightComponent {
         {
           key: "intensity",
           label: "Intensity",
+          description: "The brightness multiplier of the directional light.",
           type: "number",
           default: 1,
           min: 0,
@@ -36,6 +42,7 @@ export class DirectionalLightComponent extends BaseLightComponent {
         {
           key: "castShadow",
           label: "Cast Shadow",
+          description: "Whether this light should cast shadows on other objects.",
           type: "boolean",
           default: false,
           get: (c: DirectionalLightComponent) => c.castShadow,

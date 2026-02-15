@@ -5,8 +5,11 @@ export class LambertMaterialComponent extends BaseMaterialComponent {
   readonly type = "lambertMaterial";
   readonly metadata: ComponentMetadata = {
     type: "lambertMaterial",
+    label: "Lambert Material",
     description:
-      "Material difuso (Lambert) que recibe iluminación de forma suave. Mapeado a THREE.MeshLambertMaterial.",
+      "Diffuse material using Lambert shading model. Receives lighting softly without specular highlights. Maps to THREE.MeshLambertMaterial.",
+    category: "Rendering",
+    icon: "Circle",
     unique: true,
     requires: ["geometry"],
     conflicts: [

@@ -12,12 +12,16 @@ export class PostProcessComponent extends Component {
   readonly type = "postProcess";
   readonly metadata: ComponentMetadata = {
     type: "postProcess",
+    label: "Post Process Effects",
+    description: "Applies post-processing effects to the camera view, such as filters and visual enhancements.",
+    category: "Rendering",
+    icon: "Filter",
     unique: true,
     requires: ["cameraView"],
     conflicts: [],
     inspector: {
       fields: [
-          { key: "effects", label: "Effects", get: (c: PostProcessComponent) => c.effects, set: (c, v) => { c.setEffects((v as any) || []); } },
+          { key: "effects", label: "Effects", description: "List of post-processing effects to apply.", get: (c: PostProcessComponent) => c.effects, set: (c, v) => { c.setEffects((v as any) || []); } },
       ],
     },
   };

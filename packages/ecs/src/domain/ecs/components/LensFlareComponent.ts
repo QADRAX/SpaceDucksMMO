@@ -15,11 +15,14 @@ export class LensFlareComponent extends Component {
   readonly type = "lensFlare";
   readonly metadata: ComponentMetadata = {
     type: "lensFlare",
+    label: "Lens Flare",
     unique: true,
     requires: [],
     conflicts: [],
     description:
       "Lens flare visual effect. Elements are defined in relative units and rendered as sprites from the component's entity position.",
+    category: "Rendering",
+    icon: "Sun",
     inspector: {
       fields: [
         {

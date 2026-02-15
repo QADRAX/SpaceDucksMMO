@@ -30,6 +30,7 @@ export interface InspectorMetadata<TComponent = any> {
 
 export interface ComponentMetadata<TComponent = any> {
   type: string;
+  label?: string;
   unique?: boolean;
   requires?: string[];
   /**
@@ -42,4 +43,12 @@ export interface ComponentMetadata<TComponent = any> {
   conflicts?: string[];
   inspector?: InspectorMetadata<TComponent>;
   description?: string;
+  /**
+   * Category for grouping components in the UI
+   */
+  category?: string;
+  /**
+   * Icon name for visual representation (e.g., from Lucide icons)
+   */
+  icon?: string;
 }

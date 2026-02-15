@@ -5,7 +5,10 @@ export class StandardMaterialComponent extends BaseMaterialComponent {
   readonly type = "standardMaterial";
   readonly metadata: ComponentMetadata = {
     type: "standardMaterial",
+    label: "Standard Material",
     description: "Three.js standard PBR material. Simulates realistic surfaces using parameters like color, metalness, roughness, emissive, transparency and textures. Maps to THREE.MeshStandardMaterial.",
+    category: "Rendering",
+    icon: "Palette",
     unique: true,
     requires: ["geometry"],
     conflicts: [

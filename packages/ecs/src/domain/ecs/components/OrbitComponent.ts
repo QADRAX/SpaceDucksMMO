@@ -9,6 +9,10 @@ export class OrbitComponent extends Component {
   readonly type = "orbit";
   readonly metadata: ComponentMetadata = {
     type: "orbit",
+    label: "Orbital Movement",
+    description: "Makes the entity orbit around a target entity in a specified plane with configurable speed and altitude.",
+    category: "Movement & Controls",
+    icon: "RotateCcw",
     unique: true,
     requires: [],
     conflicts: [],

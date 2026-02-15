@@ -5,6 +5,10 @@ export class CylinderGeometryComponent extends BaseGeometryComponent {
   readonly type = "cylinderGeometry";
   readonly metadata: ComponentMetadata = {
     type: "cylinderGeometry",
+    label: "Cylinder Geometry",
+    description: "Creates a cylindrical shape with optional tapered ends. Maps to THREE.CylinderGeometry.",
+    category: "Rendering",
+    icon: "Cylinder",
     unique: true,
     requires: [],
     conflicts: ["skybox"],
@@ -13,6 +17,7 @@ export class CylinderGeometryComponent extends BaseGeometryComponent {
         {
           key: "radiusTop",
           label: "Radius Top",
+          description: "The radius of the cylinder at the top.",
           max: 1000,
           min: 0.01,
           step: 0.01,
@@ -26,6 +31,7 @@ export class CylinderGeometryComponent extends BaseGeometryComponent {
         {
           key: "radiusBottom",
           label: "Radius Bottom",
+          description: "The radius of the cylinder at the bottom.",
           max: 1000,
           min: 0.01,
           step: 0.01,
@@ -39,6 +45,7 @@ export class CylinderGeometryComponent extends BaseGeometryComponent {
         {
           key: "height",
           label: "Height",
+          description: "The height of the cylinder along the Y-axis.",
           max: 1000,
           min: 0.01,
           step: 0.01,
@@ -52,6 +59,7 @@ export class CylinderGeometryComponent extends BaseGeometryComponent {
         { 
           key: "radialSegments", 
           label: "Radial Segments", 
+          description: "Number of segments around the circumference. Higher values create smoother cylinders.",
           default: 16,
           get: (c: CylinderGeometryComponent) => c.radialSegments,
           set: (c, v) => {

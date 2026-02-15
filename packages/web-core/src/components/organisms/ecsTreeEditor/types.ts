@@ -14,7 +14,7 @@ export type EditorResource = {
   activeVersion: number | null;
 };
 
-export type CreatableComponentDef = { type: string; label: string };
+export type CreatableComponentDef = { type: string; label: string; category: string; icon: string };
 
 export type EcsComponentFactoryLike = {
   listCreatableComponents: (entity: Entity) => CreatableComponentDef[];

@@ -5,6 +5,10 @@ export class AmbientLightComponent extends BaseLightComponent {
   readonly type = "ambientLight";
   readonly metadata: ComponentMetadata = {
     type: "ambientLight",
+    label: "Ambient Light",
+    description: "Provides uniform illumination from all directions. Affects all objects in the scene equally, creating a base lighting level.",
+    category: "Lighting",
+    icon: "Sun",
     unique: true,
     requires: [],
     conflicts: ["directionalLight", "pointLight", "spotLight", "light"],
@@ -13,6 +17,7 @@ export class AmbientLightComponent extends BaseLightComponent {
         {
           key: "color",
           label: "Color",
+          description: "The color of the ambient light.",
           type: "color",
           default: "#ffffff",
           get: (c: AmbientLightComponent) => c.color,
@@ -23,6 +28,7 @@ export class AmbientLightComponent extends BaseLightComponent {
         {
           key: "intensity",
           label: "Intensity",
+          description: "The brightness multiplier of the ambient light.",
           type: "number",
           default: 1,
           min: 0,

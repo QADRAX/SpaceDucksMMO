@@ -7,6 +7,10 @@ export class LookAtPointComponent extends Component {
   readonly type = "lookAtPoint";
   readonly metadata: ComponentMetadata = {
     type: "lookAtPoint",
+    label: "Look At Point",
+    description: "Rotates the entity to face a specific point in 3D space.",
+    category: "Behavior",
+    icon: "Crosshair",
     unique: true,
     requires: [],
     conflicts: [],

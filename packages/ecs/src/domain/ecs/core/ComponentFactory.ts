@@ -74,6 +74,8 @@ export type KnownComponentType =
 export interface CreatableComponentDef {
   type: KnownComponentType;
   label: string;
+  category: string;
+  icon: string;
 }
 
 export interface IEcsComponentFactory {
@@ -93,6 +95,16 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
         cur = cur.parent;
       }
       return false;
+    };
+
+    const getComponentDef = (type: KnownComponentType): CreatableComponentDef => {
+      const comp = this.create(type);
+      return {
+        type,
+        label: (comp.metadata.label ?? type) as string,
+        category: (comp.metadata.category ?? 'Other') as string,
+        icon: (comp.metadata.icon ?? 'Box') as string,
+      };
     };
 
     const satisfiesRequiresInHierarchy = (type: KnownComponentType): boolean => {
@@ -117,13 +129,13 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       has("customGeometry");
 
     if (!hasAnyGeometry) {
-      defs.push({ type: "boxGeometry", label: "Box Geometry" });
-      defs.push({ type: "sphereGeometry", label: "Sphere Geometry" });
-      defs.push({ type: "planeGeometry", label: "Plane Geometry" });
-      defs.push({ type: "cylinderGeometry", label: "Cylinder Geometry" });
-      defs.push({ type: "coneGeometry", label: "Cone Geometry" });
-      defs.push({ type: "torusGeometry", label: "Torus Geometry" });
-      defs.push({ type: "customGeometry", label: "Custom Geometry" });
+      defs.push(getComponentDef("boxGeometry"));
+      defs.push(getComponentDef("sphereGeometry"));
+      defs.push(getComponentDef("planeGeometry"));
+      defs.push(getComponentDef("cylinderGeometry"));
+      defs.push(getComponentDef("coneGeometry"));
+      defs.push(getComponentDef("torusGeometry"));
+      defs.push(getComponentDef("customGeometry"));
     }
 
     // material requires any geometry and conflicts with shaderMaterial
@@ -134,53 +146,50 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       has("lambertMaterial");
 
     if (hasAnyGeometry && !hasAnyMaterial && !has("shaderMaterial")) {
-      defs.push({ type: "standardMaterial", label: "Standard Material" });
-      defs.push({ type: "basicMaterial", label: "Basic Material" });
-      defs.push({ type: "phongMaterial", label: "Phong Material" });
-      defs.push({ type: "lambertMaterial", label: "Lambert Material" });
+      defs.push(getComponentDef("standardMaterial"));
+      defs.push(getComponentDef("basicMaterial"));
+      defs.push(getComponentDef("phongMaterial"));
+      defs.push(getComponentDef("lambertMaterial"));
     }
 
     // texture tiling: optional component when geometry present
     if (hasAnyGeometry && !has("textureTiling")) {
-      defs.push({
-        type: "textureTiling",
-        label: "Texture Tiling",
-      });
+      defs.push(getComponentDef("textureTiling"));
     }
 
     // shaderMaterial requires any geometry and conflicts with any concrete material
     if (hasAnyGeometry && !hasAnyMaterial) {
-      defs.push({ type: "shaderMaterial", label: "Shader Material" });
+      defs.push(getComponentDef("shaderMaterial"));
     }
 
     // orbit (unique)
-    if (!has("orbit")) defs.push({ type: "orbit", label: "Orbit" });
+    if (!has("orbit")) defs.push(getComponentDef("orbit"));
 
     // name (unique)
-    if (!has("name")) defs.push({ type: "name", label: "Name" });
+    if (!has("name")) defs.push(getComponentDef("name"));
 
     // camera view (unique)
     if (!has("cameraView")) {
-      defs.push({ type: "cameraView", label: "Camera View" });
+      defs.push(getComponentDef("cameraView"));
     }
 
     // mouse / first-person movement (only when camera present)
     if (has("cameraView") && !has("mouseLook")) {
-      defs.push({ type: "mouseLook", label: "Mouse Look" });
+      defs.push(getComponentDef("mouseLook"));
     }
     if (has("cameraView") && !has("firstPersonMove") && !has("firstPersonPhysicsMove")) {
-      defs.push({ type: "firstPersonMove", label: "First Person Move" });
+      defs.push(getComponentDef("firstPersonMove"));
     }
     if (has("cameraView") && has("rigidBody") && !has("firstPersonMove") && !has("firstPersonPhysicsMove")) {
-      defs.push({ type: "firstPersonPhysicsMove", label: "First Person Physics Move" });
+      defs.push(getComponentDef("firstPersonPhysicsMove"));
     }
 
     // look-at components
     if (!has("lookAtEntity")) {
-      defs.push({ type: "lookAtEntity", label: "Look At Entity" });
+      defs.push(getComponentDef("lookAtEntity"));
     }
     if (!has("lookAtPoint")) {
-      defs.push({ type: "lookAtPoint", label: "Look At Point" });
+      defs.push(getComponentDef("lookAtPoint"));
     }
 
     // lights: only offer if entity has no light component yet
@@ -191,16 +200,16 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       has("spotLight");
 
     if (!hasAnyLight) {
-      defs.push({ type: "ambientLight", label: "Ambient Light" });
-      defs.push({ type: "directionalLight", label: "Directional Light" });
-      defs.push({ type: "pointLight", label: "Point Light" });
-      defs.push({ type: "spotLight", label: "Spot Light" });
+      defs.push(getComponentDef("ambientLight"));
+      defs.push(getComponentDef("directionalLight"));
+      defs.push(getComponentDef("pointLight"));
+      defs.push(getComponentDef("spotLight"));
     }
 
     // --- Physics ---------------------------------------------------------
     // Physics: component-level requirements are enforced by metadata (requires/requiresInHierarchy).
-    if (!has("rigidBody")) defs.push({ type: "rigidBody", label: "Rigid Body" });
-    if (!has("gravity")) defs.push({ type: "gravity", label: "Gravity" });
+    if (!has("rigidBody")) defs.push(getComponentDef("rigidBody"));
+    if (!has("gravity")) defs.push(getComponentDef("gravity"));
 
     const hasAnyCollider =
       has("sphereCollider") ||
@@ -213,12 +222,12 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
     // Collider components conflict with each other (one per entity). For compound
     // setups, add colliders to child entities instead.
     if (!hasAnyCollider) {
-      defs.push({ type: "sphereCollider", label: "Sphere Collider" });
-      defs.push({ type: "boxCollider", label: "Box Collider" });
-      defs.push({ type: "capsuleCollider", label: "Capsule Collider" });
-      defs.push({ type: "cylinderCollider", label: "Cylinder Collider" });
-      defs.push({ type: "coneCollider", label: "Cone Collider" });
-      defs.push({ type: "terrainCollider", label: "Terrain Collider" });
+      defs.push(getComponentDef("sphereCollider"));
+      defs.push(getComponentDef("boxCollider"));
+      defs.push(getComponentDef("capsuleCollider"));
+      defs.push(getComponentDef("cylinderCollider"));
+      defs.push(getComponentDef("coneCollider"));
+      defs.push(getComponentDef("terrainCollider"));
     }
 
     return defs.filter((d) => satisfiesRequiresInHierarchy(d.type));

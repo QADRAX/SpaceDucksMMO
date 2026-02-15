@@ -7,6 +7,10 @@ export class FirstPersonMoveComponent extends Component {
   readonly type = "firstPersonMove";
   readonly metadata: ComponentMetadata = {
     type: "firstPersonMove",
+    label: "First Person Movement",
+    description: "Enables first-person movement controls for an entity with a camera view. Supports walking, sprinting, and optional fly mode.",
+    category: "Movement & Controls",
+    icon: "Gamepad2",
     unique: true,
     requires: ["cameraView"],
     conflicts: [],
@@ -15,6 +19,7 @@ export class FirstPersonMoveComponent extends Component {
         {
           key: "moveSpeed",
           label: "Move Speed",
+          description: "The base movement speed in units per second.",
           type: "number",
           min: 0,
           step: 0.1,
@@ -27,6 +32,7 @@ export class FirstPersonMoveComponent extends Component {
         {
           key: "sprintMultiplier",
           label: "Sprint Multiplier",
+          description: "Multiplier applied to movement speed when sprinting.",
           type: "number",
           min: 1,
           step: 0.1,
@@ -39,6 +45,7 @@ export class FirstPersonMoveComponent extends Component {
         {
           key: "flyMode",
           label: "Fly Mode",
+          description: "When enabled, allows vertical movement with space and control keys.",
           type: "boolean",
           get: (c: FirstPersonMoveComponent) => c.flyMode,
           set: (c, v) => {

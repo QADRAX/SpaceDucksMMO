@@ -5,6 +5,10 @@ export class CameraViewComponent extends Component {
   readonly type = "cameraView";
   readonly metadata: ComponentMetadata = {
     type: "cameraView",
+    label: "Camera View",
+    description: "Makes this entity act as the main camera for the scene. Position and rotation control the camera view.",
+    category: "Camera",
+    icon: "Camera",
     unique: true,
     requires: [],
     conflicts: [],
@@ -13,6 +17,7 @@ export class CameraViewComponent extends Component {
         {
           key: "fov",
           label: "FOV",
+          description: "Field of view in degrees. Controls the camera's viewing angle.",
           type: "number",
           default: 60,
           min: 1,
@@ -26,6 +31,7 @@ export class CameraViewComponent extends Component {
         {
           key: "near",
           label: "Near",
+          description: "Near clipping plane distance. Objects closer than this are not rendered.",
           type: "number",
           default: 0.1,
           min: 0.01,
@@ -40,6 +46,7 @@ export class CameraViewComponent extends Component {
         {
           key: "far",
           label: "Far",
+          description: "Far clipping plane distance. Objects farther than this are not rendered.",
           type: "number",
           default: 1000,
           min: 1,
@@ -54,6 +61,7 @@ export class CameraViewComponent extends Component {
         {
           key: "aspect",
           label: "Aspect",
+          description: "Aspect ratio of the camera (width/height). Affects the horizontal field of view.",
           type: "number",
           default: 1,
           min: 0.1,

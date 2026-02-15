@@ -18,6 +18,10 @@ export class RigidBodyComponent extends Component {
   readonly type = "rigidBody";
   readonly metadata: ComponentMetadata<RigidBodyComponent> = {
     type: "rigidBody",
+    label: "Rigid Body",
+    description: "Enables physics simulation for this entity. Controls how the object moves and interacts with other physics objects.",
+    category: "Physics",
+    icon: "Zap",
     unique: true,
     inspector: {
       fields: [
@@ -119,7 +123,6 @@ export class RigidBodyComponent extends Component {
         },
       ],
     },
-    description: "Physics rigid body. Attach colliders on this entity and/or its child entities.",
   };
 
   bodyType: RigidBodyType;

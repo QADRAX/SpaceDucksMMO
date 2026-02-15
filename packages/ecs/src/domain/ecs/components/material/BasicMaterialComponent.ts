@@ -5,8 +5,11 @@ export class BasicMaterialComponent extends BaseMaterialComponent {
   readonly type = "basicMaterial";
   readonly metadata: ComponentMetadata = {
     type: "basicMaterial",
+    label: "Basic Material",
     description:
-      "Material simple (color + textura) mapeado a THREE.MeshBasicMaterial. Útil para objetos no afectados por iluminación.",
+      "Simple material with color and texture support. Maps to THREE.MeshBasicMaterial. Useful for objects not affected by lighting.",
+    category: "Rendering",
+    icon: "PaintBucket",
     unique: true,
     requires: ["geometry"],
     conflicts: [

@@ -6,6 +6,10 @@ export class CustomGeometryComponent extends BaseGeometryComponent {
   readonly type = "customGeometry";
   readonly metadata: ComponentMetadata = {
     type: "customGeometry",
+    label: "Custom Geometry",
+    description: "Loads geometry from a custom asset file. Specify the asset key to load.",
+    category: "Rendering",
+    icon: "File3d",
     unique: true,
     requires: [],
     conflicts: ["skybox"],

@@ -36,7 +36,7 @@ export function HierarchyPanel() {
   };
 
   return (
-    <div className="col-span-3 flex min-h-105 flex-col overflow-hidden rounded-base border-2 border-border bg-white">
+    <div className="col-span-3 flex min-h-0 flex-col overflow-hidden rounded-base border-2 border-border bg-white">
       <div
         className="flex items-center justify-between border-b border-border p-2"
         onClick={() => editor.setSelectedId(null)}
@@ -57,7 +57,7 @@ export function HierarchyPanel() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto p-2" onClick={() => editor.setSelectedId(null)}>
+      <div className="scrollbar min-h-0 flex-1 overflow-y-auto p-2" onClick={() => editor.setSelectedId(null)}>
         <div className="space-y-1">
           <TreeRow
             id={SCENE_NODE_ID}
@@ -117,7 +117,9 @@ function EntityNode(props: {
   onDropToParent: (parentId: string, e: React.DragEvent) => void;
 }) {
   const { entity } = props;
-  const name = (entity.displayName && entity.displayName.trim()) ? entity.displayName.trim() : entity.id;
+  const displayName = (entity.displayName && entity.displayName.trim()) ? entity.displayName.trim() : '';
+  const label = displayName ? displayName : entity.id;
+  const labelIsId = !displayName;
   const children = entity.getChildren();
   const hasChildren = children.length > 0;
   const expanded = props.isExpanded(entity.id);
@@ -128,7 +130,8 @@ function EntityNode(props: {
       <TreeRow
         id={entity.id}
         depth={props.depth}
-        label={name}
+        label={label}
+        labelIsId={labelIsId}
         selected={selected}
         hasChildren={hasChildren}
         expanded={expanded}
@@ -173,6 +176,7 @@ function TreeRow(props: {
   id: string;
   depth: number;
   label: string;
+  labelIsId?: boolean;
   selected: boolean;
   hasChildren: boolean;
   expanded: boolean;
@@ -193,7 +197,7 @@ function TreeRow(props: {
       className={
         'flex items-center gap-1 rounded-base border px-2 py-1 text-sm ' +
         (props.selected
-          ? 'bg-neutral-100 border-border font-bold'
+          ? 'bg-neutral-100 border-border'
           : props.dragOver
             ? 'bg-main border-border'
             : 'bg-white border-transparent hover:border-border')
@@ -229,7 +233,9 @@ function TreeRow(props: {
         <div className="w-6" />
       )}
 
-      <div className="flex-1 text-left">{props.label}</div>
+      <div className={props.labelIsId ? 'flex-1 text-left font-mono text-xs font-normal opacity-80' : 'flex-1 text-left'}>
+        {props.label}
+      </div>
     </div>
   );
 }

@@ -5,6 +5,10 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
   readonly type = "sphereGeometry";
   readonly metadata: ComponentMetadata = {
     type: "sphereGeometry",
+    label: "Sphere Geometry",
+    description: "Creates a spherical shape. Maps to THREE.SphereGeometry.",
+    category: "Rendering",
+    icon: "Circle",
     unique: true,
     requires: [],
     conflicts: ["skybox"],
@@ -13,6 +17,7 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
         {
           key: "radius",
           label: "Radius",
+          description: "The radius of the sphere.",
           type: "number",
           nullable: false,
           default: 1,
@@ -28,6 +33,7 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
         {
           key: "widthSegments",
           label: "Width Segments",
+          description: "Number of horizontal segments. Higher values create smoother spheres.",
           type: "number",
           nullable: false,
           default: 32,
@@ -43,6 +49,7 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
         {
           key: "heightSegments",
           label: "Height Segments",
+          description: "Number of vertical segments. Higher values create smoother spheres.",
           type: "number",
           nullable: false,
           default: 16,

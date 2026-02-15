@@ -7,6 +7,10 @@ export class LookAtEntityComponent extends Component {
   readonly type = "lookAtEntity";
   readonly metadata: ComponentMetadata = {
     type: "lookAtEntity",
+    label: "Look At Entity",
+    description: "Rotates the entity to face another entity, with optional smooth following and offsets.",
+    category: "Behavior",
+    icon: "Target",
     unique: true,
     requires: [],
     conflicts: [],
@@ -16,6 +20,7 @@ export class LookAtEntityComponent extends Component {
           key: "targetEntityId",
           type: "reference",
           label: "Target",
+          description: "The entity to look at.",
           get: (c: LookAtEntityComponent) => c.targetEntityId,
           set: (c, v) => {
             c.targetEntityId = String(v || "");
@@ -25,6 +30,7 @@ export class LookAtEntityComponent extends Component {
         {
           key: "followSpeed",
           label: "Follow Speed",
+          description: "Speed for smooth rotation following. If null, instant rotation.",
           nullable: true,
           get: (c: LookAtEntityComponent) => c.followSpeed,
           set: (c, v) => {
@@ -35,6 +41,7 @@ export class LookAtEntityComponent extends Component {
         {
           key: "offset",
           label: "Offset",
+          description: "Position offset from the target entity.",
           type: "vector",
           nullable: true,
           get: (c: LookAtEntityComponent) => c.offset,
@@ -46,6 +53,7 @@ export class LookAtEntityComponent extends Component {
         {
           key: "lookAtOffset",
           label: "LookAt Offset",
+          description: "Offset from the target entity's position to look at.",
           type: "vector",
           nullable: true,
           get: (c: LookAtEntityComponent) => c.lookAtOffset,

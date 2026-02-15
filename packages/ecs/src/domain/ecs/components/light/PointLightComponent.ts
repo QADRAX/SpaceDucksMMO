@@ -5,6 +5,10 @@ export class PointLightComponent extends BaseLightComponent {
   readonly type = "pointLight";
   readonly metadata: ComponentMetadata = {
     type: "pointLight",
+    label: "Point Light",
+    description: "Emits light in all directions from a single point. Light intensity decreases with distance. Position affects the light source location.",
+    category: "Lighting",
+    icon: "Lightbulb",
     unique: true,
     requires: [],
     conflicts: ["ambientLight", "directionalLight", "spotLight", "light"],
@@ -13,6 +17,7 @@ export class PointLightComponent extends BaseLightComponent {
         {
           key: "color",
           label: "Color",
+          description: "The color of the point light.",
           type: "color",
           default: "#ffffff",
           get: (c: PointLightComponent) => c.color,
@@ -23,6 +28,7 @@ export class PointLightComponent extends BaseLightComponent {
         {
           key: "intensity",
           label: "Intensity",
+          description: "The brightness multiplier of the point light.",
           type: "number",
           default: 1,
           min: 0,
@@ -36,6 +42,7 @@ export class PointLightComponent extends BaseLightComponent {
         {
           key: "distance",
           label: "Distance",
+          description: "Maximum distance the light reaches. 0 means infinite range.",
           type: "number",
           default: 0,
           min: 0,
@@ -49,6 +56,7 @@ export class PointLightComponent extends BaseLightComponent {
         {
           key: "decay",
           label: "Decay",
+          description: "How quickly the light intensity decreases with distance.",
           type: "number",
           default: 1,
           min: 0,

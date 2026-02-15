@@ -10,6 +10,10 @@ export class GravityComponent extends Component {
   readonly type = "gravity";
   readonly metadata: ComponentMetadata<GravityComponent> = {
     type: "gravity",
+    label: "Gravity",
+    description: "Defines the gravity vector for the physics simulation. Affects all dynamic rigid bodies in the scene.",
+    category: "Physics",
+    icon: "ArrowDown",
     unique: true,
     inspector: {
       fields: [
@@ -28,7 +32,6 @@ export class GravityComponent extends Component {
         },
       ],
     },
-    description: "Defines scene gravity. Physics system will use the first enabled GravityComponent it finds.",
   };
 
   gravity: [number, number, number];

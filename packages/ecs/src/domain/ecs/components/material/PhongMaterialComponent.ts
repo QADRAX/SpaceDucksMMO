@@ -5,8 +5,11 @@ export class PhongMaterialComponent extends BaseMaterialComponent {
   readonly type = "phongMaterial";
   readonly metadata: ComponentMetadata = {
     type: "phongMaterial",
+    label: "Phong Material",
     description:
-      "Material con specular y brillo (Phong). Ideal para superficies brillantes y efectos de iluminación local. Se mapea a THREE.MeshPhongMaterial.",
+      "Material with specular and shininess properties (Phong shading model). Ideal for shiny surfaces and local lighting effects. Maps to THREE.MeshPhongMaterial.",
+    category: "Rendering",
+    icon: "Sparkles",
     unique: true,
     requires: ["geometry"],
     conflicts: [

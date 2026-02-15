@@ -5,6 +5,10 @@ export class SpotLightComponent extends BaseLightComponent {
   readonly type = "spotLight";
   readonly metadata: ComponentMetadata = {
     type: "spotLight",
+    label: "Spot Light",
+    description: "Emits light in a cone shape from a single point. Position and rotation affect the light direction and cone orientation.",
+    category: "Lighting",
+    icon: "Flashlight",
     unique: true,
     requires: [],
     conflicts: ["ambientLight", "directionalLight", "pointLight", "light"],
@@ -13,6 +17,7 @@ export class SpotLightComponent extends BaseLightComponent {
         {
           key: "color",
           label: "Color",
+          description: "The color of the spot light.",
           type: "color",
           default: "#ffffff",
           get: (c: SpotLightComponent) => c.color,
@@ -23,6 +28,7 @@ export class SpotLightComponent extends BaseLightComponent {
         {
           key: "intensity",
           label: "Intensity",
+          description: "The brightness multiplier of the spot light.",
           type: "number",
           default: 1,
           min: 0,
@@ -36,6 +42,7 @@ export class SpotLightComponent extends BaseLightComponent {
         {
           key: "distance",
           label: "Distance",
+          description: "Maximum distance the light reaches. 0 means infinite range.",
           type: "number",
           default: 0,
           min: 0,
@@ -49,6 +56,7 @@ export class SpotLightComponent extends BaseLightComponent {
         {
           key: "angle",
           label: "Angle",
+          description: "The angle of the spotlight cone in radians.",
           type: "number",
           default: 0.5,
           min: 0,
@@ -62,6 +70,7 @@ export class SpotLightComponent extends BaseLightComponent {
         {
           key: "penumbra",
           label: "Penumbra",
+          description: "The softness of the spotlight edge. 0 is sharp, 1 is very soft.",
           type: "number",
           default: 0,
           min: 0,
@@ -75,6 +84,7 @@ export class SpotLightComponent extends BaseLightComponent {
         {
           key: "decay",
           label: "Decay",
+          description: "How quickly the light intensity decreases with distance.",
           type: "number",
           default: 1,
           min: 0,

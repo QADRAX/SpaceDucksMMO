@@ -5,6 +5,10 @@ export class NameComponent extends Component {
   readonly type = 'name';
   readonly metadata: ComponentMetadata = {
     type: 'name',
+    label: 'Name',
+    description: 'Assigns a human-readable name to the entity for identification and organization.',
+    category: 'Identity',
+    icon: 'Tag',
     unique: true,
     requires: [],
     conflicts: [],
@@ -13,6 +17,7 @@ export class NameComponent extends Component {
         {
           key: 'value',
           label: 'Name',
+          description: 'The display name for this entity.',
           type: 'string',
           get: (c: NameComponent) => c.value,
           set: (c, v) => {
