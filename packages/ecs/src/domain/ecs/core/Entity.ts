@@ -18,6 +18,15 @@ export type ComponentListener = (event: ComponentEvent) => void;
 export class Entity {
   readonly id: string;
   readonly transform: Transform;
+
+  /** Human-friendly name shown in editors/debug gizmos (persisted via snapshots). */
+  private _displayName = '';
+
+  /** Optional short text/emoji shown in debug gizmos (persisted via snapshots). */
+  private _gizmoIcon: string | undefined;
+
+  private presentationListeners: Array<() => void> = [];
+
   private components = new Map<string, Component>();
   private _parent?: Entity;
   private children: Entity[] = [];
@@ -41,6 +50,48 @@ export class Entity {
   constructor(id: string, position?: [number, number, number]) {
     this.id = id;
     this.transform = new Transform(position);
+  }
+
+  get displayName(): string {
+    return this._displayName;
+  }
+
+  set displayName(v: string) {
+    const next = String(v ?? '');
+    if (this._displayName === next) return;
+    this._displayName = next;
+    this.notifyPresentationChanged();
+  }
+
+  get gizmoIcon(): string | undefined {
+    return this._gizmoIcon;
+  }
+
+  set gizmoIcon(v: string | undefined) {
+    const next = typeof v === 'string' ? v.trim() : '';
+    const normalized = next ? next : undefined;
+    if (this._gizmoIcon === normalized) return;
+    this._gizmoIcon = normalized;
+    this.notifyPresentationChanged();
+  }
+
+  addPresentationListener(listener: () => void): void {
+    if (!this.presentationListeners.includes(listener)) this.presentationListeners.push(listener);
+  }
+
+  removePresentationListener(listener: () => void): void {
+    const i = this.presentationListeners.indexOf(listener);
+    if (i >= 0) this.presentationListeners.splice(i, 1);
+  }
+
+  private notifyPresentationChanged(): void {
+    for (const l of this.presentationListeners) {
+      try {
+        l();
+      } catch {
+        /* swallow listener errors */
+      }
+    }
   }
   addComponent<T extends Component>(component: T): this {
     const res = this.safeAddComponent(component);

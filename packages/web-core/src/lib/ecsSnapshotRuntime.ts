@@ -141,6 +141,8 @@ export function serializeEcsTreeFromRoots(
 
     return {
       id: e.id,
+      displayName: e.displayName ? e.displayName : undefined,
+      gizmoIcon: e.gizmoIcon,
       parentId,
       transform: {
         position: vecToTuple(e.transform.localPosition),
@@ -149,6 +151,7 @@ export function serializeEcsTreeFromRoots(
       },
       components: e
         .getAllComponents()
+        .filter((c) => c.type !== 'name')
         .map((c) => ({ type: c.type, data: extractComponentData(c) })),
     };
   });
@@ -274,6 +277,9 @@ export function deserializeEcsTreeSnapshotToEntities(
   for (const node of snapshot.entities) {
     const e = new Entity(node.id);
 
+    if (typeof (node as any).displayName === 'string') e.displayName = (node as any).displayName;
+    if (typeof (node as any).gizmoIcon === 'string') e.gizmoIcon = (node as any).gizmoIcon;
+
     try {
       const p = node.transform.position;
       e.transform.setPosition(p[0], p[1], p[2]);
@@ -288,6 +294,14 @@ export function deserializeEcsTreeSnapshotToEntities(
     entitiesById.set(node.id, e);
 
     for (const compSnap of node.components ?? []) {
+      if (compSnap.type === 'name') {
+        if (!e.displayName) {
+          const v = isPlainObject(compSnap.data) ? (compSnap.data as any).value : '';
+          if (typeof v === 'string' && v.trim()) e.displayName = v;
+        }
+        continue;
+      }
+
       createAndAttachComponent(e, compSnap, factory, errors);
     }
   }

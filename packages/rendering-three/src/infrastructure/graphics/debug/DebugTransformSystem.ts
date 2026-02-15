@@ -12,6 +12,7 @@ import { DEBUG_LAYERS } from "./DebugLayers";
 export class DebugTransformSystem {
   private readonly scene: THREE.Scene;
   private readonly helpers = new Map<string, THREE.Object3D>();
+  private readonly presentationUnsubById = new Map<string, () => void>();
   private masterEnabled = false;
   /** Set of entity ids that must never show a helper (e.g., active camera) */
   private forbidden = new Set<string>();
@@ -59,6 +60,18 @@ export class DebugTransformSystem {
 
     this.scene.add(group);
     this.helpers.set(entity.id, group);
+
+    // Keep label in sync with editor-facing properties (displayName/gizmoIcon).
+    try {
+      const listener = () => this.refreshLabel(entity);
+      entity.addPresentationListener(listener);
+      this.presentationUnsubById.set(entity.id, () => {
+        try {
+          entity.removePresentationListener(listener);
+        } catch {}
+      });
+    } catch {}
+
     // immediately sync transform
     this.updateHelperTransform(entity);
   }
@@ -139,6 +152,12 @@ export class DebugTransformSystem {
   removeHelper(entityId: string): void {
     const h = this.helpers.get(entityId);
     if (!h) return;
+
+    try {
+      this.presentationUnsubById.get(entityId)?.();
+    } catch {}
+    this.presentationUnsubById.delete(entityId);
+
     try {
       this.scene.remove(h);
     } catch {}
@@ -160,6 +179,39 @@ export class DebugTransformSystem {
       }
     });
     this.helpers.delete(entityId);
+  }
+
+  private refreshLabel(entity: Entity): void {
+    const h = this.helpers.get(entity.id);
+    if (!h) return;
+    const visuals = h.getObjectByName("visuals") as THREE.Object3D | undefined;
+    if (!visuals) return;
+
+    const existing = visuals.getObjectByName('labelSprite');
+    if (existing) {
+      visuals.remove(existing);
+      existing.traverse((o) => {
+        const mat = (o as any).material as THREE.Material | THREE.Material[] | undefined;
+        if (mat) {
+          try {
+            if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
+            else mat.dispose();
+          } catch {}
+        }
+        const map = (o as any).map as THREE.Texture | undefined;
+        if (map) {
+          try {
+            map.dispose();
+          } catch {}
+        }
+      });
+    }
+
+    const label = this.createLabelForEntity(entity);
+    label.name = 'labelSprite';
+    label.position.set(0, 1.2, 0);
+    label.layers.set(DEBUG_LAYERS.transforms);
+    visuals.add(label);
   }
 
   /** Mark an entity id as forbidden (never show helper). */
@@ -208,6 +260,9 @@ export class DebugTransformSystem {
     // heuristic for icon type
     let icon = "?";
     try {
+      const forced = entity.gizmoIcon;
+      if (typeof forced === 'string' && forced.trim()) icon = forced.trim();
+      else
       if (entity.getComponent("cameraView")) icon = "📷";
       else if (entity.getComponent("ambientLight") || entity.getComponent("directionalLight") || entity.getComponent("pointLight") || entity.getComponent("spotLight")) icon = "💡";
       else if (entity.getComponent("boxGeometry") || entity.getComponent("sphereGeometry") || entity.getComponent("planeGeometry") || entity.getComponent("customGeometry")) icon = "▦";
@@ -222,8 +277,9 @@ export class DebugTransformSystem {
     ctx.fillText(icon, pad, canvas.height / 2);
 
     // draw id text truncated if too long
-    let idText = entity.id;
-    if (idText.length > 16) idText = idText.slice(0, 12) + "…";
+    const dn = entity.displayName;
+    let idText = (typeof dn === 'string' && dn.trim()) ? dn.trim() : entity.id;
+    if (idText.length > 20) idText = idText.slice(0, 17) + "…";
     ctx.font = "18px sans-serif";
     ctx.fillStyle = "white";
     ctx.fillText(idText, pad + iconSize, canvas.height / 2);

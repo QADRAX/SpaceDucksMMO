@@ -73,6 +73,7 @@ export type EditorSceneInit = {
   id: string;
   entitiesById: Map<string, Entity>;
   debugTransformsEnabled: boolean;
+  activeCameraEntityId?: string | null;
   cameraPose?: {
     position?: [number, number, number];
     rotation?: [number, number, number];
@@ -84,6 +85,7 @@ export class EcsEditorScene extends BaseScene {
 
   private readonly entitiesById: Map<string, Entity>;
   private readonly debugTransforms: boolean;
+  private readonly desiredActiveCameraEntityId: string | null;
 
   private editorCamera?: Entity;
   private ambient?: Entity;
@@ -94,6 +96,7 @@ export class EcsEditorScene extends BaseScene {
     this.id = init.id;
     this.entitiesById = init.entitiesById;
     this.debugTransforms = init.debugTransformsEnabled;
+    this.desiredActiveCameraEntityId = init.activeCameraEntityId ?? null;
 
     try {
       this.setDebugTransformsEnabled(!!init.debugTransformsEnabled);
@@ -190,6 +193,15 @@ export class EcsEditorScene extends BaseScene {
         }
       }
     }
+
+    // Apply persisted active camera (must be a user entity with CameraViewComponent).
+    if (this.desiredActiveCameraEntityId && this.entitiesById.has(this.desiredActiveCameraEntityId)) {
+      try {
+        this.setActiveCamera(this.desiredActiveCameraEntityId);
+      } catch {
+        // ignore
+      }
+    }
   }
 
   update(dt: number, opts?: { paused?: boolean }): void {
@@ -255,6 +267,7 @@ export function makeEditorSceneFromSnapshot(args: {
       id: args.id,
       entitiesById,
       debugTransformsEnabled: args.debugTransformsEnabled,
+      activeCameraEntityId: des.activeCameraEntityId,
       cameraPose: args.cameraPose,
     }),
     snapshotJson: snapshotToJson(parsed),
@@ -264,5 +277,14 @@ export function makeEditorSceneFromSnapshot(args: {
 export function serializeSnapshotFromScene(scene: EcsEditorScene): SnapshotJson {
   const roots = scene.getUserRoots();
   const snapshot = serializeEcsTreeFromRoots(roots, { detachRoots: false });
+
+  // Persist active camera only if it's a user entity (exclude editor camera/lights).
+  try {
+    const activeId = scene.getActiveCamera()?.id ?? null;
+    snapshot.activeCameraEntityId = activeId && scene.getEntitiesById().has(activeId) ? activeId : null;
+  } catch {
+    snapshot.activeCameraEntityId = null;
+  }
+
   return snapshotToJson(snapshot);
 }

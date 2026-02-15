@@ -28,6 +28,7 @@ export function useEcsTreeEditor(args: {
   const rendererRef = React.useRef<ThreeRenderer | null>(null);
 
   const [error, setError] = React.useState<string | null>(null);
+  const [resourceDisplayName, setResourceDisplayName] = React.useState(resource.displayName);
   const [mode, setMode] = React.useState<EditorMode>('edit');
   const [paused, setPaused] = React.useState(false);
 
@@ -39,6 +40,7 @@ export function useEcsTreeEditor(args: {
   );
 
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const [sceneRevision, setSceneRevision] = React.useState(0);
 
   const selectedIdRef = React.useRef<string | null>(null);
   React.useEffect(() => {
@@ -75,6 +77,7 @@ export function useEcsTreeEditor(args: {
     },
     onInit: () => {
       scenes.rebuildEditScene(history.editSnapshotJson);
+      setSceneRevision((v) => v + 1);
     },
     onCapturePose: scenes.captureCameraPoseFromScene,
     onError: (msg) => setError(msg || null),
@@ -86,13 +89,19 @@ export function useEcsTreeEditor(args: {
   const onUndo = () => {
     if (!canUndo) return;
     const prev = history.undo();
-    if (prev) scenes.rebuildEditScene(prev);
+    if (prev) {
+      scenes.rebuildEditScene(prev);
+      setSceneRevision((v) => v + 1);
+    }
   };
 
   const onRedo = () => {
     if (!canRedo) return;
     const next = history.redo();
-    if (next) scenes.rebuildEditScene(next);
+    if (next) {
+      scenes.rebuildEditScene(next);
+      setSceneRevision((v) => v + 1);
+    }
   };
 
   const onPlay = () => {
@@ -161,6 +170,38 @@ export function useEcsTreeEditor(args: {
     history.markSaved(json);
   };
 
+  const onSetResourceDisplayName = (value: string) => {
+    setResourceDisplayName(value);
+  };
+
+  const onSaveResourceDisplayName = async (value: string) => {
+    const next = String(value ?? '').trim();
+    if (!next.length) {
+      setError('Scene name cannot be empty');
+      return;
+    }
+
+    setError(null);
+    setResourceDisplayName(next);
+
+    const res = await fetch(`/api/admin/resources/${resource.id}`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ displayName: next }),
+    });
+
+    if (!res.ok) {
+      let msg = `Failed to rename (${res.status})`;
+      try {
+        const j = await res.json();
+        if (j?.error) msg = String(j.error);
+      } catch {
+        // ignore
+      }
+      setError(msg);
+    }
+  };
+
   const factoryRef = React.useRef(new DefaultEcsComponentFactory());
   const actions = useEcsEditorActions({
     modeRef,
@@ -174,6 +215,14 @@ export function useEcsTreeEditor(args: {
 
   const currentScene = mode === 'play' ? scenes.playSceneRef.current : scenes.editSceneRef.current;
   const selectedEntity = selectedId && currentScene ? currentScene.getEntitiesById().get(selectedId) : undefined;
+
+  const activeCameraEntityId = (() => {
+    const scene = currentScene;
+    if (!scene) return null;
+    const activeId = scene.getActiveCamera()?.id ?? null;
+    if (!activeId) return null;
+    return scene.getEntitiesById().has(activeId) ? activeId : null;
+  })();
 
   const hierarchyRoots = (() => {
     const scene = currentScene;
@@ -204,17 +253,28 @@ export function useEcsTreeEditor(args: {
     onUndo,
     onRedo,
     onSave,
+
+    resourceDisplayName,
+    onSetResourceDisplayName,
+    onSaveResourceDisplayName,
+
+    activeCameraEntityId,
+    onSetActiveCameraEntityId: actions.onSetActiveCameraEntityId,
+
     selectedId,
     setSelectedId,
     selectedEntity,
     hierarchyRoots,
     allEntitiesForHierarchy,
+    sceneRevision,
     onCreateEmpty: actions.onCreateEmpty,
     onDeleteSelected: actions.onDeleteSelected,
     onReparent: actions.onReparent,
+    onReparentEntity: actions.onReparentEntity,
     onAddComponent: actions.onAddComponent,
     onRemoveComponent: actions.onRemoveComponent,
     onSetSelectedName: actions.onSetSelectedName,
+    onSetSelectedGizmoIcon: actions.onSetSelectedGizmoIcon,
     onSetSelectedLocalPositionAxis: actions.onSetSelectedLocalPositionAxis,
     onUpdateSelectedComponentData: actions.onUpdateSelectedComponentData,
     commitFromCurrentEditScene: scenes.commitFromCurrentEditScene,

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { Entity, NameComponent, type DefaultEcsComponentFactory } from '@duckengine/ecs';
+import { Entity, type DefaultEcsComponentFactory } from '@duckengine/ecs';
 
 import type { EcsEditorScene } from '@/lib/ecsTreeEditorRuntime';
 import { collectAllEntitiesFromRoots } from '@/lib/ecsTreeEditorRuntime';
@@ -51,12 +51,20 @@ export function useEcsEditorActions(args: {
 
     const id = globalThis.crypto?.randomUUID?.() ?? `entity_${Math.random().toString(16).slice(2)}`;
     const e = new Entity(id);
-    e.addComponent(new NameComponent({ value: 'Entity' } as any));
+    e.displayName = 'Entity';
 
     if (parent) parent.addChild(e);
 
     scene.addEntity(e);
     scene.getEntitiesById().set(e.id, e);
+
+    // Make sure the entity is immediately visible when debug transforms are enabled.
+    // Existing entities get this applied during scene rebuild/toggle, but newly created ones need it too.
+    try {
+      e.setDebugTransformEnabled(!!scene.debugTransformsEnabled);
+    } catch {
+      // ignore
+    }
 
     args.setSelectedId(e.id);
     args.commitFromCurrentEditScene('create-empty');
@@ -91,8 +99,57 @@ export function useEcsEditorActions(args: {
       scene.getEntitiesById().delete(e.id);
     }
 
+    // If we deleted the active camera, make sure the editor camera becomes active again.
+    try {
+      if (!scene.getActiveCamera()) {
+        const editorCam = scene.getEditorCamera();
+        if (editorCam) scene.setActiveCamera(editorCam.id);
+      }
+    } catch {
+      // ignore
+    }
+
     args.setSelectedId(null);
     args.commitFromCurrentEditScene('delete');
+  });
+
+  const onSetActiveCameraEntityId = useStableEvent((id: string | null) => {
+    if (args.modeRef.current !== 'edit') return;
+
+    const scene = args.editSceneRef.current;
+    if (!scene) return;
+
+    if (!id) {
+      const editorCam = scene.getEditorCamera();
+      if (!editorCam) return;
+      try {
+        scene.setActiveCamera(editorCam.id);
+      } catch (e) {
+        args.setError(e instanceof Error ? e.message : 'Failed to set active camera');
+        return;
+      }
+      args.commitFromCurrentEditScene('set-active-camera');
+      return;
+    }
+
+    const ent = scene.getEntitiesById().get(id);
+    if (!ent) {
+      args.setError(`Camera entity '${id}' not found`);
+      return;
+    }
+    if (!ent.getComponent('cameraView')) {
+      args.setError(`Entity '${id}' has no CameraViewComponent`);
+      return;
+    }
+
+    try {
+      scene.setActiveCamera(id);
+    } catch (e) {
+      args.setError(e instanceof Error ? e.message : 'Failed to set active camera');
+      return;
+    }
+
+    args.commitFromCurrentEditScene('set-active-camera');
   });
 
   const onAddComponent = useStableEvent((type: string) => {
@@ -110,6 +167,41 @@ export function useEcsEditorActions(args: {
       const res = ent.safeRemoveComponent(type);
       if (!res.ok) throw new Error(res.error.message);
     }, `remove-component:${type}`);
+  });
+
+  const onReparentEntity = useStableEvent((childId: string, newParentId: string | null) => {
+    if (args.modeRef.current !== 'edit') return;
+
+    const scene = args.editSceneRef.current;
+    if (!scene) return;
+
+    const child = scene.getEntitiesById().get(childId);
+    if (!child) {
+      args.setError(`Entity '${childId}' not found`);
+      return;
+    }
+
+    const newParent = newParentId ? scene.getEntitiesById().get(newParentId) : undefined;
+    if (newParentId && !newParent) {
+      args.setError(`Parent entity '${newParentId}' not found`);
+      return;
+    }
+
+    const validation = validateReparent(child, newParent);
+    if (!validation.ok) {
+      args.setError(validation.error);
+      return;
+    }
+
+    try {
+      child.parent?.removeChild(child.id);
+      if (newParent) newParent.addChild(child);
+    } catch (e) {
+      args.setError(e instanceof Error ? e.message : 'Reparent failed');
+      return;
+    }
+
+    args.commitFromCurrentEditScene('reparent');
   });
 
   const onReparent = useStableEvent((newParentId: string | null) => {
@@ -147,14 +239,15 @@ export function useEcsEditorActions(args: {
 
   const onSetSelectedName = useStableEvent((value: string) => {
     mutateSelectedEntity((_scene, ent) => {
-      const existing = ent.getComponent('name') as any;
-      if (existing) {
-        existing.value = value;
-      } else {
-        const res = ent.safeAddComponent(new NameComponent({ value } as any) as any);
-        if (!res.ok) throw new Error(res.error.message);
-      }
+      ent.displayName = value;
     }, 'set-name');
+  });
+
+  const onSetSelectedGizmoIcon = useStableEvent((value: string) => {
+    mutateSelectedEntity((_scene, ent) => {
+      const next = value.trim();
+      ent.gizmoIcon = next ? next : undefined;
+    }, 'set-gizmo-icon');
   });
 
   const onSetSelectedLocalPositionAxis = useStableEvent((axis: 'x' | 'y' | 'z', n: number) => {
@@ -180,7 +273,10 @@ export function useEcsEditorActions(args: {
     onAddComponent,
     onRemoveComponent,
     onReparent,
+    onReparentEntity,
+    onSetActiveCameraEntityId,
     onSetSelectedName,
+    onSetSelectedGizmoIcon,
     onSetSelectedLocalPositionAxis,
     onUpdateSelectedComponentData,
   };

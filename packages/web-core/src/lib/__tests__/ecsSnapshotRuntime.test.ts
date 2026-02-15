@@ -19,6 +19,8 @@ function getComponent<T extends Component>(entity: Entity, type: string): T | nu
 describe('ecsSnapshotRuntime', () => {
   test('roundtrips entity tree with transforms and components', () => {
     const root = new Entity('root');
+    root.displayName = 'Root Entity';
+    root.gizmoIcon = '🦆';
     root.transform.setPosition(1, 2, 3);
     root.transform.setRotation(10, 20, 30);
     root.transform.setScale(2, 2, 2);
@@ -27,6 +29,7 @@ describe('ecsSnapshotRuntime', () => {
     root.safeAddComponent(new StandardMaterialComponent({ color: '#123456', metalness: 0.7 }));
 
     const child = new Entity('child');
+    child.displayName = 'Child';
     child.transform.setPosition(9, 8, 7);
     root.addChild(child);
 
@@ -42,6 +45,10 @@ describe('ecsSnapshotRuntime', () => {
 
     expect(root2).toBeTruthy();
     expect(child2).toBeTruthy();
+
+    expect(root2!.displayName).toBe('Root Entity');
+    expect(root2!.gizmoIcon).toBe('🦆');
+    expect(child2!.displayName).toBe('Child');
 
     expect(root2!.parent).toBeUndefined();
     expect(child2!.parent?.id).toBe('root');
@@ -85,5 +92,31 @@ describe('ecsSnapshotRuntime', () => {
     const res = deserializeEcsTreeSnapshotToEntities(snapshot, { strict: true });
     expect(res.entitiesById.get('root')).toBeTruthy();
     expect(res.errors.some((e) => e.componentType === 'doesNotExist')).toBe(true);
+  });
+
+  test('migrates legacy name component into displayName and does not attach it', () => {
+    const snapshot = {
+      schemaVersion: 1,
+      rootIds: ['root'],
+      entities: [
+        {
+          id: 'root',
+          parentId: null,
+          transform: {
+            position: [0, 0, 0],
+            rotation: [0, 0, 0],
+            scale: [1, 1, 1],
+          },
+          components: [{ type: 'name', data: { value: 'Legacy Name' } }],
+        },
+      ],
+    };
+
+    const res = deserializeEcsTreeSnapshotToEntities(snapshot, { strict: true });
+    expect(res.errors).toEqual([]);
+
+    const root = res.entitiesById.get('root')!;
+    expect(root.displayName).toBe('Legacy Name');
+    expect(root.getAllComponents().some((c) => c.type === 'name')).toBe(false);
   });
 });

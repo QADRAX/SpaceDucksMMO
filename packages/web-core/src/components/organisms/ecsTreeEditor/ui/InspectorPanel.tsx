@@ -6,31 +6,26 @@ import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
 import { Label } from '@/components/atoms/Label';
 import { Select } from '@/components/atoms/Select';
+import { EmojiPickerDialog } from '@/components/molecules/EmojiPickerDialog';
 
 import { EcsInspectorFieldsForm } from '@/components/molecules/EcsInspectorFieldsForm';
 
 import { useEcsTreeEditorContext } from '../EcsTreeEditorContext';
-import { ReparentInput } from './ReparentInput';
+import { SCENE_NODE_ID } from '../types';
+import { SceneInspectorPanel } from './SceneInspectorPanel';
 
 export function InspectorPanel() {
   const editor = useEcsTreeEditorContext();
   const selected = editor.selectedEntity;
 
-  const selectedNameValue = React.useMemo(() => {
-    if (!selected) return '';
-    const c = selected.getComponent('name') as any;
-    return typeof c?.value === 'string' ? c.value : '';
-  }, [selected]);
+  if (editor.selectedId === SCENE_NODE_ID) {
+    return <SceneInspectorPanel />;
+  }
 
-  const selectedComponents = React.useMemo(() => {
-    if (!selected) return [];
-    return selected.getAllComponents();
-  }, [selected]);
-
-  const creatableComponents = React.useMemo(() => {
-    if (!selected) return [];
-    return editor.factory.listCreatableComponents(selected as any);
-  }, [editor.factory, selected]);
+  const selectedNameValue = selected?.displayName ?? '';
+  const selectedGizmoIconValue = selected?.gizmoIcon ?? '';
+  const selectedComponents = selected ? selected.getAllComponents().filter((c) => c.type !== 'name') : [];
+  const creatableComponents = selected ? editor.factory.listCreatableComponents(selected as any) : [];
 
   return (
     <div className="col-span-3 flex min-h-105 flex-col overflow-hidden rounded-base border-2 border-border bg-white">
@@ -51,9 +46,17 @@ export function InspectorPanel() {
               />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <div className="text-xs font-medium text-muted-foreground">Reparent</div>
-              <ReparentInput disabled={editor.mode !== 'edit'} onReparent={(idOrNull) => editor.onReparent(idOrNull)} />
+            <div className="space-y-2">
+              <div className="flex items-center justify-between gap-3">
+                <Label>Gizmo Icon</Label>
+                <EmojiPickerDialog
+                  title="Choose gizmo icon"
+                  value={selectedGizmoIconValue}
+                  onChange={(next) => editor.onSetSelectedGizmoIcon(next)}
+                  disabled={editor.mode !== 'edit'}
+                  triggerAriaLabel="Choose gizmo icon"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -110,17 +113,15 @@ export function InspectorPanel() {
                       <div key={c.type} className="border border-border rounded-base p-3">
                         <div className="flex items-center justify-between gap-2">
                           <div className="font-bold text-sm">{c.type}</div>
-                          {c.type !== 'name' ? (
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="secondary"
-                              onClick={() => editor.onRemoveComponent(c.type)}
-                              disabled={editor.mode !== 'edit'}
-                            >
-                              Remove
-                            </Button>
-                          ) : null}
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="secondary"
+                            onClick={() => editor.onRemoveComponent(c.type)}
+                            disabled={editor.mode !== 'edit'}
+                          >
+                            Remove
+                          </Button>
                         </div>
 
                         {fields.length ? (

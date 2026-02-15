@@ -28,6 +28,10 @@ export type EcsComponentSnapshot = z.infer<typeof EcsComponentSnapshotSchema>;
 export const EcsEntityNodeSnapshotSchema = z
   .object({
     id: z.string().min(1),
+    /** Optional human-friendly name for editors/debug gizmos. */
+    displayName: z.string().optional(),
+    /** Optional forced icon (emoji/text) for debug gizmos. */
+    gizmoIcon: z.string().optional(),
     parentId: z.string().min(1).nullable(),
     transform: EcsTransformSnapshotSchema,
     components: z.array(EcsComponentSnapshotSchema).default([]),
