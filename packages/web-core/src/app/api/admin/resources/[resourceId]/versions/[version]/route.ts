@@ -70,7 +70,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as crypto from 'crypto';
 
 import { prisma } from '@/lib/db';
-import { MaterialComponentSchema } from '@/lib/types';
+import { EcsTreeSnapshotSchema } from '@/lib/ecsSnapshot';
+import { CustomMeshComponentDataSchema, MaterialComponentSchema, MaterialComponentTypeSchema } from '@/lib/types';
 import { StorageService } from '@/lib/storage';
 import { updateResourceThumbnailFromVersion } from '@/lib/resourceThumbnail';
 
@@ -182,21 +183,56 @@ export async function PATCH(
       }
     })();
 
-    const componentPayloadParsed = MaterialComponentSchema.safeParse({
-      componentType: resource.kind as any,
-      componentData: coerceComponentData(baseComponentData),
-    });
+    const kind = resource.kind;
+    const materialKind = MaterialComponentTypeSchema.safeParse(kind);
+    const isMaterial = materialKind.success;
 
-    if (!componentPayloadParsed.success) {
-      return NextResponse.json(
-        { error: 'Invalid component data', details: componentPayloadParsed.error.flatten() },
-        { status: 400 }
-      );
+    let componentDataToStore: Record<string, unknown>;
+
+    if (isMaterial) {
+      const componentPayloadParsed = MaterialComponentSchema.safeParse({
+        componentType: materialKind.data,
+        componentData: coerceComponentData(baseComponentData),
+      });
+
+      if (!componentPayloadParsed.success) {
+        return NextResponse.json(
+          { error: 'Invalid component data', details: componentPayloadParsed.error.flatten() },
+          { status: 400 }
+        );
+      }
+
+      componentDataToStore = {
+        ...(componentPayloadParsed.data.componentData ?? {}),
+      };
+    } else if (kind === 'customMesh') {
+      const parsed = CustomMeshComponentDataSchema.safeParse(coerceComponentData(baseComponentData));
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: 'Invalid component data', details: parsed.error.flatten() },
+          { status: 400 }
+        );
+      }
+      componentDataToStore = { ...(parsed.data ?? {}) };
+    } else if (kind === 'prefab' || kind === 'scene') {
+      if (uploadedFiles.length > 0) {
+        return NextResponse.json(
+          { error: 'ECS resources do not support file bindings yet' },
+          { status: 400 }
+        );
+      }
+
+      const parsed = EcsTreeSnapshotSchema.safeParse(baseComponentData);
+      if (!parsed.success) {
+        return NextResponse.json(
+          { error: 'Invalid component data', details: parsed.error.flatten() },
+          { status: 400 }
+        );
+      }
+      componentDataToStore = parsed.data as any;
+    } else {
+      return NextResponse.json({ error: `Unsupported resource kind: ${kind}` }, { status: 400 });
     }
-
-    const componentDataToStore: Record<string, unknown> = {
-      ...(componentPayloadParsed.data.componentData ?? {}),
-    };
 
     const updated = await prisma.$transaction(async (tx) => {
       // Track potentially orphaned file assets after replacing bindings.
@@ -241,7 +277,7 @@ export async function PATCH(
           },
         });
 
-        if (supportedTextureFields.has(upload.slot)) {
+        if (isMaterial && supportedTextureFields.has(upload.slot)) {
           const url = `/api/files/${fileId}`;
           if (upload.slot === 'baseColor' || upload.slot === 'albedo') {
             componentDataToStore.texture = url;

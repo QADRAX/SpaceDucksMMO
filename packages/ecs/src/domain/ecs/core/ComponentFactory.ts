@@ -15,6 +15,7 @@ import { ShaderMaterialComponent } from "../components/material/ShaderMaterialCo
 import { TextureTilingComponent } from "../components/material/TextureTilingComponent";
 import { OrbitComponent } from "../components/OrbitComponent";
 import { CameraViewComponent } from "../components/CameraViewComponent";
+import { NameComponent } from "../components/NameComponent";
 import { MouseLookComponent } from "../components/MouseLookComponent";
 import { FirstPersonMoveComponent } from "../components/FirstPersonMoveComponent";
 import { FirstPersonPhysicsMoveComponent } from "../components/FirstPersonPhysicsMoveComponent";
@@ -36,6 +37,7 @@ import { ConeColliderComponent } from "../components/physics/ConeColliderCompone
 import { TerrainColliderComponent } from "../components/physics/TerrainColliderComponent";
 
 export type KnownComponentType =
+  | "name"
   | "boxGeometry"
   | "sphereGeometry"
   | "planeGeometry"
@@ -154,6 +156,9 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
     // orbit (unique)
     if (!has("orbit")) defs.push({ type: "orbit", label: "Orbit" });
 
+    // name (unique)
+    if (!has("name")) defs.push({ type: "name", label: "Name" });
+
     // camera view (unique)
     if (!has("cameraView")) {
       defs.push({ type: "cameraView", label: "Camera View" });
@@ -221,6 +226,8 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
 
   create(type: KnownComponentType, params?: any): Component {
     switch (type) {
+      case "name":
+        return new NameComponent(params ?? { value: '' });
       case "boxGeometry":
         return new BoxGeometryComponent(
           params ?? { width: 1, height: 1, depth: 1 }

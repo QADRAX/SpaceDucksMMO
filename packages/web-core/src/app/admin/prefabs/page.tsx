@@ -14,10 +14,10 @@ function parsePage(searchParams: Record<string, string | string[] | undefined>):
 }
 
 function buildPageHref(page: number): string {
-  return `/admin/scenes?page=${page}`;
+  return `/admin/prefabs?page=${page}`;
 }
 
-export default async function ScenesPage({
+export default async function PrefabsPage({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -29,9 +29,9 @@ export default async function ScenesPage({
   const skip = (page - 1) * pageSize;
 
   const [total, resources] = await Promise.all([
-    prisma.resource.count({ where: { kind: 'scene' } }),
+    prisma.resource.count({ where: { kind: 'prefab' } }),
     prisma.resource.findMany({
-      where: { kind: 'scene' },
+      where: { kind: 'prefab' },
       orderBy: { updatedAt: 'desc' },
       skip,
       take: pageSize,
@@ -55,14 +55,14 @@ export default async function ScenesPage({
 
   return (
     <div>
-      <PageHeader title="Scenes" description="Versioned scene snapshots (ECS tree)" />
+      <PageHeader title="Prefabs" description="Versioned prefab snapshots (ECS tree)" />
 
       <ResourceTable
         rows={rows}
-        toolbar={<CreateEcsTreeResourceDialog kind="scene" kindLabel="Scene" />}
-        emptyTitle="No scenes yet."
-        emptyHint={<>Create one to start editing and versioning.</>}
-        viewHref={(id) => `/admin/scenes/${id}`}
+        toolbar={<CreateEcsTreeResourceDialog kind="prefab" kindLabel="Prefab" />}
+        emptyTitle="No prefabs yet."
+        emptyHint={<>Create one to start building reusable entity trees.</>}
+        viewHref={(id) => `/admin/prefabs/${id}`}
         pagination={{
           page,
           totalPages,

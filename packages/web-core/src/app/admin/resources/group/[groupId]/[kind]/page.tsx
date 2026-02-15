@@ -6,6 +6,7 @@ import { PageHeader } from '@/components/organisms/PageHeader';
 import { ResourceTable } from '@/components/organisms/ResourceTable';
 import { CreateMaterialResourceDialog } from '@/components/organisms/CreateMaterialResourceDialog';
 import { CreateCustomMeshResourceDialog } from '@/components/organisms/CreateCustomMeshResourceDialog';
+import { CreateEcsTreeResourceDialog } from '@/components/organisms/CreateEcsTreeResourceDialog';
 import { getKindLabel, getResourceGroup, isKindInGroup } from '@/lib/resourceGroups';
 import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
 
@@ -66,6 +67,14 @@ export default async function ResourceGroupKindPage({
     versionsCount: r._count.versions,
   }));
 
+  const parsedKind = ResourceKindSchema.safeParse(kind);
+  const viewHref = (() => {
+    if (!parsedKind.success) return undefined;
+    if (parsedKind.data === 'scene') return (id: string) => `/admin/scenes/${id}`;
+    if (parsedKind.data === 'prefab') return (id: string) => `/admin/prefabs/${id}`;
+    return undefined;
+  })();
+
   return (
     <div>
       <PageHeader
@@ -81,11 +90,11 @@ export default async function ResourceGroupKindPage({
       <ResourceTable
         rows={rows}
         emptyTitle="No resources of this kind yet."
+        viewHref={viewHref}
         toolbar={(() => {
-          const parsed = ResourceKindSchema.safeParse(kind);
-          if (!parsed.success) return null;
+          if (!parsedKind.success) return null;
 
-          if (parsed.data === 'customMesh') {
+          if (parsedKind.data === 'customMesh') {
             return (
               <CreateCustomMeshResourceDialog
                 kindLabel={getKindLabel(group, kind)}
@@ -93,7 +102,16 @@ export default async function ResourceGroupKindPage({
             );
           }
 
-          const materialKind = MaterialComponentTypeSchema.safeParse(parsed.data);
+          if (parsedKind.data === 'prefab' || parsedKind.data === 'scene') {
+            return (
+              <CreateEcsTreeResourceDialog
+                kind={parsedKind.data}
+                kindLabel={getKindLabel(group, kind)}
+              />
+            );
+          }
+
+          const materialKind = MaterialComponentTypeSchema.safeParse(parsedKind.data);
           if (!materialKind.success) return null;
 
           return (

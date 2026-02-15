@@ -1,4 +1,5 @@
 export * from './CameraViewComponent';
+export * from './NameComponent';
 export * from './FirstPersonMoveComponent';
 export * from './FirstPersonPhysicsMoveComponent';
 export * from './LensFlareComponent';

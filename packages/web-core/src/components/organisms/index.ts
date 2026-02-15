@@ -6,7 +6,9 @@ export * from './AdminNavTree';
 export * from './PageHeader';
 export * from './ResourceTable';
 export * from './CreateMaterialResourceDialog';
+export * from './CreateEcsTreeResourceDialog';
 export * from './MaterialResourcePreview';
 export * from './ResourceDetailShell';
 export * from './ResourceDetailHeaderEditor';
+export * from './ResourceDetailEcsTreePanel';
 

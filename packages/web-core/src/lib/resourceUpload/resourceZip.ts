@@ -4,6 +4,7 @@ import * as path from 'path';
 import type { PrismaClient } from '@prisma/client';
 
 import { StorageService } from '@/lib/storage';
+import { EcsTreeSnapshotSchema, createEmptyEcsTreeSnapshot } from '@/lib/ecsSnapshot';
 import {
   CustomMeshComponentDataSchema,
   MaterialComponentSchema,
@@ -31,13 +32,14 @@ function coerceComponentData(raw: unknown): Record<string, unknown> {
 }
 
 function validateComponentDataForKind(kind: string, rawComponentData: unknown) {
-  const componentDataObj = coerceComponentData(rawComponentData);
+  const componentDataObj = rawComponentData === undefined ? {} : rawComponentData;
 
   const materialKind = MaterialComponentTypeSchema.safeParse(kind);
   if (materialKind.success) {
+    const componentDataCoerced = coerceComponentData(componentDataObj);
     const parsed = MaterialComponentSchema.safeParse({
       componentType: materialKind.data,
-      componentData: componentDataObj,
+      componentData: componentDataCoerced,
     });
     if (!parsed.success) {
       throw new Error('Invalid componentData for resource kind');
@@ -50,13 +52,30 @@ function validateComponentDataForKind(kind: string, rawComponentData: unknown) {
   }
 
   if (kind === 'customMesh') {
-    const parsed = CustomMeshComponentDataSchema.safeParse(componentDataObj);
+    const componentDataCoerced = coerceComponentData(componentDataObj);
+    const parsed = CustomMeshComponentDataSchema.safeParse(componentDataCoerced);
     if (!parsed.success) {
       throw new Error('Invalid componentData for resource kind');
     }
     return {
       componentType: 'customMesh',
       componentData: parsed.data ?? {},
+    };
+  }
+
+  if (kind === 'prefab' || kind === 'scene') {
+    const input =
+      rawComponentData === undefined || rawComponentData === null
+        ? createEmptyEcsTreeSnapshot()
+        : rawComponentData;
+
+    const parsed = EcsTreeSnapshotSchema.safeParse(input);
+    if (!parsed.success) {
+      throw new Error('Invalid componentData for resource kind');
+    }
+    return {
+      componentType: kind,
+      componentData: parsed.data,
     };
   }
 

@@ -89,6 +89,11 @@ export function AdminNavTree({ showUsers }: { showUsers: boolean }) {
           Scenes
         </NavLink>
 
+        <NavLink href="/admin/prefabs">
+          <span className="text-base">▥</span>
+          Prefabs
+        </NavLink>
+
         {showUsers ? (
           <NavLink href="/admin/users">
             <span className="text-base">▩</span>

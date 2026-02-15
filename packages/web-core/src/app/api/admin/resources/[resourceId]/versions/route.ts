@@ -102,6 +102,7 @@ import { prisma } from '@/lib/db';
 import { createResourceVersionFromZip } from '@/lib/resourceUpload/resourceZip';
 import { updateResourceThumbnailFromVersion } from '@/lib/resourceThumbnail';
 import { StorageService } from '@/lib/storage';
+import { EcsTreeSnapshotSchema, createEmptyEcsTreeSnapshot } from '@/lib/ecsSnapshot';
 import {
   CreateResourceVersionSchema,
   CustomMeshComponentDataSchema,
@@ -224,17 +225,26 @@ export async function POST(
 
   // Validate per-kind.
   const kind = resource.kind;
-  const componentDataCoerced = coerceComponentData(componentDataObj);
+  const hasComponentData = typeof rawComponentData === 'string' && rawComponentData.trim().length > 0;
   const componentPayloadParsed = (() => {
     const materialKind = MaterialComponentTypeSchema.safeParse(kind);
     if (materialKind.success) {
+      const componentDataCoerced = coerceComponentData(componentDataObj);
       return MaterialComponentSchema.safeParse({
         componentType: materialKind.data,
         componentData: componentDataCoerced,
       });
     }
     if (kind === 'customMesh') {
+      const componentDataCoerced = coerceComponentData(componentDataObj);
       const parsed = CustomMeshComponentDataSchema.safeParse(componentDataCoerced);
+      return parsed.success
+        ? ({ success: true, data: { componentData: parsed.data } } as const)
+        : parsed;
+    }
+    if (kind === 'prefab' || kind === 'scene') {
+      const input = hasComponentData ? componentDataObj : createEmptyEcsTreeSnapshot();
+      const parsed = EcsTreeSnapshotSchema.safeParse(input);
       return parsed.success
         ? ({ success: true, data: { componentData: parsed.data } } as const)
         : parsed;

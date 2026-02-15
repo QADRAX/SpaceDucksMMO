@@ -1,6 +1,8 @@
 import {
   CUSTOM_MESH_RESOURCE_KINDS,
+  ECS_TREE_RESOURCE_KINDS,
   MATERIAL_RESOURCE_KINDS,
+  type EcsTreeResourceKind,
   type MaterialResourceKind,
 } from '@/lib/types';
 
@@ -32,6 +34,15 @@ export const RESOURCE_GROUPS: readonly ResourceGroup[] = [
     kindLabels: {
       customMesh: 'Custom Mesh (GLB)',
     },
+  },
+  {
+    id: 'ecs',
+    label: 'ECS',
+    kinds: ECS_TREE_RESOURCE_KINDS,
+    kindLabels: {
+      prefab: 'Prefabs',
+      scene: 'Scenes',
+    } satisfies Record<EcsTreeResourceKind, string>,
   },
 ] as const;
 

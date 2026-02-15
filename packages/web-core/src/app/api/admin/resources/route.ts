@@ -79,6 +79,7 @@ import * as crypto from 'crypto';
 import { prisma } from '@/lib/db';
 import { createResourceFromZip } from '@/lib/resourceUpload/resourceZip';
 import { updateResourceThumbnailFromVersion } from '@/lib/resourceThumbnail';
+import { EcsTreeSnapshotSchema, createEmptyEcsTreeSnapshot } from '@/lib/ecsSnapshot';
 import {
   CreateResourceSchema,
   CustomMeshComponentDataSchema,
@@ -169,20 +170,28 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      // Validate per-kind. For now, only material kinds are supported.
-      const componentDataCoerced = coerceComponentData(componentDataObj);
       const kind = parsedCreate.data.kind;
+      const hasComponentData = typeof componentDataRaw === 'string' && componentDataRaw.trim().length > 0;
 
       const componentPayloadParsed = (() => {
         const materialKind = MaterialComponentTypeSchema.safeParse(kind);
         if (materialKind.success) {
+          const componentDataCoerced = coerceComponentData(componentDataObj);
           return MaterialComponentSchema.safeParse({
             componentType: materialKind.data,
             componentData: componentDataCoerced,
           });
         }
         if (kind === 'customMesh') {
+          const componentDataCoerced = coerceComponentData(componentDataObj);
           const parsed = CustomMeshComponentDataSchema.safeParse(componentDataCoerced);
+          return parsed.success
+            ? ({ success: true, data: { componentData: parsed.data } } as const)
+            : parsed;
+        }
+        if (kind === 'prefab' || kind === 'scene') {
+          const input = hasComponentData ? componentDataObj : createEmptyEcsTreeSnapshot();
+          const parsed = EcsTreeSnapshotSchema.safeParse(input);
           return parsed.success
             ? ({ success: true, data: { componentData: parsed.data } } as const)
             : parsed;
@@ -381,12 +390,17 @@ export async function POST(request: NextRequest) {
       });
 
       // On first creation, always create version 1 and mark it active.
+      const initialComponentData =
+        parsed.data.kind === 'prefab' || parsed.data.kind === 'scene'
+          ? JSON.stringify(createEmptyEcsTreeSnapshot())
+          : '{}';
+
       await tx.resourceVersion.create({
         data: {
           resourceId: resource.id,
           version: 1,
           componentType: resource.kind,
-          componentData: '{}',
+          componentData: initialComponentData,
         },
       });
 

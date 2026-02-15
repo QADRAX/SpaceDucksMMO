@@ -6,6 +6,7 @@ import { MaterialResourcePreview } from '@/components/organisms/MaterialResource
 import { CustomMeshResourcePreview } from '@/components/organisms/CustomMeshResourcePreview';
 import { ResourceDetailAdminPanel } from '@/components/organisms/ResourceDetailAdminPanel';
 import { ResourceDetailCustomMeshPanel } from '@/components/organisms/ResourceDetailCustomMeshPanel';
+import { ResourceDetailEcsTreePanel } from '@/components/organisms/ResourceDetailEcsTreePanel';
 import { ResourceDetailShell } from '@/components/organisms/ResourceDetailShell';
 import { ResourceDetailHeaderEditor } from '@/components/organisms/ResourceDetailHeaderEditor';
 import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
@@ -101,7 +102,6 @@ export default async function ResourceDetailPage({
     for (const b of activeVersion.bindings ?? []) {
       if (!supportedTextureFields.has(b.slot)) continue;
       const url = `/api/files/${b.fileAssetId}`;
-
       if ((b.slot === 'baseColor' || b.slot === 'albedo')) {
         if (typeof previewComponentData.texture !== 'string' || previewComponentData.texture.length === 0) {
           previewComponentData.texture = url;
@@ -171,11 +171,31 @@ export default async function ResourceDetailPage({
               })),
             }))}
           />
+        ) : kindParsed.success && (kindParsed.data === 'prefab' || kindParsed.data === 'scene') ? (
+          <ResourceDetailEcsTreePanel
+            resource={{
+              id: resource.id,
+              kind: kindParsed.data,
+              activeVersion: resource.activeVersion,
+            }}
+            versions={versions.map((v) => ({
+              id: v.id,
+              version: v.version,
+              componentType: v.componentType,
+              componentData: v.componentData,
+              bindings: (v.bindings ?? []).map((b) => ({
+                id: b.id,
+                slot: b.slot,
+                fileAssetId: b.fileAssetId,
+                fileName: b.fileAsset.fileName,
+              })),
+            }))}
+          />
         ) : (
           <div className="p-6 space-y-2">
             <div className="font-heading">Resource management</div>
             <div className="text-sm text-neutral-600">
-              This UI currently supports material resource kinds only.
+              This UI currently supports material, custom mesh, and ECS tree resource kinds.
             </div>
           </div>
         )
