@@ -11,6 +11,11 @@ export class BoxColliderComponent extends BaseColliderComponent {
   readonly type = "boxCollider";
   readonly metadata: ComponentMetadata<BoxColliderComponent> = {
     type: "boxCollider",
+    label: "Box Collider",
+    description:
+      "Box collider (cuboid) defined by half-extents. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
+    category: "Physics",
+    icon: "Box",
     unique: true,
     requiresInHierarchy: ["rigidBody"],
     conflicts: [
@@ -27,7 +32,7 @@ export class BoxColliderComponent extends BaseColliderComponent {
           label: "Half Extents X",
           type: "number",
           default: 0.5,
-          min: 0.01,
+          min: 0,
           max: 100,
           step: 0.01,
           description: "Half-size of the box along the X axis (width/2).",
@@ -42,7 +47,7 @@ export class BoxColliderComponent extends BaseColliderComponent {
           label: "Half Extents Y",
           type: "number",
           default: 0.5,
-          min: 0.01,
+          min: 0,
           max: 100,
           step: 0.01,
           description: "Half-size of the box along the Y axis (height/2).",
@@ -57,7 +62,7 @@ export class BoxColliderComponent extends BaseColliderComponent {
           label: "Half Extents Z",
           type: "number",
           default: 0.5,
-          min: 0.01,
+          min: 0,
           max: 100,
           step: 0.01,
           description: "Half-size of the box along the Z axis (depth/2).",
@@ -70,8 +75,6 @@ export class BoxColliderComponent extends BaseColliderComponent {
         ...this.getCommonInspectorFields(),
       ],
     },
-    description:
-      "Box collider (cuboid) defined by half-extents. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
   };
 
   halfExtents: BoxHalfExtents;
@@ -92,7 +95,8 @@ export class BoxColliderComponent extends BaseColliderComponent {
   validate(): string[] {
     const errors: string[] = [];
     const he = this.halfExtents;
-    if (!(he.x > 0 && he.y > 0 && he.z > 0)) errors.push("Box halfExtents must be > 0");
+    if (he.x < 0 || he.y < 0 || he.z < 0) errors.push("Box halfExtents must be >= 0");
+    if (he.x === 0 && he.y === 0 && he.z === 0) errors.push("Box halfExtents cannot all be 0");
     return errors;
   }
 }

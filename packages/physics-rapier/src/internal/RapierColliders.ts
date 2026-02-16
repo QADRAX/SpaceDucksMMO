@@ -157,12 +157,21 @@ export class RapierColliders {
     let desc: any;
     let localCenterShift = { x: 0, y: 0, z: 0 };
 
+    // Rapier (and most physics engines) require strictly positive shape dimensions.
+    // We allow users to model "flat" colliders in the editor by using 0 on one axis,
+    // but clamp to a tiny epsilon for the runtime shape.
+    const EPS = 0.000001;
+
     switch (col.type) {
       case "sphereCollider":
         desc = this.R.ColliderDesc.ball(col.radius);
         break;
       case "boxCollider":
-        desc = this.R.ColliderDesc.cuboid(col.halfExtents.x, col.halfExtents.y, col.halfExtents.z);
+        desc = this.R.ColliderDesc.cuboid(
+          Math.max(EPS, col.halfExtents.x),
+          Math.max(EPS, col.halfExtents.y),
+          Math.max(EPS, col.halfExtents.z)
+        );
         break;
       case "capsuleCollider":
         desc = this.R.ColliderDesc.capsule(col.halfHeight, col.radius);

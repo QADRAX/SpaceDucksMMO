@@ -31,6 +31,7 @@ export class LookAtEntityComponent extends Component {
           key: "followSpeed",
           label: "Follow Speed",
           description: "Speed for smooth rotation following. If null, instant rotation.",
+          type: "number",
           nullable: true,
           get: (c: LookAtEntityComponent) => c.followSpeed,
           set: (c, v) => {

@@ -10,20 +10,37 @@ function safeNumber(n: unknown, fallback: number): number {
 }
 
 type Props = {
-  value: number;
+  value: number | undefined;
   step: number;
   disabled?: boolean;
   /** Optional label shown at the left (e.g. X/Y/Z). */
   label?: React.ReactNode;
   onChange: (next: number) => void;
+  /** Called when the user clears the input (blank). Useful for nullable fields. */
+  onClear?: () => void;
   /** Called once at the end of an interaction so it becomes undo/redo-able. */
   onCommit: () => void;
 };
 
-export function NumberPushInput({ value, step, disabled, label, onChange, onCommit }: Props) {
+export function NumberPushInput({ value, step, disabled, label, onChange, onClear, onCommit }: Props) {
   const valueRef = React.useRef(value);
   React.useEffect(() => {
     valueRef.current = value;
+  }, [value]);
+
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+  const focusedRef = React.useRef(false);
+
+  const [text, setText] = React.useState<string>(() => {
+    return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+  });
+
+  React.useEffect(() => {
+    // Keep display in sync with external value changes, but don't clobber
+    // the user's in-progress typing while the input is focused.
+    const next = typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
+    const pushing = !!pushRef.current;
+    if (!focusedRef.current || pushing) setText(next);
   }, [value]);
 
   const pushRef = React.useRef<{
@@ -60,6 +77,7 @@ export function NumberPushInput({ value, step, disabled, label, onChange, onComm
       const next = safeNumber(valueRef.current, 0) + delta;
       valueRef.current = next;
       onChange(next);
+      setText(String(next));
 
       window.requestAnimationFrame(pushLoop);
     },
@@ -85,6 +103,7 @@ export function NumberPushInput({ value, step, disabled, label, onChange, onComm
       const nudged = safeNumber(valueRef.current, 0) + args.direction * step;
       valueRef.current = nudged;
       onChange(nudged);
+      setText(String(nudged));
 
       window.requestAnimationFrame(pushLoop);
     },
@@ -128,16 +147,22 @@ export function NumberPushInput({ value, step, disabled, label, onChange, onComm
     [stopPush]
   );
 
-  const onInputBlur = React.useCallback(
-    (e: React.FocusEvent<HTMLInputElement>) => {
-      if (disabled) return;
-      const n = Number(e.currentTarget.value);
-      if (!Number.isFinite(n)) return;
-      onChange(n);
+  const onInputBlur = React.useCallback(() => {
+    focusedRef.current = false;
+    if (disabled) return;
+
+    const raw = text.trim();
+    if (!raw.length) {
+      onClear?.();
       onCommit();
-    },
-    [disabled, onChange, onCommit]
-  );
+      return;
+    }
+
+    const n = Number(raw);
+    if (!Number.isFinite(n)) return;
+    onChange(n);
+    onCommit();
+  }, [disabled, onChange, onClear, onCommit, text]);
 
   return (
     <div className="grid grid-cols-[18px_32px_1fr_32px] items-center gap-2">
@@ -161,11 +186,22 @@ export function NumberPushInput({ value, step, disabled, label, onChange, onComm
       </Button>
 
       <Input
+        ref={inputRef}
         type="number"
         step={step}
-        value={Number.isFinite(value) ? value : 0}
-        onChange={(e) => onChange(Number(e.currentTarget.value))}
-        onBlur={onInputBlur}
+        value={text}
+        onFocus={() => {
+          focusedRef.current = true;
+        }}
+        onChange={(e) => {
+          const raw = e.currentTarget.value;
+          setText(raw);
+          if (!raw.length) return;
+          const n = Number(raw);
+          if (!Number.isFinite(n)) return;
+          onChange(n);
+        }}
+        onBlur={() => onInputBlur()}
         disabled={disabled}
         className="h-8 px-2 py-1 text-xs shadow-none"
         aria-label="Value"

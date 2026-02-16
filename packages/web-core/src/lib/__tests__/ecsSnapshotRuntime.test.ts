@@ -7,6 +7,7 @@ import {
   Entity,
   BoxGeometryComponent,
   StandardMaterialComponent,
+  BoxColliderComponent,
   type Component,
 } from '@duckengine/ecs';
 
@@ -118,5 +119,47 @@ describe('ecsSnapshotRuntime', () => {
     const root = res.entitiesById.get('root')!;
     expect(root.displayName).toBe('Legacy Name');
     expect(root.getAllComponents().some((c) => c.type === 'name')).toBe(false);
+  });
+
+  test('keeps colliders even with invalid numeric snapshot values', () => {
+    const snapshot = {
+      schemaVersion: 1,
+      rootIds: ['root'],
+      entities: [
+        {
+          id: 'root',
+          parentId: null,
+          transform: {
+            position: [0, 0, 0],
+            rotation: [0, 0, 0],
+            scale: [1, 1, 1],
+          },
+          components: [
+            {
+              type: 'boxCollider',
+              data: {
+                'halfExtents.x': null,
+                'halfExtents.y': 0,
+                'halfExtents.z': '0.02',
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const res = deserializeEcsTreeSnapshotToEntities(snapshot, { strict: true });
+    expect(res.errors).toEqual([]);
+
+    const root = res.entitiesById.get('root')!;
+    const box = getComponent<BoxColliderComponent>(root, 'boxCollider');
+    expect(box).toBeTruthy();
+
+    // x: null is ignored -> default remains
+    expect(box!.halfExtents.x).toBe(0.5);
+    // y: 0 is allowed (planar collider semantics)
+    expect(box!.halfExtents.y).toBe(0);
+    // z: string coerced
+    expect(box!.halfExtents.z).toBe(0.02);
   });
 });

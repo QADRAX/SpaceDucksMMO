@@ -13,8 +13,8 @@ describe("ECS physics components", () => {
   it("Collider validate reports invalid params per collider type", () => {
     expect(new SphereColliderComponent({ radius: -1 }).validate()).toContain("Sphere radius must be > 0");
 
-    expect(new BoxColliderComponent({ halfExtents: { x: 0, y: 1, z: 1 } }).validate()).toContain(
-      "Box halfExtents must be > 0"
+    expect(new BoxColliderComponent({ halfExtents: { x: 0, y: 0, z: 0 } }).validate()).toContain(
+      "Box halfExtents cannot all be 0"
     );
 
     expect(new CapsuleColliderComponent({ radius: 0.1, halfHeight: -1 }).validate()).toContain(

@@ -21,7 +21,13 @@ export class PostProcessComponent extends Component {
     conflicts: [],
     inspector: {
       fields: [
-          { key: "effects", label: "Effects", description: "List of post-processing effects to apply.", get: (c: PostProcessComponent) => c.effects, set: (c, v) => { c.setEffects((v as any) || []); } },
+          {
+            key: "effects",
+            label: "Effects",
+            type: "object",
+            description: "List of post-processing effects to apply.",
+            get: (c: PostProcessComponent) => c.effects,
+          },
       ],
     },
   };

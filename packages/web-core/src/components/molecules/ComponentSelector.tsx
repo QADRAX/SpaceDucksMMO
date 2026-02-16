@@ -2,7 +2,8 @@
 
 import * as React from 'react';
 
-import { Select } from '@/components/atoms/Select';
+import { Button } from '@/components/atoms/Button';
+import { DropdownMenu, DropdownMenuItem } from '@/components/molecules/DropdownMenu';
 import {
   BoxIcon,
   CameraIcon,
@@ -117,28 +118,38 @@ export function ComponentSelector({
     return sortedGroups;
   }, [components]);
 
+  const renderIcon = (iconName: unknown) => {
+    if (typeof iconName !== 'string' || !iconName) return null;
+    const Icon = iconMap[iconName as keyof typeof iconMap];
+    if (!Icon) return null;
+    return <Icon className="h-4 w-4 shrink-0" />;
+  };
+
+  const trigger = (
+    <Button type="button" variant="secondary" size="sm" disabled={disabled}>
+      {placeholder}
+    </Button>
+  );
+
+  if (disabled) return trigger;
+
   return (
-    <Select
-      defaultValue=""
-      onChange={(e) => {
-        const value = e.target.value;
-        if (value) {
-          onSelect(value);
-          e.target.value = '';
-        }
-      }}
-      disabled={disabled}
-    >
-      <option value="">{placeholder}</option>
-      {Object.entries(groupedComponents).map(([category, categoryComponents]) => (
-        <optgroup key={category} label={category}>
-          {categoryComponents.map((component) => (
-            <option key={component.type} value={component.type}>
-              {component.label}
-            </option>
-          ))}
-        </optgroup>
-      ))}
-    </Select>
+    <DropdownMenu trigger={trigger} align="right">
+      <div className="max-h-80 overflow-y-auto scrollbar">
+        {Object.entries(groupedComponents).map(([category, categoryComponents]) => (
+          <div key={category} className="py-1">
+            <div className="px-4 py-1 text-xs uppercase tracking-wide text-neutral-600">{category}</div>
+            {categoryComponents.map((component) => (
+              <DropdownMenuItem key={component.type} onClick={() => onSelect(component.type)} className="font-bold">
+                <div className="flex items-center gap-2">
+                  {renderIcon(component.icon)}
+                  <div className="truncate">{component.label}</div>
+                </div>
+              </DropdownMenuItem>
+            ))}
+          </div>
+        ))}
+      </div>
+    </DropdownMenu>
   );
 }

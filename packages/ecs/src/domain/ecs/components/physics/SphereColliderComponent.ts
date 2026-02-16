@@ -9,6 +9,11 @@ export class SphereColliderComponent extends BaseColliderComponent {
   readonly type = "sphereCollider";
   readonly metadata: ComponentMetadata<SphereColliderComponent> = {
     type: "sphereCollider",
+    label: "Sphere Collider",
+    description:
+      "Sphere collider. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
+    category: "Physics",
+    icon: "Circle",
     unique: true,
     requiresInHierarchy: ["rigidBody"],
     conflicts: [
@@ -38,8 +43,6 @@ export class SphereColliderComponent extends BaseColliderComponent {
         ...this.getCommonInspectorFields(),
       ],
     },
-    description:
-      "Sphere collider. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
   };
 
   radius: number;

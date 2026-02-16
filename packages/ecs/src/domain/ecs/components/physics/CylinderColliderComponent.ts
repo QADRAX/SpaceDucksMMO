@@ -10,6 +10,11 @@ export class CylinderColliderComponent extends BaseColliderComponent {
   readonly type = "cylinderCollider";
   readonly metadata: ComponentMetadata<CylinderColliderComponent> = {
     type: "cylinderCollider",
+    label: "Cylinder Collider",
+    description:
+      "Cylinder collider (Y axis) defined by radius and half-height. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
+    category: "Physics",
+    icon: "Cylinder",
     unique: true,
     requiresInHierarchy: ["rigidBody"],
     conflicts: [
@@ -54,8 +59,6 @@ export class CylinderColliderComponent extends BaseColliderComponent {
         ...this.getCommonInspectorFields(),
       ],
     },
-    description:
-      "Cylinder collider (Y axis) defined by radius and half-height. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
   };
 
   radius: number;

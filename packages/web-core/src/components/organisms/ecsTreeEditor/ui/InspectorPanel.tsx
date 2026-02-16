@@ -14,6 +14,7 @@ import { ComponentSelector } from '@/components/molecules/ComponentSelector';
 import { ResourceKeyDropdown } from '@/components/molecules/ResourceKeyDropdown';
 
 import { EcsInspectorFieldsForm } from '@/components/molecules/EcsInspectorFieldsForm';
+import type { EntityReferenceOption } from '@/components/molecules/EntityReferenceDropdown';
 
 import {
   BoxIcon,
@@ -94,11 +95,72 @@ function getComponentIcon(iconName: string) {
   return Icon || null;
 }
 
+function renderComponentIcon(iconName: unknown) {
+  if (typeof iconName !== 'string' || !iconName) return null;
+  const Icon = getComponentIcon(iconName);
+  if (!Icon) return null;
+  return <Icon className="h-4 w-4 shrink-0" />;
+}
+
+function buildInspectorValue(component: any, fields: any[]): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const f of fields) {
+    const key = String(f?.key ?? '');
+    if (!key) continue;
+
+    let v: unknown;
+    if (typeof f?.get === 'function') v = f.get(component);
+    else v = component?.[key];
+
+    if (v === undefined && f?.default !== undefined) v = f.default;
+    out[key] = v;
+  }
+  return out;
+}
+
+function diffInspectorValue(prev: Record<string, unknown>, next: Record<string, unknown>): Record<string, unknown> {
+  const delta: Record<string, unknown> = {};
+
+  for (const [k, v] of Object.entries(next)) {
+    if (!Object.is(prev[k], v)) delta[k] = v;
+  }
+  for (const k of Object.keys(prev)) {
+    if (!(k in next)) delta[k] = undefined;
+  }
+
+  return delta;
+}
+
 export function InspectorPanel() {
   const editor = useEcsTreeEditorContext();
   const selected = editor.selectedEntity;
   // Force re-render on per-entity debug flag changes.
   void editor.presentationRevision;
+
+  const referenceOptions = React.useMemo((): EntityReferenceOption[] => {
+    const out: EntityReferenceOption[] = [];
+
+    const visit = (ent: any, depth: number) => {
+      const id = String(ent?.id ?? '');
+      if (!id) return;
+      const dn = typeof ent?.displayName === 'string' ? ent.displayName.trim() : '';
+      const label = dn ? dn : id;
+      out.push({
+        id,
+        label,
+        depth,
+        icon: typeof ent?.gizmoIcon === 'string' ? ent.gizmoIcon : undefined,
+      });
+
+      const kids = typeof ent?.getChildren === 'function' ? ent.getChildren() : [];
+      if (Array.isArray(kids) && kids.length) {
+        for (const c of kids) visit(c, depth + 1);
+      }
+    };
+
+    for (const r of editor.hierarchyRoots) visit(r as any, 0);
+    return out;
+  }, [editor.hierarchyRoots, editor.sceneRevision]);
 
   const selectionKey = editor.selectedId ?? '__none__';
 
@@ -218,174 +280,189 @@ export function InspectorPanel() {
         }}
       >
         {selected ? (
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col">
             {tab === 'entity' ? (
-            <div className="space-y-2 p-2">
-              <Label>Name</Label>
-              <Input
-                value={selectedNameValue}
-                onChange={(e) => editor.onSetSelectedName(e.target.value)}
-                disabled={editor.mode !== 'edit'}
-              />
-            </div>
-
+              <div className="border-b border-border px-3 py-3">
+                <div className="space-y-2">
+                  <Label>Name</Label>
+                  <Input
+                    value={selectedNameValue}
+                    onChange={(e) => editor.onSetSelectedName(e.target.value)}
+                    disabled={editor.mode !== 'edit'}
+                  />
+                </div>
+              </div>
             ) : null}
 
             {tab === 'entity' ? (
+              <div className="border-b border-border px-3 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label>Gizmo Icon</Label>
+                  <EmojiPickerDialog
+                    title="Choose gizmo icon"
+                    value={selectedGizmoIconValue}
+                    onChange={(next) => editor.onSetSelectedGizmoIcon(next)}
+                    disabled={editor.mode !== 'edit'}
+                    triggerAriaLabel="Choose gizmo icon"
+                  />
+                </div>
+              </div>
+            ) : null}
 
-            <div className="space-y-2 p-2">
-              <div className="flex items-center justify-between gap-3">
-                <Label>Gizmo Icon</Label>
-                <EmojiPickerDialog
-                  title="Choose gizmo icon"
-                  value={selectedGizmoIconValue}
-                  onChange={(next) => editor.onSetSelectedGizmoIcon(next)}
+            {tab === 'entity' ? (
+              <div className="px-3 py-3">
+                <TransformEditor
+                  entity={selected}
                   disabled={editor.mode !== 'edit'}
-                  triggerAriaLabel="Choose gizmo icon"
+                  onCommit={(reason) => editor.commitFromCurrentEditScene(reason)}
                 />
               </div>
-            </div>
-
-            ) : null}
-
-            {tab === 'entity' ? (
-
-            <div className="p-2">
-            <TransformEditor
-              entity={selected}
-              disabled={editor.mode !== 'edit'}
-              onCommit={(reason) => editor.commitFromCurrentEditScene(reason)}
-            />
-            </div>
-
             ) : null}
 
             {tab === 'components' ? (
+              <>
+                <div className="sticky top-0 z-10 border-b border-border bg-white px-3 py-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="font-bold">Components</div>
+                    <ComponentSelector
+                      components={creatableComponents}
+                      onSelect={(type) => editor.onAddComponent(type)}
+                      disabled={editor.mode !== 'edit'}
+                    />
+                  </div>
+                </div>
 
-            <div className="space-y-2 p-2">
-              <div className="flex items-center justify-between gap-2">
-                <div className="font-bold">Components</div>
-                <ComponentSelector
-                  components={creatableComponents}
-                  onSelect={(type) => editor.onAddComponent(type)}
-                  disabled={editor.mode !== 'edit'}
-                />
-              </div>
+                <div className="border-t border-border">
+                  {selectedComponents.length === 0 ? (
+                    <div className="px-3 py-3 text-sm text-neutral-600">No components.</div>
+                  ) : (
+                    selectedComponents.map((c: any) => {
+                      const fields = (c.metadata?.inspector?.fields ?? []) as any[];
+                      const value = buildInspectorValue(c, fields);
 
-              <div className="border-t border-border">
-                {selectedComponents.length === 0 ? (
-                  <div className="text-sm text-neutral-600 p-3">No components.</div>
-                ) : (
-                  selectedComponents.map((c: any) => {
-                    const fields = (c.metadata?.inspector?.fields ?? []) as any[];
-                    const value: Record<string, unknown> = {};
-                    for (const f of fields) value[f.key] = c[f.key];
+                      const isMaterial = isMaterialComponentType(String(c.type));
+                      const isCustomGeometry = String(c.type) === 'customGeometry';
+                      const materialResourceKey = isMaterial
+                        ? (typeof c?.[MATERIAL_RESOURCE_REF_KEY] === 'string' ? String(c[MATERIAL_RESOURCE_REF_KEY]) : '')
+                        : '';
 
-                    const isMaterial = isMaterialComponentType(String(c.type));
-                    const isCustomGeometry = String(c.type) === 'customGeometry';
-                    const materialResourceKey = isMaterial
-                      ? (typeof c?.[MATERIAL_RESOURCE_REF_KEY] === 'string' ? String(c[MATERIAL_RESOURCE_REF_KEY]) : '')
-                      : '';
+                      const componentLabel = c?.metadata?.label || c.type;
+                      const componentDescription = typeof c?.metadata?.description === 'string' ? c.metadata.description.trim() : '';
 
-                    return (
-                      <div key={c.type} className="border-b border-border p-3">
-                        <div className="flex items-center justify-between gap-2">
-                          <div className="flex items-center gap-2 font-bold text-sm">
-                            {getComponentIcon(c.type)}
-                            {c.metadata.label || c.type}
-                          </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => editor.onRemoveComponent(c.type)}
-                            disabled={editor.mode !== 'edit'}
-                          >
-                            Remove
-                          </Button>
-                        </div>
+                      return (
+                        <div key={c.type} className="border-b border-border px-3 py-3">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-2 font-bold text-sm">
+                                {renderComponentIcon(c?.metadata?.icon)}
+                                <div className="truncate">{componentLabel}</div>
+                              </div>
+                              {componentDescription ? (
+                                <div className="mt-1 text-xs text-muted-foreground">{componentDescription}</div>
+                              ) : null}
+                            </div>
 
-                        {isMaterial ? (
-                          <div className="mt-3 space-y-2">
-                            <Label>Material Resource</Label>
-                            <ResourceKeyDropdown
-                              kinds={[String(c.type)]}
-                              value={materialResourceKey || null}
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => editor.onRemoveComponent(c.type)}
                               disabled={editor.mode !== 'edit'}
-                              placeholder="Select material resource…"
-                              onChange={async (nextKey) => {
-                                if (!nextKey) {
-                                  editor.onUpdateSelectedComponentData(c.type, { [MATERIAL_RESOURCE_REF_KEY]: '' });
-                                  return;
-                                }
+                            >
+                              Remove
+                            </Button>
+                          </div>
 
-                                editor.setError(null);
-                                try {
-                                  const resolved = await resolveMaterialResourceActive(nextKey);
-                                  if (resolved.kind !== String(c.type)) {
-                                    throw new Error(`Resource kind '${resolved.kind}' does not match component '${String(c.type)}'`);
+                          {isMaterial ? (
+                            <div className="mt-3 space-y-2">
+                              <Label>Material Resource</Label>
+                              <ResourceKeyDropdown
+                                kinds={[String(c.type)]}
+                                value={materialResourceKey || null}
+                                disabled={editor.mode !== 'edit'}
+                                placeholder="Select material resource…"
+                                onChange={async (nextKey) => {
+                                  if (!nextKey) {
+                                    editor.onUpdateSelectedComponentData(c.type, { [MATERIAL_RESOURCE_REF_KEY]: '' });
+                                    return;
                                   }
 
-                                  editor.onUpdateSelectedComponentData(c.type, {
-                                    [MATERIAL_RESOURCE_REF_KEY]: nextKey,
-                                    ...resolved.componentData,
-                                  });
-                                } catch (e) {
-                                  editor.setError(e instanceof Error ? e.message : 'Failed to apply material resource');
-                                }
-                              }}
-                            />
-                            <div className="text-xs text-muted-foreground">
-                              Uses the active version of the selected resource.
+                                  editor.setError(null);
+                                  try {
+                                    const resolved = await resolveMaterialResourceActive(nextKey);
+                                    if (resolved.kind !== String(c.type)) {
+                                      throw new Error(
+                                        `Resource kind '${resolved.kind}' does not match component '${String(c.type)}'`
+                                      );
+                                    }
+
+                                    editor.onUpdateSelectedComponentData(c.type, {
+                                      [MATERIAL_RESOURCE_REF_KEY]: nextKey,
+                                      ...resolved.componentData,
+                                    });
+                                  } catch (e) {
+                                    editor.setError(e instanceof Error ? e.message : 'Failed to apply material resource');
+                                  }
+                                }}
+                              />
+                              <div className="text-xs text-muted-foreground">Uses the active version of the selected resource.</div>
                             </div>
-                          </div>
-                        ) : isCustomGeometry ? (
-                          <div className="mt-3 space-y-2">
-                            <Label>Custom Mesh Resource</Label>
-                            <ResourceKeyDropdown
-                              kinds={['customMesh']}
-                              value={typeof c?.key === 'string' && c.key.trim() ? c.key : null}
-                              disabled={editor.mode !== 'edit'}
-                              placeholder="Select custom mesh…"
-                              onChange={(nextKey) => {
-                                editor.onUpdateSelectedComponentData(c.type, { key: nextKey ?? '' });
-                              }}
-                            />
+                          ) : isCustomGeometry ? (
+                            <div className="mt-3 space-y-2">
+                              <Label>Custom Mesh Resource</Label>
+                              <ResourceKeyDropdown
+                                kinds={['customMesh']}
+                                value={typeof c?.key === 'string' && c.key.trim() ? c.key : null}
+                                disabled={editor.mode !== 'edit'}
+                                placeholder="Select custom mesh…"
+                                onChange={(nextKey) => {
+                                  editor.onUpdateSelectedComponentData(c.type, { key: nextKey ?? '' });
+                                }}
+                              />
 
-                            {fields.length ? (
-                              <div className="mt-3">
-                                <EcsInspectorFieldsForm
-                                  fields={fields.filter((f) => String((f as any)?.key) !== 'key') as any}
-                                  value={value}
-                                  onChange={(next) => editor.onUpdateSelectedComponentData(c.type, next)}
-                                  hideTypes={['reference', 'enum'] as any}
-                                />
-                              </div>
-                            ) : null}
-                          </div>
-                        ) : fields.length ? (
-                          <div className="mt-3">
-                            <EcsInspectorFieldsForm
-                              fields={fields as any}
-                              value={value}
-                              onChange={(next) => editor.onUpdateSelectedComponentData(c.type, next)}
-                              hideTypes={['reference', 'enum'] as any}
-                            />
-                          </div>
-                        ) : (
-                          <div className="mt-3 text-sm text-neutral-600">No editable fields.</div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-
+                              {fields.length ? (
+                                <div className="mt-3">
+                                  <EcsInspectorFieldsForm
+                                    key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}:customGeometry`}
+                                    fields={fields.filter((f) => String((f as any)?.key) !== 'key') as any}
+                                    value={value}
+                                    onChange={(next) => {
+                                      const delta = diffInspectorValue(value, next);
+                                      if (Object.keys(delta).length) editor.onUpdateSelectedComponentData(c.type, delta);
+                                    }}
+                                    disabled={editor.mode !== 'edit'}
+                                    referenceOptions={referenceOptions}
+                                  />
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : fields.length ? (
+                            <div className="mt-3">
+                              <EcsInspectorFieldsForm
+                                key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}`}
+                                fields={fields as any}
+                                value={value}
+                                onChange={(next) => {
+                                  const delta = diffInspectorValue(value, next);
+                                  if (Object.keys(delta).length) editor.onUpdateSelectedComponentData(c.type, delta);
+                                }}
+                                disabled={editor.mode !== 'edit'}
+                                referenceOptions={referenceOptions}
+                              />
+                            </div>
+                          ) : (
+                            <div className="mt-3 text-sm text-neutral-600">No editable fields.</div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
             ) : null}
           </div>
         ) : (
-          <div className="text-sm text-muted-foreground">Select an entity to edit.</div>
+          <div className="px-3 py-3 text-sm text-muted-foreground">Select an entity to edit.</div>
         )}
       </div>
     </div>

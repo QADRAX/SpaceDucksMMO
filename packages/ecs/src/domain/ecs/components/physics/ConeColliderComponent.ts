@@ -10,6 +10,11 @@ export class ConeColliderComponent extends BaseColliderComponent {
   readonly type = "coneCollider";
   readonly metadata: ComponentMetadata<ConeColliderComponent> = {
     type: "coneCollider",
+    label: "Cone Collider",
+    description:
+      "Cone collider (Y axis) defined by radius and half-height. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
+    category: "Physics",
+    icon: "Triangle",
     unique: true,
     requiresInHierarchy: ["rigidBody"],
     conflicts: [
@@ -54,8 +59,6 @@ export class ConeColliderComponent extends BaseColliderComponent {
         ...this.getCommonInspectorFields(),
       ],
     },
-    description:
-      "Cone collider (Y axis) defined by radius and half-height. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
   };
 
   radius: number;

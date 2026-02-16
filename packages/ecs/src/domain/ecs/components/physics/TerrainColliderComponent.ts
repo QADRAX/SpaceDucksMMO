@@ -20,6 +20,11 @@ export class TerrainColliderComponent extends BaseColliderComponent {
   readonly type = "terrainCollider";
   readonly metadata: ComponentMetadata<TerrainColliderComponent> = {
     type: "terrainCollider",
+    label: "Terrain Collider",
+    description:
+      "Terrain collider using a heightfield grid. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
+    category: "Physics",
+    icon: "Grid3x3",
     unique: true,
     requiresInHierarchy: ["rigidBody"],
     conflicts: [
@@ -94,8 +99,6 @@ export class TerrainColliderComponent extends BaseColliderComponent {
         ...this.getCommonInspectorFields(),
       ],
     },
-    description:
-      "Terrain collider using a heightfield grid. Requires a RigidBody on this entity or an ancestor (compound). Colliders without a RigidBody owner are ignored by physics.",
   };
 
   heightfield: TerrainHeightfield;

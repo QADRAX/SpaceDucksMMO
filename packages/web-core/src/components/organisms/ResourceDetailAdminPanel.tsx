@@ -372,57 +372,21 @@ export function ResourceDetailAdminPanel({
                     fields={inspectorFields}
                     value={createComponentData}
                     onChange={setCreateComponentData}
-                    hideTypes={['texture', 'reference', 'enum']}
+                    hideTypes={['texture']}
                   />
 
                   {textureFields.length ? (
                     <div className="space-y-4">
                       <div className="font-bold">Textures</div>
-                      {textureFields.map((f) => {
-                        const current = createComponentData[f.key];
-                        const selected = createTextureFilesByKey[f.key];
-                        return (
-                          <div key={f.key} className="space-y-2">
-                            <Label>{f.label ?? f.key}</Label>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0] ?? null;
-                                  setTextureFieldFile(f.key, file, setCreateTextureFilesByKey, setCreateComponentData);
-                                }}
-                              />
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => setTextureFieldFile(f.key, null, setCreateTextureFilesByKey, setCreateComponentData)}
-                                disabled={!selected}
-                              >
-                                Clear
-                              </Button>
-                            </div>
-
-                            <div className="space-y-2">
-                              <div className="text-xs text-neutral-600">
-                                {selected ? `Selected: ${selected.file.name}` : 'No file selected'}
-                              </div>
-                              <Input
-                                value={typeof current === 'string' ? current : ''}
-                                onChange={(e) => {
-                                  const v = e.target.value;
-                                  if (selected) {
-                                    setTextureFieldFile(f.key, null, setCreateTextureFilesByKey, setCreateComponentData);
-                                  }
-                                  setCreateComponentData((prev) => ({ ...prev, [f.key]: v || undefined }));
-                                }}
-                                placeholder="catalog id or URL (optional)"
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
+                      <EcsInspectorFieldsForm
+                        fields={textureFields}
+                        value={createComponentData}
+                        onChange={setCreateComponentData}
+                        textureFilesByKey={createTextureFilesByKey}
+                        onPickTextureFile={(fieldKey, file) =>
+                          setTextureFieldFile(fieldKey, file, setCreateTextureFilesByKey, setCreateComponentData)
+                        }
+                      />
                     </div>
                   ) : null}
                 </div>
@@ -486,57 +450,21 @@ export function ResourceDetailAdminPanel({
                     fields={inspectorFields}
                     value={editComponentData}
                     onChange={setEditComponentData}
-                    hideTypes={['texture', 'reference', 'enum']}
+                    hideTypes={['texture']}
                   />
 
                   {textureFields.length ? (
                     <div className="space-y-4">
                       <div className="font-bold">Textures</div>
-                      {textureFields.map((f) => {
-                        const current = editComponentData[f.key];
-                        const selected = editTextureFilesByKey[f.key];
-                        return (
-                          <div key={f.key} className="space-y-2">
-                            <Label>{f.label ?? f.key}</Label>
-                            <div className="flex items-center gap-2">
-                              <input
-                                type="file"
-                                accept="image/*"
-                                onChange={(e) => {
-                                  const file = e.target.files?.[0] ?? null;
-                                  setTextureFieldFile(f.key, file, setEditTextureFilesByKey, setEditComponentData);
-                                }}
-                              />
-                              <Button
-                                type="button"
-                                variant="secondary"
-                                size="sm"
-                                onClick={() => setTextureFieldFile(f.key, null, setEditTextureFilesByKey, setEditComponentData)}
-                                disabled={!selected}
-                              >
-                                Clear
-                              </Button>
-                            </div>
-
-                            <div className="space-y-2">
-                              <div className="text-xs text-neutral-600">
-                                {selected ? `Selected: ${selected.file.name}` : 'No file selected'}
-                              </div>
-                              <Input
-                                value={typeof current === 'string' ? current : ''}
-                                onChange={(e) => {
-                                  const v = e.target.value;
-                                  if (selected) {
-                                    setTextureFieldFile(f.key, null, setEditTextureFilesByKey, setEditComponentData);
-                                  }
-                                  setEditComponentData((prev) => ({ ...prev, [f.key]: v || undefined }));
-                                }}
-                                placeholder="catalog id or URL (optional)"
-                              />
-                            </div>
-                          </div>
-                        );
-                      })}
+                      <EcsInspectorFieldsForm
+                        fields={textureFields}
+                        value={editComponentData}
+                        onChange={setEditComponentData}
+                        textureFilesByKey={editTextureFilesByKey}
+                        onPickTextureFile={(fieldKey, file) =>
+                          setTextureFieldFile(fieldKey, file, setEditTextureFilesByKey, setEditComponentData)
+                        }
+                      />
                     </div>
                   ) : null}
                 </div>
