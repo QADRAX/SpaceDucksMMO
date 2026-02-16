@@ -76,10 +76,12 @@ export abstract class BaseScene implements IScene {
     }
 
     const hierarchyErrors = this.validateHierarchyRequirementsInSubtree(entity);
-    if (hierarchyErrors.length) {
+    const uniqueErrors = this.validateUniqueInSceneInSubtree(entity);
+    const errors = [...hierarchyErrors, ...uniqueErrors];
+    if (errors.length) {
       throw new Error(
         `Cannot add entity '${entity.id}' to scene '${this.id}':\n` +
-          hierarchyErrors.map((e) => `  - ${e}`).join("\n")
+          errors.map((e) => `  - ${e}`).join("\n")
       );
     }
 
@@ -464,6 +466,48 @@ export abstract class BaseScene implements IScene {
     return errors;
   }
 
+  private validateUniqueInSceneInSubtree(root: Entity): string[] {
+    const errors: string[] = [];
+    const seenInSubtree: Map<string, string> = new Map(); // type -> firstEntityId
+
+    const visit = (e: Entity) => {
+      for (const comp of e.getAllComponents() as Component[]) {
+        const uniqueInScene = (comp.metadata as any)?.uniqueInScene as boolean | undefined;
+        if (!uniqueInScene) continue;
+
+        const alreadyInSubtree = seenInSubtree.get(comp.type);
+        if (alreadyInSubtree && alreadyInSubtree !== e.id) {
+          errors.push(
+            `Component '${comp.type}' is unique in scene but appears on multiple entities in the added subtree ('${alreadyInSubtree}' and '${e.id}')`
+          );
+          continue;
+        }
+        seenInSubtree.set(comp.type, e.id);
+
+        const existing = this.findEntityWithComponent(comp.type);
+        if (existing) {
+          errors.push(
+            `Component '${comp.type}' is unique in scene but already exists on entity '${existing.id}'`
+          );
+        }
+      }
+      for (const c of e.getChildren()) visit(c);
+    };
+
+    visit(root);
+    return errors;
+  }
+
+  private findEntityWithComponent(type: string, excludeEntityId?: string): Entity | undefined {
+    for (const ent of this.entities.values()) {
+      if (excludeEntityId && ent.id === excludeEntityId) continue;
+      try {
+        if (ent.hasComponent(type)) return ent;
+      } catch {}
+    }
+    return undefined;
+  }
+
   private validateHierarchyRequirements(entity: Entity): string[] {
     const errors: string[] = [];
     for (const comp of entity.getAllComponents() as Component[]) {
@@ -545,6 +589,19 @@ export abstract class BaseScene implements IScene {
             // Revert the add.
             entity.safeRemoveComponent(comp.type);
             this.emitChange({ kind: 'error', message: errs.join('\n') } as any);
+          }
+
+          // Enforce scene-wide uniqueness.
+          const uniqueInScene = (comp.metadata as any)?.uniqueInScene as boolean | undefined;
+          if (uniqueInScene) {
+            const existing = this.findEntityWithComponent(comp.type, entity.id);
+            if (existing) {
+              entity.safeRemoveComponent(comp.type);
+              this.emitChange({
+                kind: 'error',
+                message: `Cannot add component '${comp.type}' to '${entity.id}': it is unique in scene and already exists on '${existing.id}'.`,
+              } as any);
+            }
           }
         }
 

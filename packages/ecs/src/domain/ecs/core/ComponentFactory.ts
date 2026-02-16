@@ -36,6 +36,8 @@ import { CylinderColliderComponent } from "../components/physics/CylinderCollide
 import { ConeColliderComponent } from "../components/physics/ConeColliderComponent";
 import { TerrainColliderComponent } from "../components/physics/TerrainColliderComponent";
 
+import { SkyboxComponent } from "../components/environment/SkyboxComponent";
+
 export type KnownComponentType =
   | "name"
   | "boxGeometry"
@@ -62,6 +64,7 @@ export type KnownComponentType =
   | "directionalLight"
   | "pointLight"
   | "spotLight"
+  | "skybox"
   | "rigidBody"
   | "gravity"
   | "sphereCollider"
@@ -206,6 +209,9 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       defs.push(getComponentDef("spotLight"));
     }
 
+    // skybox (unique in scene; enforced by core)
+    if (!has("skybox")) defs.push(getComponentDef("skybox"));
+
     // --- Physics ---------------------------------------------------------
     // Physics: component-level requirements are enforced by metadata (requires/requiresInHierarchy).
     if (!has("rigidBody")) defs.push(getComponentDef("rigidBody"));
@@ -326,6 +332,9 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
             decay: 1,
           }
         );
+
+      case "skybox":
+        return new SkyboxComponent(params ?? { key: "", enabled: true });
 
       case "rigidBody":
         return new RigidBodyComponent(params ?? { bodyType: "dynamic" });

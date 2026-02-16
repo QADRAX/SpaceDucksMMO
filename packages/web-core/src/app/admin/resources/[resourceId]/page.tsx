@@ -4,9 +4,11 @@ import { prisma } from '@/lib/db';
 import { Card } from '@/components/molecules/Card';
 import { MaterialResourcePreview } from '@/components/organisms/MaterialResourcePreview';
 import { CustomMeshResourcePreview } from '@/components/organisms/CustomMeshResourcePreview';
+import { SkyboxResourcePreview3D } from '@/components/organisms/SkyboxResourcePreview3D';
 import { ResourceDetailAdminPanel } from '@/components/organisms/ResourceDetailAdminPanel';
 import { ResourceDetailCustomMeshPanel } from '@/components/organisms/ResourceDetailCustomMeshPanel';
 import { ResourceDetailEcsTreePanel } from '@/components/organisms/ResourceDetailEcsTreePanel';
+import { ResourceDetailSkyboxPanel } from '@/components/organisms/ResourceDetailSkyboxPanel';
 import { ResourceDetailShell } from '@/components/organisms/ResourceDetailShell';
 import { ResourceDetailHeaderEditor } from '@/components/organisms/ResourceDetailHeaderEditor';
 import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
@@ -171,6 +173,26 @@ export default async function ResourceDetailPage({
               })),
             }))}
           />
+        ) : kindParsed.success && kindParsed.data === 'skybox' ? (
+          <ResourceDetailSkyboxPanel
+            resource={{
+              id: resource.id,
+              kind: 'skybox',
+              activeVersion: resource.activeVersion,
+            }}
+            versions={versions.map((v) => ({
+              id: v.id,
+              version: v.version,
+              componentType: v.componentType,
+              componentData: v.componentData,
+              bindings: (v.bindings ?? []).map((b) => ({
+                id: b.id,
+                slot: b.slot,
+                fileAssetId: b.fileAssetId,
+                fileName: b.fileAsset.fileName,
+              })),
+            }))}
+          />
         ) : kindParsed.success && (kindParsed.data === 'prefab' || kindParsed.data === 'scene') ? (
           <ResourceDetailEcsTreePanel
             resource={{
@@ -210,6 +232,8 @@ export default async function ResourceDetailPage({
           />
         ) : kindParsed.success && kindParsed.data === 'customMesh' && activeVersion ? (
           <CustomMeshResourcePreview resourceKey={resource.key} className="h-full w-full" />
+        ) : kindParsed.success && kindParsed.data === 'skybox' && activeVersion ? (
+          <SkyboxResourcePreview3D resourceKey={resource.key} activeVersion={resource.activeVersion} className="h-full w-full" />
         ) : (
           <div className="h-full w-full flex items-center justify-center bg-bg">
             <div className="text-sm text-neutral-600">No preview available for this resource kind.</div>

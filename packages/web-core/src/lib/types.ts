@@ -20,18 +20,24 @@ export const MATERIAL_RESOURCE_KINDS = [
 // Custom mesh resources (single-mesh GLB profile)
 export const CUSTOM_MESH_RESOURCE_KINDS = ['customMesh'] as const;
 
+// Skybox resources (cube map files profile)
+export const SKYBOX_RESOURCE_KINDS = ['skybox'] as const;
+
 // ECS tree snapshot resources
 export const ECS_TREE_RESOURCE_KINDS = ['prefab', 'scene'] as const;
 
 export const RESOURCE_KINDS = [
   ...MATERIAL_RESOURCE_KINDS,
   ...CUSTOM_MESH_RESOURCE_KINDS,
+  ...SKYBOX_RESOURCE_KINDS,
   ...ECS_TREE_RESOURCE_KINDS,
 ] as const;
 
 export type MaterialResourceKind = (typeof MATERIAL_RESOURCE_KINDS)[number];
 
 export type CustomMeshResourceKind = (typeof CUSTOM_MESH_RESOURCE_KINDS)[number];
+
+export type SkyboxResourceKind = (typeof SKYBOX_RESOURCE_KINDS)[number];
 
 export type EcsTreeResourceKind = (typeof ECS_TREE_RESOURCE_KINDS)[number];
 

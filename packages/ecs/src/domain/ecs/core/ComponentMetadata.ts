@@ -32,6 +32,8 @@ export interface ComponentMetadata<TComponent = any> {
   type: string;
   label?: string;
   unique?: boolean;
+  /** If true, at most one instance of this component type is allowed in the entire scene. */
+  uniqueInScene?: boolean;
   requires?: string[];
   /**
    * Component types that must exist on this entity OR any ancestor in the entity hierarchy.

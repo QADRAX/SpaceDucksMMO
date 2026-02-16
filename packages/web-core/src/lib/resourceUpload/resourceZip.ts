@@ -79,6 +79,15 @@ function validateComponentDataForKind(kind: string, rawComponentData: unknown) {
     };
   }
 
+  if (kind === 'skybox') {
+    const componentDataCoerced = coerceComponentData(componentDataObj);
+    // Currently no structured componentData for skyboxes.
+    return {
+      componentType: 'skybox',
+      componentData: componentDataCoerced ?? {},
+    };
+  }
+
   throw new Error(`Unsupported resource kind: ${kind}`);
 }
 
@@ -187,6 +196,20 @@ export async function createResourceFromZip(prisma: PrismaClient, zipFile: File)
 
     // Strict GLB contents validation.
     assertCustomMeshGlbProfile(mesh.data);
+  }
+
+  // Enforce skybox profile (cube map faces).
+  if (kind === 'skybox') {
+    const required = ['px', 'nx', 'py', 'ny', 'pz', 'nz'] as const;
+    const slots = slotFiles.map((s) => String(s.slot).toLowerCase());
+    for (const r of required) {
+      if (!slots.includes(r)) {
+        throw new Error("skybox requires 6 cube face bindings: px, nx, py, ny, pz, nz");
+      }
+    }
+    if (slotFiles.length !== 6) {
+      throw new Error("skybox only supports 6 cube face bindings: px, nx, py, ny, pz, nz");
+    }
   }
 
   const created = await prisma.$transaction(async (tx) => {
@@ -328,6 +351,20 @@ export async function createResourceVersionFromZip(
 
     // Strict GLB contents validation.
     assertCustomMeshGlbProfile(mesh.data);
+  }
+
+  // Enforce skybox profile (cube map faces).
+  if (resourceKind === 'skybox') {
+    const required = ['px', 'nx', 'py', 'ny', 'pz', 'nz'] as const;
+    const slots = slotFiles.map((s) => String(s.slot).toLowerCase());
+    for (const r of required) {
+      if (!slots.includes(r)) {
+        throw new Error("skybox requires 6 cube face bindings: px, nx, py, ny, pz, nz");
+      }
+    }
+    if (slotFiles.length !== 6) {
+      throw new Error("skybox only supports 6 cube face bindings: px, nx, py, ny, pz, nz");
+    }
   }
 
   const created = await prisma.$transaction(async (tx) => {

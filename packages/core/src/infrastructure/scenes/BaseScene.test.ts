@@ -1,6 +1,6 @@
 import BaseScene from './BaseScene';
 import { Entity, Component } from '@duckengine/ecs';
-import { RigidBodyComponent, SphereColliderComponent } from '@duckengine/ecs';
+import { RigidBodyComponent, SphereColliderComponent, SkyboxComponent } from '@duckengine/ecs';
 import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
 
 class TestComp extends Component {
@@ -50,6 +50,33 @@ describe('BaseScene debug events', () => {
 
     const res = scene.reparentEntityResult('child', null);
     expect(res.ok).toBe(false);
+  });
+
+  it('rejects adding a second uniqueInScene component in the scene', () => {
+    const scene = new TestScene({} as any);
+
+    const e1 = new Entity('e1');
+    e1.addComponent(new SkyboxComponent({ key: 'sky-1', enabled: true }) as any);
+    scene.addEntity(e1);
+
+    const e2 = new Entity('e2');
+    e2.addComponent(new SkyboxComponent({ key: 'sky-2', enabled: true }) as any);
+    expect(() => scene.addEntity(e2)).toThrow(/unique in scene/i);
+  });
+
+  it('reverts live adds of uniqueInScene components when one already exists', () => {
+    const scene = new TestScene({} as any);
+
+    const e1 = new Entity('e1');
+    const e2 = new Entity('e2');
+    scene.addEntity(e1);
+    scene.addEntity(e2);
+
+    e1.addComponent(new SkyboxComponent({ key: 'sky-1', enabled: true }) as any);
+    expect(e1.hasComponent('skybox')).toBe(true);
+
+    e2.addComponent(new SkyboxComponent({ key: 'sky-2', enabled: true }) as any);
+    expect(e2.hasComponent('skybox')).toBe(false);
   });
 
   it('auto-attaches and detaches collisionEvents hub when physics system is provided', () => {

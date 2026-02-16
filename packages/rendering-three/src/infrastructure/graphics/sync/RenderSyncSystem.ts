@@ -10,6 +10,7 @@ import type {
   DirectionalLightComponent,
   PointLightComponent,
   SpotLightComponent,
+  SkyboxComponent,
 } from "@duckengine/ecs";
 import type { IRenderSyncSystem, ITextureResolver, TextureCatalogService } from "@duckengine/core";
 import { RenderObjectRegistry } from "./RenderObjectRegistry";
@@ -49,6 +50,10 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
   private readonly debugMeshFlagListeners = new Map<string, (enabled: boolean) => void>();
   private readonly debugColliderFlagListeners = new Map<string, (enabled: boolean) => void>();
   private activeCameraEntityId: string | null = null;
+
+  private currentSkyboxResourceKey: string | null = null;
+  private currentSkyboxTexture: THREE.Texture | THREE.CubeTexture | null = null;
+  private skyboxLoadToken = 0;
 
   constructor(
     scene: THREE.Scene,
@@ -116,6 +121,9 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     entity.addDebugColliderListener(dbgColListener);
 
     this.processEntity(entity);
+
+    // Background (skybox) is scene-level; sync it whenever entities enter.
+    this.syncSkybox();
     // If scene master and entity flags are enabled, let each system decide whether
     // to create a helper (they also check forbidden sets internally).
     if (this.sceneDebugMaster && entity.isDebugTransformEnabled()) {
@@ -182,6 +190,9 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
       this.meshDebugSystem.removeForbiddenEntity(entityId);
     } catch {}
     this.colliderDebugSystem.removeForbiddenEntity(entityId);
+
+    // If we removed the skybox owner entity, clear/update background.
+    this.syncSkybox();
   }
 
   getCamera(entityId: string): THREE.Camera | undefined {
@@ -235,6 +246,9 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
         case "lensFlare":
           this.lensFlareSystem.recreateLensFlare(entity);
           break;
+        case "skybox":
+          this.syncSkybox();
+          break;
       }
       return;
     }
@@ -246,11 +260,18 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
       case "cylinderGeometry":
       case "coneGeometry":
       case "torusGeometry":
-      case "customGeometry":
       case "shaderMaterial":
         this.meshSystem.recreateMesh(entity);
         try {
           // mesh/geometry changed: refresh wireframe if a helper exists
+          this.meshDebugSystem.refreshWireframeForEntity(entity.id);
+        } catch {}
+        break;
+      case "customGeometry":
+        // Avoid recreating the mesh for custom geometry settings changes.
+        // Sync shadow flags and reload geometry only when the key changes.
+        this.meshSystem.syncCustomGeometry(entity);
+        try {
           this.meshDebugSystem.refreshWireframeForEntity(entity.id);
         } catch {}
         break;
@@ -283,12 +304,18 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
       case "terrainCollider":
         this.colliderDebugSystem.recreateForEntityIfNeeded(entity);
         break;
+      case "skybox":
+        this.syncSkybox();
+        break;
       default:
         break;
     }
   }
 
   private processEntity(entity: Entity): void {
+    const skybox = entity.getComponent<SkyboxComponent>("skybox");
+    if (skybox) this.syncSkybox();
+
     const cameraView = entity.getComponent<CameraViewComponent>("cameraView");
     const lensComp = entity.getComponent<LensFlareComponent>("lensFlare");
 
@@ -451,6 +478,127 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     }
 
     this.lensFlareSystem.update(dt, this.entities);
+  }
+
+  private getDesiredSkyboxResourceKey(): string | null {
+    for (const ent of this.entities.values()) {
+      const skybox = ent.getComponent<SkyboxComponent>("skybox");
+      if (!skybox) continue;
+      if (skybox.enabled === false) continue;
+      const key = (skybox as any).key as string | undefined;
+      if (key && key.trim()) return key.trim();
+    }
+    return null;
+  }
+
+  private syncSkybox(): void {
+    const desiredKey = this.getDesiredSkyboxResourceKey();
+    if (!desiredKey) {
+      if (this.currentSkyboxResourceKey !== null) {
+        this.currentSkyboxResourceKey = null;
+        this.skyboxLoadToken += 1;
+      }
+      if (this.scene.background) this.scene.background = null;
+      if (this.currentSkyboxTexture) {
+        try {
+          this.currentSkyboxTexture.dispose();
+        } catch {}
+        this.currentSkyboxTexture = null;
+      }
+      return;
+    }
+
+    if (this.currentSkyboxResourceKey === desiredKey && this.scene.background === this.currentSkyboxTexture) {
+      return;
+    }
+
+    this.currentSkyboxResourceKey = desiredKey;
+    const token = (this.skyboxLoadToken += 1);
+    void this.loadAndApplySkybox(desiredKey, token);
+  }
+
+  private async loadAndApplySkybox(resourceKey: string, token: number): Promise<void> {
+    if (!this.engineResourceResolver) return;
+
+    let resolved: any;
+    try {
+      resolved = await this.engineResourceResolver.resolve(resourceKey, "active");
+    } catch {
+      return;
+    }
+
+    if (token !== this.skyboxLoadToken) return;
+    if (this.currentSkyboxResourceKey !== resourceKey) return;
+
+    const files = (resolved && resolved.files) || {};
+
+    const faces = ["px", "nx", "py", "ny", "pz", "nz"] as const;
+    const hasCubeFaces = faces.every((k) => !!files[k]?.url);
+
+    const nextTexture = await new Promise<THREE.Texture | THREE.CubeTexture | null>((resolve) => {
+      try {
+        if (hasCubeFaces) {
+          const loader = new THREE.CubeTextureLoader();
+          try {
+            (loader as any).setCrossOrigin?.("anonymous");
+          } catch {}
+          const urls = faces.map((k) => files[k].url);
+          loader.load(
+            urls,
+            (tex) => resolve(tex),
+            undefined,
+            () => resolve(null)
+          );
+          return;
+        }
+
+        const file = files.equirect ?? files.equirectangular ?? files.map ?? files.texture;
+        const url = (file && file.url) || (Object.values(files)[0] as any)?.url;
+        if (!url) return resolve(null);
+
+        const loader = new THREE.TextureLoader();
+        try {
+          (loader as any).setCrossOrigin?.("anonymous");
+        } catch {}
+        loader.load(
+          url,
+          (tex) => {
+            try {
+              (tex as any).mapping = (THREE as any).EquirectangularReflectionMapping;
+              tex.needsUpdate = true;
+            } catch {}
+            resolve(tex);
+          },
+          undefined,
+          () => resolve(null)
+        );
+      } catch {
+        resolve(null);
+      }
+    });
+
+    if (!nextTexture) return;
+    if (token !== this.skyboxLoadToken) {
+      try {
+        nextTexture.dispose();
+      } catch {}
+      return;
+    }
+    if (this.currentSkyboxResourceKey !== resourceKey) {
+      try {
+        nextTexture.dispose();
+      } catch {}
+      return;
+    }
+
+    if (this.currentSkyboxTexture && this.currentSkyboxTexture !== nextTexture) {
+      try {
+        this.currentSkyboxTexture.dispose();
+      } catch {}
+    }
+
+    this.currentSkyboxTexture = nextTexture;
+    this.scene.background = nextTexture;
   }
 }
 

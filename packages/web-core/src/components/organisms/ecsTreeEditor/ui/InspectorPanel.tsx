@@ -342,6 +342,7 @@ export function InspectorPanel() {
 
                       const isMaterial = isMaterialComponentType(String(c.type));
                       const isCustomGeometry = String(c.type) === 'customGeometry';
+                      const isSkybox = String(c.type) === 'skybox';
                       const materialResourceKey = isMaterial
                         ? (typeof c?.[MATERIAL_RESOURCE_REF_KEY] === 'string' ? String(c[MATERIAL_RESOURCE_REF_KEY]) : '')
                         : '';
@@ -424,6 +425,35 @@ export function InspectorPanel() {
                                 <div className="mt-3">
                                   <EcsInspectorFieldsForm
                                     key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}:customGeometry`}
+                                    fields={fields.filter((f) => String((f as any)?.key) !== 'key') as any}
+                                    value={value}
+                                    onChange={(next) => {
+                                      const delta = diffInspectorValue(value, next);
+                                      if (Object.keys(delta).length) editor.onUpdateSelectedComponentData(c.type, delta);
+                                    }}
+                                    disabled={editor.mode !== 'edit'}
+                                    referenceOptions={referenceOptions}
+                                  />
+                                </div>
+                              ) : null}
+                            </div>
+                          ) : isSkybox ? (
+                            <div className="mt-3 space-y-2">
+                              <Label>Skybox Resource</Label>
+                              <ResourceKeyDropdown
+                                kinds={['skybox']}
+                                value={typeof c?.key === 'string' && c.key.trim() ? c.key : null}
+                                disabled={editor.mode !== 'edit'}
+                                placeholder="Select skybox…"
+                                onChange={(nextKey) => {
+                                  editor.onUpdateSelectedComponentData(c.type, { key: nextKey ?? '' });
+                                }}
+                              />
+
+                              {fields.length ? (
+                                <div className="mt-3">
+                                  <EcsInspectorFieldsForm
+                                    key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}:skybox`}
                                     fields={fields.filter((f) => String((f as any)?.key) !== 'key') as any}
                                     value={value}
                                     onChange={(next) => {

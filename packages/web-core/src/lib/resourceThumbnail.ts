@@ -4,7 +4,7 @@ import type { PrismaClient } from '@prisma/client';
 import sharp from 'sharp';
 
 import { StorageService } from '@/lib/storage';
-import { MATERIAL_RESOURCE_KINDS } from '@/lib/types';
+import { MATERIAL_RESOURCE_KINDS, SKYBOX_RESOURCE_KINDS } from '@/lib/types';
 
 const MATERIAL_THUMBNAIL_SLOTS = [
   // Preferred naming
@@ -38,6 +38,25 @@ function pickMaterialThumbnailFile(
     if (b.fileAsset.contentType.startsWith('image/')) return b.fileAsset;
   }
 
+  return null;
+}
+
+function pickSkyboxThumbnailFile(
+  bindings: Array<{ slot: string; fileAsset: { contentType: string; storagePath: string } }>
+) {
+  const bySlot = new Map<string, (typeof bindings)[number]>();
+  for (const b of bindings) {
+    bySlot.set(normalizeSlot(b.slot), b);
+  }
+
+  // Three.js default camera looks down -Z, so use NZ (-Z) as "front" for thumbnails.
+  const preferred = bySlot.get('nz');
+  if (preferred) return preferred.fileAsset;
+
+  // Fallback: first image binding.
+  for (const b of bindings) {
+    if (b.fileAsset.contentType.startsWith('image/')) return b.fileAsset;
+  }
   return null;
 }
 
@@ -114,14 +133,17 @@ export async function updateResourceThumbnailFromVersion(
   if (!version) return;
 
   const isMaterial = (MATERIAL_RESOURCE_KINDS as readonly string[]).includes(resource.kind);
-  if (!isMaterial) return;
+  const isSkybox = (SKYBOX_RESOURCE_KINDS as readonly string[]).includes(resource.kind);
+  if (!isMaterial && !isSkybox) return;
 
-  const mainFile = pickMaterialThumbnailFile(
-    version.bindings.map((b) => ({
-      slot: b.slot,
-      fileAsset: { contentType: b.fileAsset.contentType, storagePath: b.fileAsset.storagePath },
-    }))
-  );
+  const normalizedBindings = version.bindings.map((b) => ({
+    slot: b.slot,
+    fileAsset: { contentType: b.fileAsset.contentType, storagePath: b.fileAsset.storagePath },
+  }));
+
+  const mainFile = isMaterial
+    ? pickMaterialThumbnailFile(normalizedBindings)
+    : pickSkyboxThumbnailFile(normalizedBindings);
 
   if (!mainFile) return;
   if (!mainFile.contentType.startsWith('image/')) return;

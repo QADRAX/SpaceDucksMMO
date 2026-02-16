@@ -26,7 +26,19 @@ export class RenderObjectRegistry {
     const rc = this.components.get(entityId);
     if (!rc) return;
 
-    if (rc.object3D) scene.remove(rc.object3D);
+    if (rc.object3D) {
+      // Directional/spot lights add a target Object3D to the scene.
+      // If we don't remove it, recreating lights (or hot reload) leaves orphan targets behind.
+      try {
+        if (rc.object3D instanceof THREE.DirectionalLight || rc.object3D instanceof THREE.SpotLight) {
+          scene.remove(rc.object3D.target);
+        }
+      } catch {
+        // ignore
+      }
+
+      scene.remove(rc.object3D);
+    }
     if (rc.geometry) rc.geometry.dispose();
     if (rc.material) {
       if (Array.isArray(rc.material))

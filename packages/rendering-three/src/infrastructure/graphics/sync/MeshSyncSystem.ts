@@ -151,6 +151,68 @@ export class MeshSyncSystem {
   }
 
   /**
+   * Sync changes to CustomGeometryComponent without recreating the mesh.
+   * This avoids flicker when editing fields like castShadow/receiveShadow/boundingRadius.
+   * Only triggers an async reload when the mesh key changes.
+   */
+  syncCustomGeometry(entity: Entity): void {
+    const comp = entity.getComponent<CustomGeometryComponent>("customGeometry");
+    if (!comp) return;
+
+    const rc = this.registry.get(entity.id);
+    if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) {
+      // No mesh yet (or not a mesh): fall back to recreate path.
+      this.recreateMesh(entity);
+      return;
+    }
+
+    const mesh = rc.object3D as THREE.Mesh;
+
+    // Respect enabled flag: hide when disabled.
+    if (comp.enabled === false) {
+      mesh.visible = false;
+      return;
+    }
+
+    // Update shadow flags live (no geometry reload needed).
+    try {
+      mesh.castShadow = (comp as any).castShadow ?? false;
+      mesh.receiveShadow = (comp as any).receiveShadow ?? true;
+    } catch {
+      // ignore
+    }
+
+    const key = String((comp as any).key ?? "").trim();
+    if (!key) {
+      mesh.visible = false;
+      return;
+    }
+
+    const appliedKey = String((mesh.userData as any)?.customGeometryKeyApplied ?? "");
+    if (appliedKey === key) {
+      // Already showing correct geometry.
+      if (mesh.geometry) {
+        // If we have geometry, keep it visible.
+        mesh.visible = true;
+      }
+      return;
+    }
+
+    // Key changed (or not yet applied): load and swap geometry when ready.
+    // Avoid flicker: keep current mesh visible if it already has geometry.
+    try {
+      const pos = (mesh.geometry as any)?.getAttribute?.("position") as THREE.BufferAttribute | undefined;
+      const hasPositions = !!pos && (pos.count ?? 0) > 0;
+      if (!hasPositions) mesh.visible = false;
+    } catch {
+      // If we can't determine, stay conservative.
+      mesh.visible = false;
+    }
+
+    this.loadAndApplyCustomGeometry(entity.id, key).catch(() => {});
+  }
+
+  /**
    * Called when the entity transform changes.
    * Updates the underlying THREE.Mesh transform if present.
    */
@@ -248,6 +310,11 @@ export class MeshSyncSystem {
     } catch {
       // ignore
     }
+
+    // Custom geometry is loaded asynchronously; don't render any placeholder while loading.
+    if (geometryComp.type === "customGeometry") {
+      mesh.visible = false;
+    }
     mesh.userData = mesh.userData || {};
     (mesh.userData as any).entityId = entity.id;
 
@@ -260,7 +327,7 @@ export class MeshSyncSystem {
       material,
     });
 
-    // Async custom mesh loading (best-effort). Keeps placeholder until resolved.
+    // Async custom mesh loading (best-effort).
     if (geometryComp.type === "customGeometry") {
       const key = (geometryComp as unknown as CustomGeometryComponent).key;
       if (typeof key === "string" && key.trim().length > 0) {
@@ -349,6 +416,14 @@ export class MeshSyncSystem {
 
     mesh.geometry = nextGeometry;
     rc.geometry = nextGeometry;
+
+    try {
+      mesh.userData = mesh.userData || {};
+      (mesh.userData as any).customGeometryKeyApplied = resourceKey;
+    } catch {}
+
+    // Geometry is now ready; show the mesh.
+    mesh.visible = true;
   }
 
   private async loadGlbGeometry(url: string): Promise<THREE.BufferGeometry> {

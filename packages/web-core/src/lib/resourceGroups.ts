@@ -2,6 +2,7 @@ import {
   CUSTOM_MESH_RESOURCE_KINDS,
   ECS_TREE_RESOURCE_KINDS,
   MATERIAL_RESOURCE_KINDS,
+  SKYBOX_RESOURCE_KINDS,
   type EcsTreeResourceKind,
   type MaterialResourceKind,
 } from '@/lib/types';
@@ -33,6 +34,14 @@ export const RESOURCE_GROUPS: readonly ResourceGroup[] = [
     kinds: CUSTOM_MESH_RESOURCE_KINDS,
     kindLabels: {
       customMesh: 'Custom Mesh (GLB)',
+    },
+  },
+  {
+    id: 'environment',
+    label: 'Environment',
+    kinds: SKYBOX_RESOURCE_KINDS,
+    kindLabels: {
+      skybox: 'Skyboxes',
     },
   },
   {

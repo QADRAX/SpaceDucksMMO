@@ -36,6 +36,31 @@ export class LightFactory {
         );
         dir.castShadow = c.castShadow ?? false;
 
+        // Shadows: Three.js defaults for DirectionalLight use a small orthographic
+        // shadow camera (roughly +/-5 units). In the editor this often results in
+        // some objects casting shadows (near origin) while others don't (outside
+        // the shadow frustum). Provide a conservative-but-useful default.
+        if (dir.castShadow) {
+          try {
+            dir.shadow.mapSize.set(2048, 2048);
+            // Slight bias to reduce acne.
+            (dir.shadow as any).bias = -0.0001;
+            (dir.shadow as any).normalBias = 0.02;
+
+            const cam = dir.shadow.camera as any;
+            // Orthographic camera for directional shadows
+            cam.left = -25;
+            cam.right = 25;
+            cam.top = 25;
+            cam.bottom = -25;
+            cam.near = 0.1;
+            cam.far = 200;
+            cam.updateProjectionMatrix?.();
+          } catch {
+            // best-effort only
+          }
+        }
+
         const forward = entity.transform.getForward();
         const wp = entity.transform.worldPosition;
         const targetPos = new THREE.Vector3(wp.x, wp.y, wp.z).add(
@@ -80,6 +105,21 @@ export class LightFactory {
         );
         spot.target.position.copy(targetPos);
         scene.add(spot.target);
+
+        if ((spot as any).castShadow) {
+          try {
+            spot.shadow.mapSize.set(2048, 2048);
+            (spot.shadow as any).bias = -0.0001;
+            (spot.shadow as any).normalBias = 0.02;
+            // For SpotLight, camera is perspective; far should cover typical scenes.
+            const cam = spot.shadow.camera as any;
+            cam.near = 0.1;
+            cam.far = 200;
+            cam.updateProjectionMatrix?.();
+          } catch {
+            // best-effort only
+          }
+        }
 
         return spot;
       }
