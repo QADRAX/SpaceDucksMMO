@@ -38,6 +38,9 @@ export class MeshFeature implements RenderFeature {
 
     private readonly customGeometryRequestByEntityId = new Map<string, { key: string; requestId: number }>();
 
+    private readonly pendingTaskQueue: Array<() => void> = [];
+    private readonly MAX_FRAME_BUDGET_MS = 4; // 4ms budget for mesh instantiation per frame
+
     isEligible(entity: Entity): boolean {
         const geometry = this.getGeometryComponent(entity);
         const materialComp = this.getMaterialComponent(entity);
@@ -111,17 +114,22 @@ export class MeshFeature implements RenderFeature {
     }
 
     onFrame(dt: number, context: RenderContext): void {
-        // We don't have a list of animated entities here, efficiently.
-        // But Feature Router iterates all features. 
-        // We need to iterate OUR entities. 
-        // FeatureRouter keeps track of active entities per feature, but doesn't expose them.
-        // So we must maintain our own set of active entities if we want efficiency, 
-        // OR RenderContext needs to expose method "getEntitiesForFeature"?
+        // Process pending tasks (staggered loading)
+        if (this.pendingTaskQueue.length > 0) {
+            const start = performance.now();
+            while (this.pendingTaskQueue.length > 0 && (performance.now() - start) < this.MAX_FRAME_BUDGET_MS) {
+                const task = this.pendingTaskQueue.shift();
+                if (task) {
+                    try {
+                        task();
+                    } catch (e) {
+                        console.warn("[MeshFeature] Task error", e);
+                    }
+                }
+            }
+        }
 
-        // For now, iterating context.registry might be slow if we have many non-mesh objects.
-        // But typically most objects are meshes.
-        // Let's iterate context.registry.getAll() and check for mixer.
-
+        // Animation updates
         const ms = dt / 1000;
         for (const rc of context.registry.getAll().values()) {
             const mixer: any = (rc as any).animationMixer;
@@ -135,50 +143,18 @@ export class MeshFeature implements RenderFeature {
             try {
                 const loaded = (rc.object3D as any)?.userData?.fullMeshLoaded;
                 if (loaded) {
-                    const entity = context.registry.get(rc.entityId)?.object3D?.userData?.entityId ?
-                        // wait, we need entity reference. 
-                        // RenderContext doesn't expose getEntityById? 
-                        // RenderSyncSystem had `private readonly entities = new Map<string, Entity>();`
-                        // RenderContext doesn't expose it!
-
-                        // CRITICAL: RenderContext MUST expose entities map or access method.
-                        null : null;
-
-                    // I cannot access entity to call syncFullMesh!
-
-                    // I need to add `getEntity(id)` to RenderContext.
-                    // Or store entities in MeshFeature.
-
-                    // Let's stick with: syncFullMesh is called when component changes.
-                    // But here we need to call it when LOAD FINISHES.
-                    // The load finishes async.
-                    // Logic in MeshSyncSystem lines 660:
-                    /*
-                        const loaded = (rc.object3D as any)?.userData?.fullMeshLoaded;
-                        if (loaded) {
-                            this.meshSystem.syncFullMesh(entity);
-                            (rc.object3D as any).userData.fullMeshLoaded = false;
-                        }
-                    */
-                    // It gets entity from `this.entities`.
-
-                    // I need to update RenderContext to include `getEntity(id)`.
+                    // Logic to sync full mesh animations once loaded.
+                    // We need entity reference to call syncFullMesh.
+                    // Ideally pass simple config object instead of Entity if Entity not available?
+                    // Or iterate component listeners?
+                    // For now, if we loaded via `loadAndApplyFullGlb`, we set up mixer.
+                    // We might need to trigger `syncFullMesh` logic again to apply specific clip/time.
+                    // But we miss `Entity` reference here in loop.
+                    // See comments in previous version.
+                    (rc.object3D as any).userData.fullMeshLoaded = false;
                 }
             } catch { }
         }
-
-        // To properly support this, I should add `getEntity` to RenderContext.
-        // But for now, I'll rely on onUpdate or async callback?
-        // Async callback in loader?
-        // Loader returns promise.
-        // When promise resolves, we have the mesh.
-        // We apply it.
-        // Then we can trigger syncFullMesh immediately if we have the entity reference.
-
-        // In `loadAndApplyFullGlb`, we have `entityId`.
-        // If we don't have `entity` instance, we can't call `syncFullMesh` which reads component.
-
-        // Refactoring step: add `entities` to RenderContext.
     }
 
     onDetach(entity: Entity, context: RenderContext): void {
@@ -198,6 +174,10 @@ export class MeshFeature implements RenderFeature {
     }
 
     // --- Helpers ---
+
+    private scheduleTask(task: () => void) {
+        this.pendingTaskQueue.push(task);
+    }
 
     private getGeometryComponent(entity: Entity): AnyGeometryComponent | null {
         return (
@@ -418,24 +398,26 @@ export class MeshFeature implements RenderFeature {
 
         const geometry = await this.customLoader.load(transformKey, resolver);
 
-        const current = this.customGeometryRequestByEntityId.get(entityId);
-        if (!current || current.requestId !== requestId || current.key !== transformKey) return;
+        this.scheduleTask(() => {
+            const current = this.customGeometryRequestByEntityId.get(entityId);
+            if (!current || current.requestId !== requestId || current.key !== transformKey) return;
 
-        const rc = context.registry.get(entityId);
-        if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) return;
+            const rc = context.registry.get(entityId);
+            if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) return;
 
-        const mesh = rc.object3D;
-        if (rc.geometry) rc.geometry.dispose();
+            const mesh = rc.object3D;
+            if (rc.geometry) rc.geometry.dispose();
 
-        if (geometry) {
-            mesh.geometry = geometry;
-            rc.geometry = geometry;
-            mesh.visible = true;
-            try {
-                mesh.userData = mesh.userData || {};
-                (mesh.userData as any).customGeometryKeyApplied = transformKey;
-            } catch { }
-        }
+            if (geometry) {
+                mesh.geometry = geometry;
+                rc.geometry = geometry;
+                mesh.visible = true;
+                try {
+                    mesh.userData = mesh.userData || {};
+                    (mesh.userData as any).customGeometryKeyApplied = transformKey;
+                } catch { }
+            }
+        });
     }
 
     private syncCustomGeometry(entity: Entity, context: RenderContext): void {
@@ -483,49 +465,51 @@ export class MeshFeature implements RenderFeature {
 
         const result = await this.fullLoader.load(key, context.engineResourceResolver);
 
-        const current = this.customGeometryRequestByEntityId.get(entityId);
-        if (!current || current.requestId !== requestId || current.key !== key) return;
+        this.scheduleTask(() => {
+            const current = this.customGeometryRequestByEntityId.get(entityId);
+            if (!current || current.requestId !== requestId || current.key !== key) return;
 
-        const rc = context.registry.get(entityId);
-        if (!rc || !rc.object3D) return;
+            const rc = context.registry.get(entityId);
+            if (!rc || !rc.object3D) return;
 
-        const placeholder = rc.object3D as THREE.Object3D;
+            const placeholder = rc.object3D as THREE.Object3D;
 
-        // Clear children
-        while (placeholder.children.length) {
-            placeholder.remove(placeholder.children[0]);
-        }
-
-        if (result) {
-            const { root, animations } = result;
-            // Clone root to ensure unique instance per entity
-            const instance = root.clone(true); // Is this deep clone? Yes.
-            // Note: cloning geometry? GLTFLoader reuses geometry.
-
-            placeholder.add(instance);
-
-            if (animations && animations.length) {
-                const mixer = new THREE.AnimationMixer(placeholder);
-                (rc as any).animationMixer = mixer;
-                (rc as any).availableAnimations = animations;
-
-                // Trigger animation sync immediately
-                this.syncFullMesh(entity, context);
+            // Clear children
+            while (placeholder.children.length) {
+                placeholder.remove(placeholder.children[0]);
             }
 
-            try {
-                const desiredCast = (placeholder.userData as any)?.fullMeshCastShadow ?? false;
-                const desiredReceive = (placeholder.userData as any)?.fullMeshReceiveShadow ?? true;
-                this.applyShadowFlagsRecursive(placeholder, desiredCast, desiredReceive);
-            } catch { }
+            if (result) {
+                const { root, animations } = result;
+                // Clone root to ensure unique instance per entity
+                const instance = root.clone(true); // Is this deep clone? Yes.
+                // Note: cloning geometry? GLTFLoader reuses geometry.
 
-            try {
-                (placeholder.userData as any).fullMeshKeyApplied = key;
-                (placeholder.userData as any).fullMeshLoaded = true; // Signal for onFrame to re-sync if needed
-            } catch { }
+                placeholder.add(instance);
 
-            placeholder.visible = true;
-        }
+                if (animations && animations.length) {
+                    const mixer = new THREE.AnimationMixer(placeholder);
+                    (rc as any).animationMixer = mixer;
+                    (rc as any).availableAnimations = animations;
+
+                    // Trigger animation sync immediately
+                    this.syncFullMesh(entity, context);
+                }
+
+                try {
+                    const desiredCast = (placeholder.userData as any)?.fullMeshCastShadow ?? false;
+                    const desiredReceive = (placeholder.userData as any)?.fullMeshReceiveShadow ?? true;
+                    this.applyShadowFlagsRecursive(placeholder, desiredCast, desiredReceive);
+                } catch { }
+
+                try {
+                    (placeholder.userData as any).fullMeshKeyApplied = key;
+                    (placeholder.userData as any).fullMeshLoaded = true; // Signal for onFrame to re-sync if needed
+                } catch { }
+
+                placeholder.visible = true;
+            }
+        });
     }
 
     private syncFullMesh(entity: Entity, context: RenderContext): void {
