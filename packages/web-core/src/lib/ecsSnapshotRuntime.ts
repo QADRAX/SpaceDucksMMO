@@ -80,6 +80,20 @@ function toJsonSafeValue(value: unknown, visited: WeakSet<object>): unknown {
 function extractComponentData(comp: any): Record<string, unknown> {
   const visited = new WeakSet<object>();
 
+  // Editor-only extension: allow resource-backed materials to be persisted as a reference.
+  // This avoids storing expanded material params in the scene snapshot and enables resolving
+  // the active resource version when the scene is loaded.
+  try {
+    const type = String(comp?.type ?? '');
+    const key = (comp as any)?.$resourceKey;
+    const materialTypes = new Set(['basicMaterial', 'lambertMaterial', 'phongMaterial', 'standardMaterial']);
+    if (materialTypes.has(type) && typeof key === 'string' && key.trim().length > 0) {
+      return { $resourceKey: key.trim() };
+    }
+  } catch {
+    // ignore
+  }
+
   const inspectorFields: InspectorFieldConfig<any, unknown>[] =
     comp?.metadata?.inspector?.fields ?? [];
 
@@ -170,7 +184,7 @@ export type DeserializeEcsTreeResult = {
   errors: Array<{ entityId?: string; componentType?: string; message: string }>;
 };
 
-function applyComponentDataWithInspector(comp: any, data: Record<string, unknown>): void {
+export function applyComponentDataWithInspector(comp: any, data: Record<string, unknown>): void {
   const fields: InspectorFieldConfig<any, unknown>[] = comp?.metadata?.inspector?.fields ?? [];
   const byKey = new Map<string, InspectorFieldConfig<any, unknown>>();
   for (const f of fields) byKey.set(String(f.key), f);

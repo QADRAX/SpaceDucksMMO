@@ -53,6 +53,30 @@ export class ConeGeometryComponent extends BaseGeometryComponent {
             c.notifyChanged();
           }
         },
+        {
+          key: "castShadow",
+          label: "Cast Shadow",
+          description: "Whether this mesh should cast shadows onto other meshes.",
+          type: "boolean",
+          default: false,
+          get: (c: ConeGeometryComponent) => c.castShadow,
+          set: (c, v) => {
+            c.castShadow = Boolean(v);
+            c.notifyChanged();
+          },
+        },
+        {
+          key: "receiveShadow",
+          label: "Receive Shadow",
+          description: "Whether this mesh should receive shadows cast by other meshes.",
+          type: "boolean",
+          default: true,
+          get: (c: ConeGeometryComponent) => c.receiveShadow,
+          set: (c, v) => {
+            c.receiveShadow = Boolean(v);
+            c.notifyChanged();
+          },
+        },
       ],
     },
   };
@@ -65,11 +89,16 @@ export class ConeGeometryComponent extends BaseGeometryComponent {
     radius?: number;
     height?: number;
     radialSegments?: number;
+    castShadow?: boolean;
+    receiveShadow?: boolean;
   }) {
     super();
     this.radius = params?.radius ?? 0.5;
     this.height = params?.height ?? 1;
     this.radialSegments = params?.radialSegments ?? 16;
+
+    this.castShadow = params?.castShadow ?? false;
+    this.receiveShadow = params?.receiveShadow ?? true;
   }
 
   getBoundingRadius(worldScale: Vector3Like): number {

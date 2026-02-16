@@ -1,8 +1,6 @@
 import {
-  AmbientLightComponent,
   BaseScene,
   CameraViewComponent,
-  DirectionalLightComponent,
   type GameSettings,
   type ISettingsService,
 } from '@duckengine/rendering-three';
@@ -84,22 +82,22 @@ export class EcsEditorScene extends BaseScene {
   readonly id: string;
 
   private readonly entitiesById: Map<string, Entity>;
-  private readonly debugTransforms: boolean;
   private readonly desiredActiveCameraEntityId: string | null;
 
   private editorCamera?: Entity;
-  private ambient?: Entity;
-  private dir?: Entity;
 
   constructor(init: EditorSceneInit) {
     super(new InlineSettingsService());
     this.id = init.id;
     this.entitiesById = init.entitiesById;
-    this.debugTransforms = init.debugTransformsEnabled;
     this.desiredActiveCameraEntityId = init.activeCameraEntityId ?? null;
 
     try {
-      this.setDebugTransformsEnabled(!!init.debugTransformsEnabled);
+      // Scene-level debug master switches are always enabled in the editor.
+      // Per-entity flags determine what actually renders.
+      this.setDebugTransformsEnabled(true);
+      this.setDebugMeshesEnabled(true);
+      this.setDebugCollidersEnabled(true);
     } catch {
       // ignore
     }
@@ -173,25 +171,9 @@ export class EcsEditorScene extends BaseScene {
     this.addEntity(this.editorCamera);
     this.setActiveCamera(this.editorCamera.id);
 
-    // Lights
-    this.ambient = new Entity('ambient');
-    this.ambient.addComponent(new AmbientLightComponent({ intensity: 0.9 } as any));
-    this.addEntity(this.ambient);
-
-    this.dir = new Entity('dirLight', [2.5, 3.5, 2.5]);
-    this.dir.addComponent(new DirectionalLightComponent({ intensity: 1.25 } as any));
-    this.addEntity(this.dir);
-
     // User entities
     for (const ent of this.entitiesById.values()) {
       this.addEntity(ent);
-      if (this.debugTransforms) {
-        try {
-          ent.setDebugTransformEnabled(true);
-        } catch {
-          // ignore
-        }
-      }
     }
 
     // Apply persisted active camera (must be a user entity with CameraViewComponent).

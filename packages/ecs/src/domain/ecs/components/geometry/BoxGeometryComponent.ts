@@ -59,6 +59,30 @@ export class BoxGeometryComponent extends BaseGeometryComponent {
             c.notifyChanged();
           }
         },
+        {
+          key: "castShadow",
+          label: "Cast Shadow",
+          description: "Whether this mesh should cast shadows onto other meshes.",
+          type: "boolean",
+          default: false,
+          get: (c: BoxGeometryComponent) => c.castShadow,
+          set: (c, v) => {
+            c.castShadow = Boolean(v);
+            c.notifyChanged();
+          },
+        },
+        {
+          key: "receiveShadow",
+          label: "Receive Shadow",
+          description: "Whether this mesh should receive shadows cast by other meshes.",
+          type: "boolean",
+          default: true,
+          get: (c: BoxGeometryComponent) => c.receiveShadow,
+          set: (c, v) => {
+            c.receiveShadow = Boolean(v);
+            c.notifyChanged();
+          },
+        },
       ],
     },
   };
@@ -67,11 +91,20 @@ export class BoxGeometryComponent extends BaseGeometryComponent {
   height: number;
   depth: number;
 
-  constructor(params?: { width?: number; height?: number; depth?: number }) {
+  constructor(params?: {
+    width?: number;
+    height?: number;
+    depth?: number;
+    castShadow?: boolean;
+    receiveShadow?: boolean;
+  }) {
     super();
     this.width = params?.width ?? 1;
     this.height = params?.height ?? 1;
     this.depth = params?.depth ?? 1;
+
+    this.castShadow = params?.castShadow ?? false;
+    this.receiveShadow = params?.receiveShadow ?? true;
   }
 
   getBoundingRadius(worldScale: Vector3Like): number {

@@ -64,6 +64,30 @@ export class TorusGeometryComponent extends BaseGeometryComponent {
             c.notifyChanged();
           }
         },
+        {
+          key: "castShadow",
+          label: "Cast Shadow",
+          description: "Whether this mesh should cast shadows onto other meshes.",
+          type: "boolean",
+          default: false,
+          get: (c: TorusGeometryComponent) => c.castShadow,
+          set: (c, v) => {
+            c.castShadow = Boolean(v);
+            c.notifyChanged();
+          },
+        },
+        {
+          key: "receiveShadow",
+          label: "Receive Shadow",
+          description: "Whether this mesh should receive shadows cast by other meshes.",
+          type: "boolean",
+          default: true,
+          get: (c: TorusGeometryComponent) => c.receiveShadow,
+          set: (c, v) => {
+            c.receiveShadow = Boolean(v);
+            c.notifyChanged();
+          },
+        },
       ],
     },
   };
@@ -78,12 +102,17 @@ export class TorusGeometryComponent extends BaseGeometryComponent {
     tube?: number;
     radialSegments?: number;
     tubularSegments?: number;
+    castShadow?: boolean;
+    receiveShadow?: boolean;
   }) {
     super();
     this.radius = params?.radius ?? 1;
     this.tube = params?.tube ?? 0.3;
     this.radialSegments = params?.radialSegments ?? 16;
     this.tubularSegments = params?.tubularSegments ?? 48;
+
+    this.castShadow = params?.castShadow ?? false;
+    this.receiveShadow = params?.receiveShadow ?? true;
   }
 
   getBoundingRadius(worldScale: Vector3Like): number {

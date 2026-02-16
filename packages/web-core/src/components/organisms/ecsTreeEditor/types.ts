@@ -29,8 +29,8 @@ export type EcsTreeEditorStore = {
   mode: EditorMode;
   paused: boolean;
 
-  debugTransformsEnabled: boolean;
-  setDebugTransformsEnabled: (v: boolean) => void;
+  /** Bumped on non-snapshot UI changes (e.g., per-entity debug flags). */
+  presentationRevision: number;
 
   dirty: boolean;
   canUndo: boolean;
@@ -72,6 +72,14 @@ export type EcsTreeEditorStore = {
   onSetSelectedGizmoIcon: (value: string) => void;
   onSetSelectedLocalPositionAxis: (axis: 'x' | 'y' | 'z', n: number) => void;
   onUpdateSelectedComponentData: (type: string, data: Record<string, unknown>) => void;
+
+  /** Toggle per-entity debug visualizations for the given entity id. */
+  onToggleEntityDebugTransform: (id: string) => void;
+  onToggleEntityDebugMesh: (id: string) => void;
+  onToggleEntityDebugCollider: (id: string) => void;
+
+  /** Clear all entity debug flags in the current edit scene. */
+  onClearAllDebug: () => void;
 
   commitFromCurrentEditScene: (reason: string) => void;
 

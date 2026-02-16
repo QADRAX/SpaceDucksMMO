@@ -44,6 +44,30 @@ export class CustomGeometryComponent extends BaseGeometryComponent {
             c.notifyChanged();
           },
         },
+        {
+          key: "castShadow",
+          label: "Cast Shadow",
+          description: "Whether this mesh should cast shadows onto other meshes.",
+          type: "boolean",
+          default: false,
+          get: (c: CustomGeometryComponent) => c.castShadow,
+          set: (c, v) => {
+            c.castShadow = Boolean(v);
+            c.notifyChanged();
+          },
+        },
+        {
+          key: "receiveShadow",
+          label: "Receive Shadow",
+          description: "Whether this mesh should receive shadows cast by other meshes.",
+          type: "boolean",
+          default: true,
+          get: (c: CustomGeometryComponent) => c.receiveShadow,
+          set: (c, v) => {
+            c.receiveShadow = Boolean(v);
+            c.notifyChanged();
+          },
+        },
       ],
     },
   };
@@ -52,10 +76,18 @@ export class CustomGeometryComponent extends BaseGeometryComponent {
   /** Optional explicit bounding radius (in local units) for ECS-only consumers. */
   boundingRadius?: number;
 
-  constructor(params?: { key?: string; boundingRadius?: number }) {
+  constructor(params?: {
+    key?: string;
+    boundingRadius?: number;
+    castShadow?: boolean;
+    receiveShadow?: boolean;
+  }) {
     super();
     this.key = params?.key ?? "";
     this.boundingRadius = params?.boundingRadius;
+
+    this.castShadow = params?.castShadow ?? false;
+    this.receiveShadow = params?.receiveShadow ?? true;
   }
 
   getBoundingRadius(worldScale: Vector3Like): number {

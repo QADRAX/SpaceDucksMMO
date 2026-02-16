@@ -3,12 +3,18 @@
 import * as React from 'react';
 
 import { Button } from '@/components/atoms/Button';
-import { BugIcon, PauseIcon, PlayIcon, RedoIcon, SaveIcon, StopIcon, UndoIcon } from '@/components/icons';
+import { ClearDebugIcon, PauseIcon, PlayIcon, RedoIcon, SaveIcon, StopIcon, UndoIcon } from '@/components/icons';
 
 import { useEcsTreeEditorContext } from '../EcsTreeEditorContext';
 
 export function ViewportPanel() {
   const editor = useEcsTreeEditorContext();
+  // Force re-render for per-entity debug visualization flags.
+  void editor.presentationRevision;
+
+  const anyDebugActive = editor.allEntitiesForHierarchy.some(
+    (e) => e.isDebugTransformEnabled() || e.isDebugMeshEnabled() || e.isDebugColliderEnabled()
+  );
 
   return (
     <div className="col-span-6 flex min-h-0 flex-col overflow-hidden rounded-base border-2 border-border bg-white">
@@ -75,17 +81,18 @@ export function ViewportPanel() {
 
           <div className="mx-1 h-5 w-px bg-border" />
 
-          <Button
-            type="button"
-            variant="ghost"
-            size="iconSm"
-            aria-label={editor.debugTransformsEnabled ? 'Disable debug transforms' : 'Enable debug transforms'}
-            title="Debug transforms"
-            onClick={() => editor.setDebugTransformsEnabled(!editor.debugTransformsEnabled)}
-            className={editor.debugTransformsEnabled ? 'bg-gray-100' : undefined}
-          >
-            <BugIcon className="h-4 w-4" />
-          </Button>
+          {editor.mode === 'edit' && anyDebugActive ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="iconSm"
+              aria-label="Clear all debugs"
+              title="Clear all debugs"
+              onClick={editor.onClearAllDebug}
+            >
+              <ClearDebugIcon className="h-4 w-4" />
+            </Button>
+          ) : null}
         </div>
 
         <div className="flex items-center gap-1">

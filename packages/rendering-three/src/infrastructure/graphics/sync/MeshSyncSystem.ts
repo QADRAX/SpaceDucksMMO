@@ -240,6 +240,14 @@ export class MeshSyncSystem {
     }
 
     const mesh = new THREE.Mesh(geometry, material);
+    // Shadows: lights can have castShadow enabled, but meshes must opt-in too.
+    // Use per-geometry flags when available.
+    try {
+      mesh.castShadow = (geometryComp as any).castShadow ?? false;
+      mesh.receiveShadow = (geometryComp as any).receiveShadow ?? true;
+    } catch {
+      // ignore
+    }
     mesh.userData = mesh.userData || {};
     (mesh.userData as any).entityId = entity.id;
 

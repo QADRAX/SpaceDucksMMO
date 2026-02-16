@@ -3,6 +3,7 @@
 import * as React from 'react';
 
 import { Button } from '@/components/atoms/Button';
+import { DebugColliderIcon, DebugMeshIcon, DebugTransformIcon } from '@/components/icons';
 
 import { useEcsTreeEditorContext } from '../EcsTreeEditorContext';
 import type { Entity } from '@duckengine/ecs';
@@ -12,6 +13,8 @@ export function HierarchyPanel() {
   const editor = useEcsTreeEditorContext();
   // Force re-render when the scene graph is rebuilt into refs.
   void editor.sceneRevision;
+  // Force re-render for per-entity debug visualization flags.
+  void editor.presentationRevision;
 
   const [collapsed, setCollapsed] = React.useState<Record<string, boolean>>({});
   const [dragOverId, setDragOverId] = React.useState<string | null>(null);
@@ -117,6 +120,7 @@ function EntityNode(props: {
   onDropToParent: (parentId: string, e: React.DragEvent) => void;
 }) {
   const { entity } = props;
+  const editor = useEcsTreeEditorContext();
   const displayName = (entity.displayName && entity.displayName.trim()) ? entity.displayName.trim() : '';
   const label = displayName ? displayName : entity.id;
   const labelIsId = !displayName;
@@ -124,6 +128,9 @@ function EntityNode(props: {
   const hasChildren = children.length > 0;
   const expanded = props.isExpanded(entity.id);
   const selected = props.selectedId === entity.id;
+
+  const hasGeometry = entity.getAllComponents().some((c: any) => String(c.type).endsWith('Geometry'));
+  const hasCollider = entity.getAllComponents().some((c: any) => String(c.type).toLowerCase().includes('collider'));
 
   return (
     <div>
@@ -135,6 +142,15 @@ function EntityNode(props: {
         selected={selected}
         hasChildren={hasChildren}
         expanded={expanded}
+        gizmoIcon={entity.gizmoIcon}
+        debugTransformEnabled={entity.isDebugTransformEnabled()}
+        debugMeshEnabled={entity.isDebugMeshEnabled()}
+        debugColliderEnabled={entity.isDebugColliderEnabled()}
+        showDebugMesh={hasGeometry}
+        showDebugCollider={hasCollider}
+        onToggleDebugTransform={() => editor.onToggleEntityDebugTransform(entity.id)}
+        onToggleDebugMesh={hasGeometry ? () => editor.onToggleEntityDebugMesh(entity.id) : undefined}
+        onToggleDebugCollider={hasCollider ? () => editor.onToggleEntityDebugCollider(entity.id) : undefined}
         onToggle={hasChildren ? () => props.onToggle(entity.id) : undefined}
         onSelect={() => props.onSelect(entity.id)}
         draggable={props.canDragDrop}
@@ -180,6 +196,15 @@ function TreeRow(props: {
   selected: boolean;
   hasChildren: boolean;
   expanded: boolean;
+  gizmoIcon?: string;
+  debugTransformEnabled?: boolean;
+  debugMeshEnabled?: boolean;
+  debugColliderEnabled?: boolean;
+  showDebugMesh?: boolean;
+  showDebugCollider?: boolean;
+  onToggleDebugTransform?: () => void;
+  onToggleDebugMesh?: () => void;
+  onToggleDebugCollider?: () => void;
   onToggle?: () => void;
   onSelect: () => void;
   draggable?: boolean;
@@ -191,6 +216,12 @@ function TreeRow(props: {
   onDrop?: (e: React.DragEvent) => void;
 }) {
   const indent = props.depth * 12;
+  const gizmo = (props.gizmoIcon ?? '').trim();
+
+  const showAnyDebug =
+    !!props.onToggleDebugTransform ||
+    (!!props.showDebugMesh && !!props.onToggleDebugMesh) ||
+    (!!props.showDebugCollider && !!props.onToggleDebugCollider);
 
   return (
     <div
@@ -233,9 +264,62 @@ function TreeRow(props: {
         <div className="w-6" />
       )}
 
+      <div className="w-5 text-center text-xs opacity-80" aria-hidden>
+        {gizmo || ''}
+      </div>
+
       <div className={props.labelIsId ? 'flex-1 text-left font-mono text-xs font-normal opacity-80' : 'flex-1 text-left'}>
         {props.label}
       </div>
+
+      {showAnyDebug ? (
+        <div className="ml-1 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          {props.onToggleDebugTransform ? (
+            <button
+              type="button"
+              className={
+                'flex h-6 w-6 items-center justify-center rounded-base border border-transparent hover:bg-gray-100 ' +
+                (props.debugTransformEnabled ? 'bg-gray-100' : '')
+              }
+              aria-label={props.debugTransformEnabled ? 'Disable transform debug' : 'Enable transform debug'}
+              title="Debug transform"
+              onClick={props.onToggleDebugTransform}
+            >
+              <DebugTransformIcon className="h-4 w-4" />
+            </button>
+          ) : null}
+
+          {props.showDebugMesh && props.onToggleDebugMesh ? (
+            <button
+              type="button"
+              className={
+                'flex h-6 w-6 items-center justify-center rounded-base border border-transparent hover:bg-gray-100 ' +
+                (props.debugMeshEnabled ? 'bg-gray-100' : '')
+              }
+              aria-label={props.debugMeshEnabled ? 'Disable mesh debug' : 'Enable mesh debug'}
+              title="Debug mesh"
+              onClick={props.onToggleDebugMesh}
+            >
+              <DebugMeshIcon className="h-4 w-4" />
+            </button>
+          ) : null}
+
+          {props.showDebugCollider && props.onToggleDebugCollider ? (
+            <button
+              type="button"
+              className={
+                'flex h-6 w-6 items-center justify-center rounded-base border border-transparent hover:bg-gray-100 ' +
+                (props.debugColliderEnabled ? 'bg-gray-100' : '')
+              }
+              aria-label={props.debugColliderEnabled ? 'Disable collider debug' : 'Enable collider debug'}
+              title="Debug collider"
+              onClick={props.onToggleDebugCollider}
+            >
+              <DebugColliderIcon className="h-4 w-4" />
+            </button>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -177,6 +177,88 @@ export function BugIcon(props: React.SVGProps<SVGSVGElement>) {
   );
 }
 
+// Debug visualization icons (entity-level)
+export function DebugTransformIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M12 2v20" />
+      <path d="M2 12h20" />
+      <path d="M12 2l-2 2" />
+      <path d="M12 2l2 2" />
+      <path d="M22 12l-2-2" />
+      <path d="M22 12l-2 2" />
+      <path d="M12 22l-2-2" />
+      <path d="M12 22l2-2" />
+      <path d="M2 12l2-2" />
+      <path d="M2 12l2 2" />
+    </svg>
+  );
+}
+
+export function DebugMeshIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M3 7l9-5 9 5-9 5-9-5z" />
+      <path d="M3 7v10l9 5 9-5V7" />
+      <path d="M12 12v10" />
+    </svg>
+  );
+}
+
+export function DebugColliderIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <rect x="5" y="5" width="14" height="14" rx="2" />
+      <path d="M12 5v14" />
+      <path d="M5 12h14" />
+    </svg>
+  );
+}
+
+export function ClearDebugIcon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      {...props}
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M6 6l1 16h10l1-16" />
+      <path d="M9 11l6 6" />
+      <path d="M15 11l-6 6" />
+    </svg>
+  );
+}
+
 // Component Icons
 export function TagIcon(props: React.SVGProps<SVGSVGElement>) {
   return (

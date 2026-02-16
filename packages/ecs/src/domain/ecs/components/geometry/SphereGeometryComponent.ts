@@ -62,6 +62,30 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
             c.notifyChanged();
           }
         },
+        {
+          key: "castShadow",
+          label: "Cast Shadow",
+          description: "Whether this mesh should cast shadows onto other meshes.",
+          type: "boolean",
+          default: false,
+          get: (c: SphereGeometryComponent) => c.castShadow,
+          set: (c, v) => {
+            c.castShadow = Boolean(v);
+            c.notifyChanged();
+          },
+        },
+        {
+          key: "receiveShadow",
+          label: "Receive Shadow",
+          description: "Whether this mesh should receive shadows cast by other meshes.",
+          type: "boolean",
+          default: true,
+          get: (c: SphereGeometryComponent) => c.receiveShadow,
+          set: (c, v) => {
+            c.receiveShadow = Boolean(v);
+            c.notifyChanged();
+          },
+        },
       ],
     },
   };
@@ -74,11 +98,16 @@ export class SphereGeometryComponent extends BaseGeometryComponent {
     radius?: number;
     widthSegments?: number;
     heightSegments?: number;
+    castShadow?: boolean;
+    receiveShadow?: boolean;
   }) {
     super();
     this.radius = params?.radius ?? 1;
     this.widthSegments = params?.widthSegments ?? 32;
     this.heightSegments = params?.heightSegments ?? 16;
+
+    this.castShadow = params?.castShadow ?? false;
+    this.receiveShadow = params?.receiveShadow ?? true;
   }
 
   getBoundingRadius(worldScale: Vector3Like): number {

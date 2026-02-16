@@ -20,7 +20,6 @@ export type { EditorMode, EditorResource } from './types';
 export function useEcsTreeEditor(args: {
   resource: EditorResource;
   initialComponentDataJson: string | null;
-  debugTransformsEnabledInitial?: boolean;
 }): EcsTreeEditorStore {
   const { resource, initialComponentDataJson } = args;
 
@@ -35,9 +34,7 @@ export function useEcsTreeEditor(args: {
   const modeRef = React.useRef<EditorMode>('edit');
   const pausedRef = React.useRef(false);
 
-  const [debugTransformsEnabled, setDebugTransformsEnabled] = React.useState(
-    args.debugTransformsEnabledInitial ?? true
-  );
+  const [presentationRevision, setPresentationRevision] = React.useState(0);
 
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [sceneRevision, setSceneRevision] = React.useState(0);
@@ -51,7 +48,6 @@ export function useEcsTreeEditor(args: {
 
   const scenes = useEcsEditorScenes({
     resource,
-    debugTransformsEnabled,
     modeRef,
     rendererRef,
     selectedIdRef,
@@ -211,6 +207,7 @@ export function useEcsTreeEditor(args: {
     setError,
     commitFromCurrentEditScene: scenes.commitFromCurrentEditScene,
     factoryRef,
+    bumpPresentationRevision: () => setPresentationRevision((v) => v + 1),
   });
 
   const currentScene = mode === 'play' ? scenes.playSceneRef.current : scenes.editSceneRef.current;
@@ -242,8 +239,7 @@ export function useEcsTreeEditor(args: {
     setError,
     mode,
     paused,
-    debugTransformsEnabled,
-    setDebugTransformsEnabled,
+    presentationRevision,
     dirty: history.dirty,
     canUndo,
     canRedo,
@@ -277,6 +273,10 @@ export function useEcsTreeEditor(args: {
     onSetSelectedGizmoIcon: actions.onSetSelectedGizmoIcon,
     onSetSelectedLocalPositionAxis: actions.onSetSelectedLocalPositionAxis,
     onUpdateSelectedComponentData: actions.onUpdateSelectedComponentData,
+    onToggleEntityDebugTransform: actions.onToggleEntityDebugTransform,
+    onToggleEntityDebugMesh: actions.onToggleEntityDebugMesh,
+    onToggleEntityDebugCollider: actions.onToggleEntityDebugCollider,
+    onClearAllDebug: actions.onClearAllDebug,
     commitFromCurrentEditScene: scenes.commitFromCurrentEditScene,
     factory: factoryRef.current,
   };

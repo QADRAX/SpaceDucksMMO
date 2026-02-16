@@ -19,7 +19,15 @@ export function useEcsEditorActions(args: {
   setError: (msg: string | null) => void;
   commitFromCurrentEditScene: (reason: string) => void;
   factoryRef: React.MutableRefObject<DefaultEcsComponentFactory>;
+  bumpPresentationRevision: () => void;
 }) {
+  const getEntityById = (id: string): Entity | null => {
+    if (args.modeRef.current !== 'edit') return null;
+    const scene = args.editSceneRef.current;
+    if (!scene) return null;
+    return scene.getEntitiesById().get(id) ?? null;
+  };
+
   const mutateSelectedEntity = useStableEvent((fn: (scene: EcsEditorScene, ent: Entity) => void, reason: string) => {
     if (args.modeRef.current !== 'edit') return;
     const scene = args.editSceneRef.current;
@@ -40,6 +48,51 @@ export function useEcsEditorActions(args: {
     args.commitFromCurrentEditScene(reason);
   });
 
+  const onToggleEntityDebugTransform = useStableEvent((id: string) => {
+    const ent = getEntityById(id);
+    if (!ent) return;
+    try {
+      ent.setDebugTransformEnabled(!ent.isDebugTransformEnabled());
+    } finally {
+      args.bumpPresentationRevision();
+    }
+  });
+
+  const onToggleEntityDebugMesh = useStableEvent((id: string) => {
+    const ent = getEntityById(id);
+    if (!ent) return;
+    try {
+      ent.setDebugMeshEnabled(!ent.isDebugMeshEnabled());
+    } finally {
+      args.bumpPresentationRevision();
+    }
+  });
+
+  const onToggleEntityDebugCollider = useStableEvent((id: string) => {
+    const ent = getEntityById(id);
+    if (!ent) return;
+    try {
+      ent.setDebugColliderEnabled(!ent.isDebugColliderEnabled());
+    } finally {
+      args.bumpPresentationRevision();
+    }
+  });
+
+  const onClearAllDebug = useStableEvent(() => {
+    if (args.modeRef.current !== 'edit') return;
+    const scene = args.editSceneRef.current;
+    if (!scene) return;
+    for (const ent of scene.getEntitiesById().values()) {
+      try {
+        ent.setDebugTransformEnabled(false);
+        ent.setDebugMeshEnabled(false);
+        ent.setDebugColliderEnabled(false);
+      } catch {
+        // ignore individual entity failures
+      }
+    }
+    args.bumpPresentationRevision();
+  });
   const onCreateEmpty = useStableEvent(() => {
     if (args.modeRef.current !== 'edit') return;
 
@@ -57,14 +110,6 @@ export function useEcsEditorActions(args: {
 
     scene.addEntity(e);
     scene.getEntitiesById().set(e.id, e);
-
-    // Make sure the entity is immediately visible when debug transforms are enabled.
-    // Existing entities get this applied during scene rebuild/toggle, but newly created ones need it too.
-    try {
-      e.setDebugTransformEnabled(!!scene.debugTransformsEnabled);
-    } catch {
-      // ignore
-    }
 
     args.setSelectedId(e.id);
     args.commitFromCurrentEditScene('create-empty');
@@ -290,5 +335,9 @@ export function useEcsEditorActions(args: {
     onSetSelectedGizmoIcon,
     onSetSelectedLocalPositionAxis,
     onUpdateSelectedComponentData,
+    onToggleEntityDebugTransform,
+    onToggleEntityDebugMesh,
+    onToggleEntityDebugCollider,
+    onClearAllDebug,
   };
 }

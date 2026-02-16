@@ -11,6 +11,8 @@ import { PanelTabs } from '@/components/molecules/PanelTabs';
 import { TransformEditor } from '@/components/molecules/TransformEditor';
 import { ComponentSelector } from '@/components/molecules/ComponentSelector';
 
+import { ResourceKeyDropdown } from '@/components/molecules/ResourceKeyDropdown';
+
 import { EcsInspectorFieldsForm } from '@/components/molecules/EcsInspectorFieldsForm';
 
 import {
@@ -38,6 +40,9 @@ import {
   TriangleIcon,
   ZapIcon,
   ArrowDownIcon,
+  DebugTransformIcon,
+  DebugMeshIcon,
+  DebugColliderIcon,
 } from '@/components/icons';
 
 import { useEcsTreeEditorContext } from '../EcsTreeEditorContext';
@@ -50,6 +55,12 @@ import {
   setRememberedTab,
   type InspectorTab,
 } from './inspectorUiMemory';
+
+import {
+  MATERIAL_RESOURCE_REF_KEY,
+  isMaterialComponentType,
+} from '@/lib/resourceBackedEditor';
+import { resolveMaterialResourceActive } from '@/lib/engineResourceResolution';
 
 const iconMap = {
   Tag: TagIcon,
@@ -86,6 +97,8 @@ function getComponentIcon(iconName: string) {
 export function InspectorPanel() {
   const editor = useEcsTreeEditorContext();
   const selected = editor.selectedEntity;
+  // Force re-render on per-entity debug flag changes.
+  void editor.presentationRevision;
 
   const selectionKey = editor.selectedId ?? '__none__';
 
@@ -132,8 +145,56 @@ export function InspectorPanel() {
   return (
     <div className="col-span-3 flex min-h-0 flex-col overflow-hidden rounded-base border-2 border-border bg-white">
       <div className="border-b border-border p-2">
-        <div className="text-sm font-bold">Inspector</div>
-        <div className="text-xs text-muted-foreground">{selectedSubtitle}</div>
+        <div className="flex items-start justify-between gap-2">
+          <div>
+            <div className="text-sm font-bold">Inspector</div>
+            <div className="text-xs text-muted-foreground">{selectedSubtitle}</div>
+          </div>
+
+          {selected && editor.mode === 'edit' ? (
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="iconSm"
+                aria-label={selected.isDebugTransformEnabled() ? 'Disable transform debug' : 'Enable transform debug'}
+                title="Debug transform"
+                onClick={() => editor.onToggleEntityDebugTransform(selected.id)}
+                className={selected.isDebugTransformEnabled() ? 'bg-gray-100' : undefined}
+              >
+                <DebugTransformIcon className="h-4 w-4" />
+              </Button>
+
+              {selected.getAllComponents().some((c: any) => String(c.type).endsWith('Geometry')) ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="iconSm"
+                  aria-label={selected.isDebugMeshEnabled() ? 'Disable mesh debug' : 'Enable mesh debug'}
+                  title="Debug mesh"
+                  onClick={() => editor.onToggleEntityDebugMesh(selected.id)}
+                  className={selected.isDebugMeshEnabled() ? 'bg-gray-100' : undefined}
+                >
+                  <DebugMeshIcon className="h-4 w-4" />
+                </Button>
+              ) : null}
+
+              {selected.getAllComponents().some((c: any) => String(c.type).toLowerCase().includes('collider')) ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="iconSm"
+                  aria-label={selected.isDebugColliderEnabled() ? 'Disable collider debug' : 'Enable collider debug'}
+                  title="Debug collider"
+                  onClick={() => editor.onToggleEntityDebugCollider(selected.id)}
+                  className={selected.isDebugColliderEnabled() ? 'bg-gray-100' : undefined}
+                >
+                  <DebugColliderIcon className="h-4 w-4" />
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
       </div>
 
       {selected ? (
@@ -220,6 +281,12 @@ export function InspectorPanel() {
                     const value: Record<string, unknown> = {};
                     for (const f of fields) value[f.key] = c[f.key];
 
+                    const isMaterial = isMaterialComponentType(String(c.type));
+                    const isCustomGeometry = String(c.type) === 'customGeometry';
+                    const materialResourceKey = isMaterial
+                      ? (typeof c?.[MATERIAL_RESOURCE_REF_KEY] === 'string' ? String(c[MATERIAL_RESOURCE_REF_KEY]) : '')
+                      : '';
+
                     return (
                       <div key={c.type} className="border-b border-border p-3">
                         <div className="flex items-center justify-between gap-2">
@@ -238,7 +305,65 @@ export function InspectorPanel() {
                           </Button>
                         </div>
 
-                        {fields.length ? (
+                        {isMaterial ? (
+                          <div className="mt-3 space-y-2">
+                            <Label>Material Resource</Label>
+                            <ResourceKeyDropdown
+                              kinds={[String(c.type)]}
+                              value={materialResourceKey || null}
+                              disabled={editor.mode !== 'edit'}
+                              placeholder="Select material resource…"
+                              onChange={async (nextKey) => {
+                                if (!nextKey) {
+                                  editor.onUpdateSelectedComponentData(c.type, { [MATERIAL_RESOURCE_REF_KEY]: '' });
+                                  return;
+                                }
+
+                                editor.setError(null);
+                                try {
+                                  const resolved = await resolveMaterialResourceActive(nextKey);
+                                  if (resolved.kind !== String(c.type)) {
+                                    throw new Error(`Resource kind '${resolved.kind}' does not match component '${String(c.type)}'`);
+                                  }
+
+                                  editor.onUpdateSelectedComponentData(c.type, {
+                                    [MATERIAL_RESOURCE_REF_KEY]: nextKey,
+                                    ...resolved.componentData,
+                                  });
+                                } catch (e) {
+                                  editor.setError(e instanceof Error ? e.message : 'Failed to apply material resource');
+                                }
+                              }}
+                            />
+                            <div className="text-xs text-muted-foreground">
+                              Uses the active version of the selected resource.
+                            </div>
+                          </div>
+                        ) : isCustomGeometry ? (
+                          <div className="mt-3 space-y-2">
+                            <Label>Custom Mesh Resource</Label>
+                            <ResourceKeyDropdown
+                              kinds={['customMesh']}
+                              value={typeof c?.key === 'string' && c.key.trim() ? c.key : null}
+                              disabled={editor.mode !== 'edit'}
+                              placeholder="Select custom mesh…"
+                              onChange={(nextKey) => {
+                                editor.onUpdateSelectedComponentData(c.type, { key: nextKey ?? '' });
+                              }}
+                            />
+
+                            {fields.length ? (
+                              <div className="mt-3">
+                                <EcsInspectorFieldsForm
+                                  fields={fields.filter((f) => String((f as any)?.key) !== 'key') as any}
+                                  value={value}
+                                  onChange={(next) => editor.onUpdateSelectedComponentData(c.type, next)}
+                                  hideTypes={['reference', 'enum'] as any}
+                                />
+                              </div>
+                            ) : null}
+                          </div>
+                        ) : fields.length ? (
                           <div className="mt-3">
                             <EcsInspectorFieldsForm
                               fields={fields as any}

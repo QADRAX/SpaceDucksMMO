@@ -11,29 +11,14 @@ import {
   serializeSnapshotFromScene,
 } from '@/lib/ecsTreeEditorRuntime';
 
+import { hydrateResourceBackedMaterials } from '@/lib/resourceBackedEditor';
+
 import type { EditorMode, EditorResource } from '../types';
 import { useStableEvent } from '../useStableEvent';
 import { makeSceneIds, sanitizeSelectedId } from './scenesLogic';
 
-function applyDebugTransforms(scene: EcsEditorScene, enabled: boolean) {
-  try {
-    scene.setDebugTransformsEnabled(!!enabled);
-  } catch (e) {
-    if (process.env.NODE_ENV !== 'production') console.warn('[EcsTreeEditor] setDebugTransformsEnabled failed', e);
-  }
-
-  for (const ent of scene.getEntitiesById().values()) {
-    try {
-      ent.setDebugTransformEnabled(!!enabled);
-    } catch (e) {
-      if (process.env.NODE_ENV !== 'production') console.warn('[EcsTreeEditor] ent.setDebugTransformEnabled failed', e);
-    }
-  }
-}
-
 export function useEcsEditorScenes(args: {
   resource: EditorResource;
-  debugTransformsEnabled: boolean;
   modeRef: React.RefObject<EditorMode>;
   rendererRef: React.RefObject<ThreeRenderer | null>;
   selectedIdRef: React.RefObject<string | null>;
@@ -53,16 +38,22 @@ export function useEcsEditorScenes(args: {
     const built = makeEditorSceneFromSnapshot({
       id: ids.editId,
       snapshotJson,
-      debugTransformsEnabled: args.debugTransformsEnabled,
+      // Debug masters are always enabled; per-entity flags decide what renders.
+      debugTransformsEnabled: true,
       cameraPose: cameraPoseRef.current,
     });
 
     editSceneRef.current = built.scene;
-    applyDebugTransforms(built.scene, args.debugTransformsEnabled);
 
     if (args.modeRef.current === 'edit') {
       renderer.setScene(built.scene);
     }
+
+    // Best-effort: resolve resource-backed material refs to the active version.
+    // This keeps the editor preview in sync without persisting expanded params.
+    void hydrateResourceBackedMaterials(built.scene).catch((e) => {
+      if (process.env.NODE_ENV !== 'production') console.warn('[EcsTreeEditor] hydrate materials failed', e);
+    });
 
     const nextSelected = sanitizeSelectedId(args.selectedIdRef.current, built.scene.getEntitiesById());
     if (nextSelected !== args.selectedIdRef.current) args.setSelectedId(nextSelected);
@@ -105,11 +96,16 @@ export function useEcsEditorScenes(args: {
     const built = makeEditorSceneFromSnapshot({
       id: ids.playId,
       snapshotJson: playSnapshot,
-      debugTransformsEnabled: args.debugTransformsEnabled,
+      debugTransformsEnabled: true,
       cameraPose: cameraPoseRef.current,
     });
 
     playSceneRef.current = built.scene;
+
+    void hydrateResourceBackedMaterials(built.scene).catch((e) => {
+      if (process.env.NODE_ENV !== 'production') console.warn('[EcsTreeEditor] hydrate play materials failed', e);
+    });
+
     return built.scene;
   });
 
@@ -118,10 +114,8 @@ export function useEcsEditorScenes(args: {
   });
 
   React.useEffect(() => {
-    const scene = editSceneRef.current;
-    if (!scene) return;
-    applyDebugTransforms(scene, args.debugTransformsEnabled);
-  }, [args.debugTransformsEnabled]);
+    // No scene-level debug toggles; masters stay enabled.
+  }, []);
 
   return {
     editSceneRef,

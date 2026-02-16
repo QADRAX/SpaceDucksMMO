@@ -3,7 +3,7 @@
 import * as React from 'react';
 
 import { Button } from '@/components/atoms/Button';
-import { BugIcon, PauseIcon, PlayIcon, RedoIcon, SaveIcon, StopIcon, UndoIcon } from '@/components/icons';
+import { PauseIcon, PlayIcon, RedoIcon, SaveIcon, StopIcon, UndoIcon } from '@/components/icons';
 
 import { useEcsTreeEditorContext } from '../EcsTreeEditorContext';
 
@@ -67,20 +67,6 @@ export function EditorToolbar() {
           title="Redo"
         >
           <RedoIcon className="h-4 w-4" />
-        </Button>
-      </div>
-
-      <div className="flex items-center gap-1">
-        <Button
-          type="button"
-          variant="ghost"
-          size="iconSm"
-          aria-label={editor.debugTransformsEnabled ? 'Disable debug transforms' : 'Enable debug transforms'}
-          title="Debug transforms"
-          onClick={() => editor.setDebugTransformsEnabled(!editor.debugTransformsEnabled)}
-          className={editor.debugTransformsEnabled ? 'bg-gray-100' : undefined}
-        >
-          <BugIcon className="h-4 w-4" />
         </Button>
       </div>
 
