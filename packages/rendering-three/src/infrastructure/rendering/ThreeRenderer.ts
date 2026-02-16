@@ -3,7 +3,7 @@ import type { IRenderingEngine, IScene, ITextureResolver, TextureCatalogService,
 import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
 import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import type { IFpsController } from "../ui/dev/FpsController";
-import RenderSyncSystem from "../graphics/sync/RenderSyncSystem";
+import { RenderSyncSystem } from "../graphics/sync/RenderSyncSystem";
 import { DEBUG_LAYERS } from "../graphics/debug/DebugLayers";
 import type { EngineResourceResolver } from "../resources/EngineResourceResolver";
 
@@ -94,39 +94,39 @@ export class ThreeRenderer implements IRenderingEngine {
   dispose(): void {
     try {
       this.stop();
-    } catch {}
+    } catch { }
 
     try {
       if (this.resizeRafId !== null) cancelAnimationFrame(this.resizeRafId);
-    } catch {}
+    } catch { }
     this.resizeRafId = null;
 
     try {
       if (this.onResize) window.removeEventListener('resize', this.onResize);
-    } catch {}
+    } catch { }
     this.onResize = undefined;
 
     try {
       this.disablePostProcessing();
-    } catch {}
+    } catch { }
 
     try {
       // Teardown any active scene
       this.teardownPreviousScene();
-    } catch {}
+    } catch { }
 
     try {
       const el = this.renderer?.domElement as any;
       if (el && el.parentNode) el.parentNode.removeChild(el);
-    } catch {}
+    } catch { }
 
     try {
       this.renderer?.dispose?.();
-    } catch {}
+    } catch { }
 
     try {
       this.fpsController?.dispose?.();
-    } catch {}
+    } catch { }
   }
 
   private initializeRenderer(): void {
@@ -158,7 +158,7 @@ export class ThreeRenderer implements IRenderingEngine {
       const obj = stack.pop()!;
       try {
         if (obj.userData && (obj.userData as any).entityId === entityId) return obj;
-      } catch {}
+      } catch { }
       for (const c of obj.children) stack.push(c);
     }
     return null;
@@ -246,7 +246,7 @@ export class ThreeRenderer implements IRenderingEngine {
         if (s?.getDebugTransformsEnabled?.()) mask |= 1 << DEBUG_LAYERS.transforms;
         if (s?.getDebugMeshesEnabled?.()) mask |= 1 << DEBUG_LAYERS.mesh;
         if (s?.getDebugCollidersEnabled?.()) mask |= 1 << DEBUG_LAYERS.colliders;
-      } catch {}
+      } catch { }
       cam.layers.mask = mask;
 
       if (this.usePostProcessing && this.composer) {

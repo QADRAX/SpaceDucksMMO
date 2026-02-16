@@ -12,7 +12,7 @@ import type {
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import type { IFpsController } from '../ui/dev/FpsController';
-import RenderSyncSystem from '../graphics/sync/RenderSyncSystem';
+import { RenderSyncSystem } from '../graphics/sync/RenderSyncSystem';
 import { DEBUG_LAYERS } from '../graphics/debug/DebugLayers';
 import type { EngineResourceResolver } from '../resources/EngineResourceResolver';
 
@@ -173,15 +173,15 @@ export class ThreeMultiRenderer implements IRenderingEngine {
 
     try {
       v.renderer.domElement.remove();
-    } catch {}
+    } catch { }
 
     try {
       v.composer?.dispose();
-    } catch {}
+    } catch { }
 
     try {
       v.renderer.dispose();
-    } catch {}
+    } catch { }
 
     this.views.delete(id);
     this.refreshSceneDebugAggregates();
@@ -244,7 +244,7 @@ export class ThreeMultiRenderer implements IRenderingEngine {
       const obj = stack.pop()!;
       try {
         if (obj.userData && (obj.userData as any).entityId === entityId) return obj;
-      } catch {}
+      } catch { }
       for (const c of obj.children) stack.push(c);
     }
     return null;
@@ -304,7 +304,7 @@ export class ThreeMultiRenderer implements IRenderingEngine {
       try {
         v.renderer.shadowMap.enabled = enabled;
         if (enabled) v.renderer.shadowMap.type = type;
-      } catch {}
+      } catch { }
     }
   }
 
@@ -313,15 +313,15 @@ export class ThreeMultiRenderer implements IRenderingEngine {
 
     try {
       old.domElement.remove();
-    } catch {}
+    } catch { }
 
     try {
       view.composer?.dispose();
-    } catch {}
+    } catch { }
 
     try {
       old.dispose();
-    } catch {}
+    } catch { }
 
     const renderer = new THREE.WebGLRenderer({ antialias: this.antialias });
     renderer.shadowMap.enabled = this.shadows;
@@ -359,7 +359,7 @@ export class ThreeMultiRenderer implements IRenderingEngine {
     if (v.composer) {
       try {
         v.composer.dispose();
-      } catch {}
+      } catch { }
       v.composer = undefined;
       v.renderPass = undefined;
     }
@@ -424,7 +424,7 @@ export class ThreeMultiRenderer implements IRenderingEngine {
       if (v.composer) {
         try {
           v.composer.dispose();
-        } catch {}
+        } catch { }
       }
       v.composer = undefined;
       v.renderPass = undefined;
@@ -454,7 +454,7 @@ export class ThreeMultiRenderer implements IRenderingEngine {
     try {
       view.renderer.setClearColor(0x000000, 0);
       view.renderer.clear(true, true, true);
-    } catch {}
+    } catch { }
   }
 
   private applyCameraLayersForView(view: ViewRuntime, cam: THREE.Camera): () => void {
@@ -498,7 +498,7 @@ export class ThreeMultiRenderer implements IRenderingEngine {
 
     try {
       this.fpsController.update();
-    } catch {}
+    } catch { }
   }
 
   handleResize(): void {
@@ -519,15 +519,15 @@ export class ThreeMultiRenderer implements IRenderingEngine {
 
     try {
       if (typeof scene.setDebugTransformsEnabled === 'function') scene.setDebugTransformsEnabled(anyTransforms);
-    } catch {}
+    } catch { }
 
     try {
       if (typeof scene.setDebugMeshesEnabled === 'function') scene.setDebugMeshesEnabled(anyMesh);
-    } catch {}
+    } catch { }
 
     try {
       if (typeof scene.setDebugCollidersEnabled === 'function') scene.setDebugCollidersEnabled(anyColliders);
-    } catch {}
+    } catch { }
   }
 }
 

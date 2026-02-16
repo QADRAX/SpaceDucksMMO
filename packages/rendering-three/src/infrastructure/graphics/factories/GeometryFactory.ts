@@ -69,7 +69,7 @@ export class GeometryFactory {
       case "custom":
       case "customgeometry":
         {
-          // Custom geometry is loaded asynchronously by MeshSyncSystem.
+          // Custom geometry is loaded asynchronously by MeshFeature.
           // Return an empty geometry so nothing is rendered while loading.
           const g = new THREE.BufferGeometry();
           g.setAttribute(
