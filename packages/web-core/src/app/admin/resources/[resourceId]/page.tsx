@@ -9,6 +9,7 @@ import { ResourceDetailAdminPanel } from '@/components/organisms/ResourceDetailA
 import { ResourceDetailCustomMeshPanel } from '@/components/organisms/ResourceDetailCustomMeshPanel';
 import { ResourceDetailEcsTreePanel } from '@/components/organisms/ResourceDetailEcsTreePanel';
 import { ResourceDetailSkyboxPanel } from '@/components/organisms/ResourceDetailSkyboxPanel';
+import { ResourceDetailFullMeshPanel } from '@/components/organisms/ResourceDetailFullMeshPanel';
 import { ResourceDetailShell } from '@/components/organisms/ResourceDetailShell';
 import { ResourceDetailHeaderEditor } from '@/components/organisms/ResourceDetailHeaderEditor';
 import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
@@ -173,6 +174,26 @@ export default async function ResourceDetailPage({
               })),
             }))}
           />
+        ) : kindParsed.success && kindParsed.data === 'fullMesh' ? (
+          <ResourceDetailFullMeshPanel
+            resource={{
+              id: resource.id,
+              kind: 'fullMesh',
+              activeVersion: resource.activeVersion,
+            }}
+            versions={versions.map((v) => ({
+              id: v.id,
+              version: v.version,
+              componentType: v.componentType,
+              componentData: v.componentData,
+              bindings: (v.bindings ?? []).map((b) => ({
+                id: b.id,
+                slot: b.slot,
+                fileAssetId: b.fileAssetId,
+                fileName: b.fileAsset.fileName,
+              })),
+            }))}
+          />
         ) : kindParsed.success && kindParsed.data === 'skybox' ? (
           <ResourceDetailSkyboxPanel
             resource={{
@@ -232,8 +253,8 @@ export default async function ResourceDetailPage({
           />
         ) : kindParsed.success && kindParsed.data === 'customMesh' && activeVersion ? (
           <CustomMeshResourcePreview resourceKey={resource.key} className="h-full w-full" />
-        ) : kindParsed.success && kindParsed.data === 'skybox' && activeVersion ? (
-          <SkyboxResourcePreview3D resourceKey={resource.key} activeVersion={resource.activeVersion} className="h-full w-full" />
+        ) : kindParsed.success && kindParsed.data === 'fullMesh' && activeVersion ? (
+          <CustomMeshResourcePreview resourceKey={resource.key} className="h-full w-full" disableMaterialOverrides />
         ) : (
           <div className="h-full w-full flex items-center justify-center bg-bg">
             <div className="text-sm text-neutral-600">No preview available for this resource kind.</div>

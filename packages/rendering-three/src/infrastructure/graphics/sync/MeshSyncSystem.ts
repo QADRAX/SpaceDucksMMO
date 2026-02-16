@@ -9,6 +9,7 @@ import type {
   ConeGeometryComponent,
   TorusGeometryComponent,
   CustomGeometryComponent,
+  FullMeshComponent,
   StandardMaterialComponent,
   BasicMaterialComponent,
   PhongMaterialComponent,
@@ -65,9 +66,14 @@ export class MeshSyncSystem {
     const shaderMaterial =
       entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
 
+    const isFullMesh = !!geometryComp && (geometryComp as any).type === "fullMesh";
+
+    if (!geometryComp || geometryComp.enabled === false) return false;
+
+    // Full meshes carry their own materials inside the GLB, so they must not
+    // require a separate material/shader component to be present.
     if (
-      !geometryComp ||
-      geometryComp.enabled === false ||
+      !isFullMesh &&
       ((!materialComp || materialComp.enabled === false) &&
         (!shaderMaterial || shaderMaterial.enabled === false))
     ) {
@@ -88,11 +94,14 @@ export class MeshSyncSystem {
     const shaderMaterial =
       entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
 
+    const isFullMesh = !!geometry && (geometry as any).type === "fullMesh";
+
     if (rc?.object3D) {
       const shouldBeVisible =
         !!geometry &&
         geometry.enabled !== false &&
-        ((materialComp && materialComp.enabled !== false) ||
+        (isFullMesh ||
+          (materialComp && materialComp.enabled !== false) ||
           (shaderMaterial && shaderMaterial.enabled !== false));
 
       if (!shouldBeVisible) {
@@ -109,7 +118,8 @@ export class MeshSyncSystem {
     if (
       geometry &&
       geometry.enabled !== false &&
-      ((materialComp && materialComp.enabled !== false) ||
+      (isFullMesh ||
+        (materialComp && materialComp.enabled !== false) ||
         (shaderMaterial && shaderMaterial.enabled !== false))
     ) {
       this.createMesh(entity, geometry, materialComp, shaderMaterial);
@@ -266,6 +276,7 @@ export class MeshSyncSystem {
       entity.getComponent<ConeGeometryComponent>("coneGeometry") ??
       entity.getComponent<TorusGeometryComponent>("torusGeometry") ??
       entity.getComponent<CustomGeometryComponent>("customGeometry") ??
+      entity.getComponent<FullMeshComponent>("fullMesh") ??
       null
     );
   }
@@ -286,6 +297,39 @@ export class MeshSyncSystem {
     materialComp?: AnyMaterialComponent | null,
     shaderMaterialComp?: ShaderMaterialComponent
   ): void {
+    // Special-case: full GLB (scene graph + animations) — create placeholder
+    if ((geometryComp as any).type === "fullMesh") {
+      const group = new THREE.Group();
+      group.visible = false;
+      group.userData = group.userData || {};
+      (group.userData as any).entityId = entity.id;
+
+      // Persist desired shadow flags so async GLB loading can apply them.
+      try {
+        (group.userData as any).fullMeshCastShadow = (geometryComp as any).castShadow ?? false;
+        (group.userData as any).fullMeshReceiveShadow = (geometryComp as any).receiveShadow ?? true;
+      } catch {}
+
+      syncTransformToObject3D(entity, group);
+      this.scene.add(group);
+      this.registry.add(entity.id, {
+        entityId: entity.id,
+        object3D: group,
+        geometry: undefined,
+        material: undefined,
+      });
+
+      // Apply shadow flags immediately so the placeholder subtree (once loaded)
+      // uses the expected cast/receive settings.
+      try {
+        this.applyShadowFlagsToObject3D(group, (geometryComp as any).castShadow ?? false, (geometryComp as any).receiveShadow ?? true);
+      } catch {}
+
+      const key = String(((geometryComp as any).key ?? "") as string).trim();
+      if (key && this.engineResourceResolver) this.loadAndApplyFullGlb(entity.id, key).catch(() => {});
+      return;
+    }
+
     const geometry = GeometryFactory.build(geometryComp);
     let material: THREE.Material;
 
@@ -361,10 +405,13 @@ export class MeshSyncSystem {
     const resolved = await this.engineResourceResolver.resolve(resourceKey, "active");
     const meshFile = resolved?.files?.mesh;
     const url = meshFile?.url;
+    try {
+      console.warn(`[MeshSyncSystem] loadAndApplyFullGlb: entity=${entityId} key=${resourceKey} url=${url}`);
+    } catch {}
     if (typeof url !== "string" || !url.length) return;
 
     const geomPromise = this.customGeometryCacheByUrl.get(url) ??
-      this.loadGlbGeometry(url);
+      this.loadGlbGeometry(url, resolved);
     this.customGeometryCacheByUrl.set(url, geomPromise);
 
     const loadedGeometry = await geomPromise;
@@ -426,9 +473,305 @@ export class MeshSyncSystem {
     mesh.visible = true;
   }
 
-  private async loadGlbGeometry(url: string): Promise<THREE.BufferGeometry> {
-    const loader = await this.getGltfLoader();
+  /**
+   * Load a full GLB (scene + materials + animations) and apply it to the entity.
+   */
+  private async loadAndApplyFullGlb(entityId: string, resourceKey: string): Promise<void> {
+    if (!this.engineResourceResolver) return;
+
+    const prev = this.customGeometryRequestByEntityId.get(entityId);
+    const requestId = (prev?.requestId ?? 0) + 1;
+    this.customGeometryRequestByEntityId.set(entityId, {
+      key: resourceKey,
+      requestId,
+    });
+
+    const resolved = await this.engineResourceResolver.resolve(resourceKey, "active");
+    const meshFile = resolved?.files?.mesh;
+    const url = meshFile?.url;
+    if (typeof url !== "string" || !url.length) return;
+
+    // Create a GLTFLoader instance for this resolved resource so we can
+    // map any referenced external image URLs to the file bindings returned
+    // by the engine resource resolver. This ensures textures referenced by
+    // relative paths inside the GLB are fetched from the uploaded file URLs.
+    const loader = await this.createLoaderForResolved(resolved);
     const gltf = await loader.loadAsync(url);
+    try {
+      // Report basic GLTF load info to aid debugging in the browser console.
+      let meshCount = 0;
+      let animCount = (gltf && (gltf.animations || []).length) || 0;
+      try {
+        (gltf.scene || new THREE.Group()).traverse((o: any) => {
+          if (o && (o as any).isMesh) meshCount++;
+        });
+      } catch {}
+      console.warn(`[MeshSyncSystem] GLTF loaded: url=${url} meshes=${meshCount} animations=${animCount}`);
+    } catch {}
+
+    const nextRoot = gltf.scene ? (gltf.scene.clone(true) as THREE.Object3D) : new THREE.Group();
+
+    // Normalize UVs on geometries inside the glTF scene
+    nextRoot.traverse((obj: THREE.Object3D) => {
+      const anyObj: any = obj;
+      const geom = anyObj.geometry as THREE.BufferGeometry | undefined;
+      if (geom instanceof THREE.BufferGeometry) {
+        try {
+          this.normalizeGlbUvs(geom);
+        } catch {}
+      }
+    });
+
+    const current = this.customGeometryRequestByEntityId.get(entityId);
+    if (!current || current.requestId !== requestId || current.key !== resourceKey) return;
+
+    const rc = this.registry.get(entityId);
+    if (!rc || !rc.object3D) return;
+
+    const placeholder = rc.object3D as THREE.Object3D;
+
+    // Remove existing children
+    try {
+      while (placeholder.children.length) {
+        const ch = placeholder.children.pop()!;
+        try {
+          if (ch.parent) ch.parent.remove(ch);
+        } catch {}
+      }
+    } catch {}
+
+    // Add only a single entity from the GLB: pick the first node that contains a Mesh
+    try {
+      let foundMesh: THREE.Mesh | null = null;
+      (nextRoot as any).traverse((obj: THREE.Object3D) => {
+        if (foundMesh) return;
+        if ((obj as any) instanceof THREE.Mesh) foundMesh = obj as THREE.Mesh;
+      });
+
+      if (foundMesh) {
+        // Choose the top-level ancestor under the scene that contains the mesh.
+        let ancestor: THREE.Object3D = foundMesh;
+        while (ancestor.parent && ancestor.parent !== nextRoot) {
+          ancestor = ancestor.parent as THREE.Object3D;
+        }
+
+        const toAdd = ancestor.clone(true) as THREE.Object3D;
+
+        // Remove any cameras or lights from the cloned subtree to avoid adding GLB cameras/lights.
+        try {
+          toAdd.traverse((n) => {
+            try {
+              if ((n as any) instanceof THREE.Camera || (n as any) instanceof THREE.Light) {
+                if (n.parent) n.parent.remove(n);
+              }
+            } catch {}
+          });
+        } catch {}
+
+        placeholder.add(toAdd);
+
+        try {
+          // Debug: report how many mesh children and whether materials appear present
+          let meshes = 0;
+          let mats = 0;
+          toAdd.traverse((n: any) => {
+            if (n && n.isMesh) {
+              meshes++;
+              try {
+                const m = n.material;
+                if (m) mats++;
+              } catch {}
+            }
+          });
+          console.warn(`[MeshSyncSystem] applied GLB subtree: addedMeshes=${meshes} addedMaterials=${mats} entity=${entityId}`);
+        } catch {}
+      } else {
+        // Fallback: add entire scene if no mesh found.
+        if ((nextRoot as any).children && (nextRoot as any).children.length) {
+          for (const child of (nextRoot as any).children.slice()) {
+              try {
+                placeholder.add(child);
+              } catch {}
+            }
+          try {
+            console.warn(`[MeshSyncSystem] applied GLB fallback scene children=${(nextRoot as any).children.length} entity=${entityId}`);
+          } catch {}
+        } else {
+          try {
+            placeholder.add(nextRoot as any);
+          } catch {}
+        }
+      }
+    } catch {}
+
+    // Ensure all meshes in the loaded subtree respect the FullMeshComponent shadow flags.
+    try {
+      const desiredCast = (placeholder.userData as any)?.fullMeshCastShadow ?? false;
+      const desiredReceive = (placeholder.userData as any)?.fullMeshReceiveShadow ?? true;
+      this.applyShadowFlagsToObject3D(placeholder, desiredCast, desiredReceive);
+    } catch {}
+
+    try {
+      placeholder.userData = placeholder.userData || {};
+      (placeholder.userData as any).fullMeshKeyApplied = resourceKey;
+    } catch {}
+
+    // Setup animation mixer if present
+    try {
+      const animations = gltf.animations ?? [];
+      if (animations.length > 0) {
+        const mixer = new (THREE as any).AnimationMixer(placeholder);
+        (rc as any).animationMixer = mixer;
+        (rc as any).availableAnimations = animations;
+      }
+    } catch {}
+
+    try {
+      placeholder.userData = placeholder.userData || {};
+      (placeholder.userData as any).fullMeshLoaded = true;
+    } catch {}
+    placeholder.visible = true;
+  }
+
+  /**
+   * Sync a FullMeshComponent's animation settings into the loaded object
+   */
+  syncFullMesh(entity: Entity): void {
+    const comp = entity.getComponent<any>("fullMesh");
+    if (!comp) return;
+    const rc = this.registry.get(entity.id);
+    if (!rc?.object3D) return;
+
+    // Shadow flags should be live-editable from the inspector.
+    try {
+      const cast = (comp as any).castShadow ?? false;
+      const receive = (comp as any).receiveShadow ?? true;
+      (rc.object3D as any).userData = (rc.object3D as any).userData || {};
+      (rc.object3D as any).userData.fullMeshCastShadow = cast;
+      (rc.object3D as any).userData.fullMeshReceiveShadow = receive;
+      this.applyShadowFlagsToObject3D(rc.object3D as THREE.Object3D, cast, receive);
+    } catch {}
+
+    // If the key changed, reload the GLB immediately.
+    try {
+      const nextKey = String(comp.key ?? '').trim();
+      const appliedKey = String((rc.object3D as any)?.userData?.fullMeshKeyApplied ?? '').trim();
+
+      if (!nextKey) {
+        // No key -> hide placeholder.
+        try { (rc.object3D as any).visible = false; } catch {}
+        return;
+      }
+
+      if (nextKey && nextKey !== appliedKey) {
+        try { (rc.object3D as any).visible = false; } catch {}
+        try { this.disposeEntityAnimations(entity.id); } catch {}
+        if (this.engineResourceResolver) {
+          this.loadAndApplyFullGlb(entity.id, nextKey).catch(() => {});
+        }
+        return;
+      }
+
+      // If we have a key but we haven't finished loading yet, keep trying.
+      const loaded = !!((rc.object3D as any)?.userData?.fullMeshLoaded);
+      if (!loaded && this.engineResourceResolver && nextKey) {
+        this.loadAndApplyFullGlb(entity.id, nextKey).catch(() => {});
+      }
+    } catch {}
+
+    const mixer: any = (rc as any).animationMixer;
+    const animations: any[] = (rc as any).availableAnimations ?? [];
+    if (!mixer || !animations.length) return;
+
+    const clipName = String(comp.animation?.clipName ?? "");
+    const clip = clipName ? THREE.AnimationClip.findByName(animations, clipName) : animations[0];
+    if (!clip) return;
+
+    try {
+      const prevAction: any = (rc as any).activeAction;
+      if (prevAction) {
+        prevAction.stop();
+        try { prevAction.reset(); } catch {}
+      }
+
+      const action = mixer.clipAction(clip);
+      action.setLoop(comp.animation?.loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
+      if (typeof comp.animation?.time === 'number') action.time = comp.animation.time as number;
+      if (comp.animation?.playing === false) {
+        action.paused = true;
+      } else {
+        action.play();
+      }
+      (rc as any).activeAction = action;
+    } catch {}
+  }
+
+  private applyShadowFlagsToObject3D(root: THREE.Object3D, castShadow: boolean, receiveShadow: boolean): void {
+    try {
+      root.traverse((o: any) => {
+        if (!o) return;
+        if (o.isMesh) {
+          try {
+            o.castShadow = !!castShadow;
+            o.receiveShadow = !!receiveShadow;
+          } catch {}
+        }
+      });
+    } catch {}
+  }
+
+  /** Update animation mixers (call from engine render loop) */
+  update(dtMs: number): void {
+    const ms = dtMs / 1000;
+    for (const rc of this.registry.getAll().values()) {
+      const mixer: any = (rc as any).animationMixer;
+      if (mixer && typeof mixer.update === "function") {
+        try {
+          mixer.update(ms);
+        } catch {}
+      }
+    }
+  }
+
+  /** Dispose any animation resources associated with an entity (called before removal). */
+  disposeEntityAnimations(entityId: string): void {
+    const rc = this.registry.get(entityId);
+    if (!rc) return;
+    const mixer: any = (rc as any).animationMixer;
+    try {
+      if (mixer) {
+        try {
+          if (typeof mixer.stopAllAction === 'function') mixer.stopAllAction();
+        } catch {}
+        try {
+          if (typeof mixer.uncacheRoot === 'function' && rc.object3D) mixer.uncacheRoot(rc.object3D);
+        } catch {}
+      }
+    } catch {}
+    try {
+      delete (rc as any).animationMixer;
+      delete (rc as any).availableAnimations;
+      delete (rc as any).activeAction;
+    } catch {}
+  }
+
+  private async loadGlbGeometry(url: string, resolved?: any): Promise<THREE.BufferGeometry> {
+    // Use a loader configured with resolved file mappings when available,
+    // otherwise fall back to the shared loader.
+    const loader = resolved ? await this.createLoaderForResolved(resolved) : await this.getGltfLoader();
+    try {
+      console.warn(`[MeshSyncSystem] loadGlbGeometry: loading url=${url} usingResolved=${!!resolved}`);
+    } catch {}
+    const gltf = await loader.loadAsync(url);
+    try {
+      let meshCount = 0;
+      try {
+        (gltf.scene || new THREE.Group()).traverse((o: any) => {
+          if (o && (o as any).isMesh) meshCount++;
+        });
+      } catch {}
+      console.warn(`[MeshSyncSystem] loadGlbGeometry: loaded url=${url} meshes=${meshCount}`);
+    } catch {}
     let found: THREE.Mesh | null = null;
 
     gltf.scene.traverse((obj: THREE.Object3D) => {
@@ -662,6 +1005,70 @@ export class MeshSyncSystem {
     return this.gltfLoader;
   }
 
+  /**
+   * Create a GLTFLoader instance configured to remap requested relative URLs
+   * to the resolved file bindings (if available). This lets GLBs that reference
+   * external textures by path load those textures from the server URLs returned
+   * by the engine resource resolver.
+   */
+  private async createLoaderForResolved(resolved: any): Promise<any> {
+    const mod: any = await import("three/addons/loaders/GLTFLoader.js");
+    const loader = new mod.GLTFLoader();
+
+    try {
+      const filesMap = resolved?.files ?? {};
+
+      loader.manager.setURLModifier((requestedUrl: string) => {
+        try {
+          // If the requested URL is absolute, return as-is.
+          try {
+            const u = new URL(requestedUrl, 'http://example.invalid');
+            if (u.protocol === 'http:' || u.protocol === 'https:') {
+              console.warn(`[MeshSyncSystem] URLModifier pass-through absolute requested=${requestedUrl}`);
+              return requestedUrl;
+            }
+          } catch {
+            // ignore
+          }
+
+          // Extract basename from requested path (strip any query/hash)
+          const parts = requestedUrl.split(/[\\/\\?\\#]+/).filter(Boolean);
+          const reqBase = parts.length ? parts[parts.length - 1] : requestedUrl;
+
+          // Try to find a matching file by basename in the resolved files list.
+          for (const key of Object.keys(filesMap)) {
+            try {
+              const f = filesMap[key];
+              const fname = String(f?.fileName ?? '');
+              const base = fname.split('/').pop() || fname;
+              if (base === reqBase) {
+                const mapped = String(f?.url ?? requestedUrl);
+                try {
+                  console.warn(`[MeshSyncSystem] URLModifier map request=${requestedUrl} -> ${mapped}`);
+                } catch {}
+                return mapped;
+              }
+            } catch {
+              // ignore
+            }
+          }
+
+          // No mapping found: return requested URL unchanged so the loader may resolve it normally.
+          try {
+            console.warn(`[MeshSyncSystem] URLModifier no-map for requested=${requestedUrl}`);
+          } catch {}
+          return requestedUrl;
+        } catch {
+          return requestedUrl;
+        }
+      });
+    } catch {
+      // ignore; fall back to plain loader
+    }
+
+    return loader;
+  }
+
   private applyTextureTiling(entity: Entity, texture: THREE.Texture): void {
     const tiling = entity.getComponent<any>("textureTiling");
     if (!tiling) return;
@@ -691,9 +1098,9 @@ export class MeshSyncSystem {
       this.applyTextureTiling(entity, texture);
     } catch {}
 
-    // If this entity uses custom GLB geometry, align to glTF conventions.
+    // If this entity uses custom GLB geometry or a full GLB resource, align to glTF conventions.
     try {
-      const isCustom = !!entity.getComponent<CustomGeometryComponent>("customGeometry");
+      const isCustom = !!entity.getComponent<CustomGeometryComponent>("customGeometry") || !!entity.getComponent<any>("fullMesh");
       if (isCustom) {
         (texture as any).flipY = false;
         texture.needsUpdate = true;

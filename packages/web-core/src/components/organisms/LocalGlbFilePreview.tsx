@@ -10,6 +10,10 @@ type Props = {
   className?: string;
   /** Called when a file is dropped onto the preview. */
   onDropFile?: (file: File) => void;
+  /** Enable animation controls when GLB contains animations */
+  showAnimations?: boolean;
+  /** Optional callback invoked when available animations change */
+  onAnimations?: (anims: { name: string; duration: number }[]) => void;
 };
 
 type LoadState =
@@ -53,7 +57,7 @@ function computeRadius(obj: THREE.Object3D): { center: THREE.Vector3; radius: nu
   return { center, radius: Number.isFinite(radius) && radius > 0 ? radius : 1 };
 }
 
-export function LocalGlbFilePreview({ file, className, onDropFile }: Props) {
+export function LocalGlbFilePreview({ file, className, onDropFile, showAnimations, onAnimations }: Props) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const rafRef = React.useRef<number | null>(null);
   const resizeObserverRef = React.useRef<ResizeObserver | null>(null);
@@ -61,11 +65,19 @@ export function LocalGlbFilePreview({ file, className, onDropFile }: Props) {
   const sceneRef = React.useRef<THREE.Scene | null>(null);
   const cameraRef = React.useRef<THREE.PerspectiveCamera | null>(null);
   const rootRef = React.useRef<THREE.Object3D | null>(null);
+  const mixerRef = React.useRef<any | null>(null);
+  const actionsRef = React.useRef<Map<string, any> | null>(null);
   const loadTokenRef = React.useRef(0);
   const objectUrlRef = React.useRef<string | null>(null);
 
   const [state, setState] = React.useState<LoadState>({ status: 'idle' });
   const [isDragOver, setIsDragOver] = React.useState(false);
+  const [animations, setAnimations] = React.useState<{ name: string; duration: number }[]>([]);
+  const [activeClip, setActiveClip] = React.useState<string | null>(null);
+  const [playing, setPlaying] = React.useState<boolean>(false);
+  const [looping, setLooping] = React.useState<boolean>(true);
+  const [currentTime, setCurrentTime] = React.useState<number>(0);
+  const [duration, setDuration] = React.useState<number>(0);
 
   const cleanupObjectUrl = React.useCallback(() => {
     if (!objectUrlRef.current) return;
@@ -148,6 +160,23 @@ export function LocalGlbFilePreview({ file, className, onDropFile }: Props) {
         const secs = dtMs / 1000;
         root.rotation.y += secs * 0.35;
       }
+
+      // advance mixer if present
+      try {
+        const mixer = mixerRef.current;
+        if (mixer && typeof mixer.update === 'function') {
+          mixer.update((t - last) / 1000);
+          // update time display if active action
+          const actions = actionsRef.current;
+          if (actions && activeClip) {
+            const a = actions.get(activeClip);
+            if (a) {
+              const time = a.time ?? 0;
+              setCurrentTime(Number(time));
+            }
+          }
+        }
+      } catch {}
 
       renderer.render(scene, camera);
       rafRef.current = requestAnimationFrame(tick);
@@ -241,6 +270,33 @@ export function LocalGlbFilePreview({ file, className, onDropFile }: Props) {
         scene.add(root);
         rootRef.current = root;
 
+        // Setup animations if requested
+        try {
+          if (showAnimations && Array.isArray(gltf.animations) && gltf.animations.length > 0) {
+            const mixer = new (THREE as any).AnimationMixer(root);
+            mixerRef.current = mixer;
+            const map = new Map<string, any>();
+            const animList: { name: string; duration: number }[] = [];
+            for (const clip of gltf.animations) {
+              const name = String(clip.name || '');
+              const dur = Number(clip.duration || 0) || (clip as any).duration || 0;
+              animList.push({ name, duration: dur });
+              const action = mixer.clipAction(clip);
+              action.paused = true;
+              map.set(name || `clip_${map.size}`, action);
+            }
+            actionsRef.current = map;
+            setAnimations(animList);
+            setDuration(animList[0]?.duration ?? 0);
+            setActiveClip(animList[0]?.name ?? null);
+            setPlaying(false);
+            try { onAnimations?.(animList); } catch {}
+          }
+        } catch (e) {
+          // ignore animation setup failures
+          console.warn('[LocalGlbFilePreview] animation setup failed', e);
+        }
+
         setState({ status: 'loaded' });
       } catch (e) {
         if (token !== loadTokenRef.current) return;
@@ -250,6 +306,75 @@ export function LocalGlbFilePreview({ file, className, onDropFile }: Props) {
       }
     })();
   }, [file, clearRoot, cleanupObjectUrl]);
+
+  // Cleanup mixer when file/unmount
+  React.useEffect(() => {
+    if (!file) {
+      try { mixerRef.current = null; actionsRef.current = null; setAnimations([]); setActiveClip(null); setPlaying(false); setCurrentTime(0); setDuration(0);} catch {}
+    }
+  }, [file]);
+
+  // Play/pause control
+  const togglePlay = () => {
+    try {
+      const actions = actionsRef.current;
+      if (!actions || !activeClip) return;
+      const a = actions.get(activeClip);
+      if (!a) return;
+      if (playing) {
+        a.paused = true;
+        setPlaying(false);
+      } else {
+        a.paused = false;
+        a.setLoop(looping ? (THREE as any).LoopRepeat : (THREE as any).LoopOnce, Infinity);
+        a.play();
+        setPlaying(true);
+      }
+    } catch {}
+  };
+
+  const onSelectClip = (name: string) => {
+    try {
+      const actions = actionsRef.current;
+      if (!actions) return;
+      // stop previous
+      if (activeClip) {
+        const prev = actions.get(activeClip);
+        try { prev.stop(); prev.reset(); } catch {}
+      }
+      setActiveClip(name || null);
+      const a = actions.get(name);
+      if (a) {
+        setDuration(Number(a.getClip?.()?.duration ?? duration ?? 0));
+        a.paused = !playing;
+        if (playing) {
+          a.play();
+        }
+      }
+    } catch {}
+  };
+
+  const onSeek = (value: number) => {
+    try {
+      const actions = actionsRef.current;
+      if (!actions || !activeClip) return;
+      const a = actions.get(activeClip);
+      if (!a) return;
+      a.time = value;
+      setCurrentTime(value);
+    } catch {}
+  };
+
+  const onToggleLoop = () => {
+    setLooping(!looping);
+    try {
+      const actions = actionsRef.current;
+      if (!actions || !activeClip) return;
+      const a = actions.get(activeClip);
+      if (!a) return;
+      a.setLoop(!looping ? (THREE as any).LoopRepeat : (THREE as any).LoopOnce, Infinity);
+    } catch {}
+  };
 
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();

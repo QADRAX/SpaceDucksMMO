@@ -140,8 +140,9 @@ export class DebugMeshSystem {
     h.position.set(wp.x, wp.y, wp.z);
     h.rotation.set(wr.x, wr.y, wr.z);
 
-    // Preserve previous behavior: do not force scale.
-    h.scale.set(1, 1, 1);
+    // Apply world scale so wireframe matches the visual mesh.
+    const ws = entity.transform.worldScale;
+    h.scale.set(ws.x, ws.y, ws.z);
   }
 
   private createWireframeFromGeometry(geom: THREE.BufferGeometry): THREE.LineSegments {
@@ -194,7 +195,60 @@ export class DebugMeshSystem {
       const geometry = rc?.geometry ?? (rc?.object3D && (rc.object3D as any).geometry);
       if (geometry && geometry instanceof THREE.BufferGeometry) {
         wire.add(this.createWireframeFromGeometry(geometry));
+        return;
       }
+
+      // Fallback for complex render objects (e.g., fullMesh uses a Group placeholder):
+      // traverse child meshes and add a wireframe for each geometry.
+      const root = rc?.object3D as THREE.Object3D | undefined;
+      if (!root) return;
+
+      try {
+        root.updateMatrixWorld(true);
+      } catch {}
+
+      let rootInv: THREE.Matrix4 | null = null;
+      try {
+        rootInv = new THREE.Matrix4().copy(root.matrixWorld).invert();
+      } catch {
+        rootInv = null;
+      }
+
+      const relPos = new THREE.Vector3();
+      const relQuat = new THREE.Quaternion();
+      const relScale = new THREE.Vector3();
+      const relMat = new THREE.Matrix4();
+
+      root.traverse((n: any) => {
+        try {
+          if (!n || !n.isMesh) return;
+          const geom = n.geometry as THREE.BufferGeometry | undefined;
+          if (!(geom instanceof THREE.BufferGeometry)) return;
+
+          const lines = this.createWireframeFromGeometry(geom);
+
+          // Position the wireframe to match this mesh relative to the entity root.
+          if (rootInv) {
+            try {
+              n.updateMatrixWorld(true);
+              relMat.multiplyMatrices(rootInv as THREE.Matrix4, n.matrixWorld);
+              relMat.decompose(relPos, relQuat, relScale);
+              lines.position.copy(relPos);
+              lines.quaternion.copy(relQuat);
+              lines.scale.copy(relScale);
+            } catch {}
+          } else {
+            // Best-effort: at least apply local transform.
+            try {
+              lines.position.copy(n.position);
+              lines.quaternion.copy(n.quaternion);
+              lines.scale.copy(n.scale);
+            } catch {}
+          }
+
+          wire.add(lines);
+        } catch {}
+      });
     } catch {}
   }
 

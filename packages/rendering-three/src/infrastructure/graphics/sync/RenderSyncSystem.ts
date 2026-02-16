@@ -91,7 +91,112 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
       if (!this.entities.has(e.id)) return;
       if (action === "added") {
         component.addObserver(this);
-        if (!this.registry.has(e.id)) this.processEntity(e);
+        // If the entity has no render object yet, process it normally.
+        if (!this.registry.has(e.id)) {
+          this.processEntity(e);
+          return;
+        }
+
+        // If the entity already has a render object, we still need to react to
+        // component additions that change what should be rendered.
+        //
+        // Example: adding a FullMeshComponent to an entity that currently has a
+        // primitive mesh should recreate the render object immediately (otherwise
+        // the editor preview only updates after a full scene rebuild).
+        const type = component.type;
+
+        const fullMesh = e.getComponent<any>("fullMesh");
+        const shaderMaterial = e.getComponent<any>("shaderMaterial");
+        const material =
+          e.getComponent<any>("standardMaterial") ??
+          e.getComponent<any>("basicMaterial") ??
+          e.getComponent<any>("phongMaterial") ??
+          e.getComponent<any>("lambertMaterial") ??
+          null;
+        const geometry =
+          e.getComponent<any>("boxGeometry") ??
+          e.getComponent<any>("sphereGeometry") ??
+          e.getComponent<any>("planeGeometry") ??
+          e.getComponent<any>("cylinderGeometry") ??
+          e.getComponent<any>("coneGeometry") ??
+          e.getComponent<any>("torusGeometry") ??
+          e.getComponent<any>("customGeometry") ??
+          fullMesh ??
+          null;
+
+        const hasEnabledGeometry = !!geometry && geometry.enabled !== false;
+        const isFullMesh = !!fullMesh && fullMesh.enabled !== false;
+        const hasEnabledMaterial = !!material && material.enabled !== false;
+        const hasEnabledShader = !!shaderMaterial && shaderMaterial.enabled !== false;
+        const qualifiesAsMesh = hasEnabledGeometry && (isFullMesh || hasEnabledMaterial || hasEnabledShader);
+
+        // Recreate mesh when a geometry-like component is added and the entity now qualifies.
+        if (
+          qualifiesAsMesh &&
+          [
+            "boxGeometry",
+            "sphereGeometry",
+            "planeGeometry",
+            "cylinderGeometry",
+            "coneGeometry",
+            "torusGeometry",
+            "customGeometry",
+            "shaderMaterial",
+            "fullMesh",
+          ].includes(type)
+        ) {
+          this.meshSystem.recreateMesh(e);
+          try {
+            this.meshDebugSystem.refreshWireframeForEntity(e.id);
+          } catch {}
+          return;
+        }
+
+        // Material additions should update the existing mesh (no full recreate).
+        if (["standardMaterial", "basicMaterial", "phongMaterial", "lambertMaterial"].includes(type)) {
+          this.meshSystem.syncMaterial(e);
+          return;
+        }
+
+        if (type === "textureTiling") {
+          this.meshSystem.syncTextureTiling(e);
+          return;
+        }
+
+        // Fallback: let the regular change handler apply any other incremental sync.
+        // (Note: fullMesh is intentionally handled above via recreateMesh.)
+        try {
+          this.onComponentChanged(e.id, type);
+        } catch {}
+      }
+
+      if (action === "removed") {
+        // Removal notifications happen before the component is deleted from the entity.
+        // Defer a processing pass so the entity's current component set is stable.
+        const defer = (fn: () => void) => {
+          try {
+            const qm = (globalThis as any).queueMicrotask as undefined | ((cb: () => void) => void);
+            if (typeof qm === 'function') return qm(fn);
+          } catch {}
+          Promise.resolve().then(fn).catch(() => {});
+        };
+
+        defer(() => {
+          if (!this.entities.has(e.id)) return;
+          // If this removal caused the render object to be removed, try to
+          // process the entity again to create the appropriate object.
+          if (!this.registry.has(e.id)) {
+            try {
+              this.processEntity(e);
+            } catch {}
+          } else {
+            // Render object still exists; for mesh-related removals, ensure it reflects the new state.
+            try {
+              this.meshSystem.recreateMesh(e);
+              this.meshDebugSystem.refreshWireframeForEntity(e.id);
+            } catch {}
+          }
+        });
       }
     };
 
@@ -154,6 +259,10 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
       this.componentListeners.delete(entityId);
     }
 
+    // Dispose any mixers/actions before removing the render object
+    try {
+      this.meshSystem.disposeEntityAnimations(entityId);
+    } catch {}
     this.registry.remove(entityId, this.scene);
     // Remove debug helper if present
     this.debugSystem.removeHelper(entityId);
@@ -233,6 +342,16 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
             this.meshDebugSystem.refreshWireframeForEntity(entityId);
           } catch {}
           break;
+        case "fullMesh":
+          // dispose mixers/actions before removing render object
+          try {
+            this.meshSystem.disposeEntityAnimations(entityId);
+          } catch {}
+          this.registry.remove(entityId, this.scene);
+          try {
+            this.meshDebugSystem.refreshWireframeForEntity(entityId);
+          } catch {}
+          break;
         case "sphereCollider":
         case "boxCollider":
         case "capsuleCollider":
@@ -271,6 +390,21 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
         // Avoid recreating the mesh for custom geometry settings changes.
         // Sync shadow flags and reload geometry only when the key changes.
         this.meshSystem.syncCustomGeometry(entity);
+        try {
+          this.meshDebugSystem.refreshWireframeForEntity(entity.id);
+        } catch {}
+        break;
+      case "fullMesh":
+        // Full mesh key/animation may be edited after the component is added.
+        // If we somehow don't have a render object yet (or it was removed due to
+        // earlier component removals), recreate the placeholder so syncFullMesh
+        // can kick off (re)loading.
+        try {
+          if (!this.registry.has(entity.id)) this.meshSystem.recreateMesh(entity);
+        } catch {}
+
+        // Sync full-mesh animation/flags without recreating placeholder.
+        this.meshSystem.syncFullMesh(entity);
         try {
           this.meshDebugSystem.refreshWireframeForEntity(entity.id);
         } catch {}
@@ -478,6 +612,69 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     }
 
     this.lensFlareSystem.update(dt, this.entities);
+    // Update mesh animation mixers and synchronize newly-loaded full meshes.
+    try {
+      this.meshSystem.update(dt);
+    } catch {}
+
+    // Mirror mixer state back into the FullMeshComponent so UI/inspector can show progress.
+    try {
+      for (const [id, rc] of this.registry.getAll()) {
+        const entity = this.entities.get(id);
+        if (!entity) continue;
+        try {
+          const action: any = (rc as any).activeAction;
+          if (!action) continue;
+          const comp: any = entity.getComponent("fullMesh");
+          if (!comp) continue;
+
+          // Update component time (seconds) and playing flag, but avoid noisy echo updates.
+          comp.animation = comp.animation || {};
+          try {
+            const prevTime = typeof comp.animation.time === 'number' ? comp.animation.time : NaN;
+            const prevPlaying = typeof comp.animation.playing === 'boolean' ? comp.animation.playing : undefined;
+            const newTime = typeof action.time === 'number' ? action.time : prevTime;
+            const newPlaying = action.paused ? false : true;
+
+            let changed = false;
+            // Only update time when it differs by more than a small epsilon to avoid feedback loops
+            const timeDelta = Number.isFinite(prevTime) && Number.isFinite(newTime) ? Math.abs(prevTime - newTime) : (Number.isFinite(newTime) ? Infinity : 0);
+            if (!Number.isFinite(prevTime) || timeDelta > 0.02) {
+              comp.animation.time = newTime;
+              changed = true;
+            }
+
+            if (prevPlaying === undefined || prevPlaying !== newPlaying) {
+              comp.animation.playing = newPlaying;
+              changed = true;
+            }
+
+            if (changed) {
+              try { comp.notifyChanged(); } catch {}
+            }
+          } catch {}
+        } catch {}
+      }
+    } catch {}
+
+    try {
+      for (const [id, rc] of this.registry.getAll()) {
+        const entity = this.entities.get(id);
+        if (!entity) continue;
+        try {
+          const loaded = (rc.object3D as any)?.userData?.fullMeshLoaded;
+          if (loaded) {
+            // Sync animation settings from the component once and clear flag.
+            try {
+              this.meshSystem.syncFullMesh(entity);
+            } catch {}
+            try {
+              (rc.object3D as any).userData.fullMeshLoaded = false;
+            } catch {}
+          }
+        } catch {}
+      }
+    } catch {}
   }
 
   private getDesiredSkyboxResourceKey(): string | null {

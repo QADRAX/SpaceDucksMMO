@@ -1,9 +1,8 @@
 import {
   CUSTOM_MESH_RESOURCE_KINDS,
-  ECS_TREE_RESOURCE_KINDS,
   MATERIAL_RESOURCE_KINDS,
   SKYBOX_RESOURCE_KINDS,
-  type EcsTreeResourceKind,
+  FULL_MESH_RESOURCE_KINDS,
   type MaterialResourceKind,
 } from '@/lib/types';
 
@@ -31,9 +30,10 @@ export const RESOURCE_GROUPS: readonly ResourceGroup[] = [
   {
     id: 'meshes',
     label: 'Meshes',
-    kinds: CUSTOM_MESH_RESOURCE_KINDS,
+    kinds: [...CUSTOM_MESH_RESOURCE_KINDS, ...FULL_MESH_RESOURCE_KINDS],
     kindLabels: {
       customMesh: 'Custom Mesh (GLB)',
+      fullMesh: 'Full Mesh (GLB)',
     },
   },
   {
@@ -44,15 +44,7 @@ export const RESOURCE_GROUPS: readonly ResourceGroup[] = [
       skybox: 'Skyboxes',
     },
   },
-  {
-    id: 'ecs',
-    label: 'ECS',
-    kinds: ECS_TREE_RESOURCE_KINDS,
-    kindLabels: {
-      prefab: 'Prefabs',
-      scene: 'Scenes',
-    } satisfies Record<EcsTreeResourceKind, string>,
-  },
+  // 'ecs' group removed: Prefabs and Scenes have their own top-level routes
 ] as const;
 
 export function getResourceGroup(groupId: string): ResourceGroup | null {

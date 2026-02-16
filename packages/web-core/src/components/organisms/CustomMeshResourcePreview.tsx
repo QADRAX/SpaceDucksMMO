@@ -21,7 +21,7 @@ import {
 
 import { getInputServices } from '@duckengine/rendering-three/ecs';
 
-import { CustomGeometryComponent, TextureTilingComponent } from '@duckengine/ecs';
+import { CustomGeometryComponent, FullMeshComponent, TextureTilingComponent } from '@duckengine/ecs';
 
 import { Button } from '@/components/atoms/Button';
 import { Dialog, DialogContent } from '@/components/molecules/Dialog';
@@ -39,6 +39,7 @@ type ResourceListItem = {
 type Props = {
   resourceKey: string;
   className?: string;
+  disableMaterialOverrides?: boolean;
 };
 
 type PreviewSettings = {
@@ -239,7 +240,7 @@ class InlineSettingsService implements ISettingsService {
 }
 
 class CustomMeshPreviewScene extends BaseScene {
-  readonly id = 'admin-custom-mesh-preview';
+  readonly id: string;
 
   private mesh?: Entity;
   private camera?: Entity;
@@ -249,8 +250,12 @@ class CustomMeshPreviewScene extends BaseScene {
   private rotationEnabled = true;
   private rotationSpeed = 0.35; // rad/sec
 
-  constructor(settings: ISettingsService, private readonly resourceKey: string) {
+  private readonly disableMaterialOverrides: boolean;
+
+  constructor(settings: ISettingsService, private readonly resourceKey: string, disableMaterialOverrides = false) {
     super(settings);
+    this.disableMaterialOverrides = !!disableMaterialOverrides;
+    this.id = this.disableMaterialOverrides ? 'admin-fullmesh-preview' : 'admin-custom-mesh-preview';
   }
 
   setup(engine: any, renderScene: any): void {
@@ -281,9 +286,16 @@ class CustomMeshPreviewScene extends BaseScene {
     // - starts with placeholder geometry (engine will swap it once GLB loads)
     // - uses a standard material to make the shape readable
     this.mesh = new Entity('mesh');
-    this.mesh.addComponent(new CustomGeometryComponent({ key: this.resourceKey }));
-    this.mesh.addComponent(this.createInlineMaterial());
-    this.mesh.addComponent(new TextureTilingComponent() as any);
+    // For full-mesh previews we use the FullMeshComponent so the engine
+    // loads the GLB scene/materials/animations directly. For custom meshes
+    // (system geometry) use CustomGeometryComponent and allow material overrides.
+    if (this.disableMaterialOverrides) {
+      this.mesh.addComponent(new FullMeshComponent({ key: this.resourceKey }));
+    } else {
+      this.mesh.addComponent(new CustomGeometryComponent({ key: this.resourceKey }));
+      this.mesh.addComponent(this.createInlineMaterial());
+      this.mesh.addComponent(new TextureTilingComponent() as any);
+    }
     this.addEntity(this.mesh);
   }
 
@@ -323,7 +335,7 @@ class CustomMeshPreviewScene extends BaseScene {
     this.rotationEnabled = next.rotation.enabled;
     this.rotationSpeed = next.rotation.speed;
 
-    if (this.mesh) {
+    if (this.mesh && !this.disableMaterialOverrides) {
       let tiling = this.mesh.getComponent<any>('textureTiling');
       if (!tiling) {
         this.mesh.addComponent(new TextureTilingComponent() as any);
@@ -339,13 +351,13 @@ class CustomMeshPreviewScene extends BaseScene {
   }
 
   setInlineMaterial() {
-    if (!this.mesh) return;
+    if (!this.mesh || this.disableMaterialOverrides) return;
     this.removeMaterialComponents();
     this.mesh.addComponent(this.createInlineMaterial());
   }
 
   setMaterialFromResource(kind: MaterialResourceKind, componentData: Record<string, unknown>) {
-    if (!this.mesh) return;
+    if (!this.mesh || this.disableMaterialOverrides) return;
     this.removeMaterialComponents();
     this.mesh.addComponent(createMaterialComponent(kind, componentData));
   }
@@ -360,19 +372,29 @@ class CustomMeshPreviewScene extends BaseScene {
 
   setResourceKey(next: string) {
     if (!this.mesh) return;
-    const existing = this.mesh.getComponent<CustomGeometryComponent>('customGeometry');
-    if (existing && existing.key === next) return;
+    // Handle either CustomGeometryComponent or FullMeshComponent depending on preview mode.
+    const existingCustom = this.mesh.getComponent<CustomGeometryComponent>('customGeometry');
+    const existingFull = this.mesh.getComponent<FullMeshComponent>('fullMesh');
 
-    // ECS Component.notifyChanged() is protected; to trigger render sync reliably,
-    // replace the component (remove + add) which emits component events.
-    try {
-      if (this.mesh.hasComponent('customGeometry')) {
-        this.mesh.removeComponent('customGeometry');
-      }
-    } catch {
-      // ignore
+    if (this.disableMaterialOverrides) {
+      if (existingFull && existingFull.key === next) return;
+    } else {
+      if (existingCustom && existingCustom.key === next) return;
     }
-    this.mesh.addComponent(new CustomGeometryComponent({ key: next }));
+
+    // Replace whichever geometry component is present to trigger sync events.
+    try {
+      if (this.mesh.hasComponent('customGeometry')) this.mesh.removeComponent('customGeometry');
+    } catch {}
+    try {
+      if (this.mesh.hasComponent('fullMesh')) this.mesh.removeComponent('fullMesh');
+    } catch {}
+
+    if (this.disableMaterialOverrides) {
+      this.mesh.addComponent(new FullMeshComponent({ key: next }));
+    } else {
+      this.mesh.addComponent(new CustomGeometryComponent({ key: next }));
+    }
   }
 
   update(dt: number): void {
@@ -385,7 +407,7 @@ class CustomMeshPreviewScene extends BaseScene {
   }
 }
 
-export function CustomMeshResourcePreview({ resourceKey, className }: Props) {
+export function CustomMeshResourcePreview({ resourceKey, className, disableMaterialOverrides }: Props) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const rendererRef = React.useRef<ThreeRenderer | null>(null);
   const sceneRef = React.useRef<CustomMeshPreviewScene | null>(null);
@@ -512,7 +534,7 @@ export function CustomMeshResourcePreview({ resourceKey, className }: Props) {
       renderer.setEngineResourceResolver(createWebCoreEngineResourceResolver({ baseUrl }));
 
       const settings = new InlineSettingsService();
-      scene = new CustomMeshPreviewScene(settings, resourceKey);
+      scene = new CustomMeshPreviewScene(settings, resourceKey, !!disableMaterialOverrides);
       renderer.setScene(scene);
 
       try {
@@ -601,11 +623,52 @@ export function CustomMeshResourcePreview({ resourceKey, className }: Props) {
     };
   }, []);
 
+  // Debug: when fullMesh (disableMaterialOverrides) is active, verify resolver provides a mesh URL
+  const [resolverDebug, setResolverDebug] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!disableMaterialOverrides) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+        const resolver = createWebCoreEngineResourceResolver({ baseUrl });
+        const resolved = await resolver.resolve(resourceKey, 'active');
+        if (cancelled) return;
+        if (!resolved || !resolved.files) {
+          setResolverDebug('Resolver returned no files for resource');
+          return;
+        }
+        const mesh = (resolved.files as any).mesh;
+        if (!mesh || !mesh.url) {
+          setResolverDebug('No "mesh" file binding found in resolved resource (expected files.mesh)');
+          return;
+        }
+        try {
+          const head = await fetch(mesh.url, { method: 'HEAD' });
+          if (!head.ok) {
+            setResolverDebug(`Mesh URL not reachable: ${head.status}`);
+            return;
+          }
+          setResolverDebug(null);
+        } catch (e) {
+          setResolverDebug(`Failed to fetch mesh URL: ${e instanceof Error ? e.message : String(e)}`);
+        }
+      } catch (e) {
+        setResolverDebug(`Resolver error: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [disableMaterialOverrides, resourceKey]);
+
   React.useEffect(() => {
     sceneRef.current?.setResourceKey(resourceKey);
   }, [resourceKey]);
 
   React.useEffect(() => {
+    if (disableMaterialOverrides) return;
     const scene = sceneRef.current;
     if (!scene) return;
 
@@ -641,7 +704,7 @@ export function CustomMeshResourcePreview({ resourceKey, className }: Props) {
     return () => {
       cancelled = true;
     };
-  }, [previewSettings.material.source, previewSettings.material.systemKey]);
+  }, [previewSettings.material.source, previewSettings.material.systemKey, disableMaterialOverrides]);
 
   return (
     <div className={cn('h-full w-full min-h-0', className)}>
@@ -659,6 +722,12 @@ export function CustomMeshResourcePreview({ resourceKey, className }: Props) {
             <div className="max-w-lg p-3 bg-red-100 border-2 border-border text-red-800 rounded-base text-sm">
               <strong>Preview error:</strong> {error}
             </div>
+          </div>
+        ) : null}
+        {resolverDebug ? (
+          <div className="absolute left-3 top-3 max-w-xs p-3 bg-yellow-100 border border-yellow-300 text-yellow-900 rounded-base text-xs">
+            <strong>Preview resolver:</strong>
+            <div>{resolverDebug}</div>
           </div>
         ) : null}
       </div>
@@ -795,30 +864,58 @@ export function CustomMeshResourcePreview({ resourceKey, className }: Props) {
               </div>
 
               <div className="space-y-4">
-                <div>
-                  <div className="font-bold">Material</div>
-                  <label className="flex flex-col gap-1 mt-2">
-                    <span className="text-neutral-600">Source</span>
-                    <select
-                      value={previewSettings.material.source}
-                      onChange={(e) =>
-                        setPreviewSettings((s) => ({
-                          ...s,
-                          material: { ...s.material, source: e.target.value as any },
-                        }))
-                      }
-                      className="border border-border rounded-base px-2 py-1"
-                    >
-                      <option value="inline">Inline (gray standard)</option>
-                      <option value="system">System material</option>
-                    </select>
-                  </label>
-
-                  {previewSettings.material.source === 'system' ? (
+                {!disableMaterialOverrides ? (
+                  <div>
+                    <div className="font-bold">Material</div>
                     <label className="flex flex-col gap-1 mt-2">
-                      <span className="text-neutral-600">Material key</span>
-                      {systemMaterials ? (
-                        <select
+                      <span className="text-neutral-600">Source</span>
+                      <select
+                        value={previewSettings.material.source}
+                        onChange={(e) =>
+                          setPreviewSettings((s) => ({
+                            ...s,
+                            material: { ...s.material, source: e.target.value as any },
+                          }))
+                        }
+                        className="border border-border rounded-base px-2 py-1"
+                      >
+                        <option value="inline">Inline (gray standard)</option>
+                        <option value="system">System material</option>
+                      </select>
+                    </label>
+
+                    {previewSettings.material.source === 'system' ? (
+                      <label className="flex flex-col gap-1 mt-2">
+                        <span className="text-neutral-600">Material key</span>
+                        {systemMaterials ? (
+                          <select
+                            value={previewSettings.material.systemKey}
+                            onChange={(e) =>
+                              setPreviewSettings((s) => ({
+                                ...s,
+                                material: { ...s.material, systemKey: e.target.value },
+                              }))
+                            }
+                            className="border border-border rounded-base px-2 py-1"
+                          >
+                            <option value="">Select a system material…</option>
+                            {systemMaterials.map((m) => (
+                              <option key={m.key} value={m.key}>
+                                {m.displayName}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <div className="text-xs text-neutral-600">Loading system materials…</div>
+                        )}
+
+                        {systemMaterialsError ? (
+                          <div className="text-xs text-red-600">{systemMaterialsError}</div>
+                        ) : null}
+
+                        <div className="text-xs text-neutral-600">Or type a key manually:</div>
+                        <input
+                          type="text"
                           value={previewSettings.material.systemKey}
                           onChange={(e) =>
                             setPreviewSettings((s) => ({
@@ -826,113 +923,93 @@ export function CustomMeshResourcePreview({ resourceKey, className }: Props) {
                               material: { ...s.material, systemKey: e.target.value },
                             }))
                           }
+                          placeholder="e.g. standardMaterial/moon"
                           className="border border-border rounded-base px-2 py-1"
-                        >
-                          <option value="">Select a system material…</option>
-                          {systemMaterials.map((m) => (
-                            <option key={m.key} value={m.key}>
-                              {m.displayName}
-                            </option>
-                          ))}
-                        </select>
-                      ) : (
-                        <div className="text-xs text-neutral-600">Loading system materials…</div>
-                      )}
-
-                      {systemMaterialsError ? (
-                        <div className="text-xs text-red-600">{systemMaterialsError}</div>
-                      ) : null}
-
-                      <div className="text-xs text-neutral-600">Or type a key manually:</div>
-                      <input
-                        type="text"
-                        value={previewSettings.material.systemKey}
-                        onChange={(e) =>
-                          setPreviewSettings((s) => ({
-                            ...s,
-                            material: { ...s.material, systemKey: e.target.value },
-                          }))
-                        }
-                        placeholder="e.g. standardMaterial/moon"
-                        className="border border-border rounded-base px-2 py-1"
-                      />
-                      {materialError ? <div className="text-xs text-red-600 mt-1">{materialError}</div> : null}
-                      <span className="text-xs text-neutral-600 mt-1">
-                        Resolved via engine resolver (active version).
-                      </span>
-                    </label>
-                  ) : null}
-                </div>
+                        />
+                        {materialError ? <div className="text-xs text-red-600 mt-1">{materialError}</div> : null}
+                        <span className="text-xs text-neutral-600 mt-1">
+                          Resolved via engine resolver (active version).
+                        </span>
+                      </label>
+                    ) : null}
+                  </div>
+                ) : null}
 
                 <div>
-                  <div className="font-bold">Texture Tiling</div>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    <label className="flex flex-col gap-1">
-                      <span className="text-neutral-600">Repeat U</span>
-                      <input
-                        type="number"
-                        step={0.1}
-                        min={0}
-                        value={previewSettings.tiling.repeatU}
-                        onChange={(e) =>
-                          setPreviewSettings((s) => ({
-                            ...s,
-                            tiling: { ...s.tiling, repeatU: Number(e.target.value) },
-                          }))
-                        }
-                        className="border border-border rounded-base px-2 py-1"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-neutral-600">Repeat V</span>
-                      <input
-                        type="number"
-                        step={0.1}
-                        min={0}
-                        value={previewSettings.tiling.repeatV}
-                        onChange={(e) =>
-                          setPreviewSettings((s) => ({
-                            ...s,
-                            tiling: { ...s.tiling, repeatV: Number(e.target.value) },
-                          }))
-                        }
-                        className="border border-border rounded-base px-2 py-1"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-neutral-600">Offset U</span>
-                      <input
-                        type="number"
-                        step={0.01}
-                        value={previewSettings.tiling.offsetU}
-                        onChange={(e) =>
-                          setPreviewSettings((s) => ({
-                            ...s,
-                            tiling: { ...s.tiling, offsetU: Number(e.target.value) },
-                          }))
-                        }
-                        className="border border-border rounded-base px-2 py-1"
-                      />
-                    </label>
-                    <label className="flex flex-col gap-1">
-                      <span className="text-neutral-600">Offset V</span>
-                      <input
-                        type="number"
-                        step={0.01}
-                        value={previewSettings.tiling.offsetV}
-                        onChange={(e) =>
-                          setPreviewSettings((s) => ({
-                            ...s,
-                            tiling: { ...s.tiling, offsetV: Number(e.target.value) },
-                          }))
-                        }
-                        className="border border-border rounded-base px-2 py-1"
-                      />
-                    </label>
-                  </div>
-                  <div className="text-xs text-neutral-600 mt-1">
-                    Applied via ECS TextureTilingComponent (same as runtime).
-                  </div>
+                  {!disableMaterialOverrides ? (
+                    <>
+                      <div className="font-bold">Texture Tiling</div>
+                      <div className="grid grid-cols-2 gap-2 mt-2">
+                        <label className="flex flex-col gap-1">
+                          <span className="text-neutral-600">Repeat U</span>
+                          <input
+                            type="number"
+                            step={0.1}
+                            min={0}
+                            value={previewSettings.tiling.repeatU}
+                            onChange={(e) =>
+                              setPreviewSettings((s) => ({
+                                ...s,
+                                tiling: { ...s.tiling, repeatU: Number(e.target.value) },
+                              }))
+                            }
+                            className="border border-border rounded-base px-2 py-1"
+                          />
+                        </label>
+                        <label className="flex flex-col gap-1">
+                          <span className="text-neutral-600">Repeat V</span>
+                          <input
+                            type="number"
+                            step={0.1}
+                            min={0}
+                            value={previewSettings.tiling.repeatV}
+                            onChange={(e) =>
+                              setPreviewSettings((s) => ({
+                                ...s,
+                                tiling: { ...s.tiling, repeatV: Number(e.target.value) },
+                              }))
+                            }
+                            className="border border-border rounded-base px-2 py-1"
+                          />
+                        </label>
+                        <label className="flex flex-col gap-1">
+                          <span className="text-neutral-600">Offset U</span>
+                          <input
+                            type="number"
+                            step={0.01}
+                            value={previewSettings.tiling.offsetU}
+                            onChange={(e) =>
+                              setPreviewSettings((s) => ({
+                                ...s,
+                                tiling: { ...s.tiling, offsetU: Number(e.target.value) },
+                              }))
+                            }
+                            className="border border-border rounded-base px-2 py-1"
+                          />
+                        </label>
+                        <label className="flex flex-col gap-1">
+                          <span className="text-neutral-600">Offset V</span>
+                          <input
+                            type="number"
+                            step={0.01}
+                            value={previewSettings.tiling.offsetV}
+                            onChange={(e) =>
+                              setPreviewSettings((s) => ({
+                                ...s,
+                                tiling: { ...s.tiling, offsetV: Number(e.target.value) },
+                              }))
+                            }
+                            className="border border-border rounded-base px-2 py-1"
+                          />
+                        </label>
+                      </div>
+                      <div className="text-xs text-neutral-600 mt-1">
+                        Applied via ECS TextureTilingComponent (same as runtime).
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-xs text-neutral-600 mt-1">Texture controls disabled for fullMesh previews.</div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between gap-2 pt-4 border-t border-border">

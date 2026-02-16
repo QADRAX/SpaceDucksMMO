@@ -129,7 +129,7 @@ function EntityNode(props: {
   const expanded = props.isExpanded(entity.id);
   const selected = props.selectedId === entity.id;
 
-  const hasGeometry = entity.getAllComponents().some((c: any) => String(c.type).endsWith('Geometry'));
+  const hasGeometry = entity.getAllComponents().some((c: any) => String(c.type).endsWith('Geometry') || String(c.type) === 'fullMesh');
   const hasCollider = entity.getAllComponents().some((c: any) => String(c.type).toLowerCase().includes('collider'));
 
   return (

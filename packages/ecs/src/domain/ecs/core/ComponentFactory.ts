@@ -7,6 +7,7 @@ import { CylinderGeometryComponent } from "../components/geometry/CylinderGeomet
 import { ConeGeometryComponent } from "../components/geometry/ConeGeometryComponent";
 import { TorusGeometryComponent } from "../components/geometry/TorusGeometryComponent";
 import { CustomGeometryComponent } from "../components/geometry/CustomGeometryComponent";
+import { FullMeshComponent } from "../components/geometry/FullMeshComponent";
 import { StandardMaterialComponent } from "../components/material/StandardMaterialComponent";
 import { BasicMaterialComponent } from "../components/material/BasicMaterialComponent";
 import { PhongMaterialComponent } from "../components/material/PhongMaterialComponent";
@@ -47,6 +48,7 @@ export type KnownComponentType =
   | "coneGeometry"
   | "torusGeometry"
   | "customGeometry"
+  | "fullMesh"
   | "standardMaterial"
   | "basicMaterial"
   | "phongMaterial"
@@ -129,7 +131,8 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       has("cylinderGeometry") ||
       has("coneGeometry") ||
       has("torusGeometry") ||
-      has("customGeometry");
+      has("customGeometry") ||
+      has("fullMesh");
 
     if (!hasAnyGeometry) {
       defs.push(getComponentDef("boxGeometry"));
@@ -139,6 +142,7 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       defs.push(getComponentDef("coneGeometry"));
       defs.push(getComponentDef("torusGeometry"));
       defs.push(getComponentDef("customGeometry"));
+      defs.push(getComponentDef("fullMesh"));
     }
 
     // material requires any geometry and conflicts with shaderMaterial
@@ -263,6 +267,8 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
         );
       case "customGeometry":
         return new CustomGeometryComponent(params ?? { key: "" });
+      case "fullMesh":
+        return new FullMeshComponent(params ?? { key: "" });
       case "standardMaterial":
         return new StandardMaterialComponent({ color: 0xffffff });
       case "basicMaterial":

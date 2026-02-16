@@ -30,7 +30,7 @@ export async function AdminLayout({ children, className }: AdminLayoutProps) {
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
-      <Sidebar className="h-screen overflow-auto">
+      <Sidebar className="h-screen overflow-auto scrollbar">
         <AdminNavTree showUsers={showUsers} />
       </Sidebar>
       <main className={cn('flex-1 p-8 min-w-0 min-h-0 overflow-hidden', className)}>

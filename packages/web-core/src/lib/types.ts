@@ -19,6 +19,8 @@ export const MATERIAL_RESOURCE_KINDS = [
 
 // Custom mesh resources (single-mesh GLB profile)
 export const CUSTOM_MESH_RESOURCE_KINDS = ['customMesh'] as const;
+// Full mesh resources: GLB with scene graph, materials, textures and animations
+export const FULL_MESH_RESOURCE_KINDS = ['fullMesh'] as const;
 
 // Skybox resources (cube map files profile)
 export const SKYBOX_RESOURCE_KINDS = ['skybox'] as const;
@@ -29,6 +31,7 @@ export const ECS_TREE_RESOURCE_KINDS = ['prefab', 'scene'] as const;
 export const RESOURCE_KINDS = [
   ...MATERIAL_RESOURCE_KINDS,
   ...CUSTOM_MESH_RESOURCE_KINDS,
+  ...FULL_MESH_RESOURCE_KINDS,
   ...SKYBOX_RESOURCE_KINDS,
   ...ECS_TREE_RESOURCE_KINDS,
 ] as const;

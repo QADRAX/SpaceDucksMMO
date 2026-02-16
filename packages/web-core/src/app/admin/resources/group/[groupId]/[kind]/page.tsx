@@ -8,6 +8,7 @@ import { CreateMaterialResourceDialog } from '@/components/organisms/CreateMater
 import { CreateCustomMeshResourceDialog } from '@/components/organisms/CreateCustomMeshResourceDialog';
 import { CreateEcsTreeResourceDialog } from '@/components/organisms/CreateEcsTreeResourceDialog';
 import { CreateSkyboxResourceDialog } from '@/components/organisms/CreateSkyboxResourceDialog';
+import { CreateFullMeshResourceDialog } from '@/components/organisms/CreateFullMeshResourceDialog';
 import { getKindLabel, getResourceGroup, isKindInGroup } from '@/lib/resourceGroups';
 import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
 
@@ -101,6 +102,10 @@ export default async function ResourceGroupKindPage({
                 kindLabel={getKindLabel(group, kind)}
               />
             );
+          }
+
+          if (parsedKind.data === 'fullMesh') {
+            return <CreateFullMeshResourceDialog kindLabel={getKindLabel(group, kind)} />;
           }
 
           if (parsedKind.data === 'skybox') {

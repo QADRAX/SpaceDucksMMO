@@ -6,3 +6,4 @@ export * from './CylinderGeometryComponent';
 export * from './PlaneGeometryComponent';
 export * from './SphereGeometryComponent';
 export * from './TorusGeometryComponent';
+export * from './FullMeshComponent';

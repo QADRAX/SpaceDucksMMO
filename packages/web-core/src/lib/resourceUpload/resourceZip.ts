@@ -15,6 +15,7 @@ import {
 } from '@/lib/types';
 import { parseZipJson, readZipBasenameMap } from '@/lib/zip';
 import { assertCustomMeshGlbProfile } from '@/lib/glb/validateCustomMeshGlb';
+import { assertFullMeshGlbProfile } from '@/lib/glb/validateFullMeshGlb';
 
 function stripExt(fileName: string): string {
   return path.posix.basename(fileName, path.posix.extname(fileName));
@@ -84,6 +85,15 @@ function validateComponentDataForKind(kind: string, rawComponentData: unknown) {
     // Currently no structured componentData for skyboxes.
     return {
       componentType: 'skybox',
+      componentData: componentDataCoerced ?? {},
+    };
+  }
+
+  if (kind === 'fullMesh') {
+    // Full mesh componentData is freeform (may include animations metadata added during upload).
+    const componentDataCoerced = coerceComponentData(componentDataObj);
+    return {
+      componentType: 'fullMesh',
       componentData: componentDataCoerced ?? {},
     };
   }
@@ -184,18 +194,28 @@ export async function createResourceFromZip(prisma: PrismaClient, zipFile: File)
   const slotFiles = collectSlotFilesFromZip(files, versionPayload.files);
 
   // Enforce custom mesh profile (single mesh GLB file).
-  if (kind === 'customMesh') {
+  if (kind === 'customMesh' || kind === 'fullMesh') {
     const mesh = slotFiles.find((s) => s.slot.toLowerCase() === 'mesh');
-    if (!mesh) throw new Error("customMesh requires a 'mesh' file binding");
-    if (slotFiles.length !== 1) {
-      throw new Error("customMesh only supports a single file binding ('mesh')");
-    }
+    if (!mesh) throw new Error("customMesh/fullMesh requires a 'mesh' file binding");
     if (!mesh.fileName.toLowerCase().endsWith('.glb')) {
-      throw new Error("customMesh 'mesh' file must be a .glb");
+      throw new Error("customMesh/fullMesh 'mesh' file must be a .glb");
     }
 
-    // Strict GLB contents validation.
-    assertCustomMeshGlbProfile(mesh.data);
+    if (kind === 'customMesh') {
+      // Legacy strict profile: single mesh GLB, no textures/animations/skins
+      if (slotFiles.length !== 1) {
+        throw new Error("customMesh only supports a single file binding ('mesh')");
+      }
+      // Strict GLB contents validation.
+      assertCustomMeshGlbProfile(mesh.data);
+    } else {
+      // fullMesh: allow additional files (textures etc.) and extract animation names
+      const meta = assertFullMeshGlbProfile(mesh.data);
+      // Persist extracted animation names into componentData for UI use.
+      if (meta && Array.isArray(meta.animations) && meta.animations.length) {
+        componentDataToStore.animations = meta.animations.map((n) => ({ name: n }));
+      }
+    }
   }
 
   // Enforce skybox profile (cube map faces).
@@ -285,7 +305,7 @@ export async function createResourceFromZip(prisma: PrismaClient, zipFile: File)
       }
 
       // Custom mesh convenience: expose resolved mesh URL in componentData as well.
-      if (kind === 'customMesh' && slot.slot.toLowerCase() === 'mesh') {
+      if ((kind === 'customMesh' || kind === 'fullMesh') && slot.slot.toLowerCase() === 'mesh') {
         componentDataToStore.mesh = `/api/files/${fileId}`;
       }
     }

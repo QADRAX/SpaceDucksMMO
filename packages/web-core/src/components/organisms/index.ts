@@ -9,6 +9,7 @@ export * from './CreateMaterialResourceDialog';
 export * from './CreateEcsTreeResourceDialog';
 export * from './MaterialResourcePreview';
 export * from './CreateSkyboxResourceDialog';
+export * from './CreateFullMeshResourceDialog';
 export * from './SkyboxResourcePreview';
 export * from './SkyboxResourcePreview3D';
 export * from './ResourceDetailShell';

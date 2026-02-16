@@ -7,16 +7,10 @@ import type {
   ConeGeometryComponent,
   TorusGeometryComponent,
   CustomGeometryComponent,
+  FullMeshComponent,
 } from "@duckengine/ecs";
 
-export type AnyGeometryComponent =
-  | BoxGeometryComponent
-  | SphereGeometryComponent
-  | PlaneGeometryComponent
-  | CylinderGeometryComponent
-  | ConeGeometryComponent
-  | TorusGeometryComponent
-  | CustomGeometryComponent;
+export type AnyGeometryComponent = BoxGeometryComponent | SphereGeometryComponent | PlaneGeometryComponent | CylinderGeometryComponent | ConeGeometryComponent | TorusGeometryComponent | CustomGeometryComponent | FullMeshComponent;
 
 export class GeometryFactory {
   // Accept either a concrete geometry component (classes used in ECS)
