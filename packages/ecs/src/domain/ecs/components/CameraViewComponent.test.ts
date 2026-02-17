@@ -1,7 +1,12 @@
 import { Entity } from '../core/Entity';
 import { CameraViewComponent } from './CameraViewComponent';
+import type { ComponentType } from '../core/ComponentType';
 
-class Observer { calls=0; onComponentChanged(){ this.calls++; } }
+class Observer {
+  calls = 0;
+  onComponentChanged() { this.calls++; }
+  onComponentRemoved(entityId: string, componentType: ComponentType): void { }
+}
 
 describe('CameraViewComponent', () => {
   test('defaults and setFov notify', () => {

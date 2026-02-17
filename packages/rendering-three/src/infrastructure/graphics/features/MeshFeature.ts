@@ -14,6 +14,7 @@ import type {
     BasicMaterialComponent,
     PhongMaterialComponent,
     LambertMaterialComponent,
+    ComponentType,
 } from "@duckengine/ecs";
 import {
     GeometryFactory,
@@ -65,12 +66,7 @@ export class MeshFeature implements RenderFeature {
         this.createMesh(entity, context);
     }
 
-    onUpdate(entity: Entity, componentType: string, context: RenderContext): void {
-        // If removal of a critical component happened, eligibility check fails and onDetach is called by Router.
-        // Here we handle updates (property changes) or additions that modify the mesh.
-
-        if (componentType.endsWith(":removed")) return; // handled by detach if necessary
-
+    onUpdate(entity: Entity, componentType: ComponentType, context: RenderContext): void {
         /* 
            Handle component updates. 
            If geometry type changed or material type changed, recreated mesh.
@@ -103,6 +99,31 @@ export class MeshFeature implements RenderFeature {
                 break;
             case "textureTiling":
                 this.syncTextureTiling(entity, context);
+                break;
+        }
+    }
+
+    onComponentRemoved(entity: Entity, componentType: ComponentType, context: RenderContext): void {
+        switch (componentType) {
+            case "customGeometry":
+            case "boxGeometry":
+            case "sphereGeometry":
+            case "planeGeometry":
+            case "cylinderGeometry":
+            case "coneGeometry":
+            case "torusGeometry":
+            case "fullMesh":
+            case "shaderMaterial":
+            case "standardMaterial":
+            case "basicMaterial":
+            case "phongMaterial":
+            case "lambertMaterial":
+                // For core geometry/material removal, often isEligible returns false -> onDetach.
+                // But if we swapped one for another, we might just need to recreate.
+                this.recreateMesh(entity, context);
+                break;
+            case "textureTiling":
+                this.resetTextureTiling(entity, context);
                 break;
         }
     }
@@ -330,6 +351,28 @@ export class MeshFeature implements RenderFeature {
             // ... other maps
             (m as any).needsUpdate = true;
         }
+    }
+
+    private resetTextureTiling(entity: Entity, context: RenderContext): void {
+        const rc = context.registry.get(entity.id);
+        if (!rc || !(rc.object3D instanceof THREE.Mesh)) return;
+        const mesh = rc.object3D as THREE.Mesh;
+
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        for (const m of materials) {
+            if (!m) continue;
+            const mm = m as any;
+            if (mm.map) this.resetTexture(mm.map);
+            if (mm.normalMap) this.resetTexture(mm.normalMap);
+            // ... other maps
+            (m as any).needsUpdate = true;
+        }
+    }
+
+    private resetTexture(texture: THREE.Texture): void {
+        texture.repeat.set(1, 1);
+        texture.offset.set(0, 0);
+        texture.needsUpdate = true;
     }
 
     private applyTextureTiling(entity: Entity, texture: THREE.Texture): void {

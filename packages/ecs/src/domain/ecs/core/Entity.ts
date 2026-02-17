@@ -1,5 +1,6 @@
 import { Transform } from "./Transform";
 import { Component } from "./Component";
+import { ComponentType } from "./ComponentType";
 import BaseGeometryComponent from "../components/geometry/BaseGeometryComponent";
 import { Result, ok, err } from '../../errors/EngineError';
 
@@ -27,7 +28,7 @@ export class Entity {
 
   private presentationListeners: Array<() => void> = [];
 
-  private components = new Map<string, Component>();
+  private components = new Map<ComponentType, Component>();
   private _parent?: Entity;
   private children: Entity[] = [];
   private componentListeners: ComponentListener[] = [];
@@ -100,7 +101,7 @@ export class Entity {
     }
     return this;
   }
-  removeComponent(type: string): void {
+  removeComponent(type: ComponentType): void {
     const res = this.safeRemoveComponent(type);
     if (!res.ok) throw new Error(res.error.message);
   }
@@ -120,7 +121,7 @@ export class Entity {
     return ok(undefined);
   }
 
-  safeRemoveComponent(type: string): VoidResult {
+  safeRemoveComponent(type: ComponentType): VoidResult {
     const comp = this.components.get(type);
     if (!comp) return ok(undefined);
     const errors = this.validateRemoval(type);
@@ -137,11 +138,11 @@ export class Entity {
     return ok(undefined);
   }
 
-  getComponent<T extends Component = Component>(type: string): T | undefined {
+  getComponent<T extends Component = Component>(type: ComponentType): T | undefined {
     return this.components.get(type) as T | undefined;
   }
 
-  hasComponent(type: string): boolean {
+  hasComponent(type: ComponentType): boolean {
     return this.components.has(type);
   }
 
@@ -173,13 +174,13 @@ export class Entity {
         if (r === 'geometry') {
           const hasGeom = [...this.components.values()].some((c) => c instanceof BaseGeometryComponent);
           if (!hasGeom) errors.push(`Component '${component.type}' requires '${r}' component`);
-        } else if (!this.components.has(r)) {
+        } else if (!this.components.has(r as ComponentType)) {
           errors.push(`Component '${component.type}' requires '${r}' component`);
         }
       }
     if (meta.conflicts)
       for (const c of meta.conflicts)
-        if (this.components.has(c))
+        if (this.components.has(c as ComponentType))
           errors.push(
             `Component '${component.type}' conflicts with existing '${c}' component`
           );
@@ -187,7 +188,7 @@ export class Entity {
       errors.push(...(component.validate(this) || []));
     return errors;
   }
-  private validateRemoval(type: string): string[] {
+  private validateRemoval(type: ComponentType): string[] {
     const errors: string[] = [];
     for (const c of this.components.values()) {
       const reqs = c.metadata.requires || [];

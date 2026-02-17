@@ -1,9 +1,9 @@
+import { ComponentType } from "./ComponentType";
 import { ComponentMetadata } from "./ComponentMetadata";
-import IComponent from "./IComponent";
 import IComponentObserver from "./IComponentObserver";
 
-export abstract class Component implements IComponent {
-  abstract readonly type: string;
+export abstract class Component {
+  abstract readonly type: ComponentType;
   abstract readonly metadata: ComponentMetadata;
   protected entityId?: string;
   protected observers: IComponentObserver[] = [];
@@ -32,11 +32,10 @@ export abstract class Component implements IComponent {
       o.onComponentChanged(this.entityId, this.type);
   }
   // Notify observers that this component was removed from its entity.
-  // We encode removal by sending a special componentType suffix ':removed'.
   notifyRemoved(): void {
     if (!this.entityId) return;
     for (const o of this.observers)
-      o.onComponentChanged(this.entityId, `${this.type}:removed`);
+      o.onComponentRemoved(this.entityId, this.type);
   }
   setEntityId(id: string): void {
     this.entityId = id;

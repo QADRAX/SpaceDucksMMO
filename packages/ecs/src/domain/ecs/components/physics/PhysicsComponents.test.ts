@@ -1,5 +1,6 @@
 import { Entity } from "../../core/Entity";
 import type IComponentObserver from "../../core/IComponentObserver";
+import type { ComponentType } from "../../core/ComponentType";
 import BoxColliderComponent from "./BoxColliderComponent";
 import CapsuleColliderComponent from "./CapsuleColliderComponent";
 import ConeColliderComponent from "./ConeColliderComponent";
@@ -52,6 +53,7 @@ describe("ECS physics components", () => {
 
     const observer: IComponentObserver = {
       onComponentChanged: jest.fn(),
+      onComponentRemoved: jest.fn(),
     };
     c.addObserver(observer);
 

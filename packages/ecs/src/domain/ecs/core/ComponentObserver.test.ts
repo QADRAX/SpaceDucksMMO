@@ -2,18 +2,22 @@ import { Component } from './Component';
 import { ComponentMetadata } from './ComponentMetadata';
 import IComponentObserver from './IComponentObserver';
 import { Entity } from './Entity';
+import type { ComponentType } from './ComponentType';
 
 class ObservableTestComponent extends Component {
   constructor() { super(); }
-  readonly type = 'ObservableTest';
+  readonly type = 'ObservableTest' as ComponentType;
   readonly metadata: ComponentMetadata = { type: 'ObservableTest' };
   mutate() { this.notifyChanged(); }
 }
 
 class TestObserver implements IComponentObserver {
-  calls: Array<{entityId: string; componentType: string}> = [];
-  onComponentChanged(entityId: string, componentType: string): void {
+  calls: Array<{ entityId: string; componentType: ComponentType }> = [];
+  onComponentChanged(entityId: string, componentType: ComponentType): void {
     this.calls.push({ entityId, componentType });
+  }
+  onComponentRemoved(entityId: string, componentType: ComponentType): void {
+    // Not tested in these specific tests
   }
 }
 

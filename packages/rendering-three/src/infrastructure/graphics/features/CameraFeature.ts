@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { Entity, CameraViewComponent } from "@duckengine/ecs";
+import type { Entity, CameraViewComponent, ComponentType } from "@duckengine/ecs";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
 import { CameraFactory } from "../factories/CameraFactory";
@@ -29,7 +29,7 @@ export class CameraFeature implements RenderFeature {
         });
     }
 
-    onUpdate(entity: Entity, componentType: string, context: RenderContext): void {
+    onUpdate(entity: Entity, componentType: ComponentType, context: RenderContext): void {
         if (componentType === "cameraView") {
             const rc = context.registry.get(entity.id);
             if (!rc?.object3D || !(rc.object3D instanceof THREE.PerspectiveCamera)) return;

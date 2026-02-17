@@ -1,4 +1,5 @@
 export * from './Component';
+export * from './ComponentType';
 export * from './ComponentFactory';
 export * from './ComponentMetadata';
 export * from './EcsWorldContext';

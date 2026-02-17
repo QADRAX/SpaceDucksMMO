@@ -5,6 +5,7 @@ import type {
     DirectionalLightComponent,
     PointLightComponent,
     SpotLightComponent,
+    ComponentType,
 } from "@duckengine/ecs";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
@@ -33,7 +34,7 @@ export class LightFeature implements RenderFeature {
         });
     }
 
-    onUpdate(entity: Entity, componentType: string, context: RenderContext): void {
+    onUpdate(entity: Entity, componentType: ComponentType, context: RenderContext): void {
         if (
             [
                 "ambientLight",

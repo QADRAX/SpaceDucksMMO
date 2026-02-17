@@ -1,4 +1,4 @@
-import type { ComponentEvent, ComponentListener, Entity, Vec3Like, IComponentObserver } from "@duckengine/ecs";
+import type { ComponentEvent, ComponentListener, Entity, Vec3Like, IComponentObserver, ComponentType } from "@duckengine/ecs";
 import { BaseColliderComponent } from "@duckengine/ecs";
 import type {
   AnyColliderComponent,
@@ -240,7 +240,11 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
     if (this.entitySubscriptions.has(entity.id)) return;
 
     const componentObserver: IComponentObserver = {
-      onComponentChanged: (entityId: string, componentType: string) => {
+      onComponentChanged: (entityId: string, componentType: ComponentType) => {
+        this.updates.onComponentChanged(entityId, componentType);
+      },
+      onComponentRemoved: (entityId: string, componentType: ComponentType) => {
+        // Component removal also triggers updates
         this.updates.onComponentChanged(entityId, componentType);
       },
     };

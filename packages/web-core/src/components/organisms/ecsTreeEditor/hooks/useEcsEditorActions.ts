@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { Entity, type DefaultEcsComponentFactory } from '@duckengine/ecs';
+import { Entity, type DefaultEcsComponentFactory, type ComponentType } from '@duckengine/ecs';
 
 import type { EcsEditorScene } from '@/lib/ecsTreeEditorRuntime';
 import { collectAllEntitiesFromRoots } from '@/lib/ecsTreeEditorRuntime';
@@ -209,7 +209,7 @@ export function useEcsEditorActions(args: {
 
   const onRemoveComponent = useStableEvent((type: string) => {
     mutateSelectedEntity((_scene, ent) => {
-      const res = ent.safeRemoveComponent(type);
+      const res = ent.safeRemoveComponent(type as ComponentType);
       if (!res.ok) throw new Error(res.error.message);
     }, `remove-component:${type}`);
   });
@@ -306,7 +306,7 @@ export function useEcsEditorActions(args: {
 
   const onUpdateSelectedComponentData = useStableEvent((type: string, data: Record<string, unknown>) => {
     mutateSelectedEntity((_scene, ent) => {
-      const comp = ent.getComponent(type) as any;
+      const comp = ent.getComponent(type as ComponentType) as any;
       if (!comp) throw new Error(`Component '${type}' not found`);
 
       const fields = (comp.metadata?.inspector?.fields ?? []) as Array<{ key: string; set?: (c: any, v: any) => void }>;

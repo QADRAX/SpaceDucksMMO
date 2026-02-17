@@ -1,5 +1,6 @@
 import type { Entity } from "./Entity";
 import { Component } from "./Component";
+import { ComponentType } from "./ComponentType";
 import { BoxGeometryComponent } from "../components/geometry/BoxGeometryComponent";
 import { SphereGeometryComponent } from "../components/geometry/SphereGeometryComponent";
 import { PlaneGeometryComponent } from "../components/geometry/PlaneGeometryComponent";
@@ -39,45 +40,8 @@ import { TerrainColliderComponent } from "../components/physics/TerrainColliderC
 
 import { SkyboxComponent } from "../components/environment/SkyboxComponent";
 
-export type KnownComponentType =
-  | "name"
-  | "boxGeometry"
-  | "sphereGeometry"
-  | "planeGeometry"
-  | "cylinderGeometry"
-  | "coneGeometry"
-  | "torusGeometry"
-  | "customGeometry"
-  | "fullMesh"
-  | "standardMaterial"
-  | "basicMaterial"
-  | "phongMaterial"
-  | "lambertMaterial"
-  | "shaderMaterial"
-  | "orbit"
-  | "cameraView"
-  | "mouseLook"
-  | "firstPersonMove"
-  | "firstPersonPhysicsMove"
-  | "textureTiling"
-  | "lookAtEntity"
-  | "lookAtPoint"
-  | "ambientLight"
-  | "directionalLight"
-  | "pointLight"
-  | "spotLight"
-  | "skybox"
-  | "rigidBody"
-  | "gravity"
-  | "sphereCollider"
-  | "boxCollider"
-  | "capsuleCollider"
-  | "cylinderCollider"
-  | "coneCollider"
-  | "terrainCollider";
-
 export interface CreatableComponentDef {
-  type: KnownComponentType;
+  type: ComponentType;
   label: string;
   category: string;
   icon: string;
@@ -85,15 +49,15 @@ export interface CreatableComponentDef {
 
 export interface IEcsComponentFactory {
   listCreatableComponents(entity: Entity): CreatableComponentDef[];
-  create(type: KnownComponentType, params?: any): Component;
+  create(type: ComponentType, params?: any): Component;
 }
 
 export class DefaultEcsComponentFactory implements IEcsComponentFactory {
   listCreatableComponents(entity: Entity): CreatableComponentDef[] {
     const defs: CreatableComponentDef[] = [];
-    const has = (t: string) => entity.hasComponent(t);
+    const has = (t: ComponentType) => entity.hasComponent(t);
 
-    const hasInHierarchy = (t: string) => {
+    const hasInHierarchy = (t: ComponentType) => {
       let cur: Entity | undefined = entity;
       while (cur) {
         if (cur.hasComponent(t)) return true;
@@ -102,7 +66,7 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       return false;
     };
 
-    const getComponentDef = (type: KnownComponentType): CreatableComponentDef => {
+    const getComponentDef = (type: ComponentType): CreatableComponentDef => {
       const comp = this.create(type);
       return {
         type,
@@ -112,11 +76,11 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       };
     };
 
-    const satisfiesRequiresInHierarchy = (type: KnownComponentType): boolean => {
+    const satisfiesRequiresInHierarchy = (type: ComponentType): boolean => {
       // Create a fresh instance so we can read its metadata. This is low cost (small list)
       // and keeps the factory metadata-driven (no hardcoded rules in UI).
       const comp = this.create(type);
-      const reqs = (comp.metadata as any)?.requiresInHierarchy as string[] | undefined;
+      const reqs = (comp.metadata as any)?.requiresInHierarchy as ComponentType[] | undefined;
       if (!reqs || reqs.length === 0) return true;
       for (const r of reqs) {
         if (!hasInHierarchy(r)) return false;
@@ -243,7 +207,7 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
     return defs.filter((d) => satisfiesRequiresInHierarchy(d.type));
   }
 
-  create(type: KnownComponentType, params?: any): Component {
+  create(type: ComponentType, params?: any): Component {
     switch (type) {
       case "name":
         return new NameComponent(params ?? { value: '' });

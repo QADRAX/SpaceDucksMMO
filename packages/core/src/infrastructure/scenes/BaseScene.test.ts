@@ -1,10 +1,10 @@
 import BaseScene from './BaseScene';
-import { Entity, Component } from '@duckengine/ecs';
+import { Entity, Component, type ComponentType } from '@duckengine/ecs';
 import { RigidBodyComponent, SphereColliderComponent, SkyboxComponent } from '@duckengine/ecs';
 import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
 
 class TestComp extends Component {
-  readonly type = 'test-comp';
+  readonly type = 'test-comp' as ComponentType;
   readonly metadata = { unique: false } as any;
   public poke() { this.notifyChanged(); }
 }
@@ -84,10 +84,10 @@ describe('BaseScene debug events', () => {
     let unsubscribed = 0;
 
     const physics = {
-      addEntity: () => {},
-      removeEntity: () => {},
-      update: () => {},
-      dispose: () => {},
+      addEntity: () => { },
+      removeEntity: () => { },
+      update: () => { },
+      dispose: () => { },
       subscribeCollisions: (_listener: any) => {
         subscribed += 1;
         return () => {
@@ -147,7 +147,7 @@ describe('BaseScene debug events', () => {
       getSettings: () => ({ graphics: { textureQuality: 'low' } }),
       subscribe: (listener: any) => {
         settingsListener = listener;
-        return () => {};
+        return () => { };
       },
     } as any;
 
@@ -157,7 +157,7 @@ describe('BaseScene debug events', () => {
       getBestVariant: async () => undefined,
       subscribe: (listener) => {
         listener({ variants: [] });
-        return () => {};
+        return () => { };
       },
     };
 

@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { Entity, LensFlareComponent } from "@duckengine/ecs";
+import type { Entity, LensFlareComponent, ComponentType } from "@duckengine/ecs";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
 import LensFlareFactory from "../factories/LensFlareFactory";
@@ -20,7 +20,7 @@ export class LensFlareFeature implements RenderFeature {
         this.createLensFlare(entity, context);
     }
 
-    onUpdate(entity: Entity, componentType: string, context: RenderContext): void {
+    onUpdate(entity: Entity, componentType: ComponentType, context: RenderContext): void {
         if (componentType === "lensFlare") {
             this.recreateLensFlare(entity, context);
         }

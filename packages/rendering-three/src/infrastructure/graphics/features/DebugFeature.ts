@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { Entity } from "@duckengine/ecs";
+import type { Entity, ComponentType } from "@duckengine/ecs";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
 import DebugTransformSystem from "../debug/DebugTransformSystem";
@@ -51,38 +51,54 @@ export class DebugFeature implements RenderFeature {
         this.updateHelpers(entity, context);
     }
 
-    onUpdate(entity: Entity, componentType: string, context: RenderContext): void {
+    onUpdate(entity: Entity, componentType: ComponentType, context: RenderContext): void {
         if (
-            [
-                "boxGeometry", "sphereGeometry", "planeGeometry", "cylinderGeometry",
-                "coneGeometry", "torusGeometry", "customGeometry", "fullMesh", "shaderMaterial"
-            ].includes(componentType)
+            (
+                [
+                    "boxGeometry", "sphereGeometry", "planeGeometry", "cylinderGeometry",
+                    "coneGeometry", "torusGeometry", "customGeometry", "fullMesh", "shaderMaterial"
+                ] as ComponentType[]
+            ).includes(componentType)
         ) {
             try { this.meshDebugSystem.refreshWireframeForEntity(entity.id); } catch { }
         }
 
         if (
-            [
-                "sphereCollider", "boxCollider", "capsuleCollider",
-                "cylinderCollider", "coneCollider", "terrainCollider"
-            ].includes(componentType)
+            (
+                [
+                    "sphereCollider", "boxCollider", "capsuleCollider",
+                    "cylinderCollider", "coneCollider", "terrainCollider"
+                ] as ComponentType[]
+            ).includes(componentType)
         ) {
             try { this.colliderDebugSystem.recreateForEntityIfNeeded(entity); } catch { }
         }
 
-        if (componentType.endsWith(":removed")) {
-            // Handle removal of specific components if necessary
-            const base = componentType.split(":")[0];
-            if (["boxGeometry", "sphereGeometry", "planeGeometry", "cylinderGeometry", "coneGeometry", "torusGeometry", "customGeometry", "fullMesh", "shaderMaterial"].includes(base)) {
-                try { this.meshDebugSystem.refreshWireframeForEntity(entity.id); } catch { }
-            }
-            else if (["sphereCollider", "boxCollider", "capsuleCollider", "cylinderCollider", "coneCollider", "terrainCollider"].includes(base)) {
-                try { this.colliderDebugSystem.recreateForEntityIfNeeded(entity); } catch { }
-            }
-            return;
+        // Transform changes routed via onTransformChanged
+    }
+
+    onComponentRemoved(entity: Entity, componentType: ComponentType, context: RenderContext): void {
+        if (
+            (
+                [
+                    "boxGeometry", "sphereGeometry", "planeGeometry", "cylinderGeometry",
+                    "coneGeometry", "torusGeometry", "customGeometry", "fullMesh", "shaderMaterial"
+                ] as ComponentType[]
+            ).includes(componentType)
+        ) {
+            try { this.meshDebugSystem.refreshWireframeForEntity(entity.id); } catch { }
         }
 
-        // Transform changes routed via onTransformChanged
+        if (
+            (
+                [
+                    "sphereCollider", "boxCollider", "capsuleCollider",
+                    "cylinderCollider", "coneCollider", "terrainCollider"
+                ] as ComponentType[]
+            ).includes(componentType)
+        ) {
+            try { this.colliderDebugSystem.recreateForEntityIfNeeded(entity); } catch { }
+        }
     }
 
     onTransformChanged(entity: Entity, context: RenderContext): void {

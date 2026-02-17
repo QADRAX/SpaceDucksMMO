@@ -17,6 +17,7 @@ import {
     TextureTilingComponent,
     TorusGeometryComponent,
     type ISettingsService,
+    type ComponentType,
 } from '@duckengine/rendering-three';
 import type { MaterialResourceKind } from '@/lib/types';
 import { clampNumber } from '../utils/previewUtils';
@@ -200,7 +201,7 @@ export class MaterialPreviewScene extends BaseScene {
 
     private removeMaterialComponents() {
         if (!this.mesh) return;
-        const materialTypes = ['basicMaterial', 'lambertMaterial', 'phongMaterial', 'standardMaterial'];
+        const materialTypes: ComponentType[] = ['basicMaterial', 'lambertMaterial', 'phongMaterial', 'standardMaterial'];
         for (const t of materialTypes) {
             if (this.mesh.hasComponent(t)) this.mesh.removeComponent(t);
         }
@@ -212,9 +213,9 @@ export class MaterialPreviewScene extends BaseScene {
         const materialData = this.currentMaterialData;
         this.removeMaterialComponents();
 
-        const geometryTypes: GeometryType[] = [
+        const geometryTypes: ComponentType[] = [
             'sphereGeometry', 'boxGeometry', 'planeGeometry', 'cylinderGeometry',
-            'coneGeometry', 'torusGeometry', 'customMesh',
+            'coneGeometry', 'torusGeometry', 'customMesh' as ComponentType,
         ];
         for (const t of geometryTypes) {
             if (this.mesh.hasComponent(t)) this.mesh.removeComponent(t);

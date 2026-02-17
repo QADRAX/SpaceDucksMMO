@@ -4,6 +4,7 @@ import type {
   ComponentEvent,
   ComponentListener,
   IComponentObserver,
+  ComponentType,
 } from "@duckengine/ecs";
 import type { IRenderSyncSystem, ITextureResolver, TextureCatalogService } from "@duckengine/core";
 import { RenderObjectRegistry } from "./RenderObjectRegistry";
@@ -85,20 +86,9 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
         component.addObserver(this);
         this.router.onComponentChanged(e, component.type);
       } else if (action === "removed") {
-        const defer = (fn: () => void) => {
-          try {
-            const qm = (globalThis as any).queueMicrotask as undefined | ((cb: () => void) => void);
-            if (typeof qm === 'function') return qm(fn);
-          } catch { }
-          Promise.resolve().then(fn).catch(() => { });
-        };
-
-        defer(() => {
-          if (!this.entities.has(e.id)) return;
-          this.router.onComponentChanged(e, component.type + ":removed");
-          // Also re-eval eligibility
-          this.router.onComponentChanged(e, component.type);
-        });
+        component.removeObserver(this);
+        // Removal handling is now delegated to onComponentRemoved via IComponentObserver
+        // to ensure consistent timing and strong typing.
       }
     };
 
@@ -140,11 +130,30 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     return this.entities;
   }
 
-  onComponentChanged(entityId: string, componentType: string): void {
+  onComponentChanged(entityId: string, componentType: ComponentType): void {
     const entity = this.entities.get(entityId);
     if (entity) {
       this.router.onComponentChanged(entity, componentType);
     }
+  }
+
+  onComponentRemoved(entityId: string, componentType: ComponentType): void {
+    const entity = this.entities.get(entityId);
+    if (!entity) return;
+
+    // Defer the removal notification to the next microtask/tick.
+    // This allows Entity.components to be updated (deleted) before FeatureRouter checks eligibility.
+    // Without this defer, FeatureRouter.checkEligibility would still see the component as present
+    // because Entity.notifyComponentEvent/notifyRemoved happens before the Map delete.
+    const defer = (fn: () => void) => {
+      Promise.resolve().then(fn).catch(() => { });
+    };
+
+    defer(() => {
+      // Re-check existence in case entity was destroyed in the meantime
+      if (!this.entities.has(entityId)) return;
+      this.router.onComponentRemoved(entity, componentType);
+    });
   }
 
   update(dt: number): void {

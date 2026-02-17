@@ -3,7 +3,7 @@ import type IRenderingEngine from '../../domain/ports/IRenderingEngine';
 import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
 import TextureResolverService from '../../application/TextureResolverService';
 import { setCurrentEcsWorld, setPhysicsServices, Result, ok, err } from '@duckengine/ecs';
-import type { Entity, IComponentObserver } from '@duckengine/ecs';
+import type { Entity, IComponentObserver, ComponentType } from '@duckengine/ecs';
 import type { Component } from '@duckengine/ecs';
 import type SceneChangeEvent from '../../domain/scene/SceneChangeEvent';
 import IRenderSyncSystem from '../../domain/ports/IRenderSyncSystem';
@@ -81,7 +81,7 @@ export abstract class BaseScene implements IScene {
     if (errors.length) {
       throw new Error(
         `Cannot add entity '${entity.id}' to scene '${this.id}':\n` +
-          errors.map((e) => `  - ${e}`).join("\n")
+        errors.map((e) => `  - ${e}`).join("\n")
       );
     }
 
@@ -114,7 +114,7 @@ export abstract class BaseScene implements IScene {
     // Notify subscribers (inspector/UI) about the change so they can react.
     try {
       this.emitChange({ kind: 'scene-debug-changed', enabled: !!enabled });
-    } catch {}
+    } catch { }
   }
 
   /** Enable or disable mesh (wireframe) debug helpers for all entities in this scene. */
@@ -124,11 +124,11 @@ export abstract class BaseScene implements IScene {
     if (this.renderSyncSystem) {
       try {
         this.renderSyncSystem.setSceneMeshDebugEnabled?.(enabled);
-      } catch {}
+      } catch { }
     }
     try {
       this.emitChange({ kind: 'scene-mesh-debug-changed', enabled: !!enabled });
-    } catch {}
+    } catch { }
   }
 
   /**
@@ -157,7 +157,7 @@ export abstract class BaseScene implements IScene {
     if (this.physicsSystem) {
       try {
         this.physicsSystem.removeEntity(id);
-      } catch {}
+      } catch { }
     }
     if (this.activeCameraId === id) {
       this.activeCameraId = null;
@@ -166,7 +166,7 @@ export abstract class BaseScene implements IScene {
       if (this.engine) {
         try {
           this.engine.onActiveCameraChanged();
-        } catch {}
+        } catch { }
       }
     }
     this.detachEntityObservers(id);
@@ -243,12 +243,12 @@ export abstract class BaseScene implements IScene {
         applyImpulse: (entityId, impulse) => {
           try {
             sys?.applyImpulse?.(entityId, impulse);
-          } catch {}
+          } catch { }
         },
         applyForce: (entityId, force) => {
           try {
             sys?.applyForce?.(entityId, force);
-          } catch {}
+          } catch { }
         },
         getLinearVelocity: (entityId) => {
           try {
@@ -265,12 +265,12 @@ export abstract class BaseScene implements IScene {
           }
         },
       });
-    } catch {}
+    } catch { }
 
     // Auto-wire collision event hub (no-op if physics backend doesn't support collisions).
     try {
       this.collisionEvents.attach(this.physicsSystem);
-    } catch {}
+    } catch { }
 
     // Initialize ECS systems
     // Obtain catalog from the engine (optional). If present, core constructs
@@ -281,13 +281,13 @@ export abstract class BaseScene implements IScene {
     if (this.settingsUnsubscribe) {
       try {
         this.settingsUnsubscribe();
-      } catch {}
+      } catch { }
       this.settingsUnsubscribe = undefined;
     }
     if (this.textureResolver) {
       try {
         this.textureResolver.dispose();
-      } catch {}
+      } catch { }
       this.textureResolver = undefined;
     }
 
@@ -302,7 +302,7 @@ export abstract class BaseScene implements IScene {
         this.settingsUnsubscribe = this.settingsService.subscribe((settings) => {
           try {
             this.textureResolver?.setDefaultQuality(settings.graphics.textureQuality);
-          } catch {}
+          } catch { }
         });
       } catch {
         // ignore if settings service cannot subscribe
@@ -320,15 +320,15 @@ export abstract class BaseScene implements IScene {
     if (this.renderSyncSystem) {
       try {
         this.renderSyncSystem.setSceneDebugEnabled(this.debugTransformsEnabled);
-      } catch {}
+      } catch { }
 
       try {
         this.renderSyncSystem.setSceneMeshDebugEnabled?.(this.debugMeshesEnabled);
-      } catch {}
+      } catch { }
 
       try {
         this.renderSyncSystem.setSceneColliderDebugEnabled?.(this.debugCollidersEnabled);
-      } catch {}
+      } catch { }
 
       // Add all entities that were already added
       for (const ent of this.entities.values()) {
@@ -341,7 +341,7 @@ export abstract class BaseScene implements IScene {
       for (const ent of this.entities.values()) {
         try {
           this.physicsSystem.addEntity(ent);
-        } catch {}
+        } catch { }
       }
     }
   }
@@ -361,7 +361,7 @@ export abstract class BaseScene implements IScene {
     if (this.physicsSystem) {
       try {
         this.physicsSystem.update(dt);
-      } catch {}
+      } catch { }
     }
     if (this.renderSyncSystem) {
       this.renderSyncSystem.update(dt);
@@ -447,7 +447,7 @@ export abstract class BaseScene implements IScene {
       return err(
         "invalid-reparent",
         `Reparent would violate component hierarchy requirements for '${childId}':\n` +
-          hierarchyErrors.map((e) => `  - ${e}`).join("\n"),
+        hierarchyErrors.map((e) => `  - ${e}`).join("\n"),
         { childId, newParentId, errors: hierarchyErrors }
       );
     }
@@ -502,8 +502,8 @@ export abstract class BaseScene implements IScene {
     for (const ent of this.entities.values()) {
       if (excludeEntityId && ent.id === excludeEntityId) continue;
       try {
-        if (ent.hasComponent(type)) return ent;
-      } catch {}
+        if (ent.hasComponent(type as ComponentType)) return ent;
+      } catch { }
     }
     return undefined;
   }
@@ -527,7 +527,7 @@ export abstract class BaseScene implements IScene {
   private hasComponentInSelfOrAncestors(entity: Entity, type: string): boolean {
     let cur: Entity | undefined = entity;
     while (cur) {
-      if (cur.hasComponent(type)) return true;
+      if (cur.hasComponent(type as ComponentType)) return true;
       cur = cur.parent;
     }
     return false;
@@ -555,8 +555,16 @@ export abstract class BaseScene implements IScene {
 
   private attachEntityObservers(entity: Entity) {
     const componentObserver: IComponentObserver = {
-      onComponentChanged: (_entityId: string, componentType: string) => {
+      onComponentChanged: (_entityId: string, componentType: ComponentType) => {
         // forward both normal change and removal notifications
+        this.emitChange({
+          kind: "component-changed",
+          entityId: entity.id,
+          componentType,
+        });
+      },
+      onComponentRemoved: (_entityId: string, componentType: ComponentType) => {
+        // forward removal notifications
         this.emitChange({
           kind: "component-changed",
           entityId: entity.id,
@@ -581,7 +589,7 @@ export abstract class BaseScene implements IScene {
           // Ensure scene observes new component changes.
           try {
             comp.addObserver(componentObserver);
-          } catch {}
+          } catch { }
 
           // Validate hierarchy requirements for this entity (owner/ancestor dependencies).
           const errs = this.validateHierarchyRequirements(entity);
@@ -634,25 +642,25 @@ export abstract class BaseScene implements IScene {
       comp.addObserver(componentObserver);
     try {
       entity.transform.onChange(transformListener);
-    } catch {}
+    } catch { }
 
     try {
       entity.addComponentListener(componentListener);
-    } catch {}
+    } catch { }
 
     const cleanup = () => {
       for (const comp of entity.getAllComponents()) {
         try {
           comp.removeObserver(componentObserver);
-        } catch {}
+        } catch { }
       }
       try {
         entity.transform.removeOnChange(transformListener);
-      } catch {}
+      } catch { }
 
       try {
         entity.removeComponentListener(componentListener);
-      } catch {}
+      } catch { }
     };
 
     this.entitySubscriptions.set(entity.id, cleanup);
@@ -663,7 +671,7 @@ export abstract class BaseScene implements IScene {
     if (cleanup) {
       try {
         cleanup();
-      } catch {}
+      } catch { }
       this.entitySubscriptions.delete(entityId);
     }
   }
@@ -687,12 +695,12 @@ export abstract class BaseScene implements IScene {
     // Clear scene-scoped physics services first to avoid components calling into a disposed backend.
     try {
       setPhysicsServices(null);
-    } catch {}
+    } catch { }
 
     // Detach collision hub first to ensure no callbacks fire during teardown/dispose.
     try {
       this.collisionEvents.detach();
-    } catch {}
+    } catch { }
 
     if (this.settingsUnsubscribe) {
       this.settingsUnsubscribe();
@@ -702,7 +710,7 @@ export abstract class BaseScene implements IScene {
     if (this.textureResolver) {
       try {
         this.textureResolver.dispose();
-      } catch {}
+      } catch { }
       this.textureResolver = undefined;
     }
 
@@ -713,7 +721,7 @@ export abstract class BaseScene implements IScene {
         // detach any observers attached for inspector/debug
         try {
           this.detachEntityObservers(ent.id);
-        } catch {}
+        } catch { }
       }
     }
 
@@ -721,18 +729,18 @@ export abstract class BaseScene implements IScene {
       for (const ent of this.entities.values()) {
         try {
           this.physicsSystem.removeEntity(ent.id);
-        } catch {}
+        } catch { }
       }
       try {
         this.physicsSystem.dispose();
-      } catch {}
+      } catch { }
       this.physicsSystem = undefined;
     }
     // ensure cleanup of any remaining subscriptions
     for (const id of Array.from(this.entitySubscriptions.keys())) {
       try {
         this.detachEntityObservers(id);
-      } catch {}
+      } catch { }
     }
     this.entities.clear();
 

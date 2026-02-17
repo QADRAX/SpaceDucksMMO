@@ -1,4 +1,4 @@
-import type { Entity } from "@duckengine/ecs";
+import type { Entity, ComponentType } from "@duckengine/ecs";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
 
@@ -34,7 +34,7 @@ export class FeatureRouter {
         }
     }
 
-    onComponentChanged(entity: Entity, componentType: string): void {
+    onComponentChanged(entity: Entity, componentType: ComponentType): void {
         // 1. Re-evaluate eligibility for all features (some might need to attach/detach based on the change).
         this.checkEligibility(entity);
 
@@ -46,6 +46,25 @@ export class FeatureRouter {
                     feature.onUpdate(entity, componentType, this.context);
                 } catch (e) {
                     console.error(`[FeatureRouter] Error updating feature ${feature.name} for entity ${entity.id}:`, e);
+                }
+            }
+        }
+    }
+
+    onComponentRemoved(entity: Entity, componentType: ComponentType): void {
+        // 1. Re-evaluate eligibility (removal might make entity ineligible).
+        this.checkEligibility(entity);
+
+        // 2. Notify active features of the removal.
+        const activeInfo = this.activeFeatures.get(entity.id);
+        if (activeInfo) {
+            for (const feature of activeInfo) {
+                if (feature.onComponentRemoved) {
+                    try {
+                        feature.onComponentRemoved(entity, componentType, this.context);
+                    } catch (e) {
+                        console.error(`[FeatureRouter] Error notifying removal to feature ${feature.name} for entity ${entity.id}:`, e);
+                    }
                 }
             }
         }
