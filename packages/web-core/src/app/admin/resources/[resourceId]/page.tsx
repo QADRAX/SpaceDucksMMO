@@ -2,14 +2,8 @@ import Link from 'next/link';
 
 import { prisma } from '@/lib/db';
 import { Card } from '@/components/molecules/Card';
-import { MaterialResourcePreview } from '@/components/organisms/MaterialResourcePreview';
-import { CustomMeshResourcePreview } from '@/components/organisms/CustomMeshResourcePreview';
-import { SkyboxResourcePreview3D } from '@/components/organisms/SkyboxResourcePreview3D';
-import { ResourceDetailAdminPanel } from '@/components/organisms/ResourceDetailAdminPanel';
-import { ResourceDetailCustomMeshPanel } from '@/components/organisms/ResourceDetailCustomMeshPanel';
-import { ResourceDetailEcsTreePanel } from '@/components/organisms/ResourceDetailEcsTreePanel';
-import { ResourceDetailSkyboxPanel } from '@/components/organisms/ResourceDetailSkyboxPanel';
-import { ResourceDetailFullMeshPanel } from '@/components/organisms/ResourceDetailFullMeshPanel';
+import { ResourceDetailDispatcher } from '@/components/organisms/resources/ResourceDetailDispatcher';
+import { ResourcePreviewDispatcher } from '@/components/organisms/resources/ResourcePreviewDispatcher';
 import { ResourceDetailShell } from '@/components/organisms/ResourceDetailShell';
 import { ResourceDetailHeaderEditor } from '@/components/organisms/ResourceDetailHeaderEditor';
 import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
@@ -133,133 +127,38 @@ export default async function ResourceDetailPage({
       }
       title={resource.displayName}
       left={
-        materialKindParsed.success ? (
-          <ResourceDetailAdminPanel
-            resource={{
-              id: resource.id,
-              key: resource.key,
-              kind: materialKindParsed.data,
-              activeVersion: resource.activeVersion,
-            }}
-            versions={versions.map((v) => ({
-              id: v.id,
-              version: v.version,
-              componentType: v.componentType,
-              componentData: v.componentData,
-              bindings: (v.bindings ?? []).map((b) => ({
-                id: b.id,
-                slot: b.slot,
-                fileAssetId: b.fileAssetId,
-                fileName: b.fileAsset.fileName,
-              })),
-            }))}
-          />
-        ) : kindParsed.success && kindParsed.data === 'customMesh' ? (
-          <ResourceDetailCustomMeshPanel
-            resource={{
-              id: resource.id,
-              kind: 'customMesh',
-              activeVersion: resource.activeVersion,
-            }}
-            versions={versions.map((v) => ({
-              id: v.id,
-              version: v.version,
-              componentType: v.componentType,
-              componentData: v.componentData,
-              bindings: (v.bindings ?? []).map((b) => ({
-                id: b.id,
-                slot: b.slot,
-                fileAssetId: b.fileAssetId,
-                fileName: b.fileAsset.fileName,
-              })),
-            }))}
-          />
-        ) : kindParsed.success && kindParsed.data === 'fullMesh' ? (
-          <ResourceDetailFullMeshPanel
-            resource={{
-              id: resource.id,
-              kind: 'fullMesh',
-              activeVersion: resource.activeVersion,
-            }}
-            versions={versions.map((v) => ({
-              id: v.id,
-              version: v.version,
-              componentType: v.componentType,
-              componentData: v.componentData,
-              bindings: (v.bindings ?? []).map((b) => ({
-                id: b.id,
-                slot: b.slot,
-                fileAssetId: b.fileAssetId,
-                fileName: b.fileAsset.fileName,
-              })),
-            }))}
-          />
-        ) : kindParsed.success && kindParsed.data === 'skybox' ? (
-          <ResourceDetailSkyboxPanel
-            resource={{
-              id: resource.id,
-              kind: 'skybox',
-              activeVersion: resource.activeVersion,
-            }}
-            versions={versions.map((v) => ({
-              id: v.id,
-              version: v.version,
-              componentType: v.componentType,
-              componentData: v.componentData,
-              bindings: (v.bindings ?? []).map((b) => ({
-                id: b.id,
-                slot: b.slot,
-                fileAssetId: b.fileAssetId,
-                fileName: b.fileAsset.fileName,
-              })),
-            }))}
-          />
-        ) : kindParsed.success && (kindParsed.data === 'prefab' || kindParsed.data === 'scene') ? (
-          <ResourceDetailEcsTreePanel
-            resource={{
-              id: resource.id,
-              kind: kindParsed.data,
-              activeVersion: resource.activeVersion,
-            }}
-            versions={versions.map((v) => ({
-              id: v.id,
-              version: v.version,
-              componentType: v.componentType,
-              componentData: v.componentData,
-              bindings: (v.bindings ?? []).map((b) => ({
-                id: b.id,
-                slot: b.slot,
-                fileAssetId: b.fileAssetId,
-                fileName: b.fileAsset.fileName,
-              })),
-            }))}
-          />
-        ) : (
-          <div className="p-6 space-y-2">
-            <div className="font-heading">Resource management</div>
-            <div className="text-sm text-neutral-600">
-              This UI currently supports material, custom mesh, and ECS tree resource kinds.
-            </div>
-          </div>
-        )
+        <ResourceDetailDispatcher
+          resource={{
+            id: resource.id,
+            key: resource.key,
+            kind: resource.kind,
+            activeVersion: resource.activeVersion,
+          }}
+          versions={versions.map((v) => ({
+            id: v.id,
+            version: v.version,
+            componentType: v.componentType,
+            componentData: v.componentData,
+            bindings: (v.bindings ?? []).map((b) => ({
+              id: b.id,
+              slot: b.slot,
+              fileAssetId: b.fileAssetId,
+              fileName: b.fileAsset.fileName,
+            })),
+          }))}
+        />
       }
       right={
-        canPreviewMaterial ? (
-          <MaterialResourcePreview
-            resourceKey={resource.key}
-            kind={materialKindParsed.data}
-            componentData={previewComponentData}
-            className="h-full w-full"
-          />
-        ) : kindParsed.success && kindParsed.data === 'customMesh' && activeVersion ? (
-          <CustomMeshResourcePreview resourceKey={resource.key} className="h-full w-full" />
-        ) : kindParsed.success && kindParsed.data === 'fullMesh' && activeVersion ? (
-          <CustomMeshResourcePreview resourceKey={resource.key} className="h-full w-full" disableMaterialOverrides />
-        ) : (
-          <div className="h-full w-full flex items-center justify-center bg-bg">
-            <div className="text-sm text-neutral-600">No preview available for this resource kind.</div>
-          </div>
-        )
+        <ResourcePreviewDispatcher
+          resource={{
+            id: resource.id,
+            key: resource.key,
+            kind: resource.kind,
+            activeVersion: resource.activeVersion,
+          }}
+          activeVersionId={activeVersion?.id ?? null}
+          previewComponentData={previewComponentData}
+        />
       }
       footer={
         <div className="flex items-center justify-between gap-4 text-sm">

@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { NotificationProvider } from '@/contexts/NotificationContext';
+import { Toaster } from '@/components/organisms/Toaster';
 
 export const metadata: Metadata = {
   title: 'Duck Engine Web Core',
@@ -13,7 +15,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <NotificationProvider>
+          {children}
+          <Toaster />
+        </NotificationProvider>
+      </body>
     </html>
   );
 }

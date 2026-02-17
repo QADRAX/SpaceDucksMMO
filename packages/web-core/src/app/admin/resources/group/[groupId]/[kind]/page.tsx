@@ -4,11 +4,11 @@ import { notFound } from 'next/navigation';
 import { prisma } from '@/lib/db';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { ResourceTable } from '@/components/organisms/ResourceTable';
-import { CreateMaterialResourceDialog } from '@/components/organisms/CreateMaterialResourceDialog';
-import { CreateCustomMeshResourceDialog } from '@/components/organisms/CreateCustomMeshResourceDialog';
-import { CreateEcsTreeResourceDialog } from '@/components/organisms/CreateEcsTreeResourceDialog';
-import { CreateSkyboxResourceDialog } from '@/components/organisms/CreateSkyboxResourceDialog';
-import { CreateFullMeshResourceDialog } from '@/components/organisms/CreateFullMeshResourceDialog';
+import { CreateMaterialDialog } from '@/components/organisms/resources/material/CreateMaterialDialog';
+import { CreateCustomMeshDialog } from '@/components/organisms/resources/custom-mesh/CreateCustomMeshDialog';
+import { CreateEcsTreeDialog } from '@/components/organisms/resources/ecs-tree/CreateEcsTreeDialog';
+import { CreateSkyboxDialog } from '@/components/organisms/resources/skybox/CreateSkyboxDialog';
+import { CreateFullMeshDialog } from '@/components/organisms/resources/full-mesh/CreateFullMeshDialog';
 import { getKindLabel, getResourceGroup, isKindInGroup } from '@/lib/resourceGroups';
 import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
 
@@ -98,23 +98,23 @@ export default async function ResourceGroupKindPage({
 
           if (parsedKind.data === 'customMesh') {
             return (
-              <CreateCustomMeshResourceDialog
+              <CreateCustomMeshDialog
                 kindLabel={getKindLabel(group, kind)}
               />
             );
           }
 
           if (parsedKind.data === 'fullMesh') {
-            return <CreateFullMeshResourceDialog kindLabel={getKindLabel(group, kind)} />;
+            return <CreateFullMeshDialog kindLabel={getKindLabel(group, kind)} />;
           }
 
           if (parsedKind.data === 'skybox') {
-            return <CreateSkyboxResourceDialog kindLabel={getKindLabel(group, kind)} />;
+            return <CreateSkyboxDialog kindLabel={getKindLabel(group, kind)} />;
           }
 
           if (parsedKind.data === 'prefab' || parsedKind.data === 'scene') {
             return (
-              <CreateEcsTreeResourceDialog
+              <CreateEcsTreeDialog
                 kind={parsedKind.data}
                 kindLabel={getKindLabel(group, kind)}
               />
@@ -125,7 +125,7 @@ export default async function ResourceGroupKindPage({
           if (!materialKind.success) return null;
 
           return (
-            <CreateMaterialResourceDialog
+            <CreateMaterialDialog
               kind={materialKind.data}
               kindLabel={getKindLabel(group, kind)}
             />

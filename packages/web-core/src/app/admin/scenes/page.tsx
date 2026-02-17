@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { ResourceTable } from '@/components/organisms/ResourceTable';
-import { CreateEcsTreeResourceDialog } from '@/components/organisms/CreateEcsTreeResourceDialog';
+import { CreateEcsTreeDialog } from '@/components/organisms/resources/ecs-tree/CreateEcsTreeDialog';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -59,7 +59,7 @@ export default async function ScenesPage({
 
       <ResourceTable
         rows={rows}
-        toolbar={<CreateEcsTreeResourceDialog kind="scene" kindLabel="Scene" />}
+        toolbar={<CreateEcsTreeDialog kind="scene" kindLabel="Scene" />}
         emptyTitle="No scenes yet."
         emptyHint={<>Create one to start editing and versioning.</>}
         viewHref={(id) => `/admin/scenes/${id}`}

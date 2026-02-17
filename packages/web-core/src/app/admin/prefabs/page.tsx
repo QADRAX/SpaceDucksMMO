@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/db';
 import { PageHeader } from '@/components/organisms/PageHeader';
 import { ResourceTable } from '@/components/organisms/ResourceTable';
-import { CreateEcsTreeResourceDialog } from '@/components/organisms/CreateEcsTreeResourceDialog';
+import { CreateEcsTreeDialog } from '@/components/organisms/resources/ecs-tree/CreateEcsTreeDialog';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -59,7 +59,7 @@ export default async function PrefabsPage({
 
       <ResourceTable
         rows={rows}
-        toolbar={<CreateEcsTreeResourceDialog kind="prefab" kindLabel="Prefab" />}
+        toolbar={<CreateEcsTreeDialog kind="prefab" kindLabel="Prefab" />}
         emptyTitle="No prefabs yet."
         emptyHint={<>Create one to start building reusable entity trees.</>}
         viewHref={(id) => `/admin/prefabs/${id}`}
