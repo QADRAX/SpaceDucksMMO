@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { useFormState } from '@/hooks/useFormState';
 import { createUploadZip } from '@/lib/resource-zip';
+import { AdminService } from '@/lib/api';
 
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
@@ -86,12 +87,9 @@ export function FullMeshDetailPanel({ resource, versions }: { resource: Resource
 
       const zipFile = new File([zipBlob], `fullMesh-${resource.id}.zip`, { type: 'application/zip' });
 
-      const form = new FormData();
-      form.set('zip', zipFile);
-
-      const res = await fetch(`/api/admin/resources/${resource.id}/versions`, { method: 'POST', body: form });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) { const msg = (json && (json.error as string)) || `Failed to create version (${res.status})`; throw new Error(msg); }
+      await AdminService.postApiAdminResourcesVersions(resource.id, {
+        zip: zipFile,
+      });
 
       setCreatingOpen(false);
       router.refresh();
@@ -127,7 +125,7 @@ export function FullMeshDetailPanel({ resource, versions }: { resource: Resource
         title="New Full Mesh Version"
         subtitle="Create"
         onClose={() => setCreatingOpen(false)}
-        fullscreen={false}
+        fullscreen={true}
         className="max-w-4xl"
       >
         <div className="flex h-full">

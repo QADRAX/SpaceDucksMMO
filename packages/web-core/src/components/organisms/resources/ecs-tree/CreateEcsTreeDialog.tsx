@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/atoms/Button';
 import { ResourceDialogLayout, ResourceDialogFormPanel } from '@/components/molecules/resource-ui/ResourceDialogLayout';
 import { ResourceKeyInput, ResourceDisplayNameInput } from '@/components/molecules/resource-ui/ResourceFormFields';
+import { AdminService } from '@/lib/api';
 
 export function CreateEcsTreeDialog({
   kind,
@@ -43,23 +44,17 @@ export function CreateEcsTreeDialog({
 
     setSubmitting(true);
     try {
-      const res = await fetch('/api/admin/resources', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          kind,
-          key: key.trim(),
-          displayName: displayName.trim(),
-        }),
+      const res = await AdminService.postApiAdminResources({
+        kind,
+        key: key.trim(),
+        displayName: displayName.trim(),
       });
 
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        const msg = (json && (json.error as string)) || `Failed to create resource (${res.status})`;
-        throw new Error(msg);
-      }
-
-      const createdId = (json && (json.id as string)) || null;
+      // The response can be Resource or CreateResourceFromZipResponse.
+      // We know it's a Resource here because we didn't send a zip.
+      // However, the generated client might not discriminate perfectly in types.
+      // We'll cast or just use the id.
+      const createdId = (res as any).id;
       if (!createdId) {
         throw new Error('Resource created but missing id in response');
       }

@@ -11,6 +11,7 @@ import { SkyboxFaceDropBox, FACE_SLOTS, type FaceSlot } from '@/components/molec
 import { rotateImageFile } from '@/lib/imageTransform';
 import { useFormState } from '@/hooks/useFormState';
 import { createUploadZip } from '@/lib/resource-zip';
+import { createResourceWithZip } from '@/lib/api';
 
 function useObjectUrl(file: File | null): string | null {
   const [url, setUrl] = React.useState<string | null>(null);
@@ -130,19 +131,12 @@ export function CreateSkyboxDialog({ kindLabel }: { kindLabel: string }) {
         type: 'application/zip',
       });
 
-      const form = new FormData();
-      form.set('zip', zipFile);
-
-      const res = await fetch('/api/admin/resources', {
-        method: 'POST',
-        body: form,
+      await createResourceWithZip({
+        kind: 'skybox',
+        key: key.trim(),
+        displayName: displayName.trim(),
+        zip: zipFile,
       });
-
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        const msg = (json && (json.error as string)) || `Failed to create resource (${res.status})`;
-        throw new Error(msg);
-      }
 
       setOpen(false);
       router.refresh();

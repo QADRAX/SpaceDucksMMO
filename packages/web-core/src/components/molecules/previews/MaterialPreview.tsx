@@ -236,13 +236,16 @@ export function MaterialPreview({ resourceKey, kind, componentData, className }:
                             {previewSettings.geometry.type === 'customMesh' && (
                                 <div className="flex flex-col gap-2">
                                     <div className="text-xs text-neutral-600 font-medium">Mesh Key</div>
-                                    <input
-                                        type="text"
+                                    <select
                                         className="w-full bg-white border border-border rounded px-2 py-1 text-xs"
-                                        placeholder="Mesh Key"
                                         value={previewSettings.geometry.customMesh.key}
                                         onChange={(e) => setPreviewSettings(s => ({ ...s, geometry: { ...s.geometry, customMesh: { key: e.target.value } } }))}
-                                    />
+                                    >
+                                        <option value="">(Select mesh)</option>
+                                        {systemMeshes?.map((m) => (
+                                            <option key={m.key} value={m.key}>{m.displayName} ({m.key})</option>
+                                        ))}
+                                    </select>
                                     {systemMeshesError && <div className="text-red-500 text-xs">{systemMeshesError}</div>}
                                 </div>
                             )}

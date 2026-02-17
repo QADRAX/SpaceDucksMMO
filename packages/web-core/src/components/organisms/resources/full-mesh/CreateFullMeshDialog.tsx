@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { useFormState } from '@/hooks/useFormState';
 import { createUploadZip } from '@/lib/resource-zip';
+import { createResourceWithZip } from '@/lib/api';
 
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
@@ -83,15 +84,12 @@ export function CreateFullMeshDialog({ kindLabel }: { kindLabel: string }) {
 
       const zipFile = new File([zipBlob], `${key.trim() || 'fullMesh'}.zip`, { type: 'application/zip' });
 
-      const form = new FormData();
-      form.set('zip', zipFile);
-
-      const res = await fetch('/api/admin/resources', { method: 'POST', body: form });
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        const msg = (json && (json.error as string)) || `Failed to create resource (${res.status})`;
-        throw new Error(msg);
-      }
+      await createResourceWithZip({
+        kind: 'fullMesh',
+        key: key.trim(),
+        displayName: displayName.trim(),
+        zip: zipFile,
+      });
 
       setOpen(false);
       router.refresh();

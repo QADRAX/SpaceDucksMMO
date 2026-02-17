@@ -14,6 +14,7 @@ import { useResourceMutations } from '@/hooks/useResourceMutations';
 import { SkyboxFaceDropBox, FACE_SLOTS, type FaceSlot } from '@/components/molecules/resource-ui/SkyboxFaceDropBox';
 import { useFormState } from '@/hooks/useFormState';
 import { createUploadZip } from '@/lib/resource-zip';
+import { AdminService } from '@/lib/api';
 
 import { VersionSummary, VersionBindingSummary } from '../types';
 
@@ -187,21 +188,19 @@ export function SkyboxDetailPanel({
         type: 'application/zip',
       });
 
-      const form = new FormData();
-      form.set('zip', zipFile);
-
-      const res = await fetch(`/api/admin/resources/${resource.id}/versions`, {
-        method: 'POST',
-        body: form,
+      await AdminService.postApiAdminResourcesVersions(resource.id, {
+        zip: zipFile,
       });
 
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        const msg = (json && (json.error as string)) || `Failed to create version (${res.status})`;
-        throw new Error(msg);
-      }
-
       setCreatingOpen(false);
+      // window.location.reload(); // Original used fetch which doesn't auto-reload, but component has router.refresh(). 
+      // The original code had window.location.reload() which is abrupt. router.refresh() is better if the server component updates.
+      // However, the previous code had window.location.reload(). I will stick to router.refresh() if possible, or keep reload if critical.
+      // The original code:
+      // setCreatingOpen(false);
+      // window.location.reload();
+      // I will replace with router.refresh() as seen in other components, or keep it if I must.
+      // Actually, SkyboxDetailPanel used window.location.reload().
       window.location.reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -242,7 +241,7 @@ export function SkyboxDetailPanel({
         title="New Skybox Version"
         subtitle="Upload"
         onClose={() => setCreatingOpen(false)}
-        fullscreen={false}
+        fullscreen={true}
         className="max-w-4xl"
       >
         <div className="flex h-full">

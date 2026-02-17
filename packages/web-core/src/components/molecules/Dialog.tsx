@@ -24,7 +24,7 @@ interface DialogProps {
 
 export function Dialog({ open: controlledOpen, onOpenChange, children }: DialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
-  
+
   const open = controlledOpen !== undefined ? controlledOpen : uncontrolledOpen;
   const setOpen = onOpenChange || setUncontrolledOpen;
 
@@ -60,9 +60,10 @@ export function DialogTrigger({ children, asChild, ...props }: DialogTriggerProp
 
 interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
   fullscreen?: boolean;
+  zIndex?: number;
 }
 
-export function DialogContent({ className, children, fullscreen = false, ...props }: DialogContentProps) {
+export function DialogContent({ className, children, fullscreen = false, zIndex = 10000, ...props }: DialogContentProps) {
   const { open, setOpen } = useDialog();
 
   React.useEffect(() => {
@@ -80,16 +81,17 @@ export function DialogContent({ className, children, fullscreen = false, ...prop
   return (
     <div
       className={cn(
-        'fixed inset-0 z-10000 flex',
+        'fixed inset-0 flex',
         fullscreen ? 'items-stretch justify-stretch p-0' : 'items-center justify-center p-4'
       )}
+      style={{ zIndex }}
     >
       {/* Overlay */}
       <div
         className="fixed inset-0 bg-black/50"
         onClick={() => setOpen(false)}
       />
-      
+
       {/* Dialog */}
       <div
         className={cn(
@@ -107,7 +109,7 @@ export function DialogContent({ className, children, fullscreen = false, ...prop
   );
 }
 
-interface DialogHeaderProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface DialogHeaderProps extends React.HTMLAttributes<HTMLDivElement> { }
 
 export function DialogHeader({ className, ...props }: DialogHeaderProps) {
   return (
@@ -118,7 +120,7 @@ export function DialogHeader({ className, ...props }: DialogHeaderProps) {
   );
 }
 
-interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> {}
+interface DialogFooterProps extends React.HTMLAttributes<HTMLDivElement> { }
 
 export function DialogFooter({ className, ...props }: DialogFooterProps) {
   return (
@@ -129,7 +131,7 @@ export function DialogFooter({ className, ...props }: DialogFooterProps) {
   );
 }
 
-interface DialogTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {}
+interface DialogTitleProps extends React.HTMLAttributes<HTMLHeadingElement> { }
 
 export function DialogTitle({ className, ...props }: DialogTitleProps) {
   return (
@@ -140,7 +142,7 @@ export function DialogTitle({ className, ...props }: DialogTitleProps) {
   );
 }
 
-interface DialogDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {}
+interface DialogDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> { }
 
 export function DialogDescription({ className, ...props }: DialogDescriptionProps) {
   return (

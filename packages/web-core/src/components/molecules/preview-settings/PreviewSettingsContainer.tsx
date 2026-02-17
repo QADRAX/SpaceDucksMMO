@@ -31,7 +31,7 @@ export function PreviewSettingsContainer({ label = 'Preview settings', trigger, 
             </div>
 
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="p-0 w-full max-w-2xl bg-white rounded-lg shadow-xl outline-none">
+                <DialogContent zIndex={20000} className="p-0 w-full max-w-2xl bg-white rounded-lg shadow-xl outline-none">
                     <div className="p-6 border-b border-border bg-neutral-50 rounded-t-lg">
                         <div className="flex items-center justify-between gap-4">
                             <div>

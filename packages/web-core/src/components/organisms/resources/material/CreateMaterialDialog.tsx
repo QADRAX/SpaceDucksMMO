@@ -21,6 +21,7 @@ import { EcsInspectorFieldsForm } from '@/components/molecules/EcsInspectorField
 import { MaterialPreview } from '@/components/molecules/previews/MaterialPreview';
 import { useFormState } from '@/hooks/useFormState';
 import { createUploadZip } from '@/lib/resource-zip';
+import { createResourceWithZip } from '@/lib/api';
 
 type TextureFileState = {
   file: File;
@@ -163,19 +164,12 @@ export function CreateMaterialDialog({
 
       const zipFile = new File([zipBlob], `${key.trim() || kind}.zip`, { type: 'application/zip' });
 
-      const form = new FormData();
-      form.set('zip', zipFile);
-
-      const res = await fetch('/api/admin/resources', {
-        method: 'POST',
-        body: form,
+      await createResourceWithZip({
+        kind,
+        key: key.trim(),
+        displayName: displayName.trim(),
+        zip: zipFile,
       });
-
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        const msg = (json && (json.error as string)) || `Failed to create resource (${res.status})`;
-        throw new Error(msg);
-      }
 
       setOpen(false);
       router.refresh();

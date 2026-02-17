@@ -12,6 +12,7 @@ import { ResourceDetailHeader } from '@/components/molecules/resource-ui/Resourc
 import { ResourceDialogLayout, ResourceDialogFormPanel } from '@/components/molecules/resource-ui/ResourceDialogLayout';
 import { useResourceMutations } from '@/hooks/useResourceMutations';
 import { useFormState } from '@/hooks/useFormState';
+import { AdminService } from '@/lib/api';
 
 import { VersionSummary, VersionBindingSummary } from '../types';
 
@@ -93,24 +94,15 @@ export function EcsTreeDetailPanel({
 
     setSubmitting(true);
     try {
-      const form = new FormData();
-      form.set('componentData', JSON.stringify(parsed.data, null, 2));
-
-      const res = await fetch(`/api/admin/resources/${resource.id}/versions`, {
-        method: 'POST',
-        body: form,
+      await AdminService.postApiAdminResourcesVersions(resource.id, {
+        componentData: JSON.stringify(parsed.data, null, 2),
       });
-
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        const msg = (json && (json.error as string)) || `Failed to create version (${res.status})`;
-        throw new Error(msg);
-      }
 
       setCreatingOpen(false);
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      setError(msg);
       setSubmitting(false);
     }
   };

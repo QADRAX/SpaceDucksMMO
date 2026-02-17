@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 
 import { useFormState } from '@/hooks/useFormState';
 import { createUploadZip } from '@/lib/resource-zip';
+import { AdminService } from '@/lib/api';
 
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';
@@ -108,19 +109,9 @@ export function CustomMeshDetailPanel({
 
       const zipFile = new File([zipBlob], `customMesh-${resource.id}.zip`, { type: 'application/zip' });
 
-      const form = new FormData();
-      form.set('zip', zipFile);
-
-      const res = await fetch(`/api/admin/resources/${resource.id}/versions`, {
-        method: 'POST',
-        body: form,
+      await AdminService.postApiAdminResourcesVersions(resource.id, {
+        zip: zipFile,
       });
-
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        const msg = (json && (json.error as string)) || `Failed to create version (${res.status})`;
-        throw new Error(msg);
-      }
 
       setCreatingOpen(false);
       router.refresh();
@@ -166,7 +157,7 @@ export function CustomMeshDetailPanel({
         title="New Mesh Version"
         subtitle="Create"
         onClose={() => setCreatingOpen(false)}
-        fullscreen={false}
+        fullscreen={true}
         className="max-w-4xl"
       >
         <div className="flex h-full">

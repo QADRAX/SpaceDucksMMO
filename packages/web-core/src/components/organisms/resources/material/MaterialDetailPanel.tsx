@@ -22,6 +22,7 @@ import { ResourceDialogLayout, ResourceDialogFormPanel, ResourceDialogPreviewPan
 import { useResourceMutations } from '@/hooks/useResourceMutations';
 import { useFormState } from '@/hooks/useFormState';
 import { createUploadZip } from '@/lib/resource-zip';
+import { AdminService, updateResourceVersionWithFiles } from '@/lib/api';
 
 import { VersionSummary, VersionBindingSummary } from '../types';
 
@@ -181,24 +182,20 @@ export function MaterialDetailPanel({
     setEditError(null);
     setEditSubmitting(true);
 
+    setEditSubmitting(true);
+
     try {
-      const form = new FormData();
-      form.set('componentData', JSON.stringify(editComponentData ?? {}, null, 2));
-
+      const files: Record<string, File> = {};
       for (const [slot, tf] of Object.entries(editTextureFilesByKey)) {
-        form.set(slot, tf.file);
+        files[slot] = tf.file;
       }
 
-      const res = await fetch(`/api/admin/resources/${resource.id}/versions/${editingVersion.version}`, {
-        method: 'PATCH',
-        body: form,
+      await updateResourceVersionWithFiles({
+        resourceId: resource.id,
+        version: editingVersion.version,
+        componentData: editComponentData ?? {},
+        files,
       });
-
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        const msg = (json && (json.error as string)) || `Failed to update version (${res.status})`;
-        throw new Error(msg);
-      }
 
       setEditingVersion(null);
       router.refresh();
@@ -215,9 +212,10 @@ export function MaterialDetailPanel({
     setCreateSubmitting(true);
 
     try {
-      const form = new FormData();
+      let zipFile: File;
+
       if (createZip) {
-        form.set('zip', createZip);
+        zipFile = createZip;
       } else {
         const files: Record<string, File> = {};
         for (const [key, tf] of Object.entries(createTextureFilesByKey)) {
@@ -229,20 +227,12 @@ export function MaterialDetailPanel({
           componentData: createComponentData,
         }, files);
 
-        const zipFile = new File([zipBlob], `material-${resource.id}.zip`, { type: 'application/zip' });
-        form.set('zip', zipFile);
+        zipFile = new File([zipBlob], `material-${resource.id}.zip`, { type: 'application/zip' });
       }
 
-      const res = await fetch(`/api/admin/resources/${resource.id}/versions`, {
-        method: 'POST',
-        body: form,
+      await AdminService.postApiAdminResourcesVersions(resource.id, {
+        zip: zipFile,
       });
-
-      const json = await res.json().catch(() => null);
-      if (!res.ok) {
-        const msg = (json && (json.error as string)) || `Failed to create version (${res.status})`;
-        throw new Error(msg);
-      }
 
       setCreatingOpen(false);
       router.refresh();
@@ -287,7 +277,7 @@ export function MaterialDetailPanel({
         title="Create / Upload Version"
         subtitle="Newly created version becomes active"
         onClose={() => setCreatingOpen(false)}
-        fullscreen={false}
+        fullscreen={true}
         className="max-w-4xl"
       >
         <div className="flex h-full">
@@ -360,7 +350,7 @@ export function MaterialDetailPanel({
         title={`Edit version ${editingVersion ? `v${editingVersion.version}` : ''}`}
         subtitle="Updates componentData and optional bindings"
         onClose={() => setEditingVersion(null)}
-        fullscreen={false}
+        fullscreen={true}
         className="max-w-4xl"
       >
         <div className="flex h-full">
