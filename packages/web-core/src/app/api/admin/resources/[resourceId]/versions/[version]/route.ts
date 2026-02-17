@@ -70,7 +70,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import * as crypto from 'crypto';
 
 import { prisma } from '@/lib/db';
-import { EcsTreeSnapshotSchema } from '@/lib/ecsSnapshot';
+import {
+  type EcsTreeSnapshot,
+  safeParseEcsTreeSnapshot,
+  EcsTreeSnapshotSchema,
+} from '@/lib/ecs-snapshot';
 import { CustomMeshComponentDataSchema, MaterialComponentSchema, MaterialComponentTypeSchema } from '@/lib/types';
 import { StorageService } from '@/lib/storage';
 import { updateResourceThumbnailFromVersion } from '@/lib/resourceThumbnail';

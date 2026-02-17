@@ -1,40 +1,44 @@
-import type { Entity } from '@duckengine/ecs';
+import type { Entity, Component } from '@duckengine/ecs';
+import {
+  isMaterialComponent,
+  MATERIAL_RESOURCE_REF_KEY,
+  MATERIAL_RESOURCE_KINDS,
+  type MaterialResourceKind,
+  type MaterialResourceRef,
+  type AnyMaterialComponent,
+} from '@duckengine/ecs';
 
-import type { EcsEditorScene } from '@/lib/ecsTreeEditorRuntime';
-import { applyComponentDataWithInspector } from '@/lib/ecsSnapshotRuntime';
-import type { MaterialResourceKind } from '@/lib/types';
+import type { EcsEditorScene } from '@/components/organisms/SceneEditor/logic/EcsEditorScene';
+import { applyComponentDataWithInspector } from '@/lib/ecs-snapshot';
 import { resolveMaterialResourceActive } from '@/lib/engineResourceResolution';
 
-export const MATERIAL_RESOURCE_REF_KEY = '$resourceKey' as const;
+// Re-export for compatibility if needed, or just use from ECS
+export { MATERIAL_RESOURCE_REF_KEY, type MaterialResourceRef };
 
-export const MATERIAL_COMPONENT_TYPES: MaterialResourceKind[] = [
-  'basicMaterial',
-  'lambertMaterial',
-  'phongMaterial',
-  'standardMaterial',
-];
+export const MATERIAL_COMPONENT_TYPES = MATERIAL_RESOURCE_KINDS;
 
 export function isMaterialComponentType(type: string): type is MaterialResourceKind {
-  return (MATERIAL_COMPONENT_TYPES as string[]).includes(type);
+  return (MATERIAL_RESOURCE_KINDS as string[]).includes(type);
 }
-
-export type MaterialResourceRef = {
-  [MATERIAL_RESOURCE_REF_KEY]?: string;
-};
 
 function getAllEntities(scene: EcsEditorScene): Entity[] {
   return Array.from(scene.getEntitiesById().values());
 }
 
 export async function hydrateResourceBackedMaterials(scene: EcsEditorScene): Promise<void> {
-  const compsByKey = new Map<string, Array<{ comp: any; type: MaterialResourceKind }>>();
+  const compsByKey = new Map<string, Array<{ comp: Component; type: MaterialResourceKind }>>();
 
   for (const ent of getAllEntities(scene)) {
     const comps = ent.getAllComponents();
-    for (const c of comps as any[]) {
-      const type = String(c?.type ?? '');
-      if (!isMaterialComponentType(type)) continue;
-      const key = typeof c?.[MATERIAL_RESOURCE_REF_KEY] === 'string' ? String(c[MATERIAL_RESOURCE_REF_KEY]) : '';
+    for (const c of comps) {
+      if (!isMaterialComponent(c)) continue;
+
+      const type = c.type as MaterialResourceKind;
+      // Access property safely via unknown cast first if needed, or better, direct access if we extend the type.
+      // Since $resourceKey is runtime dynamic editor data, we cast to unknown first.
+      const rawKey = (c as unknown as MaterialResourceRef)[MATERIAL_RESOURCE_REF_KEY];
+      const key = typeof rawKey === 'string' ? rawKey : '';
+
       if (!key.trim()) continue;
 
       const list = compsByKey.get(key) ?? [];
@@ -49,8 +53,14 @@ export async function hydrateResourceBackedMaterials(scene: EcsEditorScene): Pro
 
   await Promise.all(
     Array.from(compsByKey.keys()).map(async (key) => {
-      const resolved = await resolveMaterialResourceActive(key);
-      resolvedByKey.set(key, resolved);
+      try {
+        const resolved = await resolveMaterialResourceActive(key);
+        resolvedByKey.set(key, resolved);
+      } catch (e) {
+        if (process.env.NODE_ENV !== 'production') {
+          console.warn(`[hydrateResourceBackedMaterials] Failed to resolve resource '${key}'`, e);
+        }
+      }
     })
   );
 
@@ -61,10 +71,24 @@ export async function hydrateResourceBackedMaterials(scene: EcsEditorScene): Pro
     for (const { comp, type } of comps) {
       // Safety: only hydrate when the resource kind matches the component type.
       if (resolved.kind !== type) continue;
+
+      // Prepare data by explicitly setting missing inspector fields to undefined.
+      // This ensures that switching resources resets properties that the new resource doesn't define.
+      // comp.metadata is strictly typed on Component.
+      const fields = comp.metadata.inspector?.fields ?? [];
+      const dataToApply = { ...resolved.componentData };
+
+      for (const f of fields) {
+        const key = String(f.key);
+        if (!(key in dataToApply)) {
+          dataToApply[key] = undefined;
+        }
+      }
+
       try {
-        applyComponentDataWithInspector(comp, resolved.componentData);
-      } catch {
-        // ignore
+        applyComponentDataWithInspector(comp, dataToApply);
+      } catch (e) {
+        console.warn(`[hydrateResourceBackedMaterials] Failed to apply data to component '${comp.type}' on entity '${(comp as any).entityId}'`, e);
       }
     }
   }

@@ -10,7 +10,7 @@ import { CreateEcsTreeDialog } from '@/components/organisms/resources/ecs-tree/C
 import { CreateSkyboxDialog } from '@/components/organisms/resources/skybox/CreateSkyboxDialog';
 import { CreateFullMeshDialog } from '@/components/organisms/resources/full-mesh/CreateFullMeshDialog';
 import { getKindLabel, getResourceGroup, isKindInGroup } from '@/lib/resourceGroups';
-import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
+import { MaterialComponentTypeSchema, ResourceKindSchema, type MaterialResourceKind } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -126,7 +126,7 @@ export default async function ResourceGroupKindPage({
 
           return (
             <CreateMaterialDialog
-              kind={materialKind.data}
+              kind={materialKind.data as MaterialResourceKind}
               kindLabel={getKindLabel(group, kind)}
             />
           );

@@ -7,7 +7,11 @@ import { Button } from '@/components/atoms/Button';
 import { Label } from '@/components/atoms/Label';
 import { ResourceVersionsTable } from '@/components/organisms/ResourceVersionsTable';
 import { cn } from '@/lib/utils';
-import { createEmptyEcsTreeSnapshot, safeParseEcsTreeSnapshot } from '@/lib/ecsSnapshot';
+import {
+  type EcsTreeSnapshot,
+  safeParseEcsTreeSnapshot,
+  createEmptyEcsTreeSnapshot,
+} from '@/lib/ecs-snapshot';
 import { ResourceDetailHeader } from '@/components/molecules/resource-ui/ResourceDetailHeader';
 import { ResourceDialogLayout, ResourceDialogFormPanel } from '@/components/molecules/resource-ui/ResourceDialogLayout';
 import { useResourceMutations } from '@/hooks/useResourceMutations';

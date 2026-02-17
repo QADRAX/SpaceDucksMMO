@@ -1,7 +1,8 @@
-import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
-import { MaterialPreview } from '@/components/molecules/previews/MaterialPreview';
+import { MaterialComponentTypeSchema, ResourceKindSchema, type MaterialResourceKind } from '@/lib/types';
 import { CustomMeshPreview } from '@/components/molecules/previews/CustomMeshPreview';
 import { Skybox3DPreview } from '@/components/molecules/previews/Skybox3DPreview';
+import { ModelFilePreview } from '@/components/molecules/previews/ModelFilePreview';
+import { MaterialPreview } from '@/components/molecules/previews/MaterialPreview';
 import { ResourceSummary } from './types';
 
 type Props = {
@@ -19,7 +20,7 @@ export function ResourcePreviewDispatcher({ resource, activeVersionId, previewCo
         return (
             <MaterialPreview
                 resourceKey={resource.key}
-                kind={materialKindParsed.data}
+                kind={materialKindParsed.data as MaterialResourceKind}
                 componentData={previewComponentData}
                 className="h-full w-full"
             />

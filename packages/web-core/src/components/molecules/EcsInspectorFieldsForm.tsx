@@ -135,7 +135,7 @@ export function EcsInspectorFieldsForm({
                   }}
                   onClear={isNullable ? () => set(undefined) : undefined}
                   onCommit={() => {
-                    // Commit handled by parent (ecsTreeEditor) or ignored in other contexts.
+                    // Commit handled by parent (SceneEditor) or ignored in other contexts.
                   }}
                 />
                 {f.description ? <div className="text-xs text-neutral-600">{f.description}</div> : null}
@@ -256,7 +256,7 @@ export function EcsInspectorFieldsForm({
                     onChange={(n) => setAxis(0, n)}
                     onClear={nullable ? () => set(undefined) : undefined}
                     onCommit={() => {
-                      // Commit handled by parent (ecsTreeEditor) or ignored in other contexts.
+                      // Commit handled by parent (SceneEditor) or ignored in other contexts.
                     }}
                   />
                   <NumberPushInput
@@ -267,7 +267,7 @@ export function EcsInspectorFieldsForm({
                     onChange={(n) => setAxis(1, n)}
                     onClear={nullable ? () => set(undefined) : undefined}
                     onCommit={() => {
-                      // Commit handled by parent (ecsTreeEditor) or ignored in other contexts.
+                      // Commit handled by parent (SceneEditor) or ignored in other contexts.
                     }}
                   />
                   <NumberPushInput
@@ -278,7 +278,7 @@ export function EcsInspectorFieldsForm({
                     onChange={(n) => setAxis(2, n)}
                     onClear={nullable ? () => set(undefined) : undefined}
                     onCommit={() => {
-                      // Commit handled by parent (ecsTreeEditor) or ignored in other contexts.
+                      // Commit handled by parent (SceneEditor) or ignored in other contexts.
                     }}
                   />
                 </div>

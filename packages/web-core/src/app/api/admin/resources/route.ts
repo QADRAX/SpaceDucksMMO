@@ -79,7 +79,12 @@ import * as crypto from 'crypto';
 import { prisma } from '@/lib/db';
 import { createResourceFromZip } from '@/lib/resourceUpload/resourceZip';
 import { updateResourceThumbnailFromVersion } from '@/lib/resourceThumbnail';
-import { EcsTreeSnapshotSchema, createEmptyEcsTreeSnapshot } from '@/lib/ecsSnapshot';
+import {
+  type EcsTreeSnapshot,
+  safeParseEcsTreeSnapshot,
+  createEmptyEcsTreeSnapshot,
+  EcsTreeSnapshotSchema,
+} from '@/lib/ecs-snapshot';
 import {
   CreateResourceSchema,
   CustomMeshComponentDataSchema,

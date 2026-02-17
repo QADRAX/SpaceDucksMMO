@@ -7,15 +7,16 @@ import type {
   StandardMaterialComponent,
 } from '@duckengine/ecs';
 
+import { MATERIAL_RESOURCE_KINDS } from '@duckengine/ecs';
+
+// Re-export for other files depending on it
+export { MATERIAL_RESOURCE_KINDS };
+
 // Resource kinds
 // For now, each Three material component type is treated as a distinct resource kind.
 // This lets the API expand kinds without multiplying endpoints.
-export const MATERIAL_RESOURCE_KINDS = [
-  'basicMaterial',
-  'lambertMaterial',
-  'phongMaterial',
-  'standardMaterial',
-] as const;
+// Imported from ECS to share with editor and runtime.
+
 
 // Custom mesh resources (single-mesh GLB profile)
 export const CUSTOM_MESH_RESOURCE_KINDS = ['customMesh'] as const;
@@ -29,7 +30,7 @@ export const SKYBOX_RESOURCE_KINDS = ['skybox'] as const;
 export const ECS_TREE_RESOURCE_KINDS = ['prefab', 'scene'] as const;
 
 export const RESOURCE_KINDS = [
-  ...MATERIAL_RESOURCE_KINDS,
+  ...(MATERIAL_RESOURCE_KINDS as unknown as [string, ...string[]]),
   ...CUSTOM_MESH_RESOURCE_KINDS,
   ...FULL_MESH_RESOURCE_KINDS,
   ...SKYBOX_RESOURCE_KINDS,
@@ -44,7 +45,9 @@ export type SkyboxResourceKind = (typeof SKYBOX_RESOURCE_KINDS)[number];
 
 export type EcsTreeResourceKind = (typeof ECS_TREE_RESOURCE_KINDS)[number];
 
-export const ResourceKindSchema = z.enum(RESOURCE_KINDS);
+// Zod enum requires a mutable array of at least one string.
+// We cast to any or verify length at runtime to satisfy TS.
+export const ResourceKindSchema = z.enum(RESOURCE_KINDS as unknown as [string, ...string[]]);
 export type ResourceKind = z.infer<typeof ResourceKindSchema>;
 
 // Legacy compatibility (assets UI/API are being retired).
@@ -56,7 +59,7 @@ export type MaterialComponentType =
   | PhongMaterialComponent['type']
   | StandardMaterialComponent['type'];
 
-export const MaterialComponentTypeSchema = z.enum(MATERIAL_RESOURCE_KINDS);
+export const MaterialComponentTypeSchema = z.enum(MATERIAL_RESOURCE_KINDS as unknown as [string, ...string[]]);
 
 // Custom mesh component data (version metadata stored alongside the mesh file binding)
 export const CustomMeshComponentDataSchema = z
@@ -318,9 +321,9 @@ export type ResolvedResource = {
 };
 
 // Material metadata types
-export type MaterialMapType = 
+export type MaterialMapType =
   | 'albedo'
-  | 'normal' 
+  | 'normal'
   | 'roughness'
   | 'metallic'
   | 'ao'
@@ -341,7 +344,7 @@ export interface MaterialMetadata {
 // Helper to detect map type from filename
 export function detectMapType(filename: string): MaterialMapType | null {
   const lower = filename.toLowerCase();
-  
+
   if (lower.includes('albedo') || lower.includes('diffuse') || lower.includes('color') || lower.includes('basecolor')) {
     return 'albedo';
   }
@@ -363,6 +366,6 @@ export function detectMapType(filename: string): MaterialMapType | null {
   if (lower.includes('emission') || lower.includes('emissive')) {
     return 'emission';
   }
-  
+
   return null;
 }

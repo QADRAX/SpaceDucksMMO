@@ -1,7 +1,7 @@
 import {
   deserializeEcsTreeSnapshotToEntities,
   serializeEcsTreeFromRoots,
-} from '@/lib/ecsSnapshotRuntime';
+} from '@/lib/ecs-snapshot';
 
 import {
   Entity,

@@ -1,4 +1,4 @@
-import { MaterialComponentTypeSchema, ResourceKindSchema } from '@/lib/types';
+import { MaterialComponentTypeSchema, ResourceKindSchema, type MaterialResourceKind } from '@/lib/types';
 import { MaterialDetailPanel } from './material/MaterialDetailPanel';
 import { CustomMeshDetailPanel } from './custom-mesh/CustomMeshDetailPanel';
 import { FullMeshDetailPanel } from './full-mesh/FullMeshDetailPanel';
@@ -21,7 +21,7 @@ export function ResourceDetailDispatcher({ resource, versions }: Props) {
                 resource={{
                     id: resource.id,
                     key: resource.key,
-                    kind: materialKindParsed.data,
+                    kind: materialKindParsed.data as MaterialResourceKind,
                     activeVersion: resource.activeVersion,
                 }}
                 versions={versions}

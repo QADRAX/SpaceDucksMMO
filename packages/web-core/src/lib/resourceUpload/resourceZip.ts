@@ -4,7 +4,13 @@ import * as path from 'path';
 import type { PrismaClient } from '@prisma/client';
 
 import { StorageService } from '@/lib/storage';
-import { EcsTreeSnapshotSchema, createEmptyEcsTreeSnapshot } from '@/lib/ecsSnapshot';
+import {
+  // We just need types here potentially, or schema validation
+  safeParseEcsTreeSnapshot,
+  EcsTreeSnapshot,
+  createEmptyEcsTreeSnapshot,
+  EcsTreeSnapshotSchema,
+} from '@/lib/ecs-snapshot';
 import {
   CustomMeshComponentDataSchema,
   MaterialComponentSchema,

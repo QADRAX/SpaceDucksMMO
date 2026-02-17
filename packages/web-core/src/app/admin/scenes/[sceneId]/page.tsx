@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { prisma } from '@/lib/db';
-import { EcsTreeEditor } from '@/components/organisms/ecsTreeEditor';
+import { SceneEditor } from '@/components/organisms/SceneEditor';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -30,7 +30,7 @@ export default async function SceneEditorPage({
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden">
-      <EcsTreeEditor resource={resource} initialComponentDataJson={initialComponentDataJson} />
+      <SceneEditor resource={resource} initialComponentDataJson={initialComponentDataJson} />
     </div>
   );
 }

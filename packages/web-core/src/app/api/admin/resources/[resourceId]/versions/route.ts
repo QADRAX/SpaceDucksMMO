@@ -102,7 +102,12 @@ import { prisma } from '@/lib/db';
 import { createResourceVersionFromZip } from '@/lib/resourceUpload/resourceZip';
 import { updateResourceThumbnailFromVersion } from '@/lib/resourceThumbnail';
 import { StorageService } from '@/lib/storage';
-import { EcsTreeSnapshotSchema, createEmptyEcsTreeSnapshot } from '@/lib/ecsSnapshot';
+import {
+  type EcsTreeSnapshot,
+  safeParseEcsTreeSnapshot,
+  createEmptyEcsTreeSnapshot,
+  EcsTreeSnapshotSchema,
+} from '@/lib/ecs-snapshot';
 import {
   CreateResourceVersionSchema,
   CustomMeshComponentDataSchema,
