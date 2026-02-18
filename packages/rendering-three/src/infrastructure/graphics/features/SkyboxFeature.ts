@@ -82,84 +82,71 @@ export class SkyboxFeature implements RenderFeature {
     ): Promise<void> {
         if (!context.engineResourceResolver) return;
 
-        let resolved: any;
+        const useTracker = context.isInitialLoading && context.loadingTracker;
+        const taskName = `skybox:${resourceKey}`;
+        if (useTracker) context.loadingTracker!.startTask(taskName);
+
         try {
-            resolved = await context.engineResourceResolver.resolve(resourceKey, "active");
-        } catch {
-            return;
-        }
-
-        if (token !== this.skyboxLoadToken) return;
-        if (this.currentSkyboxResourceKey !== resourceKey) return;
-
-        const files = (resolved && resolved.files) || {};
-
-        const faces = ["px", "nx", "py", "ny", "pz", "nz"] as const;
-        const hasCubeFaces = faces.every((k) => !!files[k]?.url);
-
-        const nextTexture = await new Promise<THREE.Texture | THREE.CubeTexture | null>((resolve) => {
+            let resolved: any;
             try {
-                if (hasCubeFaces) {
-                    const loader = new THREE.CubeTextureLoader();
-                    try {
-                        (loader as any).setCrossOrigin?.("anonymous");
-                    } catch { }
-                    const urls = faces.map((k) => files[k].url);
-                    loader.load(
-                        urls,
-                        (tex) => resolve(tex),
-                        undefined,
-                        () => resolve(null)
-                    );
-                    return;
-                }
+                resolved = await context.engineResourceResolver.resolve(resourceKey, "active");
+            } catch {
+                return;
+            }
 
-                const file = files.equirect ?? files.equirectangular ?? files.map ?? files.texture;
-                const url = (file && file.url) || (Object.values(files)[0] as any)?.url;
-                if (!url) return resolve(null);
+            if (token !== this.skyboxLoadToken) return;
+            if (this.currentSkyboxResourceKey !== resourceKey) return;
 
-                const loader = new THREE.TextureLoader();
+            const files = (resolved && resolved.files) || {};
+            const faces = ["px", "nx", "py", "ny", "pz", "nz"] as const;
+            const hasCubeFaces = faces.every((k) => !!files[k]?.url);
+
+            const nextTexture = await new Promise<THREE.Texture | THREE.CubeTexture | null>((resolve) => {
                 try {
-                    (loader as any).setCrossOrigin?.("anonymous");
-                } catch { }
-                loader.load(
-                    url,
-                    (tex) => {
+                    if (hasCubeFaces) {
+                        const loader = new THREE.CubeTextureLoader();
+                        try { (loader as any).setCrossOrigin?.("anonymous"); } catch { }
+                        const urls = faces.map((k) => files[k].url);
+                        loader.load(urls, (tex) => resolve(tex), undefined, () => resolve(null));
+                        return;
+                    }
+
+                    const file = files.equirect ?? files.equirectangular ?? files.map ?? files.texture;
+                    const url = (file && file.url) || (Object.values(files)[0] as any)?.url;
+                    if (!url) return resolve(null);
+
+                    const loader = new THREE.TextureLoader();
+                    try { (loader as any).setCrossOrigin?.("anonymous"); } catch { }
+                    loader.load(url, (tex) => {
                         try {
                             (tex as any).mapping = (THREE as any).EquirectangularReflectionMapping;
                             tex.needsUpdate = true;
                         } catch { }
                         resolve(tex);
-                    },
-                    undefined,
-                    () => resolve(null)
-                );
-            } catch {
-                resolve(null);
+                    }, undefined, () => resolve(null));
+                } catch {
+                    resolve(null);
+                }
+            });
+
+            if (!nextTexture) return;
+
+            // Final check: if something else became active while we were awaiting, clean up and exit.
+            if (token !== this.skyboxLoadToken || this.currentSkyboxResourceKey !== resourceKey) {
+                try { nextTexture.dispose(); } catch { }
+                return;
             }
-        });
 
-        if (!nextTexture) return;
-        if (token !== this.skyboxLoadToken) {
-            try {
-                nextTexture.dispose();
-            } catch { }
-            return;
-        }
-        if (this.currentSkyboxResourceKey !== resourceKey) {
-            try {
-                nextTexture.dispose();
-            } catch { }
-            return;
-        }
+            if (this.currentSkyboxTexture && this.currentSkyboxTexture !== nextTexture) {
+                try { this.currentSkyboxTexture.dispose(); } catch { }
+            }
 
-        if (this.currentSkyboxTexture && this.currentSkyboxTexture !== nextTexture) {
-            try {
-                this.currentSkyboxTexture.dispose();
-            } catch { }
+            this.currentSkyboxTexture = nextTexture;
+            context.scene.background = nextTexture;
+        } catch (e) {
+            console.warn("[SkyboxFeature] Load error", e);
+        } finally {
+            if (useTracker) context.loadingTracker!.endTask(taskName);
         }
-
-        this.currentSkyboxTexture = nextTexture;
-        context.scene.background = nextTexture;
     }
 }

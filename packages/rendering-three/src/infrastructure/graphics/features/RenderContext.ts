@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { ITextureResolver, TextureCatalogService } from "@duckengine/core";
+import type { ITextureResolver, TextureCatalogService, LoadingTracker } from "@duckengine/core";
 import { RenderObjectRegistry } from "../sync/RenderObjectRegistry";
 import { TextureCache } from "../factories/TextureCache";
 import type { EngineResourceResolver } from "../../resources/EngineResourceResolver";
@@ -12,6 +12,7 @@ export interface RenderContext {
     readonly scene: THREE.Scene;
     readonly registry: RenderObjectRegistry;
     readonly textureCache: TextureCache;
+    readonly loadingTracker?: LoadingTracker;
     readonly textureCatalog?: TextureCatalogService;
     readonly textureResolver?: ITextureResolver;
     readonly engineResourceResolver?: EngineResourceResolver;
@@ -21,4 +22,5 @@ export interface RenderContext {
         mesh: boolean;
         collider: boolean;
     };
+    readonly isInitialLoading: boolean;
 }

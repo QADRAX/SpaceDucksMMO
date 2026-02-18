@@ -204,7 +204,12 @@ export function useThreeRendererLoop(args: {
 
         if (scene) {
           args.onCapturePose(scene);
-          scene.update(dtMs, { paused });
+          // If the engine is in its initial loading phase, it will handle update(0) internally
+          // during renderFrame() to allow for discovery without advancing simulation.
+          const isLoading = (renderer as any).isLoading?.() ?? false;
+          if (!isLoading) {
+            scene.update(dtMs, { paused });
+          }
         }
 
         renderer.renderFrame();

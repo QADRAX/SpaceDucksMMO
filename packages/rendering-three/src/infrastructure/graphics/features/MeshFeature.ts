@@ -148,6 +148,10 @@ export class MeshFeature implements RenderFeature {
                     }
                 }
             }
+
+            if (context.isInitialLoading && context.loadingTracker && this.pendingTaskQueue.length === 0) {
+                context.loadingTracker.endTask("MeshFeature:sync");
+            }
         }
 
         // Animation updates
@@ -196,8 +200,11 @@ export class MeshFeature implements RenderFeature {
 
     // --- Helpers ---
 
-    private scheduleTask(task: () => void) {
+    private scheduleTask(task: () => void, context: RenderContext) {
         this.pendingTaskQueue.push(task);
+        if (context.isInitialLoading && context.loadingTracker) {
+            context.loadingTracker.startTask("MeshFeature:sync");
+        }
     }
 
     private getGeometryComponent(entity: Entity): AnyGeometryComponent | null {
@@ -395,40 +402,48 @@ export class MeshFeature implements RenderFeature {
     }
 
     private async resolveAndApplyTextures(entity: Entity, material: THREE.Material, comp: AnyMaterialComponent, context: RenderContext) {
-        // Implementation similar to MeshSyncSystem using context.textureCatalog and context.textureCache
-        // Assuming textureCatalog provided in context
         if (!context.textureCatalog) return;
 
-        // ... same logic as MeshSyncSystem.resolveAndApplyTextures ...
-        // Can copy paste the logic or simplify if TextureCatalog has helper.
-        // Copying logic for now to ensure compatibility.
+        const useTracker = context.isInitialLoading && context.loadingTracker;
+        const taskName = `materialTextures:${entity.id}`;
+        if (useTracker) context.loadingTracker!.startTask(taskName);
 
-        const isCatalogId = (val: unknown): val is string => {
-            if (typeof val !== "string") return false;
-            return !(val.startsWith("/") || val.startsWith("http") || val.includes("."));
-        };
+        try {
+            const isCatalogId = (val: unknown): val is string => {
+                if (typeof val !== "string") return false;
+                return !(val.startsWith("/") || val.startsWith("http") || val.includes("."));
+            };
 
-        const applyIfLoaded = async (field: string, setter: (t: THREE.Texture) => void) => {
-            const val = (comp as any)[field];
-            if (!isCatalogId(val)) return;
-            try {
-                const variants = await context.textureCatalog!.getVariantsById(val);
-                if (!variants?.length) return;
-                // Sort by quality... simplified: take first
-                const chosen = variants[0];
-                if (!chosen?.path) return;
+            const applyIfLoaded = async (field: string, setter: (t: THREE.Texture) => void) => {
+                const val = (comp as any)[field];
+                if (!isCatalogId(val)) return;
+                try {
+                    const variants = await context.textureCatalog!.getVariantsById(val);
+                    if (!variants?.length) return;
+                    const chosen = variants[0];
+                    if (!chosen?.path) return;
 
-                const tex = await context.textureCache.load(chosen.path);
-                let t: THREE.Texture;
-                try { t = (tex as THREE.Texture).clone(); } catch { t = tex as THREE.Texture; }
-                setter(t);
-                this.applyTextureSettings(entity, t);
-                material.needsUpdate = true;
-            } catch { }
-        };
+                    const tex = await context.textureCache.load(chosen.path);
+                    let t: THREE.Texture;
+                    try { t = (tex as THREE.Texture).clone(); } catch { t = tex as THREE.Texture; }
+                    setter(t);
+                    this.applyTextureSettings(entity, t);
+                    material.needsUpdate = true;
+                } catch { }
+            };
 
-        await applyIfLoaded("texture", (t) => { if ("map" in material) (material as any).map = t; });
-        // ... others
+            await Promise.all([
+                applyIfLoaded("texture", (t) => { if ("map" in material) (material as any).map = t; }),
+                applyIfLoaded("normalMap", (t) => { if ("normalMap" in material) (material as any).normalMap = t; }),
+                applyIfLoaded("roughnessMap", (t) => { if ("roughnessMap" in material) (material as any).roughnessMap = t; }),
+                applyIfLoaded("metalnessMap", (t) => { if ("metalnessMap" in material) (material as any).metalnessMap = t; }),
+                applyIfLoaded("aoMap", (t) => { if ("aoMap" in material) (material as any).aoMap = t; }),
+                applyIfLoaded("emissiveMap", (t) => { if ("emissiveMap" in material) (material as any).emissiveMap = t; }),
+                applyIfLoaded("envMap", (t) => { if ("envMap" in material) (material as any).envMap = t; }),
+            ]);
+        } finally {
+            if (useTracker) context.loadingTracker!.endTask(taskName);
+        }
     }
 
     private async loadAndApplyCustomGeometry(entityId: string, transformKey: string, context: RenderContext) {
@@ -439,28 +454,41 @@ export class MeshFeature implements RenderFeature {
         const requestId = (prev?.requestId ?? 0) + 1;
         this.customGeometryRequestByEntityId.set(entityId, { key: transformKey, requestId });
 
-        const geometry = await this.customLoader.load(transformKey, resolver);
+        const taskName = `customGeometry:${entityId}:${transformKey}`;
+        if (context.isInitialLoading && context.loadingTracker) {
+            context.loadingTracker.startTask(taskName);
+        }
 
-        this.scheduleTask(() => {
-            const current = this.customGeometryRequestByEntityId.get(entityId);
-            if (!current || current.requestId !== requestId || current.key !== transformKey) return;
+        try {
+            const geometry = await this.customLoader.load(transformKey, resolver);
 
-            const rc = context.registry.get(entityId);
-            if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) return;
+            this.scheduleTask(() => {
+                const current = this.customGeometryRequestByEntityId.get(entityId);
+                if (!current || current.requestId !== requestId || current.key !== transformKey) return;
 
-            const mesh = rc.object3D;
-            if (rc.geometry) rc.geometry.dispose();
+                const rc = context.registry.get(entityId);
+                if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) return;
 
-            if (geometry) {
-                mesh.geometry = geometry;
-                rc.geometry = geometry;
-                mesh.visible = true;
-                try {
-                    mesh.userData = mesh.userData || {};
-                    (mesh.userData as any).customGeometryKeyApplied = transformKey;
-                } catch { }
+                const mesh = rc.object3D;
+                if (rc.geometry) rc.geometry.dispose();
+
+                if (geometry) {
+                    mesh.geometry = geometry;
+                    rc.geometry = geometry;
+                    mesh.visible = true;
+                    try {
+                        mesh.userData = mesh.userData || {};
+                        (mesh.userData as any).customGeometryKeyApplied = transformKey;
+                    } catch { }
+                }
+            }, context);
+        } catch (e) {
+            console.warn("[MeshFeature] Custom geometry load failed", e);
+        } finally {
+            if (context.isInitialLoading && context.loadingTracker) {
+                context.loadingTracker.endTask(taskName);
             }
-        });
+        }
     }
 
     private syncCustomGeometry(entity: Entity, context: RenderContext): void {
@@ -506,53 +534,61 @@ export class MeshFeature implements RenderFeature {
         const requestId = (prev?.requestId ?? 0) + 1;
         this.customGeometryRequestByEntityId.set(entityId, { key, requestId });
 
-        const result = await this.fullLoader.load(key, context.engineResourceResolver);
+        const taskName = `fullMesh:${entityId}:${key}`;
+        if (context.isInitialLoading && context.loadingTracker) {
+            context.loadingTracker.startTask(taskName);
+        }
 
-        this.scheduleTask(() => {
-            const current = this.customGeometryRequestByEntityId.get(entityId);
-            if (!current || current.requestId !== requestId || current.key !== key) return;
+        try {
+            const result = await this.fullLoader.load(key, context.engineResourceResolver);
 
-            const rc = context.registry.get(entityId);
-            if (!rc || !rc.object3D) return;
+            this.scheduleTask(() => {
+                const current = this.customGeometryRequestByEntityId.get(entityId);
+                if (!current || current.requestId !== requestId || current.key !== key) return;
 
-            const placeholder = rc.object3D as THREE.Object3D;
+                const rc = context.registry.get(entityId);
+                if (!rc || !rc.object3D) return;
 
-            // Clear children
-            while (placeholder.children.length) {
-                placeholder.remove(placeholder.children[0]);
-            }
+                const placeholder = rc.object3D as THREE.Object3D;
 
-            if (result) {
-                const { root, animations } = result;
-                // Clone root to ensure unique instance per entity
-                const instance = root.clone(true); // Is this deep clone? Yes.
-                // Note: cloning geometry? GLTFLoader reuses geometry.
-
-                placeholder.add(instance);
-
-                if (animations && animations.length) {
-                    const mixer = new THREE.AnimationMixer(placeholder);
-                    (rc as any).animationMixer = mixer;
-                    (rc as any).availableAnimations = animations;
-
-                    // Trigger animation sync immediately
-                    this.syncFullMesh(entity, context);
+                // Clear children
+                while (placeholder.children.length) {
+                    placeholder.remove(placeholder.children[0]);
                 }
 
-                try {
-                    const desiredCast = (placeholder.userData as any)?.fullMeshCastShadow ?? false;
-                    const desiredReceive = (placeholder.userData as any)?.fullMeshReceiveShadow ?? true;
-                    this.applyShadowFlagsRecursive(placeholder, desiredCast, desiredReceive);
-                } catch { }
+                if (result) {
+                    const { root, animations } = result;
+                    const instance = root.clone(true);
+                    placeholder.add(instance);
 
-                try {
-                    (placeholder.userData as any).fullMeshKeyApplied = key;
-                    (placeholder.userData as any).fullMeshLoaded = true; // Signal for onFrame to re-sync if needed
-                } catch { }
+                    if (animations && animations.length) {
+                        const mixer = new THREE.AnimationMixer(placeholder);
+                        (rc as any).animationMixer = mixer;
+                        (rc as any).availableAnimations = animations;
+                        this.syncFullMesh(entity, context);
+                    }
 
-                placeholder.visible = true;
+                    try {
+                        const desiredCast = (placeholder.userData as any)?.fullMeshCastShadow ?? false;
+                        const desiredReceive = (placeholder.userData as any)?.fullMeshReceiveShadow ?? true;
+                        this.applyShadowFlagsRecursive(placeholder, desiredCast, desiredReceive);
+                    } catch { }
+
+                    try {
+                        (placeholder.userData as any).fullMeshKeyApplied = key;
+                        (placeholder.userData as any).fullMeshLoaded = true;
+                    } catch { }
+
+                    placeholder.visible = true;
+                }
+            }, context);
+        } catch (e) {
+            console.warn("[MeshFeature] Full mesh load failed", e);
+        } finally {
+            if (context.isInitialLoading && context.loadingTracker) {
+                context.loadingTracker.endTask(taskName);
             }
-        });
+        }
     }
 
     private syncFullMesh(entity: Entity, context: RenderContext): void {

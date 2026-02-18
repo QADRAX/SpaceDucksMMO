@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import type { ThreeRenderer } from '@duckengine/rendering-three';
+import type { IRenderingEngine } from '@duckengine/core';
 
 import type { SnapshotJson } from '../logic/sceneEditorRuntime';
 import { serializeSnapshotFromScene } from '../logic/sceneEditorRuntime';
@@ -20,7 +20,7 @@ import { makeSceneIds, sanitizeSelectedId } from './scenesLogic';
 export function useEcsEditorScenes(args: {
   resource: EditorResource;
   modeRef: React.RefObject<EditorMode>;
-  rendererRef: React.RefObject<ThreeRenderer | null>;
+  rendererRef: React.RefObject<IRenderingEngine | null>;
   selectedIdRef: React.RefObject<string | null>;
   setSelectedId: (id: string | null) => void;
   commitJson: (nextJson: SnapshotJson) => void;
@@ -51,8 +51,20 @@ export function useEcsEditorScenes(args: {
 
     // Best-effort: resolve resource-backed material refs to the active version.
     // This keeps the editor preview in sync without persisting expanded params.
+    const tracker = renderer.getLoadingTracker?.();
+    if (!tracker) {
+      const nextSelected = sanitizeSelectedId(args.selectedIdRef.current, built.scene.getEntitiesById());
+      if (nextSelected !== args.selectedIdRef.current) args.setSelectedId(nextSelected);
+      return;
+    }
+
+    const taskId = `editor:hydrate:${ids.editId}`;
+    tracker.startTask(taskId);
+
     void hydrateResourceBackedMaterials(built.scene).catch((e) => {
       if (process.env.NODE_ENV !== 'production') console.warn('[SceneEditor] hydrate materials failed', e);
+    }).finally(() => {
+      tracker.endTask(taskId);
     });
 
     const nextSelected = sanitizeSelectedId(args.selectedIdRef.current, built.scene.getEntitiesById());

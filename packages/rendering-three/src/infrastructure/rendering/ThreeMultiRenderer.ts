@@ -9,6 +9,7 @@ import type {
   RenderViewOptions,
   RenderViewDebugOptions,
 } from '@duckengine/core';
+import { LoadingTracker } from '@duckengine/core';
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import type { IFpsController } from '../ui/dev/FpsController';
@@ -52,6 +53,7 @@ type ViewRuntime = {
   resolutionScale: number;
   debug: Required<ViewDebugOptions>;
   missingCameraWarned: boolean;
+  loadingOverlay?: HTMLElement;
 };
 
 /**
@@ -66,6 +68,10 @@ export class ThreeMultiRenderer implements IRenderingEngine {
   private views = new Map<ViewId, ViewRuntime>();
   private activeIScene: IScene | null = null;
   private rafId: number | null = null;
+  private loadingTracker = new LoadingTracker();
+  private initialLoading = false;
+  private showLoadingOverlay = true;
+  private currentLoadingSessionId = 0;
 
   private antialias = true;
   private shadows = true;
@@ -117,8 +123,26 @@ export class ThreeMultiRenderer implements IRenderingEngine {
       renderScene,
       catalog,
       resolver,
-      this.engineResourceResolver
+      this.engineResourceResolver,
+      this.loadingTracker
     );
+  }
+
+  getLoadingTracker(): LoadingTracker {
+    return this.loadingTracker;
+  }
+
+  isLoading(): boolean {
+    return this.initialLoading;
+  }
+
+  setLoadingOverlayEnabled(enabled: boolean): void {
+    this.showLoadingOverlay = enabled;
+    for (const v of this.views.values()) {
+      if (v.loadingOverlay) {
+        v.loadingOverlay.style.display = enabled && this.initialLoading ? 'flex' : 'none';
+      }
+    }
   }
 
   /**
@@ -390,9 +414,156 @@ export class ThreeMultiRenderer implements IRenderingEngine {
     }
   }
 
+  private async startInitialLoading(): Promise<void> {
+    const sessionId = ++this.currentLoadingSessionId;
+    this.initialLoading = true;
+    this.createLoadingOverlays();
+
+    try {
+      // Discovery Phase: Wait for at least 500ms to allow all systems (MeshFeature, etc.)
+      // to discover entities and register their async tasks (like material catalog lookups).
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      if (sessionId !== this.currentLoadingSessionId) return;
+
+      this.loadingTracker.endTask('sceneDiscovery');
+
+      await this.loadingTracker.waitForInitialLoad();
+      if (sessionId !== this.currentLoadingSessionId) return;
+
+      // GPU Warm-up Phase: Pre-compile shaders and upload textures for ALL views.
+      const camera = this.getActiveCamera();
+      if (camera) {
+        this.updateLoadingOverlaysText('Finalizing GPU textures...');
+        try {
+          // We warm up each view sequentially, yielding a frame between each to avoid
+          // one massive blocking call that triggers [Violation] warnings.
+          for (const [viewId, v] of this.views.entries()) {
+            if (v.renderer) {
+              // 1. Async shader compilation for this view
+              await v.renderer.compileAsync(this.scene, camera);
+              if (sessionId !== this.currentLoadingSessionId) return;
+              await new Promise((resolve) => requestAnimationFrame(resolve));
+              if (sessionId !== this.currentLoadingSessionId) return;
+
+              // 2. Multi-stage Hidden Render: Absorbs synchronous Buffer/Texture uploads.
+              // Doing it twice ensures all textures are committed before the view is exposed.
+              for (let i = 0; i < 2; i++) {
+                v.renderer.render(this.scene, camera);
+                // Yield to allow browser to consume the heavy frame
+                await new Promise((resolve) => requestAnimationFrame(resolve));
+                if (sessionId !== this.currentLoadingSessionId) return;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('[ThreeMultiRenderer] GPU Warm-up failed', e);
+        }
+      }
+    } finally {
+      // Important: Only reset state if this session is still the active one.
+      // If a new session started while we were awaiting, it's responsible for its own state.
+      if (sessionId === this.currentLoadingSessionId) {
+        this.initialLoading = false;
+        this.removeLoadingOverlays();
+      }
+    }
+  }
+
+  private createLoadingOverlays(): void {
+    if (!this.showLoadingOverlay) return;
+    for (const v of this.views.values()) {
+      if (v.loadingOverlay) continue;
+
+      // Ensure container is positioned so absolute overlay is contained
+      if (getComputedStyle(v.container).position === 'static') {
+        v.container.style.position = 'relative';
+      }
+
+      const el = document.createElement('div');
+      el.style.position = 'absolute';
+      el.style.top = '0';
+      el.style.left = '0';
+      el.style.width = '100%';
+      el.style.height = '100%';
+      el.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+      el.style.color = 'white';
+      el.style.display = 'flex';
+      el.style.flexDirection = 'column';
+      el.style.alignItems = 'center';
+      el.style.justifyContent = 'center';
+      el.style.zIndex = '1000';
+      el.style.fontFamily = 'Inter, system-ui, sans-serif';
+
+      const text = document.createElement('div');
+      text.innerText = 'Loading Scene...';
+      text.style.marginBottom = '10px';
+
+      const progress = document.createElement('div');
+      progress.className = 'engine-loader-progress';
+      progress.style.width = '200px';
+      progress.style.height = '4px';
+      progress.style.backgroundColor = '#333';
+      progress.style.borderRadius = '2px';
+      progress.style.overflow = 'hidden';
+
+      const bar = document.createElement('div');
+      bar.style.width = '0%';
+      bar.style.height = '100%';
+      bar.style.backgroundColor = '#3b82f6'; // blue-500
+      bar.style.transition = 'width 0.2s ease-out';
+
+      progress.appendChild(bar);
+      el.appendChild(text);
+      el.appendChild(progress);
+
+      v.container.appendChild(el);
+      v.loadingOverlay = el;
+    }
+  }
+
+  private updateLoadingOverlays(): void {
+    const progress = this.loadingTracker.getProgress();
+    for (const v of this.views.values()) {
+      if (!v.loadingOverlay) continue;
+      const bar = v.loadingOverlay.querySelector('.engine-loader-progress > div') as HTMLElement;
+      if (bar) {
+        bar.style.width = `${Math.floor(progress * 100)}%`;
+      }
+    }
+  }
+
+  private updateLoadingOverlaysText(text: string): void {
+    for (const v of this.views.values()) {
+      if (!v.loadingOverlay) continue;
+      const textEl = v.loadingOverlay.querySelector('div:first-child') as HTMLElement;
+      if (textEl) {
+        textEl.innerText = text;
+      }
+    }
+  }
+
+  private removeLoadingOverlays(): void {
+    for (const v of this.views.values()) {
+      if (v.loadingOverlay) {
+        v.loadingOverlay.remove();
+        v.loadingOverlay = undefined;
+      }
+    }
+  }
+
   setScene(scene: IScene): void {
     this.teardownPreviousScene();
     this.activeIScene = scene;
+    this.loadingTracker.reset();
+
+    // Fix Race Condition: Set loading state BEFORE setup so features/textures 
+    // register their tasks correctly in the tracker immediately.
+    this.initialLoading = true;
+    this.loadingTracker.startTask('sceneDiscovery');
+    try {
+      (this.activeIScene as any).renderSyncSystem?.setIsInitialLoading(true);
+    } catch { }
+
     scene.setup(this, this.scene);
     this.onActiveCameraChanged();
 
@@ -406,6 +577,9 @@ export class ThreeMultiRenderer implements IRenderingEngine {
     if (!this.getActiveCamera()) {
       console.warn('[ThreeMultiRenderer] Scene setup did not register an active camera.');
     }
+
+    // Trigger initial load tracking routine (session-managed)
+    this.startInitialLoading();
   }
 
   private teardownPreviousScene(): void {
@@ -470,6 +644,28 @@ export class ThreeMultiRenderer implements IRenderingEngine {
   }
 
   renderFrame(): void {
+    // Sync loading state to systems
+    try {
+      (this.activeIScene as any).renderSyncSystem?.setIsInitialLoading(this.initialLoading);
+    } catch { }
+
+    if (this.initialLoading) {
+      try {
+        this.activeIScene?.update(0);
+      } catch (e) {
+        console.warn('[ThreeMultiRenderer] Initial load update(0) failed', e);
+      }
+
+      for (const v of this.views.values()) {
+        this.clearRenderer(v);
+      }
+      this.updateLoadingOverlays();
+      try {
+        this.fpsController.update();
+      } catch { }
+      return;
+    }
+
     for (const v of this.views.values()) {
       this.applyResolutionScaleForView(v);
 

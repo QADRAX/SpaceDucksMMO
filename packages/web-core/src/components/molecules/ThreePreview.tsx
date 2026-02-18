@@ -91,7 +91,9 @@ export function ThreePreview({
             last = t;
 
             try {
-                if (scene) {
+                const isLoading = renderer.isLoading();
+
+                if (scene && !isLoading) {
                     scene.update(dtMs);
                 }
 

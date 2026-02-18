@@ -90,6 +90,21 @@ export interface IRenderingEngine {
   * Core depends only on the interface (defined in @duckengine/core), not an implementation.
    */
   createPhysicsSystem?(): IPhysicsSystem | undefined;
+
+  /**
+   * Optional: return the loading tracker used by this engine.
+   */
+  getLoadingTracker?(): any; // LoadingTracker (using any for portability)
+
+  /**
+   * Check if the engine is currently in an initial loading/frozen state.
+   */
+  isLoading?(): boolean;
+
+  /**
+   * Enable or disable the built-in loading overlay.
+   */
+  setLoadingOverlayEnabled?(enabled: boolean): void;
 }
 
 export type RenderViewId = string;

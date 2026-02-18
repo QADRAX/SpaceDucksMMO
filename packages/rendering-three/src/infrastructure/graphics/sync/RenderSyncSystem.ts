@@ -6,7 +6,7 @@ import type {
   IComponentObserver,
   ComponentType,
 } from "@duckengine/ecs";
-import type { IRenderSyncSystem, ITextureResolver, TextureCatalogService } from "@duckengine/core";
+import type { IRenderSyncSystem, ITextureResolver, TextureCatalogService, LoadingTracker } from "@duckengine/core";
 import { RenderObjectRegistry } from "./RenderObjectRegistry";
 import { ShaderUniformUpdater } from "./ShaderUniformUpdater";
 import { TextureCache } from "../factories/TextureCache";
@@ -44,7 +44,8 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     scene: THREE.Scene,
     textureCatalog?: TextureCatalogService,
     textureResolver?: ITextureResolver,
-    engineResourceResolver?: EngineResourceResolver
+    engineResourceResolver?: EngineResourceResolver,
+    loadingTracker?: LoadingTracker
   ) {
     this.scene = scene;
 
@@ -56,10 +57,13 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
       textureResolver,
       engineResourceResolver,
       entities: this.entities,
-      debugFlags: this.debugFlags
+      debugFlags: this.debugFlags,
+      loadingTracker: loadingTracker,
+      isInitialLoading: false
     };
 
     this.router = new FeatureRouter(this.context);
+    this.textureCache.setLoadingTracker(this.context.loadingTracker);
 
     this.debugFeature = new DebugFeature(scene, this.registry);
 
@@ -187,5 +191,10 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     const prev = this.activeCameraEntityId;
     this.activeCameraEntityId = id;
     this.debugFeature.setActiveCameraEntityId(id, prev, this.context);
+  }
+
+  setIsInitialLoading(loading: boolean): void {
+    (this.context as any).isInitialLoading = loading;
+    this.textureCache.setIsInitialLoading(loading);
   }
 }
