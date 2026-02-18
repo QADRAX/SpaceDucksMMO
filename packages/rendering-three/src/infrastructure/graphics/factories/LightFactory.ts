@@ -1,4 +1,5 @@
-import * as THREE from "three";
+// @ts-ignore
+import * as THREE from "three/webgpu";
 import type {
   Entity,
   AmbientLightComponent,
@@ -44,8 +45,8 @@ export class LightFactory {
           try {
             dir.shadow.mapSize.set(2048, 2048);
             // Slight bias to reduce acne.
-            (dir.shadow as any).bias = -0.0001;
-            (dir.shadow as any).normalBias = 0.02;
+            (dir.shadow as any).bias = -0.0005;
+            (dir.shadow as any).normalBias = 0.05;
 
             const cam = dir.shadow.camera as any;
             // Orthographic camera for directional shadows
@@ -109,8 +110,8 @@ export class LightFactory {
         if ((spot as any).castShadow) {
           try {
             spot.shadow.mapSize.set(2048, 2048);
-            (spot.shadow as any).bias = -0.0001;
-            (spot.shadow as any).normalBias = 0.02;
+            (spot.shadow as any).bias = -0.0005;
+            (spot.shadow as any).normalBias = 0.05;
             // For SpotLight, camera is perspective; far should cover typical scenes.
             const cam = spot.shadow.camera as any;
             cam.near = 0.1;

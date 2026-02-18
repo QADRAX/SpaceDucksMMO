@@ -1,4 +1,5 @@
-import * as THREE from "three";
+// @ts-ignore
+import * as THREE from "three/webgpu";
 import type { Entity, SkyboxComponent, ComponentType } from "@duckengine/ecs";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
@@ -107,7 +108,7 @@ export class SkyboxFeature implements RenderFeature {
                         const loader = new THREE.CubeTextureLoader();
                         try { (loader as any).setCrossOrigin?.("anonymous"); } catch { }
                         const urls = faces.map((k) => files[k].url);
-                        loader.load(urls, (tex) => resolve(tex), undefined, () => resolve(null));
+                        loader.load(urls, (tex: THREE.CubeTexture) => resolve(tex), undefined, () => resolve(null));
                         return;
                     }
 
@@ -117,7 +118,7 @@ export class SkyboxFeature implements RenderFeature {
 
                     const loader = new THREE.TextureLoader();
                     try { (loader as any).setCrossOrigin?.("anonymous"); } catch { }
-                    loader.load(url, (tex) => {
+                    loader.load(url, (tex: THREE.Texture) => {
                         try {
                             (tex as any).mapping = (THREE as any).EquirectangularReflectionMapping;
                             tex.needsUpdate = true;

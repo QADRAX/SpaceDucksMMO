@@ -1,4 +1,5 @@
-import * as THREE from "three";
+// @ts-ignore
+import * as THREE from "three/webgpu";
 import type {
     Entity,
     ShaderMaterialComponent,
@@ -337,9 +338,10 @@ export class MeshFeature implements RenderFeature {
             this.applyTextureSettings(entity, tex);
         });
 
-        rc.object3D.material = newMat;
+        const mesh = rc.object3D as THREE.Mesh;
+        mesh.material = newMat;
         rc.material = newMat;
-        rc.object3D.visible = true;
+        mesh.visible = true;
 
         this.resolveAndApplyTextures(entity, newMat, materialComp, context);
     }
@@ -469,10 +471,10 @@ export class MeshFeature implements RenderFeature {
                 const rc = context.registry.get(entityId);
                 if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) return;
 
-                const mesh = rc.object3D;
                 if (rc.geometry) rc.geometry.dispose();
 
                 if (geometry) {
+                    const mesh = rc.object3D as THREE.Mesh;
                     mesh.geometry = geometry;
                     rc.geometry = geometry;
                     mesh.visible = true;
@@ -519,7 +521,8 @@ export class MeshFeature implements RenderFeature {
 
         const appliedKey = String((mesh.userData as any)?.customGeometryKeyApplied ?? "");
         if (appliedKey === key) {
-            if (mesh.geometry) mesh.visible = true;
+            const m = mesh as THREE.Mesh;
+            if (m.geometry) m.visible = true;
             return;
         }
 

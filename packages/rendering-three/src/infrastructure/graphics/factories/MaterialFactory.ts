@@ -1,4 +1,5 @@
-import * as THREE from "three";
+// @ts-ignore
+import * as THREE from "three/webgpu";
 import type { TextureCache } from "./TextureCache";
 import type {
   StandardMaterialComponent,
@@ -100,7 +101,7 @@ export class MaterialFactory {
           transparent: comp.transparent,
           opacity: comp.opacity,
         };
-        material = new THREE.MeshStandardMaterial(cleanParams(opts));
+        material = new (THREE as any).MeshStandardNodeMaterial(cleanParams(opts));
         break;
       }
       case "basicMaterial": {
@@ -111,7 +112,7 @@ export class MaterialFactory {
           opacity: basic.opacity,
           wireframe: basic.wireframe,
         };
-        material = new THREE.MeshBasicMaterial(cleanParams(opts));
+        material = new (THREE as any).MeshBasicNodeMaterial(cleanParams(opts));
         break;
       }
       case "phongMaterial": {
@@ -124,7 +125,7 @@ export class MaterialFactory {
           transparent: phong.transparent,
           opacity: phong.opacity,
         };
-        material = new THREE.MeshPhongMaterial(cleanParams(opts));
+        material = new (THREE as any).MeshPhongNodeMaterial(cleanParams(opts));
         break;
       }
       case "lambertMaterial": {
@@ -135,11 +136,11 @@ export class MaterialFactory {
           transparent: lambert.transparent,
           opacity: lambert.opacity,
         };
-        material = new THREE.MeshLambertMaterial(cleanParams(opts));
+        material = new (THREE as any).MeshLambertNodeMaterial(cleanParams(opts));
         break;
       }
       default:
-        material = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+        material = new (THREE as any).MeshStandardNodeMaterial({ color: 0xcccccc });
         break;
     }
 

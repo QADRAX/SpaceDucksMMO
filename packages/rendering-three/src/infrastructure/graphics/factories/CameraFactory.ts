@@ -1,4 +1,5 @@
-import * as THREE from 'three';
+// @ts-ignore
+import * as THREE from "three/webgpu";
 import type { CameraViewComponent } from '@duckengine/ecs';
 
 export class CameraFactory {

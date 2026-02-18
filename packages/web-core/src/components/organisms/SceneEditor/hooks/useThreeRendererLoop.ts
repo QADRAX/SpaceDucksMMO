@@ -79,17 +79,8 @@ export function useThreeRendererLoop(args: {
   }, []);
 
   React.useEffect(() => {
-    let container = args.containerRef.current;
-    if (!container) {
-      // One retry on next microtask/frame: helps avoid a "ref not set yet" edge.
-      const id = requestAnimationFrame(() => {
-        container = args.containerRef.current;
-        if (!container) return;
-      });
-      cancelAnimationFrame(id);
-      container = args.containerRef.current;
-      if (!container) return;
-    }
+    const container = args.containerRef.current;
+    if (!container) return;
 
     args.onError('');
 
@@ -97,16 +88,7 @@ export function useThreeRendererLoop(args: {
     container.querySelectorAll('canvas').forEach((c) => c.remove());
 
     const renderer = new ThreeRenderer(new NoopFpsController() as any);
-    renderer.init(container);
-
-    try {
-      const baseUrl = window.location.origin;
-      renderer.setEngineResourceResolver(createWebCoreEngineResourceResolver({ baseUrl }));
-    } catch (e) {
-      devWarn('EcsTreeEditor', 'Failed to set resource resolver', e);
-    }
-
-    args.rendererRef.current = renderer;
+    let isDisposed = false;
 
     // Wire canvas to mouse service
     let canvasClickHandler: (() => void) | null = null;
@@ -125,127 +107,154 @@ export function useThreeRendererLoop(args: {
       }
     };
 
-    const canvas = container.querySelector('canvas') as HTMLCanvasElement | null;
-    if (canvas) {
-      // allow focus-based capture without pointer lock
+    const init = async () => {
       try {
-        canvas.tabIndex = 0;
-      } catch {
-        // ignore
-      }
-
-      const input = getInputServices();
-      if (input?.mouse) {
-        try {
-          input.mouse.setTargetElement(canvas);
-        } catch (e) {
-          devWarn('EcsTreeEditor', 'Failed to set mouse target element', e);
+        await renderer.init(container);
+        if (isDisposed) {
+          renderer.dispose();
+          return;
         }
-        canvasClickHandler = () => {
-          // Clicking viewport should "activate" the editor controls.
-          try {
-            canvas.focus();
-          } catch {
-            // ignore
-          }
-          setKeyboardEnabled(true);
-          try {
-            input.mouse.requestPointerLock();
-          } catch (e) {
-            devWarn('EcsTreeEditor', 'Pointer lock request failed', e);
-          }
-        };
-        canvas.addEventListener('click', canvasClickHandler);
-      }
 
-      canvasFocusHandler = () => setKeyboardEnabled(true);
-      canvasBlurHandler = () => setKeyboardEnabled(false);
-      canvas.addEventListener('focus', canvasFocusHandler);
-      canvas.addEventListener('blur', canvasBlurHandler);
+        const baseUrl = window.location.origin;
+        renderer.setEngineResourceResolver(createWebCoreEngineResourceResolver({ baseUrl }));
 
-      pointerLockChangeHandler = () => {
-        try {
-          const locked = !!(document && (document as any).pointerLockElement);
-          setKeyboardEnabled(locked);
-        } catch (e) {
-          devWarn('EcsTreeEditor', 'pointerlockchange handler failed', e);
-          setKeyboardEnabled(false);
-        }
-      };
-      try {
-        document.addEventListener('pointerlockchange', pointerLockChangeHandler);
+        args.rendererRef.current = renderer;
+
+        setupCanvas(renderer);
+
+        args.onInit();
+        startLoop(renderer);
+
       } catch (e) {
-        devWarn('EcsTreeEditor', 'Failed to attach pointerlockchange handler', e);
+        const msg = e instanceof Error ? e.message : 'Failed to initialize editor';
+        args.onError(msg);
+        devWarn('EcsTreeEditor', 'Initialization failed', e);
       }
-
-      windowBlurHandler = () => setKeyboardEnabled(false);
-      try {
-        window.addEventListener('blur', windowBlurHandler);
-      } catch (e) {
-        devWarn('EcsTreeEditor', 'Failed to attach window blur handler', e);
-      }
-    }
-
-    try {
-      args.onInit();
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Failed to initialize editor';
-      args.onError(msg);
-    }
-
-    let last = performance.now();
-
-    const tick = (t: number) => {
-      const dtMs = t - last;
-      last = t;
-
-      try {
-        const { scene, paused } = args.getFrame();
-
-        if (scene) {
-          args.onCapturePose(scene);
-          // If the engine is in its initial loading phase, it will handle update(0) internally
-          // during renderFrame() to allow for discovery without advancing simulation.
-          const isLoading = (renderer as any).isLoading?.() ?? false;
-          if (!isLoading) {
-            scene.update(dtMs, { paused });
-          }
-        }
-
-        renderer.renderFrame();
-
-        const input = getInputServices();
-        if (input?.mouse?.beginFrame) {
-          try {
-            input.mouse.beginFrame();
-          } catch (e) {
-            devWarn('EcsTreeEditor', 'mouse.beginFrame failed', e);
-          }
-        }
-      } catch (e) {
-        console.error('[EcsTreeEditor] render failed', e);
-        args.onError(e instanceof Error ? e.message : 'Editor render failed');
-        return;
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
     };
 
-    rafRef.current = requestAnimationFrame(tick);
-
-    if (typeof ResizeObserver !== 'undefined') {
-      const ro = new ResizeObserver(() => {
+    const setupCanvas = (renderer: ThreeRenderer) => {
+      if (!container) return;
+      const canvas = container.querySelector('canvas') as HTMLCanvasElement | null;
+      if (canvas) {
+        // allow focus-based capture without pointer lock
         try {
-          renderer.handleResize();
-        } catch (e) {
-          devWarn('EcsTreeEditor', 'renderer.handleResize failed', e);
+          canvas.tabIndex = 0;
+        } catch {
+          // ignore
         }
-      });
-      ro.observe(container);
-      resizeObserverRef.current = ro;
-    }
+
+        const input = getInputServices();
+        if (input?.mouse) {
+          try {
+            input.mouse.setTargetElement(canvas);
+          } catch (e) {
+            devWarn('EcsTreeEditor', 'Failed to set mouse target element', e);
+          }
+          canvasClickHandler = () => {
+            // Clicking viewport should "activate" the editor controls.
+            try {
+              canvas.focus();
+            } catch {
+              // ignore
+            }
+            setKeyboardEnabled(true);
+            try {
+              input.mouse.requestPointerLock();
+            } catch (e) {
+              devWarn('EcsTreeEditor', 'Pointer lock request failed', e);
+            }
+          };
+          canvas.addEventListener('click', canvasClickHandler);
+        }
+
+        canvasFocusHandler = () => setKeyboardEnabled(true);
+        canvasBlurHandler = () => setKeyboardEnabled(false);
+        canvas.addEventListener('focus', canvasFocusHandler);
+        canvas.addEventListener('blur', canvasBlurHandler);
+
+        pointerLockChangeHandler = () => {
+          try {
+            const locked = !!(document && (document as any).pointerLockElement);
+            setKeyboardEnabled(locked);
+          } catch (e) {
+            devWarn('EcsTreeEditor', 'pointerlockchange handler failed', e);
+            setKeyboardEnabled(false);
+          }
+        };
+        try {
+          document.addEventListener('pointerlockchange', pointerLockChangeHandler);
+        } catch (e) {
+          devWarn('EcsTreeEditor', 'Failed to attach pointerlockchange handler', e);
+        }
+
+        windowBlurHandler = () => setKeyboardEnabled(false);
+        try {
+          window.addEventListener('blur', windowBlurHandler);
+        } catch (e) {
+          devWarn('EcsTreeEditor', 'Failed to attach window blur handler', e);
+        }
+      }
+    };
+
+    const startLoop = (renderer: ThreeRenderer) => {
+      let last = performance.now();
+
+      const tick = (t: number) => {
+        if (isDisposed) return;
+        const dtMs = t - last;
+        last = t;
+
+        try {
+          const { scene, paused } = args.getFrame();
+
+          if (scene) {
+            args.onCapturePose(scene);
+            // If the engine is in its initial loading phase, it will handle update(0) internally
+            // during renderFrame() to allow for discovery without advancing simulation.
+            const isLoading = (renderer as any).isLoading?.() ?? false;
+            if (!isLoading) {
+              scene.update(dtMs, { paused });
+            }
+          }
+
+          renderer.renderFrame();
+
+          const input = getInputServices();
+          if (input?.mouse?.beginFrame) {
+            try {
+              input.mouse.beginFrame();
+            } catch (e) {
+              devWarn('EcsTreeEditor', 'mouse.beginFrame failed', e);
+            }
+          }
+        } catch (e) {
+          console.error('[EcsTreeEditor] render failed', e);
+          args.onError(e instanceof Error ? e.message : 'Editor render failed');
+          return;
+        }
+
+        rafRef.current = requestAnimationFrame(tick);
+      };
+
+      rafRef.current = requestAnimationFrame(tick);
+
+      if (typeof ResizeObserver !== 'undefined') {
+        const ro = new ResizeObserver(() => {
+          try {
+            renderer.handleResize();
+          } catch (e) {
+            devWarn('EcsTreeEditor', 'renderer.handleResize failed', e);
+          }
+        });
+        ro.observe(container);
+        resizeObserverRef.current = ro;
+      }
+    };
+
+    init();
 
     return () => {
+      isDisposed = true;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       rafRef.current = null;
 

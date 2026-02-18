@@ -1,4 +1,5 @@
-import * as THREE from "three";
+// @ts-ignore
+import * as THREE from "three/webgpu";
 import type { Entity, CameraViewComponent, ComponentType } from "@duckengine/ecs";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
@@ -37,11 +38,12 @@ export class CameraFeature implements RenderFeature {
             const cv = entity.getComponent<CameraViewComponent>("cameraView");
             if (!cv) return;
 
-            rc.object3D.fov = cv.fov;
-            rc.object3D.aspect = cv.aspect;
-            rc.object3D.near = cv.near;
-            rc.object3D.far = cv.far;
-            rc.object3D.updateProjectionMatrix();
+            const cam = rc.object3D as THREE.PerspectiveCamera;
+            cam.fov = cv.fov;
+            cam.aspect = cv.aspect;
+            cam.near = cv.near;
+            cam.far = cv.far;
+            cam.updateProjectionMatrix();
         }
     }
 

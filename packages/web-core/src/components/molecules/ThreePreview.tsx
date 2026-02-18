@@ -56,82 +56,97 @@ export function ThreePreview({
             // ignore
         }
 
-        let renderer: ThreeRenderer;
+        let renderer: ThreeRenderer | undefined;
+        let isDisposed = false;
 
-        try {
-            const fps = new NoopFpsController();
-            renderer = new ThreeRenderer(fps);
-            renderer.init(container);
-
-            // Setup resolver
-            if (resourceResolver) {
-                renderer.setEngineResourceResolver(resourceResolver);
-            } else {
-                const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-                renderer.setEngineResourceResolver(createWebCoreEngineResourceResolver({ baseUrl }));
-            }
-
-            if (scene) {
-                renderer.setScene(scene);
-            }
-        } catch (e) {
-            const msg = e instanceof Error ? e.message : 'Failed to initialize preview';
-            console.error('[ThreePreview] init failed', e);
-            notify(msg, 'error');
-            return;
-        }
-
-        internalRendererRef.current = renderer;
-        if (externalRendererRef) externalRendererRef.current = renderer;
-
-        // Animation Loop
-        let last = performance.now();
-        const tick = (t: number) => {
-            const dtMs = t - last;
-            last = t;
-
+        const initRenderer = async () => {
             try {
-                const isLoading = renderer.isLoading();
+                const fps = new NoopFpsController();
+                renderer = new ThreeRenderer(fps);
+                await renderer.init(container);
 
-                if (scene && !isLoading) {
-                    scene.update(dtMs);
+                if (isDisposed) {
+                    renderer.dispose();
+                    return;
                 }
 
-                renderer.renderFrame();
-
-                // Standard input processing
-                try {
-                    const input = getInputServices();
-                    if (input?.mouse?.beginFrame) input.mouse.beginFrame();
-                } catch {
-                    // ignore
+                // Setup resolver
+                if (resourceResolver) {
+                    renderer.setEngineResourceResolver(resourceResolver);
+                } else {
+                    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
+                    renderer.setEngineResourceResolver(createWebCoreEngineResourceResolver({ baseUrl }));
                 }
 
-                onRender?.(dtMs);
+                if (scene) {
+                    renderer.setScene(scene);
+                }
+
+                internalRendererRef.current = renderer;
+                if (externalRendererRef) externalRendererRef.current = renderer;
+
+                startLoop(renderer);
+
+                // Initial resize
+                requestAnimationFrame(() => {
+                    try { renderer?.handleResize(); } catch { }
+                });
 
             } catch (e) {
-                console.error('[ThreePreview] render failed', e);
-                // Don't spam notifications on render loop failure, maybe just once or log
-                if (rafRef.current) cancelAnimationFrame(rafRef.current);
-                renderer.stop();
-                return;
+                const msg = e instanceof Error ? e.message : 'Failed to initialize preview';
+                console.error('[ThreePreview] init failed', e);
+                notify(msg, 'error');
             }
+        };
+
+        // Animation Loop
+        const startLoop = (renderer: ThreeRenderer) => {
+            let last = performance.now();
+            const tick = (t: number) => {
+                if (isDisposed) return;
+
+                const dtMs = t - last;
+                last = t;
+
+                try {
+                    const isLoading = renderer.isLoading();
+
+                    if (scene && !isLoading) {
+                        scene.update(dtMs);
+                    }
+
+                    renderer.renderFrame();
+
+                    // Standard input processing
+                    try {
+                        const input = getInputServices();
+                        if (input?.mouse?.beginFrame) input.mouse.beginFrame();
+                    } catch {
+                        // ignore
+                    }
+
+                    onRender?.(dtMs);
+
+                } catch (e) {
+                    console.error('[ThreePreview] render failed', e);
+                    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+                    renderer.stop();
+                    return;
+                }
+
+                rafRef.current = requestAnimationFrame(tick);
+            };
 
             rafRef.current = requestAnimationFrame(tick);
         };
 
-        rafRef.current = requestAnimationFrame(tick);
-
-        // Initial resize
-        requestAnimationFrame(() => {
-            try { renderer.handleResize(); } catch { }
-        });
+        initRenderer();
 
         // Resize Observer
         try {
             const ro = new ResizeObserver(() => {
                 try {
-                    renderer.handleResize();
+                    internalRendererRef.current?.handleResize();
                 } catch {
                     // ignore
                 }
@@ -143,6 +158,7 @@ export function ThreePreview({
         }
 
         return () => {
+            isDisposed = true;
             if (rafRef.current) cancelAnimationFrame(rafRef.current);
             rafRef.current = null;
 
@@ -151,10 +167,12 @@ export function ThreePreview({
             } catch { }
             resizeObserverRef.current = null;
 
-            try {
-                renderer.dispose();
-            } catch {
-                try { renderer.stop(); } catch { }
+            if (renderer) {
+                try {
+                    renderer.dispose();
+                } catch {
+                    try { renderer.stop(); } catch { }
+                }
             }
 
             internalRendererRef.current = null;

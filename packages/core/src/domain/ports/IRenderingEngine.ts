@@ -22,7 +22,7 @@ import type { IPhysicsSystem } from '../physics/IPhysicsSystem';
  */
 export interface IRenderingEngine {
   /** Initialize engine resources and attach to DOM container */
-  init(container: HTMLElement): void;
+  init(container: HTMLElement): Promise<void>;
 
   /** Start the update+render loop */
   start(): void;
@@ -49,13 +49,13 @@ export interface IRenderingEngine {
   /** Rendering/quality settings */
   setResolutionPolicy(policy: 'auto' | 'scale', scale?: number): void;
   setResolutionScale(scale: number): void;
-  setAntialias(enabled: boolean): void;
+  setAntialias(enabled: boolean): Promise<void>;
   setShadows(enabled: boolean, type?: any): void;
 
   /** Post-processing control (composer is optional) */
-  enablePostProcessing(): any;
-  disablePostProcessing(): void;
-  getComposer(): any | undefined;
+  enablePostProcessing(viewId?: string): any;
+  disablePostProcessing(viewId?: string): void;
+  getComposer(viewId?: string): any | undefined;
 
   getTextureCatalog(): TextureCatalogService | undefined;
 
@@ -69,7 +69,7 @@ export interface IRenderingEngine {
   // select a camera entity id (overriding scene active camera).
 
   /** Opaque view identifier returned by addView(). */
-  addView?(container: HTMLElement, options?: RenderViewOptions): RenderViewId;
+  addView?(container: HTMLElement, options?: RenderViewOptions): Promise<RenderViewId>;
   removeView?(viewId: RenderViewId): void;
   setViewCamera?(viewId: RenderViewId, cameraEntityId: string | undefined): void;
   setViewDebug?(viewId: RenderViewId, debug: RenderViewDebugOptions): void;

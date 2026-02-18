@@ -1,4 +1,7 @@
-import * as THREE from 'three';
+// @ts-ignore
+import * as THREE from 'three/webgpu';
+// @ts-ignore
+import { pass } from 'three/tsl';
 import type {
   IRenderingEngine,
   IScene,
@@ -10,8 +13,6 @@ import type {
   RenderViewDebugOptions,
 } from '@duckengine/core';
 import { LoadingTracker } from '@duckengine/core';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import type { IFpsController } from '../ui/dev/FpsController';
 import { RenderSyncSystem } from '../graphics/sync/RenderSyncSystem';
 import { DEBUG_LAYERS } from '../graphics/debug/DebugLayers';
@@ -44,9 +45,9 @@ export type { RenderViewId as CoreViewId, RenderViewOptions as CoreViewOptions, 
 type ViewRuntime = {
   id: ViewId;
   container: HTMLElement;
-  renderer: THREE.WebGLRenderer;
-  composer?: EffectComposer;
-  renderPass?: RenderPass;
+  renderer: any; // THREE.WebGPURenderer
+  composer?: any; // THREE.PostProcessing
+  renderPass?: any;
   usePostProcessing: boolean;
   cameraEntityId?: string;
   resolutionPolicy: ResolutionPolicy;
@@ -148,21 +149,24 @@ export class ThreeMultiRenderer implements IRenderingEngine {
   /**
    * Initializes the shared world scene and creates a default view attached to the given container.
    */
-  init(container: HTMLElement): void {
+  async init(container: HTMLElement): Promise<void> {
     this.scene = new THREE.Scene();
-    this.addView(container, { id: 'main' });
+    await this.addView(container, { id: 'main' });
 
     window.addEventListener('resize', () => this.handleResize());
   }
 
   /** Add an extra canvas/view that renders the same scene. */
-  addView(container: HTMLElement, options: (RenderViewOptions | ViewOptions) & { id?: RenderViewId } = {}): RenderViewId {
+  async addView(container: HTMLElement, options: (RenderViewOptions | ViewOptions) & { id?: RenderViewId } = {}): Promise<RenderViewId> {
     const id = (options as any).id ?? `view:${++this.viewSeq}`;
     if (this.views.has(id)) throw new Error(`[ThreeMultiRenderer] View id already exists: ${id}`);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: this.antialias });
-    renderer.shadowMap.enabled = this.shadows;
-    if (this.shadows) renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    const renderer = new (THREE as any).WebGPURenderer({ antialias: this.antialias });
+    await renderer.init();
+
+    // WebGPURenderer shadow properties
+    (renderer as any).shadowMap.enabled = this.shadows;
+    if (this.shadows) (renderer as any).shadowMap.type = THREE.PCFSoftShadowMap;
 
     container.appendChild(renderer.domElement);
 
@@ -315,11 +319,11 @@ export class ThreeMultiRenderer implements IRenderingEngine {
     }
   }
 
-  setAntialias(enabled: boolean): void {
+  async setAntialias(enabled: boolean): Promise<void> {
     if (this.antialias === enabled) return;
     this.antialias = enabled;
     // Reinitialize each view renderer (antialias is constructor-only)
-    for (const v of this.views.values()) this.reinitializeViewRenderer(v);
+    await Promise.all(Array.from(this.views.values()).map(v => this.reinitializeViewRenderer(v)));
   }
 
   setShadows(enabled: boolean, type: any = THREE.PCFSoftShadowMap): void {
@@ -332,7 +336,7 @@ export class ThreeMultiRenderer implements IRenderingEngine {
     }
   }
 
-  private reinitializeViewRenderer(view: ViewRuntime): void {
+  private async reinitializeViewRenderer(view: ViewRuntime): Promise<void> {
     const old = view.renderer;
 
     try {
@@ -347,37 +351,45 @@ export class ThreeMultiRenderer implements IRenderingEngine {
       old.dispose();
     } catch { }
 
-    const renderer = new THREE.WebGLRenderer({ antialias: this.antialias });
+    const renderer = new (THREE as any).WebGPURenderer({ antialias: this.antialias });
+    await renderer.init();
+
+    // Shadow properties
     renderer.shadowMap.enabled = this.shadows;
-    if (this.shadows) renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
     view.renderer = renderer;
     view.composer = undefined;
     view.renderPass = undefined;
     view.usePostProcessing = false;
-
     view.container.appendChild(renderer.domElement);
     this.applyResolutionScaleForView(view);
   }
 
-  enablePostProcessing(viewId: ViewId = 'main'): EffectComposer {
-    const v = this.views.get(viewId);
-    if (!v) throw new Error(`[ThreeMultiRenderer] Unknown view: ${viewId}`);
+  enablePostProcessing(viewId?: string): any {
+    const targetId = viewId ?? this.views.keys().next().value;
+    if (!targetId) return undefined;
+    const v = this.views.get(targetId);
+    if (!v) throw new Error(`[ThreeMultiRenderer] View not found: ${targetId}`);
 
-    if (!v.composer) {
-      const cam = this.getCameraForView(v);
-      if (!cam) throw new Error('Cannot enable post-processing: no active camera.');
-      v.composer = new EffectComposer(v.renderer);
-      v.renderPass = new RenderPass(this.scene, cam);
-      v.composer.addPass(v.renderPass);
-    }
+    if (v.usePostProcessing && v.composer) return v.composer;
 
     v.usePostProcessing = true;
+    // @ts-ignore
+    v.composer = new (THREE as any).PostProcessing(v.renderer);
+
+    const cam = this.getCameraForView(v);
+    if (this.scene && cam) {
+      v.composer.outputNode = pass(this.scene, cam);
+    }
+
+    console.log(`[ThreeMultiRenderer] Node-based post-processing enabled for view: ${viewId}`);
+
     return v.composer;
   }
 
-  disablePostProcessing(viewId: ViewId = 'main'): void {
-    const v = this.views.get(viewId);
+  disablePostProcessing(viewId?: RenderViewId): void {
+    const targetId = viewId ?? 'main';
+    const v = this.views.get(targetId);
     if (!v) return;
     v.usePostProcessing = false;
     if (v.composer) {
@@ -389,8 +401,10 @@ export class ThreeMultiRenderer implements IRenderingEngine {
     }
   }
 
-  getComposer(viewId: ViewId = 'main'): EffectComposer | undefined {
-    return this.views.get(viewId)?.composer;
+  getComposer(viewId?: string): any | undefined {
+    const targetId = viewId ?? this.views.keys().next().value;
+    if (!targetId) return undefined;
+    return this.views.get(targetId)?.composer;
   }
 
   start(): void {
@@ -682,7 +696,9 @@ export class ThreeMultiRenderer implements IRenderingEngine {
       const restoreLayers = this.applyCameraLayersForView(v, cam);
       try {
         if (v.usePostProcessing && v.composer) {
-          if (v.renderPass && v.renderPass.camera !== cam) v.renderPass.camera = cam;
+          if (v.composer.outputNode && (v.composer.outputNode as any).camera !== cam) {
+            v.composer.outputNode = pass(this.scene, cam);
+          }
           v.composer.render();
         } else {
           v.renderer.render(this.scene, cam);

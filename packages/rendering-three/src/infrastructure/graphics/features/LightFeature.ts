@@ -1,4 +1,5 @@
-import * as THREE from "three";
+// @ts-ignore
+import * as THREE from "three/webgpu";
 import type {
     Entity,
     AmbientLightComponent,
@@ -58,7 +59,7 @@ export class LightFeature implements RenderFeature {
             rc.object3D instanceof THREE.DirectionalLight ||
             rc.object3D instanceof THREE.SpotLight
         ) {
-            LightFactory.updateDirectionalTarget(rc.object3D, entity);
+            LightFactory.updateDirectionalTarget(rc.object3D as any, entity);
         }
     }
 

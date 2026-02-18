@@ -1,4 +1,5 @@
-import * as THREE from "three";
+// @ts-ignore
+import * as THREE from "three/webgpu";
 import type { ITextureResolver, TextureCatalogService, LoadingTracker } from "@duckengine/core";
 import { RenderObjectRegistry } from "../sync/RenderObjectRegistry";
 import { TextureCache } from "../factories/TextureCache";

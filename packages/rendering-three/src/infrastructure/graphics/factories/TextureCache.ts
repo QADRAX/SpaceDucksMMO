@@ -1,4 +1,5 @@
-import * as THREE from 'three';
+// @ts-ignore
+import * as THREE from 'three/webgpu';
 
 export class TextureCache {
   private cache = new Map<string, THREE.Texture>();
@@ -25,7 +26,7 @@ export class TextureCache {
     const promise = new Promise<THREE.Texture>((resolve, reject) => {
       this.loader.load(
         url,
-        (bitmap) => {
+        (bitmap: ImageBitmap) => {
           const texture = new THREE.Texture(bitmap);
           texture.flipY = false; // Bitmap is already flipped by loader option
           texture.needsUpdate = true;
@@ -35,7 +36,7 @@ export class TextureCache {
           if (useTracker) this.loadingTracker.endTask(taskName);
         },
         undefined,
-        (error) => {
+        (error: ErrorEvent) => {
           this.pendingLoads.delete(url);
           // Fallback or reject? Rejecting is cleaner for now.
           console.warn(`[TextureCache] Failed to load texture: ${url}`, error);

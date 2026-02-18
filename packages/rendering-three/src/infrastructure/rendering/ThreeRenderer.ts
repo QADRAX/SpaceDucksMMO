@@ -1,7 +1,8 @@
-import * as THREE from "three";
+// @ts-ignore
+import * as THREE from "three/webgpu";
+// @ts-ignore
+import { pass } from 'three/tsl';
 import type { IRenderingEngine, IScene, ITextureResolver, TextureCatalogService, IRenderSyncSystem } from "@duckengine/core";
-import { EffectComposer } from "three/addons/postprocessing/EffectComposer.js";
-import { RenderPass } from "three/addons/postprocessing/RenderPass.js";
 import type { IFpsController } from "../ui/dev/FpsController";
 import { RenderSyncSystem } from "../graphics/sync/RenderSyncSystem";
 import { DEBUG_LAYERS } from "../graphics/debug/DebugLayers";
@@ -10,9 +11,9 @@ import { LoadingTracker } from "@duckengine/core";
 
 export class ThreeRenderer implements IRenderingEngine {
   private scene!: THREE.Scene;
-  private renderer!: THREE.WebGLRenderer;
-  private composer?: EffectComposer;
-  private renderPass?: RenderPass;
+  private renderer!: any; // THREE.WebGPURenderer
+  private composer?: any; // THREE.PostProcessing
+  private renderPass?: any;
   private usePostProcessing = false;
   private container!: HTMLElement;
   private resolutionPolicy: "auto" | "scale" = "auto";
@@ -92,10 +93,10 @@ export class ThreeRenderer implements IRenderingEngine {
     }
   }
 
-  init(container: HTMLElement): void {
+  async init(container: HTMLElement): Promise<void> {
     this.container = container;
     this.scene = new THREE.Scene();
-    this.initializeRenderer();
+    await this.initializeRenderer();
     this.applyResolutionScale();
     try {
       // Ensure the canvas always fits and responds to container resizing.
@@ -152,10 +153,15 @@ export class ThreeRenderer implements IRenderingEngine {
     } catch { }
   }
 
-  private initializeRenderer(): void {
-    this.renderer = new THREE.WebGLRenderer({ antialias: this.antialias });
-    this.renderer.shadowMap.enabled = this.shadows;
-    if (this.shadows) this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  private async initializeRenderer(): Promise<void> {
+    this.renderer = new (THREE as any).WebGPURenderer({ antialias: this.antialias });
+    await this.renderer.init();
+
+    // WebGPURenderer uses different properties for shadows
+    // For now, let's keep it simple. Standard shadowMap.enabled still works in many cases
+    // but the backend might change.
+    (this.renderer as any).shadowMap.enabled = this.shadows;
+    if (this.shadows) (this.renderer as any).shadowMap.type = THREE.PCFSoftShadowMap;
   }
 
   public getActiveCamera(): THREE.Camera | null {
@@ -217,17 +223,17 @@ export class ThreeRenderer implements IRenderingEngine {
     if (scale !== undefined) this.setResolutionScale(scale);
   }
 
-  setAntialias(enabled: boolean): void {
+  async setAntialias(enabled: boolean): Promise<void> {
     if (this.antialias === enabled) return;
     this.antialias = enabled;
-    this.reinitializeRenderer();
+    await this.reinitializeRenderer();
   }
 
-  private reinitializeRenderer(): void {
+  private async reinitializeRenderer(): Promise<void> {
     if (!this.container) return;
     this.renderer.domElement.remove();
     this.renderer.dispose();
-    this.initializeRenderer();
+    await this.initializeRenderer();
     try {
       this.renderer.domElement.style.display = 'block';
       this.renderer.domElement.style.width = '100%';
@@ -294,7 +300,9 @@ export class ThreeRenderer implements IRenderingEngine {
       cam.layers.mask = mask;
 
       if (this.usePostProcessing && this.composer) {
-        this.updateComposerCamera(cam);
+        if (this.composer.outputNode && (this.composer.outputNode as any).camera !== cam) {
+          this.composer.outputNode = pass(this.scene, cam);
+        }
         this.composer.render();
       } else {
         this.renderer.render(this.scene, cam);
@@ -322,29 +330,37 @@ export class ThreeRenderer implements IRenderingEngine {
   }
 
   private updateComposerCamera(cam: THREE.Camera): void {
-    if (this.renderPass && this.renderPass.camera !== cam) {
-      this.renderPass.camera = cam;
+    if (this.renderPass && (this.renderPass as any).camera !== cam) {
+      (this.renderPass as any).camera = cam;
     }
   }
 
-  enablePostProcessing(): EffectComposer {
-    if (!this.composer) {
-      const cam = this.getActiveCamera();
-      if (!cam) throw new Error("Cannot enable post-processing: no active camera.");
-      this.composer = new EffectComposer(this.renderer);
-      this.renderPass = new RenderPass(this.scene, cam);
-      this.composer.addPass(this.renderPass);
-    }
+  enablePostProcessing(): any {
+    if (this.usePostProcessing && this.composer) return this.composer;
+
     this.usePostProcessing = true;
+    this.composer = new (THREE as any).PostProcessing(this.renderer);
+
+    const cam = this.getActiveCamera();
+    if (this.scene && cam) {
+      this.composer.outputNode = pass(this.scene, cam);
+    }
+
+    console.log("[ThreeRenderer] Node-based post-processing enabled.");
+
     return this.composer;
   }
 
   disablePostProcessing(): void {
     this.usePostProcessing = false;
     if (this.composer) {
-      this.composer.dispose();
+      try { (this.composer as any).dispose(); } catch { }
       this.composer = undefined;
     }
+  }
+
+  getComposer(): any | undefined {
+    return this.composer;
   }
 
   start(): void {
@@ -477,7 +493,7 @@ export class ThreeRenderer implements IRenderingEngine {
     const progress = this.loadingTracker.getProgress();
     const bar = this.loadingOverlayElement.querySelector('.engine-loader-progress > div') as HTMLElement;
     if (bar) {
-      bar.style.width = `${Math.floor(progress * 100)}%`;
+      bar.style.width = `${Math.floor(progress * 100)}% `;
     }
   }
 
@@ -549,17 +565,13 @@ export class ThreeRenderer implements IRenderingEngine {
     const camera = this.getActiveCamera();
     if (camera) this.missingCameraWarned = false;
     if (this.renderPass && camera) {
-      this.renderPass.camera = camera;
+      (this.renderPass as any).camera = camera;
     }
     if (camera instanceof THREE.PerspectiveCamera) {
       const { clientWidth: w, clientHeight: h } = this.container || window;
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
     }
-  }
-
-  getComposer(): EffectComposer | undefined {
-    return this.composer;
   }
 
   getActiveScene(): IScene | null {
