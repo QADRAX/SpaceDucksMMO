@@ -17,10 +17,13 @@ import { FeatureRouter } from "../features/FeatureRouter";
 import { RenderContext } from "../features/RenderContext";
 import { CameraFeature } from "../features/CameraFeature";
 import { LightFeature } from "../features/LightFeature";
-import { MeshFeature } from "../features/MeshFeature";
 import { SkyboxFeature } from "../features/SkyboxFeature";
 import { DebugFeature } from "../features/DebugFeature";
 import { LensFlareFeature } from "../features/LensFlareFeature";
+import { GeometryFeature } from "../features/GeometryFeature";
+import { FullMeshFeature } from "../features/FullMeshFeature";
+import { MaterialFeature } from "../features/MaterialFeature";
+import { AnimationFeature } from "../features/AnimationFeature";
 
 export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
   private readonly scene: THREE.Scene;
@@ -72,7 +75,10 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     // Register features
     this.router.addFeature(new CameraFeature());
     this.router.addFeature(new LightFeature());
-    this.router.addFeature(new MeshFeature());
+    this.router.addFeature(new GeometryFeature());
+    this.router.addFeature(new FullMeshFeature());
+    this.router.addFeature(new MaterialFeature());
+    this.router.addFeature(new AnimationFeature());
     this.router.addFeature(new SkyboxFeature());
     this.router.addFeature(this.debugFeature);
     this.router.addFeature(new LensFlareFeature());
