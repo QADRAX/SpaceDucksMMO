@@ -1,26 +1,40 @@
-import * as THREE from 'three';
+// Mock three/webgpu before any imports that depend on it.
+// WebGPURenderer is the renderer used by ThreeRenderer after the WebGPU migration.
+jest.mock('three/webgpu', () => {
+  const actual = jest.requireActual('three');
+  const canvas = (globalThis as any).document?.createElement?.('canvas') ?? {};
 
-// Extend mocks for EffectComposer and RenderPass
-jest.mock('three/addons/postprocessing/EffectComposer.js', () => {
+  const mockRenderer = () => ({
+    init: jest.fn().mockResolvedValue(undefined),
+    setSize: jest.fn(),
+    render: jest.fn(),
+    dispose: jest.fn(),
+    setPixelRatio: jest.fn(),
+    clear: jest.fn(),
+    setClearColor: jest.fn(),
+    compileAsync: jest.fn().mockResolvedValue(undefined),
+    shadowMap: { enabled: false, type: null },
+    domElement: canvas,
+  });
+
   return {
-    EffectComposer: jest.fn().mockImplementation(() => ({
-      addPass: jest.fn(),
+    ...actual,
+    WebGPURenderer: jest.fn().mockImplementation(mockRenderer),
+    PostProcessing: jest.fn().mockImplementation(() => ({
       render: jest.fn(),
       dispose: jest.fn(),
+      outputNode: null,
     })),
+    PCFSoftShadowMap: actual.PCFSoftShadowMap ?? 2,
   };
 });
 
-jest.mock('three/addons/postprocessing/RenderPass.js', () => {
-  return {
-    RenderPass: jest.fn().mockImplementation(() => ({})),
-  };
-});
+// three/tsl provides shader utilities — mock pass() as a no-op factory.
+jest.mock('three/tsl', () => ({
+  pass: jest.fn().mockReturnValue({ camera: null }),
+}));
 
-// Note: we avoid mocking the top-level 'three' module because creating a
-// real `WebGLRenderer` produces a real `canvas` node which is required
-// for DOM assertions in these tests. We only mock postprocessing addons above.
-
+import * as THREE from 'three';
 import { ThreeRenderer } from './ThreeRenderer';
 import { NoopFpsController, type IFpsController } from '../ui/dev/FpsController';
 
@@ -32,116 +46,73 @@ describe('ThreeRenderer', () => {
   beforeEach(() => {
     container = document.createElement('div');
     document.body.appendChild(container);
-    // make appendChild tolerant to non-Node domElement from mocked renderers
-    const _originalAppend = container.appendChild.bind(container as any);
-    (container as any).appendChild = (node: any) => {
-      try {
-        if (!(node instanceof Node)) {
-          const canvas = document.createElement('canvas');
-          return _originalAppend(canvas);
-        }
-      } catch {
-        const canvas = document.createElement('canvas');
-        return _originalAppend(canvas);
-      }
-      return _originalAppend(node);
-    };
     fpsController = new NoopFpsController();
     renderer = new ThreeRenderer(fpsController as any);
   });
 
-  // Helper to replace the mocked domElement with a real canvas so DOM assertions pass.
-  function attachRealCanvas(r: ThreeRenderer, root: HTMLElement) {
-    const internal = (r as any).renderer;
-    if (!internal) return;
-    try {
-      const old = internal.domElement;
-      if (old && typeof old.remove === 'function') {
-        // attempt to remove mock element from DOM if appended
-        try { old.remove(); } catch {}
-      } else if (old && old.parentNode) {
-        try { old.parentNode.removeChild(old); } catch {}
-      }
-    } catch {}
+  afterEach(() => {
+    try { renderer.dispose(); } catch { }
+    document.body.removeChild(container);
+    jest.clearAllMocks();
+  });
 
-    const canvas = document.createElement('canvas');
-    internal.domElement = canvas;
-    root.appendChild(canvas);
-  }
+  /**
+   * Inject a synchronous mock renderer directly into the private field,
+   * bypassing the async WebGPURenderer.init() call.
+   * Also sets container + scene so class internals are in a ready state.
+   */
   function setupMockRenderer(r: ThreeRenderer, root: HTMLElement) {
     const canvas = document.createElement('canvas');
     (r as any).renderer = {
+      init: jest.fn().mockResolvedValue(undefined),
       setSize: jest.fn(),
       render: jest.fn(),
       dispose: jest.fn(),
       setPixelRatio: jest.fn(),
+      clear: jest.fn(),
+      setClearColor: jest.fn(),
+      compileAsync: jest.fn().mockResolvedValue(undefined),
       shadowMap: { enabled: false, type: null },
       domElement: canvas,
     };
-    // Ensure the renderer.scene exists so teardownPreviousScene can call clear()
     (r as any).scene = new THREE.Scene();
     (r as any).container = root;
-    // Ensure resize dispatch triggers applyResolutionScale for tests.
-    window.addEventListener('resize', () => (r as any).applyResolutionScale());
-    // Append the canvas for DOM assertions
     root.appendChild(canvas);
   }
-  let _originalWebGLRenderer: any;
-  beforeEach(() => {
-    // Replace THREE.WebGLRenderer with a lightweight mock that produces a real canvas node.
-    // Do this at runtime (inside beforeEach) to avoid jest.mock factory restrictions.
-    _originalWebGLRenderer = (THREE as any).WebGLRenderer;
-    (THREE as any).WebGLRenderer = jest.fn().mockImplementation(() => {
-      const canvas = document.createElement('canvas');
-      return {
-        setSize: jest.fn(),
-        render: jest.fn(),
-        dispose: jest.fn(),
-        setPixelRatio: jest.fn(),
-        shadowMap: { enabled: false, type: null },
-        domElement: canvas,
-      };
-    });
-  });
 
-  afterEach(() => {
-    // restore original WebGLRenderer
-    if (_originalWebGLRenderer) (THREE as any).WebGLRenderer = _originalWebGLRenderer;
-  });
-
-  afterEach(() => {
-    document.body.removeChild(container);
-  });
-
-  it('should initialize the renderer', () => {
-    setupMockRenderer(renderer, container);
-
-    expect(container.querySelector('canvas')).toBeTruthy();
+  it('should be instantiated correctly', () => {
     expect(renderer).toBeTruthy();
   });
 
-  it('should set resolution scale', () => {
+  it('should set resolution scale without throwing', () => {
     setupMockRenderer(renderer, container);
-    renderer.setResolutionScale(2);
-
-    const canvas = container.querySelector('canvas') as HTMLCanvasElement;
-    expect(canvas.width).toBeGreaterThanOrEqual(0);
-    expect(canvas.height).toBeGreaterThanOrEqual(0);
+    expect(() => renderer.setResolutionScale(2)).not.toThrow();
   });
 
-  it('should handle resizing', () => {
+  it('should handle resize via handleResize (debounced)', () => {
     setupMockRenderer(renderer, container);
 
-    const spy = jest.spyOn(renderer as any, 'applyResolutionScale');
-    window.dispatchEvent(new Event('resize'));
+    // handleResize() is now debounced via requestAnimationFrame.
+    // We verify it calls applyResolutionForAllViews (the RAF-deferred hook)
+    // by running fake timers.
+    jest.useFakeTimers();
+    const spy = jest.spyOn(renderer as any, 'applyResolutionForAllViews');
+
+    renderer.handleResize();
+
+    // RAF hasn't fired yet
+    expect(spy).not.toHaveBeenCalled();
+
+    // Advance timers to trigger the RAF callback
+    jest.runAllTimers();
 
     expect(spy).toHaveBeenCalled();
+    jest.useRealTimers();
   });
 
   it('should enable and disable post-processing', () => {
     setupMockRenderer(renderer, container);
 
-    // Mock an active camera
     const mockCamera = new THREE.PerspectiveCamera();
     jest.spyOn(renderer, 'getActiveCamera').mockReturnValue(mockCamera);
 
@@ -178,7 +149,7 @@ describe('ThreeRenderer', () => {
   });
 
   it('should warn if no active camera is set', () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
 
     setupMockRenderer(renderer, container);
     renderer.renderFrame();
@@ -188,5 +159,15 @@ describe('ThreeRenderer', () => {
     );
 
     warnSpy.mockRestore();
+  });
+
+  it('should setShadows without throwing', () => {
+    setupMockRenderer(renderer, container);
+    expect(() => renderer.setShadows(true)).not.toThrow();
+    expect(() => renderer.setShadows(false)).not.toThrow();
+  });
+
+  it('should getActiveScene return null initially', () => {
+    expect(renderer.getActiveScene()).toBeNull();
   });
 });

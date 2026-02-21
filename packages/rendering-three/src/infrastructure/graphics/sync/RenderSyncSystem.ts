@@ -59,6 +59,7 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
       engineResourceResolver,
       entities: this.entities,
       debugFlags: this.debugFlags,
+      activeCameraEntityId: this.activeCameraEntityId,
       loadingTracker: loadingTracker,
       isInitialLoading: false
     };
@@ -191,11 +192,12 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
   setActiveCameraEntityId(id: string | null): void {
     const prev = this.activeCameraEntityId;
     this.activeCameraEntityId = id;
+    this.context.activeCameraEntityId = id; // Update context
     this.debugFeature.setActiveCameraEntityId(id, prev, this.context);
   }
 
   setIsInitialLoading(loading: boolean): void {
-    (this.context as any).isInitialLoading = loading;
+    this.context.isInitialLoading = loading;
     this.textureCache.setIsInitialLoading(loading);
   }
 }

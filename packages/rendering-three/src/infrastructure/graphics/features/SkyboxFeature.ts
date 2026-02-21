@@ -39,7 +39,7 @@ export class SkyboxFeature implements RenderFeature {
             const skybox = entity.getComponent<SkyboxComponent>("skybox");
             if (!skybox) continue;
             if (skybox.enabled === false) continue;
-            const key = (skybox as any).key as string | undefined;
+            const key = skybox.key;
             if (key && key.trim()) return key.trim();
         }
         return null;
@@ -106,7 +106,6 @@ export class SkyboxFeature implements RenderFeature {
                 try {
                     if (hasCubeFaces) {
                         const loader = new THREE.CubeTextureLoader();
-                        try { (loader as any).setCrossOrigin?.("anonymous"); } catch { }
                         const urls = faces.map((k) => files[k].url);
                         loader.load(urls, (tex: THREE.CubeTexture) => resolve(tex), undefined, () => resolve(null));
                         return;
@@ -117,12 +116,9 @@ export class SkyboxFeature implements RenderFeature {
                     if (!url) return resolve(null);
 
                     const loader = new THREE.TextureLoader();
-                    try { (loader as any).setCrossOrigin?.("anonymous"); } catch { }
                     loader.load(url, (tex: THREE.Texture) => {
-                        try {
-                            (tex as any).mapping = (THREE as any).EquirectangularReflectionMapping;
-                            tex.needsUpdate = true;
-                        } catch { }
+                        tex.mapping = THREE.EquirectangularReflectionMapping;
+                        tex.needsUpdate = true;
                         resolve(tex);
                     }, undefined, () => resolve(null));
                 } catch {

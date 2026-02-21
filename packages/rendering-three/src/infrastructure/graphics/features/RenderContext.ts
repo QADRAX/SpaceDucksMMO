@@ -23,5 +23,6 @@ export interface RenderContext {
         mesh: boolean;
         collider: boolean;
     };
-    readonly isInitialLoading: boolean;
+    activeCameraEntityId: string | null;
+    isInitialLoading: boolean;
 }

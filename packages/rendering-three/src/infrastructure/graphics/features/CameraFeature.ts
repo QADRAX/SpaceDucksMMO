@@ -20,7 +20,7 @@ export class CameraFeature implements RenderFeature {
 
         const camera = CameraFactory.build(cameraView);
         camera.userData = camera.userData || {};
-        (camera.userData as any).entityId = entity.id;
+        camera.userData.entityId = entity.id;
 
         syncTransformToObject3D(entity, camera);
         context.scene.add(camera);

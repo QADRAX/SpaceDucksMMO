@@ -3,8 +3,11 @@ import * as THREE from 'three';
 export interface RenderComponent {
   entityId: string;
   object3D?: THREE.Object3D;
-  material?: THREE.Material;
+  material?: THREE.Material | THREE.Material[];
   geometry?: THREE.BufferGeometry;
+  animationMixer?: THREE.AnimationMixer;
+  availableAnimations?: THREE.AnimationClip[];
+  activeAction?: THREE.AnimationAction;
 }
 
 export class RenderObjectRegistry {
@@ -42,7 +45,7 @@ export class RenderObjectRegistry {
     if (rc.geometry) rc.geometry.dispose();
     if (rc.material) {
       if (Array.isArray(rc.material))
-        (rc.material as any).forEach((m: THREE.Material) => m.dispose());
+        rc.material.forEach((m: THREE.Material) => m.dispose());
       else rc.material.dispose();
     }
 

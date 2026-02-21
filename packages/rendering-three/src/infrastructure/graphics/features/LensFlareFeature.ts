@@ -49,25 +49,10 @@ export class LensFlareFeature implements RenderFeature {
         // Or find it in registry.
 
         let camera: THREE.Camera | null = null;
-        if (context.entities && context.entities.size > 0) {
-            // We need the "active" camera.
-            // Usually RenderSyncSystem tracks it, but doesn't pass it to onFrame.
-            // We can assume the camera used for rendering.
-            // But we don't have access to the renderer's active camera here.
-            // We'll search specifically for the entity tagged as active camera? 
-            // Or just the first enabled camera.
-
-            // Optimization: Maybe FeatureRouter or RenderContext should expose 'activeCamera'?
-            // For now, let's find one.
-            for (const ent of context.entities.values()) {
-                const camC = ent.getComponent("cameraView");
-                if (camC && camC.enabled !== false && (camC.isActive ?? true)) { // Assuming isActive or similar, or just take first
-                    const rc = context.registry.get(ent.id);
-                    if (rc?.object3D instanceof THREE.Camera) {
-                        camera = rc.object3D;
-                        break;
-                    }
-                }
+        if (context.activeCameraEntityId) {
+            const rc = context.registry.get(context.activeCameraEntityId);
+            if (rc?.object3D instanceof THREE.Camera) {
+                camera = rc.object3D;
             }
         }
 
@@ -105,7 +90,7 @@ export class LensFlareFeature implements RenderFeature {
 
         const group = LensFlareFactory.build(comp);
         group.userData = group.userData || {};
-        (group.userData as any).entityId = entity.id;
+        group.userData.entityId = entity.id;
 
         // Decide where to attach
         // If entity has other renderables (light, mesh), attach to them?
@@ -249,7 +234,7 @@ export class LensFlareFeature implements RenderFeature {
 
         for (const child of group.children) {
             if (child instanceof THREE.Sprite) {
-                const meta = (child as any).userData; // { distance, ... }
+                const meta = child.userData; // { distance, ... }
                 if (typeof meta?.distance === 'number') {
                     // distance 0 = at light.
                     // distance 1 = at screen center? Or opposite?

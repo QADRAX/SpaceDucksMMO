@@ -47,9 +47,8 @@ export class MeshFeature implements RenderFeature {
         const geometry = this.getGeometryComponent(entity);
         const materialComp = this.getMaterialComponent(entity);
         const shaderMaterial = entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
-        const isFullMesh = !!geometry && (geometry as any).type === "fullMesh";
-
         if (!geometry || geometry.enabled === false) return false;
+        const isFullMesh = geometry.type === "fullMesh";
 
         // Full meshes don't need separate material
         if (
@@ -158,28 +157,17 @@ export class MeshFeature implements RenderFeature {
         // Animation updates
         const ms = dt / 1000;
         for (const rc of context.registry.getAll().values()) {
-            const mixer: any = (rc as any).animationMixer;
-            if (mixer && typeof mixer.update === "function") {
-                try {
-                    mixer.update(ms);
-                } catch { }
+            const mixer = rc.animationMixer;
+            if (mixer) {
+                mixer.update(ms);
             }
 
             // Also handle loaded flag for fullMesh
-            try {
-                const loaded = (rc.object3D as any)?.userData?.fullMeshLoaded;
-                if (loaded) {
-                    // Logic to sync full mesh animations once loaded.
-                    // We need entity reference to call syncFullMesh.
-                    // Ideally pass simple config object instead of Entity if Entity not available?
-                    // Or iterate component listeners?
-                    // For now, if we loaded via `loadAndApplyFullGlb`, we set up mixer.
-                    // We might need to trigger `syncFullMesh` logic again to apply specific clip/time.
-                    // But we miss `Entity` reference here in loop.
-                    // See comments in previous version.
-                    (rc.object3D as any).userData.fullMeshLoaded = false;
-                }
-            } catch { }
+            const obj = rc.object3D;
+            if (obj && obj.userData.fullMeshLoaded) {
+                // ... setup logic if needed ...
+                obj.userData.fullMeshLoaded = false;
+            }
         }
     }
 
@@ -239,8 +227,8 @@ export class MeshFeature implements RenderFeature {
 
         if (!geometryComp) return;
 
-        if ((geometryComp as any).type === "fullMesh") {
-            this.createFullMeshPlaceholder(entity, geometryComp, context);
+        if (geometryComp.type === "fullMesh") {
+            this.createFullMeshPlaceholder(entity, geometryComp as FullMeshComponent, context);
             return;
         }
 
@@ -292,12 +280,10 @@ export class MeshFeature implements RenderFeature {
         const group = new THREE.Group();
         group.visible = false;
         group.userData = group.userData || {};
-        (group.userData as any).entityId = entity.id;
+        group.userData.entityId = entity.id;
 
-        try {
-            (group.userData as any).fullMeshCastShadow = (geometryComp as any).castShadow ?? false;
-            (group.userData as any).fullMeshReceiveShadow = (geometryComp as any).receiveShadow ?? true;
-        } catch { }
+        group.userData.fullMeshCastShadow = geometryComp.castShadow ?? false;
+        group.userData.fullMeshReceiveShadow = geometryComp.receiveShadow ?? true;
 
         syncTransformToObject3D(entity, group);
         context.scene.add(group);
@@ -313,10 +299,12 @@ export class MeshFeature implements RenderFeature {
     }
 
     private applyShadowFlags(obj: THREE.Object3D, geometryComp: AnyGeometryComponent): void {
-        try {
-            obj.castShadow = (geometryComp as any).castShadow ?? false;
-            obj.receiveShadow = (geometryComp as any).receiveShadow ?? true;
-        } catch { }
+        const cast = (geometryComp as any).castShadow;
+        const receive = (geometryComp as any).receiveShadow;
+        if (typeof cast === "boolean") obj.castShadow = cast;
+        else obj.castShadow = false;
+        if (typeof receive === "boolean") obj.receiveShadow = receive;
+        else obj.receiveShadow = true;
     }
 
     private syncMaterial(entity: Entity, context: RenderContext): void {
@@ -436,10 +424,10 @@ export class MeshFeature implements RenderFeature {
 
             await Promise.all([
                 applyIfLoaded("texture", (t) => { if ("map" in material) (material as any).map = t; }),
-                applyIfLoaded("normalMap", (t) => { if ("normalMap" in material) (material as any).normalMap = t; }),
-                applyIfLoaded("roughnessMap", (t) => { if ("roughnessMap" in material) (material as any).roughnessMap = t; }),
-                applyIfLoaded("metalnessMap", (t) => { if ("metalnessMap" in material) (material as any).metalnessMap = t; }),
-                applyIfLoaded("aoMap", (t) => { if ("aoMap" in material) (material as any).aoMap = t; }),
+                applyIfLoaded("normalMap", (t) => { if (material instanceof THREE.MeshStandardMaterial || material instanceof THREE.MeshPhongMaterial) (material as any).normalMap = t; }),
+                applyIfLoaded("roughnessMap", (t) => { if (material instanceof THREE.MeshStandardMaterial) material.roughnessMap = t; }),
+                applyIfLoaded("metalnessMap", (t) => { if (material instanceof THREE.MeshStandardMaterial) material.metalnessMap = t; }),
+                applyIfLoaded("aoMap", (t) => { if (material instanceof THREE.MeshStandardMaterial) material.aoMap = t; }),
                 applyIfLoaded("emissiveMap", (t) => { if ("emissiveMap" in material) (material as any).emissiveMap = t; }),
                 applyIfLoaded("envMap", (t) => { if ("envMap" in material) (material as any).envMap = t; }),
             ]);
@@ -478,10 +466,8 @@ export class MeshFeature implements RenderFeature {
                     mesh.geometry = geometry;
                     rc.geometry = geometry;
                     mesh.visible = true;
-                    try {
-                        mesh.userData = mesh.userData || {};
-                        (mesh.userData as any).customGeometryKeyApplied = transformKey;
-                    } catch { }
+                    mesh.userData = mesh.userData || {};
+                    mesh.userData.customGeometryKeyApplied = transformKey;
                 }
             }, context);
         } catch (e) {
@@ -508,10 +494,10 @@ export class MeshFeature implements RenderFeature {
             return;
         }
 
-        try {
-            mesh.castShadow = (comp as any).castShadow ?? false;
-            mesh.receiveShadow = (comp as any).receiveShadow ?? true;
-        } catch { }
+        const compCast = (comp as any).castShadow;
+        const compReceive = (comp as any).receiveShadow;
+        if (typeof compCast === "boolean") mesh.castShadow = compCast;
+        if (typeof compReceive === "boolean") mesh.receiveShadow = compReceive;
 
         const key = String((comp as any).key ?? "").trim();
         if (!key) {
@@ -519,7 +505,7 @@ export class MeshFeature implements RenderFeature {
             return;
         }
 
-        const appliedKey = String((mesh.userData as any)?.customGeometryKeyApplied ?? "");
+        const appliedKey = String(mesh.userData?.customGeometryKeyApplied ?? "");
         if (appliedKey === key) {
             const m = mesh as THREE.Mesh;
             if (m.geometry) m.visible = true;
@@ -565,22 +551,17 @@ export class MeshFeature implements RenderFeature {
                     placeholder.add(instance);
 
                     if (animations && animations.length) {
-                        const mixer = new THREE.AnimationMixer(placeholder);
-                        (rc as any).animationMixer = mixer;
-                        (rc as any).availableAnimations = animations;
+                        rc.animationMixer = new THREE.AnimationMixer(placeholder);
+                        rc.availableAnimations = animations;
                         this.syncFullMesh(entity, context);
                     }
 
-                    try {
-                        const desiredCast = (placeholder.userData as any)?.fullMeshCastShadow ?? false;
-                        const desiredReceive = (placeholder.userData as any)?.fullMeshReceiveShadow ?? true;
-                        this.applyShadowFlagsRecursive(placeholder, desiredCast, desiredReceive);
-                    } catch { }
+                    const desiredCast = placeholder.userData?.fullMeshCastShadow ?? false;
+                    const desiredReceive = placeholder.userData?.fullMeshReceiveShadow ?? true;
+                    this.applyShadowFlagsRecursive(placeholder, desiredCast, desiredReceive);
 
-                    try {
-                        (placeholder.userData as any).fullMeshKeyApplied = key;
-                        (placeholder.userData as any).fullMeshLoaded = true;
-                    } catch { }
+                    placeholder.userData.fullMeshKeyApplied = key;
+                    placeholder.userData.fullMeshLoaded = true;
 
                     placeholder.visible = true;
                 }
@@ -601,17 +582,15 @@ export class MeshFeature implements RenderFeature {
         if (!rc?.object3D) return;
 
         // Shadow flags
-        try {
-            const cast = (comp as any).castShadow ?? false;
-            const receive = (comp as any).receiveShadow ?? true;
-            (rc.object3D as any).userData.fullMeshCastShadow = cast;
-            (rc.object3D as any).userData.fullMeshReceiveShadow = receive;
-            this.applyShadowFlagsRecursive(rc.object3D, cast, receive);
-        } catch { }
+        const cast = (comp as any).castShadow ?? false;
+        const receive = (comp as any).receiveShadow ?? true;
+        rc.object3D.userData.fullMeshCastShadow = cast;
+        rc.object3D.userData.fullMeshReceiveShadow = receive;
+        this.applyShadowFlagsRecursive(rc.object3D, cast, receive);
 
         // Check key change
         const nextKey = String(comp.key ?? '').trim();
-        const appliedKey = String((rc.object3D as any)?.userData?.fullMeshKeyApplied ?? '').trim();
+        const appliedKey = String(rc.object3D.userData?.fullMeshKeyApplied ?? '').trim();
 
         if (nextKey && nextKey !== appliedKey) {
             (rc.object3D as any).visible = false;
@@ -623,29 +602,27 @@ export class MeshFeature implements RenderFeature {
         }
 
         // Animation sync
-        const mixer: any = (rc as any).animationMixer;
-        const animations: any[] = (rc as any).availableAnimations ?? [];
+        const mixer = rc.animationMixer;
+        const animations = rc.availableAnimations ?? [];
         if (!mixer || !animations.length) return;
 
         const clipName = String(comp.animation?.clipName ?? "");
         const clip = clipName ? THREE.AnimationClip.findByName(animations, clipName) : animations[0];
         if (!clip) return;
 
-        try {
-            const prevAction: any = (rc as any).activeAction;
-            if (prevAction) {
-                prevAction.stop();
-                try { prevAction.reset(); } catch { }
-            }
+        const prevAction = rc.activeAction;
+        if (prevAction) {
+            prevAction.stop();
+            prevAction.reset();
+        }
 
-            const action = mixer.clipAction(clip);
-            action.setLoop(comp.animation?.loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
-            if (typeof comp.animation?.time === 'number') action.time = comp.animation.time;
-            if (comp.animation?.playing === false) action.paused = true;
-            else action.play();
+        const action = mixer.clipAction(clip);
+        action.setLoop(comp.animation?.loop ? THREE.LoopRepeat : THREE.LoopOnce, Infinity);
+        if (typeof comp.animation?.time === 'number') action.time = comp.animation.time;
+        if (comp.animation?.playing === false) action.paused = true;
+        else action.play();
 
-            (rc as any).activeAction = action;
-        } catch { }
+        rc.activeAction = action;
     }
 
     private applyShadowFlagsRecursive(root: THREE.Object3D, cast: boolean, receive: boolean) {
@@ -660,13 +637,13 @@ export class MeshFeature implements RenderFeature {
     private disposeEntityAnimations(entityId: string, context: RenderContext): void {
         const rc = context.registry.get(entityId);
         if (!rc) return;
-        const mixer: any = (rc as any).animationMixer;
+        const mixer = rc.animationMixer;
         if (mixer) {
             mixer.stopAllAction();
             if (rc.object3D) mixer.uncacheRoot(rc.object3D);
         }
-        delete (rc as any).animationMixer;
-        delete (rc as any).availableAnimations;
-        delete (rc as any).activeAction;
+        rc.animationMixer = undefined;
+        rc.availableAnimations = undefined;
+        rc.activeAction = undefined;
     }
 }

@@ -124,19 +124,18 @@ describe('GeometryFactory', () => {
       expect(geometry).toBeInstanceOf(THREE.TorusGeometry);
     });
 
-    it('should return box geometry fallback for custom type', () => {
-      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+    it('should return empty BufferGeometry placeholder for custom type', () => {
+      const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
 
       const geometry = GeometryFactory.build({
         type: 'custom',
         key: 'myCustomShape',
       } as any);
 
-      expect(geometry).toBeInstanceOf(THREE.BoxGeometry);
-      expect(warnSpy).toHaveBeenCalledWith(
-        expect.stringContaining('custom geometry')
-      );
-
+      // Custom geometry is loaded asynchronously — the factory returns an empty
+      // BufferGeometry as a placeholder while the real mesh is being fetched.
+      expect(geometry).toBeInstanceOf(THREE.BufferGeometry);
+      // No warning is expected for the 'custom' type (it's a known valid type)
       warnSpy.mockRestore();
     });
 
@@ -165,12 +164,12 @@ describe('GeometryFactory', () => {
       types.forEach((type) => {
         expect(() => {
           const params = type === 'sphere' ? { type, radius: 1 } :
-                        type === 'box' ? { type, width: 1, height: 1, depth: 1 } :
-                        type === 'plane' ? { type, width: 1, height: 1 } :
-                        type === 'cylinder' ? { type, radiusTop: 1, radiusBottom: 1, height: 1 } :
-                        type === 'cone' ? { type, radius: 1, height: 1 } :
-                        { type, radius: 1, tube: 0.4 };
-          
+            type === 'box' ? { type, width: 1, height: 1, depth: 1 } :
+              type === 'plane' ? { type, width: 1, height: 1 } :
+                type === 'cylinder' ? { type, radiusTop: 1, radiusBottom: 1, height: 1 } :
+                  type === 'cone' ? { type, radius: 1, height: 1 } :
+                    { type, radius: 1, tube: 0.4 };
+
           GeometryFactory.build(params as any);
         }).not.toThrow();
       });

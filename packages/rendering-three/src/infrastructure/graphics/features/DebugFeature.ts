@@ -31,18 +31,14 @@ export class DebugFeature implements RenderFeature {
 
     onAttach(entity: Entity, context: RenderContext): void {
         // Listen to per-entity debug flag changes
-        const dbgListener = (enabled: boolean) => this.onEntityDebugFlagChanged(entity, context);
+        const dbgListener = () => this.onEntityDebugFlagChanged(entity, context);
         this.debugFlagListeners.set(entity.id, dbgListener);
-        try {
-            entity.addDebugTransformListener(dbgListener);
-        } catch { }
+        entity.addDebugTransformListener(dbgListener);
 
-        const dbgMeshListener = (enabled: boolean) => this.onEntityMeshDebugFlagChanged(entity, context);
-        if (typeof (entity as any).addDebugMeshListener === "function") {
+        const dbgMeshListener = () => this.onEntityMeshDebugFlagChanged(entity, context);
+        if (typeof entity.addDebugMeshListener === "function") {
             this.debugMeshFlagListeners.set(entity.id, dbgMeshListener);
-            try {
-                (entity as any).addDebugMeshListener(dbgMeshListener);
-            } catch { }
+            entity.addDebugMeshListener(dbgMeshListener);
         }
 
         const dbgColListener = (enabled: boolean) => this.onEntityColliderDebugFlagChanged(entity, context);
@@ -61,7 +57,7 @@ export class DebugFeature implements RenderFeature {
                 ] as ComponentType[]
             ).includes(componentType)
         ) {
-            try { this.meshDebugSystem.refreshWireframeForEntity(entity.id); } catch { }
+            this.meshDebugSystem.refreshWireframeForEntity(entity.id);
         }
 
         if (
@@ -72,7 +68,7 @@ export class DebugFeature implements RenderFeature {
                 ] as ComponentType[]
             ).includes(componentType)
         ) {
-            try { this.colliderDebugSystem.recreateForEntityIfNeeded(entity); } catch { }
+            this.colliderDebugSystem.recreateForEntityIfNeeded(entity);
         }
 
         // Transform changes routed via onTransformChanged
@@ -87,7 +83,7 @@ export class DebugFeature implements RenderFeature {
                 ] as ComponentType[]
             ).includes(componentType)
         ) {
-            try { this.meshDebugSystem.refreshWireframeForEntity(entity.id); } catch { }
+            this.meshDebugSystem.refreshWireframeForEntity(entity.id);
         }
 
         if (
@@ -98,13 +94,13 @@ export class DebugFeature implements RenderFeature {
                 ] as ComponentType[]
             ).includes(componentType)
         ) {
-            try { this.colliderDebugSystem.recreateForEntityIfNeeded(entity); } catch { }
+            this.colliderDebugSystem.recreateForEntityIfNeeded(entity);
         }
     }
 
     onTransformChanged(entity: Entity, context: RenderContext): void {
-        try { this.debugSystem.updateHelperTransform(entity); } catch { }
-        try { this.meshDebugSystem.updateHelperTransform(entity); } catch { }
+        this.debugSystem.updateHelperTransform(entity);
+        this.meshDebugSystem.updateHelperTransform(entity);
         this.colliderDebugSystem.updateHelperTransform(entity);
     }
 
@@ -115,13 +111,15 @@ export class DebugFeature implements RenderFeature {
 
         const dbg = this.debugFlagListeners.get(entity.id);
         if (dbg) {
-            try { entity.removeDebugTransformListener(dbg); } catch { }
+            entity.removeDebugTransformListener(dbg);
             this.debugFlagListeners.delete(entity.id);
         }
 
         const dbgMesh = this.debugMeshFlagListeners.get(entity.id);
         if (dbgMesh) {
-            try { (entity as any).removeDebugMeshListener(dbgMesh); } catch { }
+            if (typeof entity.removeDebugMeshListener === "function") {
+                entity.removeDebugMeshListener(dbgMesh);
+            }
             this.debugMeshFlagListeners.delete(entity.id);
         }
 
@@ -131,8 +129,8 @@ export class DebugFeature implements RenderFeature {
             this.debugColliderFlagListeners.delete(entity.id);
         }
 
-        try { this.debugSystem.removeForbiddenEntity(entity.id); } catch { }
-        try { this.meshDebugSystem.removeForbiddenEntity(entity.id); } catch { }
+        this.debugSystem.removeForbiddenEntity(entity.id);
+        this.meshDebugSystem.removeForbiddenEntity(entity.id);
         this.colliderDebugSystem.removeForbiddenEntity(entity.id);
     }
 
@@ -158,24 +156,20 @@ export class DebugFeature implements RenderFeature {
     }
 
     setActiveCameraEntityId(id: string | null, prevId: string | null, context: RenderContext): void {
-        try {
-            if (prevId) {
-                this.debugSystem.removeForbiddenEntity(prevId);
-                this.meshDebugSystem.removeForbiddenEntity(prevId);
-                const pEnt = context.entities.get(prevId);
-                if (pEnt) {
-                    this.debugSystem.recreateForEntityIfNeeded(pEnt);
-                    this.meshDebugSystem.recreateForEntityIfNeeded(pEnt);
-                }
+        if (prevId) {
+            this.debugSystem.removeForbiddenEntity(prevId);
+            this.meshDebugSystem.removeForbiddenEntity(prevId);
+            const pEnt = context.entities.get(prevId);
+            if (pEnt) {
+                this.debugSystem.recreateForEntityIfNeeded(pEnt);
+                this.meshDebugSystem.recreateForEntityIfNeeded(pEnt);
             }
-        } catch { }
-        try {
-            if (id) {
-                this.debugSystem.addForbiddenEntity(id);
-                this.meshDebugSystem.addForbiddenEntity(id);
-                this.colliderDebugSystem.addForbiddenEntity(id);
-            }
-        } catch { }
+        }
+        if (id) {
+            this.debugSystem.addForbiddenEntity(id);
+            this.meshDebugSystem.addForbiddenEntity(id);
+            this.colliderDebugSystem.addForbiddenEntity(id);
+        }
     }
 
     // --- Helpers ---
@@ -202,10 +196,10 @@ export class DebugFeature implements RenderFeature {
         if (context.debugFlags.transform && entity.isDebugTransformEnabled()) {
             this.debugSystem.recreateForEntityIfNeeded(entity);
         }
-        if (context.debugFlags.mesh && typeof (entity as any).isDebugMeshEnabled === "function" && (entity as any).isDebugMeshEnabled()) {
+        if (context.debugFlags.mesh && typeof entity.isDebugMeshEnabled === "function" && entity.isDebugMeshEnabled()) {
             this.meshDebugSystem.recreateForEntityIfNeeded(entity);
         }
-        if (context.debugFlags.collider && entity.isDebugColliderEnabled?.()) {
+        if (context.debugFlags.collider && typeof entity.isDebugColliderEnabled === "function" && entity.isDebugColliderEnabled()) {
             this.colliderDebugSystem.recreateForEntityIfNeeded(entity);
         }
     }
