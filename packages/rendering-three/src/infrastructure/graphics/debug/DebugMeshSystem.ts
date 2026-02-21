@@ -1,7 +1,9 @@
-import * as THREE from "three";
+// @ts-ignore
+import * as THREE from "three/webgpu";
 import type { Entity } from "@duckengine/ecs";
 import type { RenderObjectRegistry } from "../sync/RenderObjectRegistry";
 import { DEBUG_LAYERS } from "./DebugLayers";
+import { deferredDisposeObject } from "./DebugUtils";
 
 /**
  * Manages debug mesh helpers (wireframes) for entities.
@@ -30,7 +32,7 @@ export class DebugMeshSystem {
       if (this.forbidden.has(id)) {
         try {
           this.scene.remove(h);
-        } catch {}
+        } catch { }
         this.helpers.delete(id);
         continue;
       }
@@ -38,7 +40,7 @@ export class DebugMeshSystem {
       if (this.masterEnabled) {
         try {
           this.refreshWireframeForEntity(id);
-        } catch {}
+        } catch { }
       }
     }
   }
@@ -96,8 +98,8 @@ export class DebugMeshSystem {
     // Assign all mesh debug objects to a dedicated layer so each
     // view/canvas can independently show/hide mesh debug.
     try {
-      group.traverse((o) => o.layers.set(DEBUG_LAYERS.mesh));
-    } catch {}
+      group.traverse((o: THREE.Object3D) => o.layers.set(DEBUG_LAYERS.mesh));
+    } catch { }
 
     this.scene.add(group);
     this.updateHelperTransform(entity);
@@ -108,24 +110,9 @@ export class DebugMeshSystem {
     if (!h) return;
     try {
       this.scene.remove(h);
-    } catch {}
+    } catch { }
 
-    h.traverse((o) => {
-      // @ts-ignore
-      if (o.geometry) {
-        try {
-          // @ts-ignore
-          o.geometry.dispose();
-        } catch {}
-      }
-      // @ts-ignore
-      if (o.material) {
-        try {
-          // @ts-ignore
-          o.material.dispose();
-        } catch {}
-      }
-    });
+    deferredDisposeObject(h);
 
     this.helpers.delete(entityId);
   }
@@ -138,6 +125,7 @@ export class DebugMeshSystem {
     const wr = entity.transform.worldRotation;
 
     h.position.set(wp.x, wp.y, wp.z);
+    h.rotation.order = "YXZ";
     h.rotation.set(wr.x, wr.y, wr.z);
 
     // Apply world scale so wireframe matches the visual mesh.
@@ -172,21 +160,7 @@ export class DebugMeshSystem {
     const toRemove = wire.children.slice();
     for (const c of toRemove) {
       wire.remove(c);
-      c.traverse((o) => {
-        const geom = (o as any).geometry as THREE.BufferGeometry | undefined;
-        if (geom) {
-          try {
-            geom.dispose();
-          } catch {}
-        }
-        const mat = (o as any).material as THREE.Material | THREE.Material[] | undefined;
-        if (mat) {
-          try {
-            if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-            else mat.dispose();
-          } catch {}
-        }
-      });
+      deferredDisposeObject(c);
     }
 
     // Try to find geometry from registry
@@ -205,7 +179,7 @@ export class DebugMeshSystem {
 
       try {
         root.updateMatrixWorld(true);
-      } catch {}
+      } catch { }
 
       let rootInv: THREE.Matrix4 | null = null;
       try {
@@ -236,20 +210,20 @@ export class DebugMeshSystem {
               lines.position.copy(relPos);
               lines.quaternion.copy(relQuat);
               lines.scale.copy(relScale);
-            } catch {}
+            } catch { }
           } else {
             // Best-effort: at least apply local transform.
             try {
               lines.position.copy(n.position);
               lines.quaternion.copy(n.quaternion);
               lines.scale.copy(n.scale);
-            } catch {}
+            } catch { }
           }
 
           wire.add(lines);
-        } catch {}
+        } catch { }
       });
-    } catch {}
+    } catch { }
   }
 
   clear(): void {

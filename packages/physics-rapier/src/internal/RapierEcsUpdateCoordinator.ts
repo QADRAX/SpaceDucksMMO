@@ -39,6 +39,8 @@ export interface IRapierCollider {
   setSensor?: (v: boolean) => void;
   setTranslation?: (t: { x: number; y: number; z: number }, wakeUp: boolean) => void;
   setRotation?: (q: QuatLike, wakeUp: boolean) => void;
+  /** Helper for detecting if we need to rebuild the entire shape */
+  entityId?: string;
 }
 
 export interface IRapierBodiesAdapter {
@@ -78,7 +80,7 @@ export class RapierEcsUpdateCoordinator {
     private readonly bodies: IRapierBodiesAdapter,
     private readonly colliders: IRapierCollidersAdapter,
     private readonly getEntity: GetEntityFn
-  ) {}
+  ) { }
 
   dispose(): void {
     this.pendingRigidBodyUpdates.clear();
@@ -249,21 +251,32 @@ export class RapierEcsUpdateCoordinator {
     const rb = ent.getComponent<RigidBodyComponent>("rigidBody");
     const body = this.bodies.bodyByEntity.get(entityId);
 
-    // Update body pose for static bodies and standalone fixed bodies.
-    // Kinematic bodies are synced via RapierBodies.syncKinematicBodiesFromEcs() inside the step.
-    if (body && (rb?.bodyType === "static" || !rb)) {
+    // Update body pose if changed. 
+    // We sync for all types (static, dynamic, kinematic) to allow "teleporting" 
+    // bodies when the user manually changes the ECS transform.
+    if (body) {
       const wp = ent.transform.worldPosition;
       const wr = ent.transform.worldRotation;
       const q = quatNormalize(quatFromEulerYXZ(wr));
 
-      this.callRequired(
-        body,
-        "setTranslation",
-        "RigidBody.setTranslation",
-        { x: wp.x, y: wp.y, z: wp.z },
-        true
-      );
-      this.callRequired(body, "setRotation", "RigidBody.setRotation", q, true);
+      if (rb?.bodyType === "kinematic") {
+        this.callRequired(
+          body,
+          "setNextKinematicTranslation",
+          "RigidBody.setNextKinematicTranslation",
+          { x: wp.x, y: wp.y, z: wp.z }
+        );
+        this.callRequired(body, "setNextKinematicRotation", "RigidBody.setNextKinematicRotation", q);
+      } else {
+        this.callRequired(
+          body,
+          "setTranslation",
+          "RigidBody.setTranslation",
+          { x: wp.x, y: wp.y, z: wp.z },
+          true
+        );
+        this.callRequired(body, "setRotation", "RigidBody.setRotation", q, true);
+      }
     }
 
     // If this entity is a collider attached to a rigidBody ancestor, update its local offset.
@@ -277,9 +290,24 @@ export class RapierEcsUpdateCoordinator {
     const localPoseSig = JSON.stringify({
       p: ent.transform.localPosition,
       r: ent.transform.localRotation,
+      s: ent.transform.localScale,
     });
     const prevLocalPoseSig = this.colliderLocalPoseSigByEntity.get(entityId);
     if (prevLocalPoseSig === localPoseSig) return;
+
+    // Detect if we need a rebuild due to scale change (Rapier shapes are immutable)
+    if (prevLocalPoseSig !== undefined) {
+      const prev = JSON.parse(prevLocalPoseSig);
+      if (
+        prev.s?.x !== ent.transform.localScale.x ||
+        prev.s?.y !== ent.transform.localScale.y ||
+        prev.s?.z !== ent.transform.localScale.z
+      ) {
+        this.rebuildCollider(ent);
+        return;
+      }
+    }
+
     // Seed without writing when first seen; ensureCollider already applied initial offset.
     if (prevLocalPoseSig === undefined) {
       this.colliderLocalPoseSigByEntity.set(entityId, localPoseSig);
@@ -293,7 +321,7 @@ export class RapierEcsUpdateCoordinator {
     if (!collider) return;
 
     const local = this.getLocalPoseRelativeTo(owner, ent);
-    const shift = this.getLocalCenterShift(col);
+    const shift = this.getLocalCenterShift(col, local.scale);
 
     this.callRequired(
       collider,
@@ -406,18 +434,21 @@ export class RapierEcsUpdateCoordinator {
     }
   }
 
-  private getLocalCenterShift(col: AnyColliderComponent): { x: number; y: number; z: number } {
+  private getLocalCenterShift(
+    col: AnyColliderComponent,
+    scale: { x: number; y: number; z: number } = { x: 1, y: 1, z: 1 }
+  ): { x: number; y: number; z: number } {
     if (col.type !== "terrainCollider") return { x: 0, y: 0, z: 0 };
     const hf = (col as TerrainColliderComponent).heightfield;
     const sizeX = hf?.size?.x ?? 0;
     const sizeZ = hf?.size?.z ?? 0;
-    return { x: -sizeX / 2, y: 0, z: -sizeZ / 2 };
+    return { x: (-sizeX * Math.abs(scale.x)) / 2, y: 0, z: (-sizeZ * Math.abs(scale.z)) / 2 };
   }
 
   private getLocalPoseRelativeTo(
     root: Entity,
     child: Entity
-  ): { pos: { x: number; y: number; z: number }; rot: QuatLike } {
+  ): { pos: { x: number; y: number; z: number }; rot: QuatLike; scale: { x: number; y: number; z: number } } {
     // Compute the relative pose using *local* transforms only.
     // This avoids Transform.world* getter side-effects (which trigger onChange) and
     // correctly supports deep hierarchies.
@@ -428,23 +459,30 @@ export class RapierEcsUpdateCoordinator {
       cur = cur.parent;
     }
     if (cur !== root) {
-      return { pos: { x: 0, y: 0, z: 0 }, rot: { x: 0, y: 0, z: 0, w: 1 } };
+      return { pos: { x: 0, y: 0, z: 0 }, rot: { x: 0, y: 0, z: 0, w: 1 }, scale: { x: 1, y: 1, z: 1 } };
     }
 
     let pos = { x: 0, y: 0, z: 0 };
     let rot: QuatLike = { x: 0, y: 0, z: 0, w: 1 };
+    let scale = { x: 1, y: 1, z: 1 };
 
     // Apply transforms from root->child order.
     for (const node of path.reverse()) {
       const lp = node.transform.localPosition;
       const lq = quatNormalize(quatFromEulerYXZ(node.transform.localRotation));
+      const ls = node.transform.localScale;
+
       const rotated = applyQuatToVec(lp, rot);
-      pos = { x: pos.x + rotated.x, y: pos.y + rotated.y, z: pos.z + rotated.z };
+      pos = {
+        x: pos.x + rotated.x * scale.x,
+        y: pos.y + rotated.y * scale.y,
+        z: pos.z + rotated.z * scale.z,
+      };
       rot = quatMul(rot, lq);
+      scale = { x: scale.x * ls.x, y: scale.y * ls.y, z: scale.z * ls.z };
     }
 
-    // Note: we intentionally do not include scaling here.
-    return { pos, rot };
+    return { pos, rot, scale };
   }
 
   private callRequired(

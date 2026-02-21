@@ -1,6 +1,8 @@
-import * as THREE from "three";
+// @ts-ignore
+import * as THREE from "three/webgpu";
 import type { Entity } from "@duckengine/ecs";
 import { DEBUG_LAYERS } from "./DebugLayers";
+import { deferredDisposeObject } from "./DebugUtils";
 
 /**
  * Manages debug transform helpers for entities.
@@ -27,7 +29,7 @@ export class DebugTransformSystem {
       if (this.forbidden.has(id)) {
         try {
           this.scene.remove(h);
-        } catch {}
+        } catch { }
         this.helpers.delete(id);
         continue;
       }
@@ -55,8 +57,8 @@ export class DebugTransformSystem {
     // Assign all transform debug objects to a dedicated layer so renderers/views can
     // independently include/exclude transform gizmos.
     try {
-      visuals.traverse((o) => o.layers.set(DEBUG_LAYERS.transforms));
-    } catch {}
+      visuals.traverse((o: THREE.Object3D) => o.layers.set(DEBUG_LAYERS.transforms));
+    } catch { }
 
     this.scene.add(group);
     this.helpers.set(entity.id, group);
@@ -68,9 +70,9 @@ export class DebugTransformSystem {
       this.presentationUnsubById.set(entity.id, () => {
         try {
           entity.removePresentationListener(listener);
-        } catch {}
+        } catch { }
       });
-    } catch {}
+    } catch { }
 
     // immediately sync transform
     this.updateHelperTransform(entity);
@@ -89,7 +91,7 @@ export class DebugTransformSystem {
       m.depthWrite = false;
       m.transparent = true;
       m.opacity = 1;
-    } catch {}
+    } catch { }
     visuals.add(axes);
 
     const dir = new THREE.Vector3(0, 0, -1);
@@ -99,7 +101,7 @@ export class DebugTransformSystem {
     arrow.layers.set(DEBUG_LAYERS.transforms);
     // Always visible (overlay)
     try {
-      arrow.traverse((o) => {
+      arrow.traverse((o: THREE.Object3D) => {
         const mat = (o as any).material as THREE.Material | THREE.Material[] | undefined;
         if (!mat) return;
         const apply = (m: THREE.Material) => {
@@ -111,7 +113,7 @@ export class DebugTransformSystem {
         if (Array.isArray(mat)) mat.forEach(apply);
         else apply(mat);
       });
-    } catch {}
+    } catch { }
     visuals.add(arrow);
 
     const label = this.createLabelForEntity(entity);
@@ -125,27 +127,7 @@ export class DebugTransformSystem {
     const toRemove = group.children.slice();
     for (const c of toRemove) {
       group.remove(c);
-      c.traverse((o) => {
-        const geom = (o as any).geometry as THREE.BufferGeometry | undefined;
-        if (geom) {
-          try {
-            geom.dispose();
-          } catch {}
-        }
-        const mat = (o as any).material as THREE.Material | THREE.Material[] | undefined;
-        if (mat) {
-          try {
-            if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-            else mat.dispose();
-          } catch {}
-        }
-        const map = (o as any).map as THREE.Texture | undefined;
-        if (map) {
-          try {
-            map.dispose();
-          } catch {}
-        }
-      });
+      deferredDisposeObject(c);
     }
   }
 
@@ -155,29 +137,14 @@ export class DebugTransformSystem {
 
     try {
       this.presentationUnsubById.get(entityId)?.();
-    } catch {}
+    } catch { }
     this.presentationUnsubById.delete(entityId);
 
     try {
       this.scene.remove(h);
-    } catch {}
+    } catch { }
     // dispose children geometries/materials if any
-    h.traverse((o) => {
-      // @ts-ignore
-      if (o.geometry) {
-        try {
-          // @ts-ignore
-          o.geometry.dispose();
-        } catch {}
-      }
-      // @ts-ignore
-      if (o.material) {
-        try {
-          // @ts-ignore
-          o.material.dispose();
-        } catch {}
-      }
-    });
+    deferredDisposeObject(h);
     this.helpers.delete(entityId);
   }
 
@@ -190,21 +157,7 @@ export class DebugTransformSystem {
     const existing = visuals.getObjectByName('labelSprite');
     if (existing) {
       visuals.remove(existing);
-      existing.traverse((o) => {
-        const mat = (o as any).material as THREE.Material | THREE.Material[] | undefined;
-        if (mat) {
-          try {
-            if (Array.isArray(mat)) mat.forEach((m) => m.dispose());
-            else mat.dispose();
-          } catch {}
-        }
-        const map = (o as any).map as THREE.Texture | undefined;
-        if (map) {
-          try {
-            map.dispose();
-          } catch {}
-        }
-      });
+      deferredDisposeObject(existing);
     }
 
     const label = this.createLabelForEntity(entity);
@@ -235,6 +188,7 @@ export class DebugTransformSystem {
     const wr = entity.transform.worldRotation;
     const baseSize = 1; // fixed world-space size for visuals
     h.position.set(wp.x, wp.y, wp.z);
+    h.rotation.order = "YXZ";
     h.rotation.set(wr.x, wr.y, wr.z);
     // visuals sub-group gets scaled to fixed world-space size
     const visuals = h.getObjectByName("visuals") as THREE.Object3D | undefined;
@@ -263,10 +217,10 @@ export class DebugTransformSystem {
       const forced = entity.gizmoIcon;
       if (typeof forced === 'string' && forced.trim()) icon = forced.trim();
       else
-      if (entity.getComponent("cameraView")) icon = "📷";
-      else if (entity.getComponent("ambientLight") || entity.getComponent("directionalLight") || entity.getComponent("pointLight") || entity.getComponent("spotLight")) icon = "💡";
-      else if (entity.getComponent("boxGeometry") || entity.getComponent("sphereGeometry") || entity.getComponent("planeGeometry") || entity.getComponent("customGeometry")) icon = "▦";
-      else icon = "•";
+        if (entity.getComponent("cameraView")) icon = "📷";
+        else if (entity.getComponent("ambientLight") || entity.getComponent("directionalLight") || entity.getComponent("pointLight") || entity.getComponent("spotLight")) icon = "💡";
+        else if (entity.getComponent("boxGeometry") || entity.getComponent("sphereGeometry") || entity.getComponent("planeGeometry") || entity.getComponent("customGeometry")) icon = "▦";
+        else icon = "•";
     } catch {
       icon = "•";
     }

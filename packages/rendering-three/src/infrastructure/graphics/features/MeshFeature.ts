@@ -31,6 +31,7 @@ import type { RenderContext } from "./RenderContext";
 import { syncTransformToObject3D } from "../sync/TransformSync";
 import { CustomGeometryLoader } from "../loaders/CustomGeometryLoader";
 import { FullGltfLoader, FullGltfResult } from "../loaders/FullGltfLoader";
+import { deferredDispose, deferredDisposeObject } from "../debug/DebugUtils";
 
 export class MeshFeature implements RenderFeature {
     readonly name = "MeshFeature";
@@ -176,11 +177,7 @@ export class MeshFeature implements RenderFeature {
         if (rc) {
             if (rc.object3D) {
                 context.scene.remove(rc.object3D);
-                if (rc.geometry) rc.geometry.dispose();
-                if (rc.material) {
-                    if (Array.isArray(rc.material)) (rc.material as any).forEach((m: any) => m.dispose());
-                    else rc.material.dispose();
-                }
+                deferredDisposeObject(rc.object3D);
             }
             this.disposeEntityAnimations(entity.id, context);
             context.registry.remove(entity.id, context.scene);
@@ -318,8 +315,8 @@ export class MeshFeature implements RenderFeature {
         }
 
         if (rc.material) {
-            if (Array.isArray(rc.material)) (rc.material as any).forEach((m: any) => m.dispose());
-            else rc.material.dispose();
+            if (Array.isArray(rc.material)) rc.material.forEach((m: any) => deferredDispose(m));
+            else deferredDispose(rc.material);
         }
 
         const newMat = MaterialFactory.build(materialComp, context.textureCache, (tex) => {
@@ -459,7 +456,7 @@ export class MeshFeature implements RenderFeature {
                 const rc = context.registry.get(entityId);
                 if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) return;
 
-                if (rc.geometry) rc.geometry.dispose();
+                if (rc.geometry) deferredDispose(rc.geometry);
 
                 if (geometry) {
                     const mesh = rc.object3D as THREE.Mesh;
@@ -592,11 +589,25 @@ export class MeshFeature implements RenderFeature {
         const nextKey = String(comp.key ?? '').trim();
         const appliedKey = String(rc.object3D.userData?.fullMeshKeyApplied ?? '').trim();
 
-        if (nextKey && nextKey !== appliedKey) {
-            (rc.object3D as any).visible = false;
-            this.disposeEntityAnimations(entity.id, context);
-            if (context.engineResourceResolver) {
-                this.loadAndApplyFullGlb(entity, nextKey, context);
+        if (nextKey !== appliedKey) {
+            if (nextKey) {
+                (rc.object3D as any).visible = false;
+                this.disposeEntityAnimations(entity.id, context);
+                if (context.engineResourceResolver) {
+                    this.loadAndApplyFullGlb(entity, nextKey, context);
+                }
+            } else {
+                // Key cleared (none)
+                this.disposeEntityAnimations(entity.id, context);
+                const placeholder = rc.object3D;
+                while (placeholder.children.length) {
+                    const c = placeholder.children[0];
+                    placeholder.remove(c);
+                    deferredDisposeObject(c);
+                }
+                placeholder.userData.fullMeshKeyApplied = "";
+                placeholder.userData.fullMeshLoaded = false;
+                placeholder.visible = false;
             }
             return;
         }

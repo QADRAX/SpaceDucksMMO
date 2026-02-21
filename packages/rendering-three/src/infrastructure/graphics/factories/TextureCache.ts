@@ -1,5 +1,6 @@
 // @ts-ignore
 import * as THREE from 'three/webgpu';
+import { deferredDispose } from '../debug/DebugUtils';
 
 export class TextureCache {
   private cache = new Map<string, THREE.Texture>();
@@ -55,7 +56,7 @@ export class TextureCache {
   }
 
   clear(): void {
-    for (const tex of this.cache.values()) tex.dispose();
+    for (const tex of this.cache.values()) deferredDispose(tex);
     this.cache.clear();
     this.pendingLoads.clear();
   }

@@ -51,7 +51,7 @@ export class RapierColliders {
     private readonly world: any,
     private readonly bodies: RapierBodies,
     private readonly collisions: RapierCollisionEvents
-  ) {}
+  ) { }
 
   removeEntityCollider(entityId: string): void {
     const collider = this.colliderByEntity.get(entityId);
@@ -60,42 +60,60 @@ export class RapierColliders {
     const handle = typeof collider.handle === "number" ? (collider.handle as number) : undefined;
     if (handle !== undefined) callOptional(this.collisions, "unregisterColliderHandle", handle);
 
-    callRequired(this.world, "removeCollider", "World.removeCollider", collider, true);
+    if (typeof this.world.removeCollider === "function") {
+      this.world.removeCollider(collider, true);
+    } else {
+      callRequired(this.world, "removeCollider", "World.removeCollider", collider, true);
+    }
+
+    // If this collider was on a standalone fixed body created by ensureCollider,
+    // we should ideally clean up the body too if it was specifically for this.
+    // For now we assume the coordinator handles body removal via removeEntityBody.
+
     this.colliderByEntity.delete(entityId);
   }
 
   ensureCollider(entity: Entity, col: AnyColliderComponent): void {
     if (this.colliderByEntity.has(entity.id)) return;
 
-    const { desc, localCenterShift } = this.createColliderDesc(entity, col);
+    // 1. Find or create a body to host this collider.
+    let bodyOwner = this.findNearestRigidBodyOwner(entity);
+    let body = bodyOwner ? this.bodies.bodyByEntity.get(bodyOwner.id) : undefined;
 
-    const bodyOwner = this.findNearestRigidBodyOwner(entity);
-    if (bodyOwner) {
-      const body = this.bodies.bodyByEntity.get(bodyOwner.id);
-      if (body) {
-        const local = this.getLocalPoseRelativeTo(bodyOwner, entity);
-
-        callOptional(
-          desc,
-          "setTranslation",
-          local.pos.x + localCenterShift.x,
-          local.pos.y + localCenterShift.y,
-          local.pos.z + localCenterShift.z
-        );
-        callOptional(desc, "setRotation", local.rot);
-
-        const collider = this.world.createCollider(desc, body);
-        this.colliderByEntity.set(entity.id, collider);
-
-        const createdHandle = collider.handle as number;
-        callOptional(this.collisions, "registerColliderHandle", createdHandle, entity.id, bodyOwner.id);
-        return;
-      }
+    // If no rigid body in hierarchy, create a static fixed body for this collider.
+    if (!body) {
+      bodyOwner = entity;
+      // We use the RapierBodies adapter to manage the body.
+      // This ensures it has the correct initial translation/rotation from the entity.
+      const rbComp = {
+        type: "rigidBody",
+        bodyType: "static",
+        enabled: true,
+      } as any;
+      this.bodies.ensureRigidBody((this as any).R, this.world, entity, rbComp);
+      body = this.bodies.bodyByEntity.get(entity.id);
     }
 
-    // No rigid body found: intentionally ignore.
-    // (Editor should prevent/flag these; engine remains robust by skipping them.)
-    return;
+    if (!body || !bodyOwner) return;
+
+    // 2. Compute local pose relative to that body.
+    const local = this.getLocalPoseRelativeTo(bodyOwner, entity);
+    const { desc, localCenterShift } = this.createColliderDesc(entity, col, local.scale);
+
+    callOptional(
+      desc,
+      "setTranslation",
+      local.pos.x + localCenterShift.x,
+      local.pos.y + localCenterShift.y,
+      local.pos.z + localCenterShift.z
+    );
+    callOptional(desc, "setRotation", local.rot);
+
+    const collider = this.world.createCollider(desc, body);
+    this.colliderByEntity.set(entity.id, collider);
+
+    const createdHandle = collider.handle as number;
+    callOptional(this.collisions, "registerColliderHandle", createdHandle, entity.id, bodyOwner.id);
   }
 
   ensureCollidersInSubtree(root: Entity): void {
@@ -152,7 +170,8 @@ export class RapierColliders {
 
   private createColliderDesc(
     entity: Entity,
-    col: AnyColliderComponent
+    col: AnyColliderComponent,
+    scale: { x: number; y: number; z: number } = { x: 1, y: 1, z: 1 }
   ): { desc: any; localCenterShift: { x: number; y: number; z: number } } {
     let desc: any;
     let localCenterShift = { x: 0, y: 0, z: 0 };
@@ -161,34 +180,43 @@ export class RapierColliders {
     // We allow users to model "flat" colliders in the editor by using 0 on one axis,
     // but clamp to a tiny epsilon for the runtime shape.
     const EPS = 0.000001;
+    const absScale = { x: Math.abs(scale.x), y: Math.abs(scale.y), z: Math.abs(scale.z) };
 
     switch (col.type) {
       case "sphereCollider":
-        desc = this.R.ColliderDesc.ball(col.radius);
+        // Use max scale component for sphere to ensure it encases the intended volume if non-uniform.
+        const s = Math.max(absScale.x, absScale.y, absScale.z);
+        desc = this.R.ColliderDesc.ball(col.radius * s);
         break;
       case "boxCollider":
         desc = this.R.ColliderDesc.cuboid(
-          Math.max(EPS, col.halfExtents.x),
-          Math.max(EPS, col.halfExtents.y),
-          Math.max(EPS, col.halfExtents.z)
+          Math.max(EPS, col.halfExtents.x * absScale.x),
+          Math.max(EPS, col.halfExtents.y * absScale.y),
+          Math.max(EPS, col.halfExtents.z * absScale.z)
         );
         break;
-      case "capsuleCollider":
-        desc = this.R.ColliderDesc.capsule(col.halfHeight, col.radius);
+      case "capsuleCollider": {
+        const avgSide = (absScale.x + absScale.z) / 2;
+        desc = this.R.ColliderDesc.capsule(col.halfHeight * absScale.y, col.radius * avgSide);
         break;
-      case "cylinderCollider":
-        desc = this.R.ColliderDesc.cylinder(col.halfHeight, col.radius);
+      }
+      case "cylinderCollider": {
+        const avgSide = (absScale.x + absScale.z) / 2;
+        desc = this.R.ColliderDesc.cylinder(col.halfHeight * absScale.y, col.radius * avgSide);
         break;
-      case "coneCollider":
-        desc = this.R.ColliderDesc.cone(col.halfHeight, col.radius);
+      }
+      case "coneCollider": {
+        const avgSide = (absScale.x + absScale.z) / 2;
+        desc = this.R.ColliderDesc.cone(col.halfHeight * absScale.y, col.radius * avgSide);
         break;
+      }
       case "terrainCollider": {
         const hf = col.heightfield;
-        const sx = hf.size.x / Math.max(1, hf.columns - 1);
-        const sz = hf.size.z / Math.max(1, hf.rows - 1);
-        const scale = { x: sx, y: 1, z: sz };
-        desc = this.R.ColliderDesc.heightfield(hf.rows, hf.columns, hf.heights, scale);
-        localCenterShift = { x: -hf.size.x / 2, y: 0, z: -hf.size.z / 2 };
+        const sx = (hf.size.x * absScale.x) / Math.max(1, hf.columns - 1);
+        const sz = (hf.size.z * absScale.z) / Math.max(1, hf.rows - 1);
+        const s = { x: sx, y: absScale.y, z: sz };
+        desc = this.R.ColliderDesc.heightfield(hf.rows, hf.columns, hf.heights, s);
+        localCenterShift = { x: (-hf.size.x * absScale.x) / 2, y: 0, z: (-hf.size.z * absScale.z) / 2 };
         break;
       }
       default:
@@ -207,7 +235,10 @@ export class RapierColliders {
     return { desc, localCenterShift };
   }
 
-  private getLocalPoseRelativeTo(root: Entity, child: Entity): { pos: { x: number; y: number; z: number }; rot: QuatLike } {
+  private getLocalPoseRelativeTo(
+    root: Entity,
+    child: Entity
+  ): { pos: { x: number; y: number; z: number }; rot: QuatLike; scale: { x: number; y: number; z: number } } {
     // Compute the relative pose using *local* transforms only.
     // This avoids Transform.world* getter side-effects (which trigger onChange) and
     // correctly supports deep hierarchies.
@@ -218,22 +249,31 @@ export class RapierColliders {
       cur = cur.parent;
     }
     if (cur !== root) {
-      return { pos: { x: 0, y: 0, z: 0 }, rot: { x: 0, y: 0, z: 0, w: 1 } };
+      return { pos: { x: 0, y: 0, z: 0 }, rot: { x: 0, y: 0, z: 0, w: 1 }, scale: { x: 1, y: 1, z: 1 } };
     }
 
     let pos = { x: 0, y: 0, z: 0 };
     let rot: QuatLike = { x: 0, y: 0, z: 0, w: 1 };
+    let scale = { x: 1, y: 1, z: 1 };
 
     for (const node of path.reverse()) {
       const lp = node.transform.localPosition;
       const lq = quatNormalize(quatFromEulerYXZ(node.transform.localRotation));
+      const ls = node.transform.localScale;
+
       const rotated = applyQuatToVec(lp, rot);
-      pos = { x: pos.x + rotated.x, y: pos.y + rotated.y, z: pos.z + rotated.z };
+      // Position is affected by the inherited scale up to this point
+      pos = {
+        x: pos.x + rotated.x * scale.x,
+        y: pos.y + rotated.y * scale.y,
+        z: pos.z + rotated.z * scale.z,
+      };
+
       rot = quatMul(rot, lq);
+      scale = { x: scale.x * ls.x, y: scale.y * ls.y, z: scale.z * ls.z };
     }
 
-    // Note: we intentionally do not include scaling here.
-    return { pos, rot };
+    return { pos, rot, scale };
   }
 }
 

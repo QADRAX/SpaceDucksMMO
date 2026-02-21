@@ -12,6 +12,7 @@ import {
   type RenderPass,
   type ThreeRendererBaseOptions,
 } from "./ThreeRendererBase";
+import { deferredDispose } from "../graphics/debug/DebugUtils";
 
 /**
  * Single-canvas Three.js/WebGPU renderer.
@@ -158,11 +159,7 @@ export class ThreeRenderer extends ThreeRendererBase {
   disablePostProcessing(_viewId?: string): void {
     this.usePostProcessing = false;
     if (this.composer) {
-      try {
-        this.composer.dispose();
-      } catch (err) {
-        console.warn(`[${this.logPrefix}] composer.dispose() failed`, err);
-      }
+      deferredDispose(this.composer);
       this.composer = undefined;
     }
   }
@@ -222,7 +219,7 @@ export class ThreeRenderer extends ThreeRendererBase {
 
   protected teardownViewComposers(): void {
     if (this.composer) {
-      this.composer.dispose?.();
+      deferredDispose(this.composer);
       this.composer = undefined;
       this.renderPass = undefined;
       this.usePostProcessing = false;

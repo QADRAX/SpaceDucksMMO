@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { deferredDispose, deferredDisposeObject } from "../debug/DebugUtils";
 
 export interface RenderComponent {
   entityId: string;
@@ -41,12 +42,13 @@ export class RenderObjectRegistry {
       }
 
       scene.remove(rc.object3D);
+      deferredDisposeObject(rc.object3D);
     }
-    if (rc.geometry) rc.geometry.dispose();
+    if (rc.geometry) deferredDispose(rc.geometry);
     if (rc.material) {
       if (Array.isArray(rc.material))
-        rc.material.forEach((m: THREE.Material) => m.dispose());
-      else rc.material.dispose();
+        rc.material.forEach((m: THREE.Material) => deferredDispose(m));
+      else deferredDispose(rc.material);
     }
 
     this.components.delete(entityId);

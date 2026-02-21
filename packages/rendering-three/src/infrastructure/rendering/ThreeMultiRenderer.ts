@@ -17,6 +17,7 @@ import {
   type RenderPass,
   type ThreeRendererBaseOptions,
 } from './ThreeRendererBase';
+import { deferredDispose } from "../graphics/debug/DebugUtils";
 
 type ResolutionPolicy = 'auto' | 'scale';
 
@@ -222,11 +223,7 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
     if (!v) return;
     v.usePostProcessing = false;
     if (v.composer) {
-      try {
-        v.composer.dispose();
-      } catch (err) {
-        console.warn(`[${this.logPrefix}] composer.dispose() failed for view '${targetId}'`, err);
-      }
+      deferredDispose(v.composer);
       v.composer = undefined;
       v.renderPass = undefined;
     }
@@ -351,11 +348,7 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
   protected teardownViewComposers(): void {
     for (const v of this.views.values()) {
       if (v.composer) {
-        try {
-          v.composer.dispose();
-        } catch (err) {
-          console.warn(`[${this.logPrefix}] composer.dispose() failed for view '${v.id}'`, err);
-        }
+        deferredDispose(v.composer);
       }
       v.composer = undefined;
       v.renderPass = undefined;
@@ -421,11 +414,7 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
   private disposeView(view: ViewRuntime): void {
     view.renderer.domElement.remove();
     if (view.composer) {
-      try {
-        view.composer.dispose();
-      } catch (err) {
-        console.warn(`[${this.logPrefix}] composer.dispose() failed for view '${view.id}'`, err);
-      }
+      deferredDispose(view.composer);
     }
     try {
       view.renderer.dispose();
@@ -437,7 +426,7 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
   private async reinitializeViewRenderer(view: ViewRuntime): Promise<void> {
     view.renderer.domElement.remove();
     if (view.composer) {
-      try { view.composer.dispose(); } catch { /* best-effort */ }
+      deferredDispose(view.composer);
     }
     try { view.renderer.dispose(); } catch { /* best-effort */ }
 

@@ -1,4 +1,5 @@
-import * as THREE from "three";
+// @ts-ignore
+import * as THREE from "three/webgpu";
 import type {
   AnyColliderComponent,
   BoxColliderComponent,
@@ -12,13 +13,14 @@ import type {
 } from "@duckengine/ecs";
 import type { RenderObjectRegistry } from "../sync/RenderObjectRegistry";
 import { DEBUG_LAYERS } from "./DebugLayers";
+import { deferredDisposeObject } from "./DebugUtils";
+import { syncTransformToObject3D } from "../sync/TransformSync";
 
 /**
  * Manages debug collider helpers for entities.
  *
  * Intent: visualize the *physics* collider shapes (not render meshes).
- * Important: current Rapier integration ignores rotations (and most scales) for colliders,
- * so this debug visualization intentionally matches the same assumptions.
+ * Matches ECS transform conventions (YXZ rotation order, world transforms).
  */
 export class DebugColliderSystem {
   private readonly scene: THREE.Scene;
@@ -42,7 +44,7 @@ export class DebugColliderSystem {
       if (this.forbidden.has(id)) {
         try {
           this.scene.remove(h);
-        } catch {}
+        } catch { }
         this.helpers.delete(id);
         continue;
       }
@@ -103,8 +105,8 @@ export class DebugColliderSystem {
     // Assign all collider debug objects to a dedicated layer so each
     // view/canvas can independently show/hide collider debug.
     try {
-      group.traverse((o) => o.layers.set(DEBUG_LAYERS.colliders));
-    } catch {}
+      group.traverse((o: THREE.Object3D) => o.layers.set(DEBUG_LAYERS.colliders));
+    } catch { }
 
     this.scene.add(group);
     this.updateHelperTransform(entity);
@@ -115,24 +117,9 @@ export class DebugColliderSystem {
     if (!h) return;
     try {
       this.scene.remove(h);
-    } catch {}
+    } catch { }
 
-    h.traverse((o) => {
-      // @ts-ignore
-      if (o.geometry) {
-        try {
-          // @ts-ignore
-          o.geometry.dispose();
-        } catch {}
-      }
-      // @ts-ignore
-      if (o.material) {
-        try {
-          // @ts-ignore
-          o.material.dispose();
-        } catch {}
-      }
-    });
+    deferredDisposeObject(h);
 
     this.helpers.delete(entityId);
   }
@@ -141,12 +128,8 @@ export class DebugColliderSystem {
     const h = this.helpers.get(entity.id);
     if (!h) return;
 
-    const p = this.computePhysicsColliderWorldPosition(entity);
-    h.position.set(p.x, p.y, p.z);
-
-    // Match current Rapier integration: no rotation support yet.
-    h.rotation.set(0, 0, 0);
-    h.scale.set(1, 1, 1);
+    // Use common helper to ensure parity with render meshes and other debug systems.
+    syncTransformToObject3D(entity, h);
   }
 
   /** Rebuild the collider wire geometry inside the helper. */
@@ -161,14 +144,7 @@ export class DebugColliderSystem {
     const toRemove = wire.children.slice();
     for (const c of toRemove) {
       wire.remove(c);
-      try {
-        // @ts-ignore
-        c.geometry?.dispose?.();
-      } catch {}
-      try {
-        // @ts-ignore
-        c.material?.dispose?.();
-      } catch {}
+      deferredDisposeObject(c);
     }
 
     const e = entity;
@@ -231,15 +207,15 @@ export class DebugColliderSystem {
     });
   }
 
-  private makeCircle(radius: number, segments = 96): THREE.LineLoop {
+  private makeCircle(radius: number, segments = 96): THREE.Line {
     const pts: THREE.Vector3[] = [];
     const seg = Math.max(12, Math.floor(segments));
-    for (let i = 0; i < seg; i++) {
+    for (let i = 0; i <= seg; i++) { // <= to include the closing point
       const t = (i / seg) * Math.PI * 2;
       pts.push(new THREE.Vector3(Math.cos(t) * radius, Math.sin(t) * radius, 0));
     }
     const geom = new THREE.BufferGeometry().setFromPoints(pts);
-    return new THREE.LineLoop(geom, this.makeLineMaterial());
+    return new THREE.Line(geom, this.makeLineMaterial());
   }
 
   private buildSphereOutline(radius: number): THREE.Object3D[] {
@@ -396,45 +372,6 @@ export class DebugColliderSystem {
     return geom;
   }
 
-  // --- Physics-position matching (mirrors RapierPhysicsSystem limitations) ---
-
-  private computePhysicsColliderWorldPosition(entity: Entity): { x: number; y: number; z: number } {
-    // If collider belongs to a rigidbody ancestor, Rapier currently computes offset
-    // as a sum of local positions (ignoring rotation). Match that.
-    const owner = this.findNearestRigidBodyOwner(entity);
-    if (!owner) {
-      const wp = entity.transform.worldPosition;
-      return { x: wp.x, y: wp.y, z: wp.z };
-    }
-
-    const root = owner.transform.worldPosition;
-    const offset = this.sumLocalPositionUpTo(entity, owner);
-    return { x: root.x + offset.x, y: root.y + offset.y, z: root.z + offset.z };
-  }
-
-  private findNearestRigidBodyOwner(entity: Entity): Entity | null {
-    let cur: Entity | undefined = entity;
-    while (cur) {
-      if (cur.getComponent<RigidBodyComponent>("rigidBody")) return cur;
-      cur = cur.parent;
-    }
-    return null;
-  }
-
-  private sumLocalPositionUpTo(child: Entity, root: Entity): { x: number; y: number; z: number } {
-    if (child.id === root.id) return { x: 0, y: 0, z: 0 };
-
-    let cur: Entity | undefined = child;
-    const pos = { x: 0, y: 0, z: 0 };
-    while (cur && cur.id !== root.id) {
-      const lp = cur.transform.localPosition;
-      pos.x += lp.x;
-      pos.y += lp.y;
-      pos.z += lp.z;
-      cur = cur.parent;
-    }
-    return pos;
-  }
 
   private getAnyColliderComponent(entity: Entity): AnyColliderComponent | undefined {
     return (

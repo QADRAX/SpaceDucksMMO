@@ -3,6 +3,7 @@ import * as THREE from "three/webgpu";
 import type { Entity, SkyboxComponent, ComponentType } from "@duckengine/ecs";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
+import { deferredDispose } from "../debug/DebugUtils";
 
 export class SkyboxFeature implements RenderFeature {
     readonly name = "SkyboxFeature";
@@ -56,9 +57,7 @@ export class SkyboxFeature implements RenderFeature {
             }
             if (scene.background) scene.background = null;
             if (this.currentSkyboxTexture) {
-                try {
-                    this.currentSkyboxTexture.dispose();
-                } catch { }
+                deferredDispose(this.currentSkyboxTexture);
                 this.currentSkyboxTexture = null;
             }
             return;
@@ -130,12 +129,12 @@ export class SkyboxFeature implements RenderFeature {
 
             // Final check: if something else became active while we were awaiting, clean up and exit.
             if (token !== this.skyboxLoadToken || this.currentSkyboxResourceKey !== resourceKey) {
-                try { nextTexture.dispose(); } catch { }
+                deferredDispose(nextTexture);
                 return;
             }
 
             if (this.currentSkyboxTexture && this.currentSkyboxTexture !== nextTexture) {
-                try { this.currentSkyboxTexture.dispose(); } catch { }
+                deferredDispose(this.currentSkyboxTexture);
             }
 
             this.currentSkyboxTexture = nextTexture;

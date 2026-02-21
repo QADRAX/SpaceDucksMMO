@@ -92,9 +92,10 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
         component.addObserver(this);
         this.router.onComponentChanged(e, component.type);
       } else if (action === "removed") {
-        component.removeObserver(this);
-        // Removal handling is now delegated to onComponentRemoved via IComponentObserver
-        // to ensure consistent timing and strong typing.
+        // DO NOT call component.removeObserver(this) here!
+        // Entity.safeRemoveComponent calls listener FIRST, then comp.notifyRemoved().
+        // If we remove observer here, comp.notifyRemoved() will have nothing to notify, 
+        // and this.onComponentRemoved won't be triggered, breaking feature sync.
       }
     };
 
@@ -124,6 +125,12 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     // is properly removed from the registry/scene.
     this.router.onEntityRemoved(entity);
     this.registry.remove(entityId, this.scene);
+
+    // Stop observing all components of this entity
+    for (const comp of entity.getAllComponents()) {
+      comp.removeObserver(this);
+    }
+
     this.entities.delete(entityId);
   }
 
