@@ -11,3 +11,4 @@ export * from './PhysicsContext';
 export * from './Math3D';
 export * from './MathTypes';
 export * from './Transform';
+export * from './DebugKind';

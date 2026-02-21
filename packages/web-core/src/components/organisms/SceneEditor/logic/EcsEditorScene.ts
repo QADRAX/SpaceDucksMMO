@@ -73,9 +73,10 @@ export class EcsEditorScene extends BaseScene {
         try {
             // Scene-level debug master switches are always enabled in the editor.
             // Per-entity flags determine what actually renders.
-            this.setDebugTransformsEnabled(true);
-            this.setDebugMeshesEnabled(true);
-            this.setDebugCollidersEnabled(true);
+            this.setDebugEnabled?.('transform', true);
+            this.setDebugEnabled?.('mesh', true);
+            this.setDebugEnabled?.('collider', true);
+            this.setDebugEnabled?.('camera', true);
         } catch {
             // ignore
         }

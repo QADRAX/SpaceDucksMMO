@@ -256,9 +256,13 @@ export class ThreeRenderer extends ThreeRendererBase {
 
   private buildDebugLayerMask(): number {
     let mask = 1 << 0;
-    mask |= this.activeIScene?.getDebugTransformsEnabled?.() ? 1 << DEBUG_LAYERS.transforms : 0;
-    mask |= this.activeIScene?.getDebugMeshesEnabled?.() ? 1 << DEBUG_LAYERS.mesh : 0;
-    mask |= this.activeIScene?.getDebugCollidersEnabled?.() ? 1 << DEBUG_LAYERS.colliders : 0;
+    const flags = (this.activeIScene as any)?.debugFlags;
+    if (flags) {
+      mask |= flags.transform ? 1 << DEBUG_LAYERS.transforms : 0;
+      mask |= flags.mesh ? 1 << DEBUG_LAYERS.mesh : 0;
+      mask |= flags.collider ? 1 << DEBUG_LAYERS.colliders : 0;
+      mask |= flags.camera ? 1 << DEBUG_LAYERS.cameras : 0;
+    }
     return mask;
   }
 

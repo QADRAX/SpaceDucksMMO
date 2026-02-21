@@ -3,60 +3,57 @@ import type IRenderingEngine from '../../domain/ports/IRenderingEngine';
 import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
 import TextureResolverService from '../../application/TextureResolverService';
 import { setCurrentEcsWorld, setPhysicsServices, Result, ok, err } from '@duckengine/ecs';
-import type { Entity, IComponentObserver, ComponentType } from '@duckengine/ecs';
-import type { Component } from '@duckengine/ecs';
+import type { Entity, ComponentType } from '@duckengine/ecs';
 import type SceneChangeEvent from '../../domain/scene/SceneChangeEvent';
 import IRenderSyncSystem from '../../domain/ports/IRenderSyncSystem';
 import ISettingsService from '../../domain/ports/ISettingsService';
 import type { IPhysicsSystem } from '../../domain/physics/IPhysicsSystem';
 import CollisionEventsHub from '../../domain/physics/CollisionEventsHub';
+import { SceneValidator } from './SceneValidator';
+import { SceneObserverManager } from './SceneObserverManager';
 
 type VoidResult = Result<void>;
 
+/**
+ * Base implementation of IScene. 
+ * Manages ECS entities, physics initialization, and render synchronization.
+ */
 export abstract class BaseScene implements IScene {
   abstract readonly id: string;
 
-  protected entities: Map<string, Entity> = new Map();
-  private _changeListeners: Set<(ev: SceneChangeEvent) => void> = new Set();
-  private entitySubscriptions: Map<string, () => void> = new Map();
+  protected entities = new Map<string, Entity>();
   protected activeCameraId: string | null = null;
   protected engine?: IRenderingEngine;
-  protected renderScene?: any; // THREE.Scene injected by engine
+  /** Injected by engine during setup. Concrete types (e.g. THREE.Scene) are handled in infrastructure. */
+  protected renderScene?: any;
 
   // ECS Systems
   protected renderSyncSystem?: IRenderSyncSystem;
   protected physicsSystem?: IPhysicsSystem;
 
-  /** Collision events convenience hub; auto-attaches to physics system when present. */
-  public readonly collisionEvents: CollisionEventsHub = new CollisionEventsHub();
-  /**
-   * Scene-level master switch for debug transform helpers.
-   * When false (default), no debug helpers are rendered even if
-   * individual entities have their debug flag enabled. When true,
-   * helpers are rendered only for entities whose `isDebugTransformEnabled()`
-   * returns true.
-   *
-   * Public so the scene inspector can read/write the value generically.
-   */
-  public debugTransformsEnabled: boolean = false;
+  public readonly collisionEvents = new CollisionEventsHub();
+  public debugFlags: Record<string, boolean> = {
+    transform: false,
+    mesh: false,
+    collider: false,
+    camera: false,
+  };
 
-  /** Scene-level master switch for mesh (wireframe) debug helpers. Independent from transform/collider debug. */
-  public debugMeshesEnabled: boolean = false;
-
-  /** Scene-level master switch for collider debug helpers. Independent from transform debug. */
-  public debugCollidersEnabled: boolean = false;
-
-  // Settings service kept for future use (e.g., quality affecting ECS components)
-  // Used to drive texture resolver quality.
   private settingsUnsubscribe?: () => void;
   private textureResolver?: TextureResolverService;
 
+  private validator: SceneValidator;
+  private observerManager: SceneObserverManager;
+  private changeListeners = new Set<(ev: SceneChangeEvent) => void>();
+
   constructor(protected settingsService: ISettingsService) {
-    // No-op: legacy texture reload path removed in ECS-only mode
+    this.validator = new SceneValidator(this.entities);
+    this.observerManager = new SceneObserverManager(this.validator, (ev) => this.emitChange(ev));
   }
 
-  // EcsWorldContext implementation
-  getEntity(id: string) {
+  // ─── EcsWorldContext Implementation ────────────────────────────────────────
+
+  getEntity(id: string): Entity | undefined {
     return this.entities.get(id);
   }
 
@@ -64,703 +61,272 @@ export abstract class BaseScene implements IScene {
     return this.entities.values();
   }
 
+  // ─── Entity Management ─────────────────────────────────────────────────────
+
   /**
-   * Add an ECS Entity directly, without any adapter.
+   * Adds an entity to the scene, performing hierarchy and uniqueness validations.
    */
   addEntity(entity: Entity): void {
     if (this.entities.has(entity.id)) {
-      console.warn(
-        `[${this.id}] addEntity: entity '${entity.id}' already added`
-      );
+      console.warn(`[${this.id}] addEntity: entity '${entity.id}' already added`);
       return;
     }
 
-    const hierarchyErrors = this.validateHierarchyRequirementsInSubtree(entity);
-    const uniqueErrors = this.validateUniqueInSceneInSubtree(entity);
+    const hierarchyErrors = this.validator.validateHierarchyRequirementsInSubtree(entity);
+    const uniqueErrors = this.validator.validateUniqueInSceneInSubtree(entity, this.entities);
     const errors = [...hierarchyErrors, ...uniqueErrors];
+
     if (errors.length) {
-      throw new Error(
-        `Cannot add entity '${entity.id}' to scene '${this.id}':\n` +
-        errors.map((e) => `  - ${e}`).join("\n")
-      );
+      throw new Error(`Cannot add entity '${entity.id}' to scene '${this.id}':\n${errors.map(e => `  - ${e}`).join("\n")}`);
     }
 
     this.entities.set(entity.id, entity);
-    if (this.renderSyncSystem) {
-      this.renderSyncSystem.addEntity(entity);
-    }
-    if (this.physicsSystem) {
-      this.physicsSystem.addEntity(entity);
-    }
-    // subscribe to entity-level events for inspector/debug
-    this.attachEntityObservers(entity);
+    this.renderSyncSystem?.addEntity(entity);
+    this.physicsSystem?.addEntity(entity);
+
+    this.observerManager.attachEntityObservers(entity, this.entities);
     this.emitChange({ kind: "entity-added", entity });
   }
 
   /**
-   * Enable or disable debug transform helpers for all entities in this scene.
-   * Design: scene-level flag is a master switch. If set to false, no debug
-   * helpers are visible even if entities have their personal flag enabled.
-   * If set to true, helpers will be created/shown for entities that have
-   * `entity.isDebugTransformEnabled() === true`.
+   * Removes an entity from the scene and cleans up its observers.
    */
-  public setDebugTransformsEnabled(enabled: boolean): void {
-    if (this.debugTransformsEnabled === enabled) return;
-    this.debugTransformsEnabled = enabled;
-    // Notify render/debug systems so helpers are created/removed accordingly.
-    if (this.renderSyncSystem) {
-      this.renderSyncSystem.setSceneDebugEnabled(enabled);
-    }
-    // Notify subscribers (inspector/UI) about the change so they can react.
-    try {
-      this.emitChange({ kind: 'scene-debug-changed', enabled: !!enabled });
-    } catch { }
-  }
-
-  /** Enable or disable mesh (wireframe) debug helpers for all entities in this scene. */
-  public setDebugMeshesEnabled(enabled: boolean): void {
-    if (this.debugMeshesEnabled === enabled) return;
-    this.debugMeshesEnabled = enabled;
-    if (this.renderSyncSystem) {
-      try {
-        this.renderSyncSystem.setSceneMeshDebugEnabled?.(enabled);
-      } catch { }
-    }
-    try {
-      this.emitChange({ kind: 'scene-mesh-debug-changed', enabled: !!enabled });
-    } catch { }
-  }
-
-  /**
-   * Enable or disable collider debug helpers for all entities in this scene.
-   * Master switch: requires per-entity `entity.isDebugColliderEnabled() === true`.
-   */
-  public setDebugCollidersEnabled(enabled: boolean): void {
-    if (this.debugCollidersEnabled === enabled) return;
-    this.debugCollidersEnabled = enabled;
-    if (this.renderSyncSystem) {
-      this.renderSyncSystem.setSceneColliderDebugEnabled?.(enabled);
-    }
-    this.emitChange({ kind: 'scene-collider-debug-changed', enabled: !!enabled });
-  }
-
-  /** Remove an ECS Entity by ID */
   removeEntity(id: string): void {
     const ent = this.entities.get(id);
     if (!ent) {
       console.warn(`[${this.id}] removeEntity: entity '${id}' not found`);
       return;
     }
-    if (this.renderSyncSystem) {
-      this.renderSyncSystem.removeEntity(id);
-    }
-    if (this.physicsSystem) {
-      try {
-        this.physicsSystem.removeEntity(id);
-      } catch { }
-    }
+
+    this.renderSyncSystem?.removeEntity(id);
+    this.physicsSystem?.removeEntity(id);
+
     if (this.activeCameraId === id) {
-      this.activeCameraId = null;
-      // inform render sync system that there is no active camera now
-      if (this.renderSyncSystem) this.renderSyncSystem.setActiveCameraEntityId(null);
-      if (this.engine) {
-        try {
-          this.engine.onActiveCameraChanged();
-        } catch { }
-      }
+      this.clearActiveCamera();
     }
-    this.detachEntityObservers(id);
+
+    this.observerManager.detachEntityObservers(id);
     this.entities.delete(id);
     this.emitChange({ kind: "entity-removed", entityId: id });
   }
 
   /**
-   * IScene API: Set which object is the active camera.
-   * The object must implement ISceneCamera and must have been added via addObject() first.
+   * Reparents an entity, validating that no cycles or hierarchy violations are created.
    */
-  setActiveCamera(id: string): void {
-    const ent = this.entities.get(id);
-    if (!ent || !this.renderSyncSystem) {
-      console.warn(`[${this.id}] setActiveCamera: entity '${id}' not found`);
-      return;
-    }
-    const camera = this.renderSyncSystem.getCamera?.(id);
-    if (this.renderSyncSystem.getCamera && !camera) {
-      console.warn(
-        `[${this.id}] setActiveCamera: entity '${id}' has no CameraViewComponent`
-      );
-      return;
-    }
-    this.activeCameraId = id;
-
-    // inform render sync system about new active camera so it can hide helpers
-    if (this.renderSyncSystem) this.renderSyncSystem.setActiveCameraEntityId(this.activeCameraId);
-
-    if (this.engine) {
-      try {
-        this.engine.onActiveCameraChanged();
-      } catch (e) {
-        // ignore notify errors
-      }
-    }
-    // Notify subscribers that active camera changed
-    this.emitChange({
-      kind: "active-camera-changed",
-      entityId: this.activeCameraId,
-    });
-  }
-
-  /**
-   * IScene API: Return the active THREE.Camera or null.
-   */
-  getActiveCamera(): Entity | null {
-    if (!this.activeCameraId) return null;
-    return this.entities.get(this.activeCameraId) || null;
-  }
-
-  /**
-   * Setup the scene. Call super.setup(engine, renderScene) in derived classes.
-   */
-  setup(engine: IRenderingEngine, renderScene: any): void {
-    this.engine = engine;
-    this.renderScene = renderScene;
-
-    // Set current ECS world context
-    setCurrentEcsWorld(this);
-
-    // Optional physics system creation (provided by app/backend)
-    try {
-      this.physicsSystem = this.engine?.createPhysicsSystem?.();
-    } catch {
-      this.physicsSystem = undefined;
-    }
-
-    // Provide physics services globally so ECS components can apply forces/impulses.
-    // This is scene-scoped; teardown clears it.
-    try {
-      const sys = this.physicsSystem;
-      setPhysicsServices({
-        applyImpulse: (entityId, impulse) => {
-          try {
-            sys?.applyImpulse?.(entityId, impulse);
-          } catch { }
-        },
-        applyForce: (entityId, force) => {
-          try {
-            sys?.applyForce?.(entityId, force);
-          } catch { }
-        },
-        getLinearVelocity: (entityId) => {
-          try {
-            return sys?.getLinearVelocity?.(entityId) ?? null;
-          } catch {
-            return null;
-          }
-        },
-        raycast: (ray) => {
-          try {
-            return sys?.raycast?.(ray) ?? null;
-          } catch {
-            return null;
-          }
-        },
-      });
-    } catch { }
-
-    // Auto-wire collision event hub (no-op if physics backend doesn't support collisions).
-    try {
-      this.collisionEvents.attach(this.physicsSystem);
-    } catch { }
-
-    // Initialize ECS systems
-    // Obtain catalog from the engine (optional). If present, core constructs
-    // the texture resolver implementation.
-    const catalog: TextureCatalogService | undefined = this.engine?.getTextureCatalog?.();
-
-    // Reset any previous subscriptions/resolvers (defensive for reuse).
-    if (this.settingsUnsubscribe) {
-      try {
-        this.settingsUnsubscribe();
-      } catch { }
-      this.settingsUnsubscribe = undefined;
-    }
-    if (this.textureResolver) {
-      try {
-        this.textureResolver.dispose();
-      } catch { }
-      this.textureResolver = undefined;
-    }
-
-    if (catalog) {
-      const initialQuality = this.settingsService.getSettings().graphics.textureQuality;
-      this.textureResolver = new TextureResolverService(catalog, {
-        defaultQuality: initialQuality,
-      });
-
-      // Keep resolver quality in sync with settings.
-      try {
-        this.settingsUnsubscribe = this.settingsService.subscribe((settings) => {
-          try {
-            this.textureResolver?.setDefaultQuality(settings.graphics.textureQuality);
-          } catch { }
-        });
-      } catch {
-        // ignore if settings service cannot subscribe
-      }
-    }
-
-    // Note: extra args are intentionally passed for backends that accept them.
-    this.renderSyncSystem = this.engine?.createRenderSyncSystem?.(
-      renderScene,
-      catalog,
-      this.textureResolver
-    );
-
-    // Ensure render sync is aware of current scene-level debug master flag
-    if (this.renderSyncSystem) {
-      try {
-        this.renderSyncSystem.setSceneDebugEnabled(this.debugTransformsEnabled);
-      } catch { }
-
-      try {
-        this.renderSyncSystem.setSceneMeshDebugEnabled?.(this.debugMeshesEnabled);
-      } catch { }
-
-      try {
-        this.renderSyncSystem.setSceneColliderDebugEnabled?.(this.debugCollidersEnabled);
-      } catch { }
-
-      // Add all entities that were already added
-      for (const ent of this.entities.values()) {
-        this.renderSyncSystem.addEntity(ent);
-      }
-    }
-
-    // Add all entities to physics system as well (if present)
-    if (this.physicsSystem) {
-      for (const ent of this.entities.values()) {
-        try {
-          this.physicsSystem.addEntity(ent);
-        } catch { }
-      }
-    }
-  }
-
-  /**
-   * Update all objects.
-   * Most scenes don't need to override this.
-   */
-  update(dt: number): void {
-    // Update ECS entities
-    for (const ent of this.entities.values()) {
-      ent.update(dt);
-    }
-
-    // Physics step (singleplayer): after ECS component updates so gameplay can
-    // apply forces/impulses before stepping.
-    if (this.physicsSystem) {
-      try {
-        this.physicsSystem.update(dt);
-      } catch { }
-    }
-    if (this.renderSyncSystem) {
-      this.renderSyncSystem.update(dt);
-    }
-  }
-
-  // --- Scene debug/inspector helpers -------------------------------------
-  public getEntities(): ReadonlyArray<Entity> {
-    return Array.from(this.entities.values());
-  }
-
-  public getActiveCameraEntityId(): string | null {
-    return this.activeCameraId;
-  }
-
-  public subscribeChanges(
-    listener: (ev: SceneChangeEvent) => void
-  ): () => void {
-    this._changeListeners.add(listener);
-    return () => this._changeListeners.delete(listener);
-  }
-
-  public reparentEntity(childId: string, newParentId: string | null): void {
+  reparentEntity(childId: string, newParentId: string | null): void {
     const res = this.reparentEntityResult(childId, newParentId);
     if (!res.ok) {
-      // emit error for backward-compatible behavior and for debug/inspector
       this.emitChange({ kind: "error", message: res.error.message });
     }
   }
 
-  /**
-   * Result-based reparent operation. Returns structured error on failure.
-   */
-  public reparentEntityResult(
-    childId: string,
-    newParentId: string | null
-  ): VoidResult {
+  reparentEntityResult(childId: string, newParentId: string | null): VoidResult {
     const child = this.entities.get(childId);
-    if (!child)
-      return err("invalid-reparent", `Child '${childId}' not found`, {
-        childId,
-        newParentId,
-      });
-    const oldParent = child.parent;
+    if (!child) return err("invalid-reparent", `Child '${childId}' not found`, { childId, newParentId });
 
-    // no-op when parent unchanged
-    if (oldParent && oldParent.id === newParentId) return ok(undefined);
+    if (child.parent?.id === newParentId) return ok(undefined);
 
-    // Validate new parent (if any) BEFORE mutating hierarchy
     let newParent: Entity | undefined;
     if (newParentId) {
       newParent = this.entities.get(newParentId);
-      if (!newParent)
-        return err("invalid-reparent", `Parent '${newParentId}' not found`, {
-          childId,
-          newParentId,
-        });
-
-      // Prevent cycles: if the new parent is a descendant of the child, attaching would create a cycle
-      if (this.wouldCreateCycle(child, newParent)) {
-        return err(
-          "invalid-reparent",
-          `Invalid reparent: '${newParentId}' is a descendant of '${childId}'`,
-          { childId, newParentId }
-        );
+      if (!newParent) return err("invalid-reparent", `Parent '${newParentId}' not found`, { childId, newParentId });
+      if (this.validator.wouldCreateCycle(child, newParent)) {
+        return err("invalid-reparent", `Cycle detected: '${newParentId}' is a descendant of '${childId}'`, { childId, newParentId });
       }
     }
 
-    // All validations passed; perform the mutation atomically
-    if (oldParent) oldParent.removeChild(childId);
+    const oldParent = child.parent;
+    oldParent?.removeChild(childId);
+    newParent?.addChild(child);
 
-    if (newParent) {
-      newParent.addChild(child);
-    }
-
-    // Validate hierarchy requirements for the moved subtree. If invalid, revert.
-    const hierarchyErrors = this.validateHierarchyRequirementsInSubtree(child);
+    const hierarchyErrors = this.validator.validateHierarchyRequirementsInSubtree(child);
     if (hierarchyErrors.length) {
-      // revert
-      if (newParent) newParent.removeChild(childId);
-      if (oldParent) oldParent.addChild(child);
+      // Revert if invalid
+      newParent?.removeChild(childId);
+      oldParent?.addChild(child);
 
-      return err(
-        "invalid-reparent",
-        `Reparent would violate component hierarchy requirements for '${childId}':\n` +
-        hierarchyErrors.map((e) => `  - ${e}`).join("\n"),
-        { childId, newParentId, errors: hierarchyErrors }
-      );
+      return err("invalid-reparent", `Hierarchy violation moved subtree: ${hierarchyErrors[0]}`, { childId, newParentId, errors: hierarchyErrors });
     }
 
     this.emitChange({ kind: "hierarchy-changed", childId, newParentId });
     return ok(undefined);
   }
 
-  private validateHierarchyRequirementsInSubtree(root: Entity): string[] {
-    const errors: string[] = [];
-    const visit = (e: Entity) => {
-      errors.push(...this.validateHierarchyRequirements(e));
-      for (const c of e.getChildren()) visit(c);
-    };
-    visit(root);
-    return errors;
+  // ─── Debug API ─────────────────────────────────────────────────────────────
+
+  public setDebugEnabled(kind: string, enabled: boolean): void {
+    if (this.debugFlags[kind] === enabled) return;
+    this.debugFlags[kind] = enabled;
+    this.renderSyncSystem?.setSceneDebugEnabled(kind, enabled);
+    this.emitChange({ kind: 'scene-debug-changed', kindName: kind, enabled } as any);
   }
 
-  private validateUniqueInSceneInSubtree(root: Entity): string[] {
-    const errors: string[] = [];
-    const seenInSubtree: Map<string, string> = new Map(); // type -> firstEntityId
 
-    const visit = (e: Entity) => {
-      for (const comp of e.getAllComponents() as Component[]) {
-        const uniqueInScene = (comp.metadata as any)?.uniqueInScene as boolean | undefined;
-        if (!uniqueInScene) continue;
+  // ─── Camera Management ─────────────────────────────────────────────────────
 
-        const alreadyInSubtree = seenInSubtree.get(comp.type);
-        if (alreadyInSubtree && alreadyInSubtree !== e.id) {
-          errors.push(
-            `Component '${comp.type}' is unique in scene but appears on multiple entities in the added subtree ('${alreadyInSubtree}' and '${e.id}')`
-          );
-          continue;
-        }
-        seenInSubtree.set(comp.type, e.id);
+  setActiveCamera(id: string): void {
+    const ent = this.entities.get(id);
+    if (!ent || !this.renderSyncSystem) {
+      console.warn(`[${this.id}] setActiveCamera: entity '${id}' not found or sync system missing`);
+      return;
+    }
 
-        const existing = this.findEntityWithComponent(comp.type);
-        if (existing) {
-          errors.push(
-            `Component '${comp.type}' is unique in scene but already exists on entity '${existing.id}'`
-          );
-        }
-      }
-      for (const c of e.getChildren()) visit(c);
-    };
+    const camera = this.renderSyncSystem.getCamera?.(id);
+    if (this.renderSyncSystem.getCamera && !camera) {
+      console.warn(`[${this.id}] setActiveCamera: entity '${id}' has no CameraViewComponent`);
+      return;
+    }
 
-    visit(root);
-    return errors;
+    this.activeCameraId = id;
+    this.renderSyncSystem.setActiveCameraEntityId(this.activeCameraId);
+    this.engine?.onActiveCameraChanged();
+
+    this.emitChange({ kind: "active-camera-changed", entityId: this.activeCameraId });
   }
 
-  private findEntityWithComponent(type: string, excludeEntityId?: string): Entity | undefined {
+  getActiveCamera(): Entity | null {
+    return this.activeCameraId ? this.entities.get(this.activeCameraId) || null : null;
+  }
+
+  private clearActiveCamera(): void {
+    this.activeCameraId = null;
+    this.renderSyncSystem?.setActiveCameraEntityId(null);
+    this.engine?.onActiveCameraChanged();
+  }
+
+  // ─── Lifecycle (Setup/Teardown) ──────────────────────────────────────────
+
+  setup(engine: IRenderingEngine, renderScene: any): void {
+    this.engine = engine;
+    this.renderScene = renderScene;
+    setCurrentEcsWorld(this);
+
+    this.initializePhysics();
+    this.initializeTextureResolver();
+    this.initializeRenderSync(renderScene);
+
+    // Add all pre-existing entities to systems
     for (const ent of this.entities.values()) {
-      if (excludeEntityId && ent.id === excludeEntityId) continue;
-      try {
-        if (ent.hasComponent(type as ComponentType)) return ent;
-      } catch { }
-    }
-    return undefined;
-  }
-
-  private validateHierarchyRequirements(entity: Entity): string[] {
-    const errors: string[] = [];
-    for (const comp of entity.getAllComponents() as Component[]) {
-      const reqs = (comp.metadata as any)?.requiresInHierarchy as string[] | undefined;
-      if (!reqs || reqs.length === 0) continue;
-      for (const req of reqs) {
-        if (!this.hasComponentInSelfOrAncestors(entity, req)) {
-          errors.push(
-            `Component '${comp.type}' on entity '${entity.id}' requires '${req}' on this entity or an ancestor`
-          );
-        }
-      }
-    }
-    return errors;
-  }
-
-  private hasComponentInSelfOrAncestors(entity: Entity, type: string): boolean {
-    let cur: Entity | undefined = entity;
-    while (cur) {
-      if (cur.hasComponent(type as ComponentType)) return true;
-      cur = cur.parent;
-    }
-    return false;
-  }
-
-  private wouldCreateCycle(child: Entity, candidateParent: Entity): boolean {
-    // Walk up candidateParent's ancestor chain; if we encounter the child, it would create a cycle
-    let cur: Entity | undefined = candidateParent;
-    while (cur) {
-      if (cur.id === child.id) return true;
-      cur = cur.parent;
-    }
-    return false;
-  }
-
-  private emitChange(ev: SceneChangeEvent) {
-    for (const l of this._changeListeners) {
-      try {
-        l(ev);
-      } catch (e) {
-        /* swallow listener errors */
-      }
+      this.renderSyncSystem?.addEntity(ent);
+      this.physicsSystem?.addEntity(ent);
     }
   }
 
-  private attachEntityObservers(entity: Entity) {
-    const componentObserver: IComponentObserver = {
-      onComponentChanged: (_entityId: string, componentType: ComponentType) => {
-        // forward both normal change and removal notifications
-        this.emitChange({
-          kind: "component-changed",
-          entityId: entity.id,
-          componentType,
+  private initializePhysics(): void {
+    try {
+      this.physicsSystem = this.engine?.createPhysicsSystem?.();
+      const sys = this.physicsSystem;
+
+      if (sys) {
+        setPhysicsServices({
+          applyImpulse: (id, imp) => sys.applyImpulse?.(id, imp),
+          applyForce: (id, force) => sys.applyForce?.(id, force),
+          getLinearVelocity: (id) => sys.getLinearVelocity?.(id) ?? null,
+          raycast: (ray) => sys.raycast?.(ray) ?? null,
         });
-      },
-      onComponentRemoved: (_entityId: string, componentType: ComponentType) => {
-        // forward removal notifications
-        this.emitChange({
-          kind: "component-changed",
-          entityId: entity.id,
-          componentType,
-        });
-      },
-    };
-
-    // Enforce requiresInHierarchy even when components are added/removed after the entity
-    // has already been added to the scene.
-    let isHandlingComponentEvent = false;
-    const componentListener = (ev: any) => {
-      if (isHandlingComponentEvent) return;
-      if (!ev || ev.entity !== entity) return;
-      const comp: Component | undefined = ev.component;
-      const action: string | undefined = ev.action;
-      if (!comp || (action !== 'added' && action !== 'removed')) return;
-
-      isHandlingComponentEvent = true;
-      try {
-        if (action === 'added') {
-          // Ensure scene observes new component changes.
-          try {
-            comp.addObserver(componentObserver);
-          } catch { }
-
-          // Validate hierarchy requirements for this entity (owner/ancestor dependencies).
-          const errs = this.validateHierarchyRequirements(entity);
-          if (errs.length) {
-            // Revert the add.
-            entity.safeRemoveComponent(comp.type);
-            this.emitChange({ kind: 'error', message: errs.join('\n') } as any);
-          }
-
-          // Enforce scene-wide uniqueness.
-          const uniqueInScene = (comp.metadata as any)?.uniqueInScene as boolean | undefined;
-          if (uniqueInScene) {
-            const existing = this.findEntityWithComponent(comp.type, entity.id);
-            if (existing) {
-              entity.safeRemoveComponent(comp.type);
-              this.emitChange({
-                kind: 'error',
-                message: `Cannot add component '${comp.type}' to '${entity.id}': it is unique in scene and already exists on '${existing.id}'.`,
-              } as any);
-            }
-          }
-        }
-
-        if (action === 'removed') {
-          // Validate subtree, because removing an owner component (e.g. rigidBody)
-          // may break descendants.
-          const errs = this.validateHierarchyRequirementsInSubtree(entity);
-          if (errs.length) {
-            // Attempt to restore the removed component instance.
-            const restore = entity.safeAddComponent(comp as any);
-            const msg =
-              `Cannot remove component '${comp.type}' from '${entity.id}' because it breaks hierarchy requirements.\n` +
-              errs.map((e) => `  - ${e}`).join('\n');
-            this.emitChange({ kind: 'error', message: msg } as any);
-            if (!restore.ok) {
-              // If restoration fails, surface the error.
-              throw new Error(msg + `\nRestore failed: ${restore.error.message}`);
-            }
-          }
-        }
-      } finally {
-        isHandlingComponentEvent = false;
+        this.collisionEvents.attach(sys);
       }
-    };
-
-    const transformListener = () =>
-      this.emitChange({ kind: "transform-changed", entityId: entity.id });
-
-    for (const comp of entity.getAllComponents())
-      comp.addObserver(componentObserver);
-    try {
-      entity.transform.onChange(transformListener);
-    } catch { }
-
-    try {
-      entity.addComponentListener(componentListener);
-    } catch { }
-
-    const cleanup = () => {
-      for (const comp of entity.getAllComponents()) {
-        try {
-          comp.removeObserver(componentObserver);
-        } catch { }
-      }
-      try {
-        entity.transform.removeOnChange(transformListener);
-      } catch { }
-
-      try {
-        entity.removeComponentListener(componentListener);
-      } catch { }
-    };
-
-    this.entitySubscriptions.set(entity.id, cleanup);
-  }
-
-  private detachEntityObservers(entityId: string) {
-    const cleanup = this.entitySubscriptions.get(entityId);
-    if (cleanup) {
-      try {
-        cleanup();
-      } catch { }
-      this.entitySubscriptions.delete(entityId);
+    } catch (err) {
+      console.error(`[${this.id}] Failed to initialize physics`, err);
     }
   }
 
-  public getDebugTransformsEnabled(): boolean {
-    return this.debugTransformsEnabled;
+  private initializeTextureResolver(): void {
+    const catalog = this.engine?.getTextureCatalog?.();
+    if (!catalog) return;
+
+    this.textureResolver = new TextureResolverService(catalog, {
+      defaultQuality: this.settingsService.getSettings().graphics.textureQuality,
+    });
+
+    this.settingsUnsubscribe = this.settingsService.subscribe((s) => {
+      this.textureResolver?.setDefaultQuality(s.graphics.textureQuality);
+    });
   }
 
-  public getDebugMeshesEnabled(): boolean {
-    return this.debugMeshesEnabled;
-  }
+  private initializeRenderSync(renderScene: any): void {
+    this.renderSyncSystem = this.engine?.createRenderSyncSystem?.(
+      renderScene,
+      this.engine.getTextureCatalog?.(),
+      this.textureResolver
+    );
 
-  public getDebugCollidersEnabled(): boolean {
-    return this.debugCollidersEnabled;
-  }
-
-  /**
-   * Teardown the scene. Call super.teardown(engine, renderScene) if overriding.
-   */
-  teardown(engine: IRenderingEngine, renderScene: any): void {
-    // Clear scene-scoped physics services first to avoid components calling into a disposed backend.
-    try {
-      setPhysicsServices(null);
-    } catch { }
-
-    // Detach collision hub first to ensure no callbacks fire during teardown/dispose.
-    try {
-      this.collisionEvents.detach();
-    } catch { }
-
-    if (this.settingsUnsubscribe) {
-      this.settingsUnsubscribe();
-      this.settingsUnsubscribe = undefined;
-    }
-
-    if (this.textureResolver) {
-      try {
-        this.textureResolver.dispose();
-      } catch { }
-      this.textureResolver = undefined;
-    }
-
-    // Remove and dispose all entities
     if (this.renderSyncSystem) {
-      for (const ent of this.entities.values()) {
-        this.renderSyncSystem.removeEntity(ent.id);
-        // detach any observers attached for inspector/debug
-        try {
-          this.detachEntityObservers(ent.id);
-        } catch { }
+      for (const [kind, enabled] of Object.entries(this.debugFlags)) {
+        this.renderSyncSystem.setSceneDebugEnabled(kind, enabled);
       }
     }
+  }
 
+  teardown(engine: IRenderingEngine, renderScene: any): void {
+    this.cleanupPhysics();
+    this.cleanupSettings();
+    this.cleanupEntities();
+
+    this.renderSyncSystem = undefined;
+    this.engine?.onActiveCameraChanged();
+    this.renderScene = undefined;
+  }
+
+  private cleanupPhysics(): void {
+    setPhysicsServices(null);
+    this.collisionEvents.detach();
     if (this.physicsSystem) {
-      for (const ent of this.entities.values()) {
-        try {
-          this.physicsSystem.removeEntity(ent.id);
-        } catch { }
-      }
       try {
         this.physicsSystem.dispose();
-      } catch { }
+      } catch (err) {
+        console.error(`[${this.id}] Error disposing physics system`, err);
+      }
       this.physicsSystem = undefined;
     }
-    // ensure cleanup of any remaining subscriptions
-    for (const id of Array.from(this.entitySubscriptions.keys())) {
-      try {
-        this.detachEntityObservers(id);
-      } catch { }
+  }
+
+  private cleanupSettings(): void {
+    this.settingsUnsubscribe?.();
+    this.settingsUnsubscribe = undefined;
+    this.textureResolver?.dispose();
+    this.textureResolver = undefined;
+  }
+
+  private cleanupEntities(): void {
+    for (const ent of this.entities.values()) {
+      this.renderSyncSystem?.removeEntity(ent.id);
     }
+    this.observerManager.clear();
     this.entities.clear();
-
     this.activeCameraId = null;
-    // notify listeners that active camera is now null
     this.emitChange({ kind: "active-camera-changed", entityId: null });
+  }
 
-    // Clean up systems
-    this.renderSyncSystem = undefined;
+  // ─── Helpers & Events ──────────────────────────────────────────────────────
 
-    // Notify engine that camera is gone
-    if (engine) {
+  update(dt: number): void {
+    for (const ent of this.entities.values()) ent.update(dt);
+    this.physicsSystem?.update(dt);
+    this.renderSyncSystem?.update(dt);
+  }
+
+  getEntities(): ReadonlyArray<Entity> {
+    return Array.from(this.entities.values());
+  }
+
+  getActiveCameraEntityId(): string | null {
+    return this.activeCameraId;
+  }
+
+  subscribeChanges(listener: (ev: SceneChangeEvent) => void): () => void {
+    this.changeListeners.add(listener);
+    return () => this.changeListeners.delete(listener);
+  }
+
+  private emitChange(ev: SceneChangeEvent): void {
+    for (const l of this.changeListeners) {
       try {
-        engine.onActiveCameraChanged();
-      } catch (e) {
-        /* ignore */
+        l(ev);
+      } catch (err) {
+        console.warn(`[${this.id}] Error in change listener`, err);
       }
     }
-
-    this.renderScene = undefined;
   }
 }
 

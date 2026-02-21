@@ -1,6 +1,9 @@
 import * as React from 'react';
+import type { DebugKind } from '@duckengine/ecs';
 import { Button } from '@/components/atoms/Button';
-import { DebugTransformIcon, DebugMeshIcon, DebugColliderIcon } from '@/components/icons';
+import { DebugTransformIcon, DebugMeshIcon, DebugColliderIcon, CameraIcon } from '@/components/icons';
+import { EntityDebugDropdown } from '@/components/molecules/EntityDebugDropdown';
+import { cn } from '@/lib/utils';
 import { useSceneEditorContext } from '../../SceneEditorContext';
 
 interface InspectorHeaderProps {
@@ -26,45 +29,27 @@ export function InspectorHeader({ selected, editor }: InspectorHeaderProps) {
 
                 {selected && editor.mode === 'edit' ? (
                     <div className="flex items-center gap-1">
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="iconSm"
-                            aria-label={selected.isDebugTransformEnabled() ? 'Disable transform debug' : 'Enable transform debug'}
-                            title="Debug transform"
-                            onClick={() => editor.onToggleEntityDebugTransform(selected.id)}
-                            className={selected.isDebugTransformEnabled() ? 'bg-gray-100' : undefined}
-                        >
-                            <DebugTransformIcon className="h-4 w-4" />
-                        </Button>
-
-                        {selected.getAllComponents().some((c: any) => String(c.type).endsWith('Geometry') || String(c.type) === 'fullMesh') ? (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="iconSm"
-                                aria-label={selected.isDebugMeshEnabled() ? 'Disable mesh debug' : 'Enable mesh debug'}
-                                title="Debug mesh"
-                                onClick={() => editor.onToggleEntityDebugMesh(selected.id)}
-                                className={selected.isDebugMeshEnabled() ? 'bg-gray-100' : undefined}
-                            >
-                                <DebugMeshIcon className="h-4 w-4" />
-                            </Button>
-                        ) : null}
-
-                        {selected.getAllComponents().some((c: any) => String(c.type).toLowerCase().includes('collider')) ? (
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="iconSm"
-                                aria-label={selected.isDebugColliderEnabled() ? 'Disable collider debug' : 'Enable collider debug'}
-                                title="Debug collider"
-                                onClick={() => editor.onToggleEntityDebugCollider(selected.id)}
-                                className={selected.isDebugColliderEnabled() ? 'bg-gray-100' : undefined}
-                            >
-                                <DebugColliderIcon className="h-4 w-4" />
-                            </Button>
-                        ) : null}
+                        <EntityDebugDropdown
+                            id={selected.id}
+                            enabledDebugs={selected.getEnabledDebugs()}
+                            availableDebugs={(() => {
+                                const available: any[] = [
+                                    { kind: 'transform', label: 'Transform', icon: DebugTransformIcon },
+                                ];
+                                if (selected.getAllComponents().some((c: any) => String(c.type).endsWith('Geometry') || String(c.type) === 'fullMesh')) {
+                                    available.push({ kind: 'mesh', label: 'Mesh', icon: DebugMeshIcon });
+                                }
+                                if (selected.getAllComponents().some((c: any) => String(c.type).toLowerCase().includes('collider'))) {
+                                    available.push({ kind: 'collider', label: 'Collider', icon: DebugColliderIcon });
+                                }
+                                if (selected.hasComponent('cameraView')) {
+                                    available.push({ kind: 'camera', label: 'Camera', icon: CameraIcon });
+                                }
+                                return available;
+                            })()}
+                            onToggleDebug={(kind: DebugKind) => editor.onToggleEntityDebug(selected.id, kind)}
+                            align="right"
+                        />
                     </div>
                 ) : null}
             </div>

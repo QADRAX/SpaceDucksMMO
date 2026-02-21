@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useSceneEditorContext } from '../../SceneEditorContext';
 import { SCENE_NODE_ID } from '../../types';
+import { DebugTransformIcon, DebugMeshIcon, DebugColliderIcon, CameraIcon } from '@/components/icons';
 import { EntityNode } from './EntityNode';
 import { HierarchyItem } from './HierarchyItem';
 import { useHierarchyContext } from './HierarchyContext';
@@ -28,6 +29,18 @@ export function HierarchyList({ editor }: HierarchyListProps) {
                     selected={editor.selectedId === SCENE_NODE_ID}
                     hasChildren={true}
                     expanded={isExpanded(SCENE_NODE_ID)}
+                    availableDebugs={[
+                        { kind: 'transform', label: 'Transforms', icon: DebugTransformIcon },
+                        { kind: 'mesh', label: 'Meshes (Wireframe)', icon: DebugMeshIcon },
+                        { kind: 'collider', label: 'Colliders', icon: DebugColliderIcon },
+                        { kind: 'camera', label: 'Cameras', icon: CameraIcon },
+                    ]}
+                    enabledDebugs={editor.mode === 'edit' && editor.presentationRevision >= 0 ?
+                        Object.entries((editor as any)._currentScene?.debugFlags ?? {})
+                            .filter(([_, enabled]) => !!enabled)
+                            .map(([kind]) => kind as any)
+                        : []}
+                    onToggleDebug={(kind: any) => editor.onToggleSceneDebug(kind)}
                     onToggle={() => toggleExpanded(SCENE_NODE_ID)}
                     onSelect={() => editor.setSelectedId(SCENE_NODE_ID)}
                     droppable={editor.mode === 'edit'}

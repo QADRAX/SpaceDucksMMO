@@ -38,7 +38,7 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
 
   private readonly debugFeature: DebugFeature;
 
-  private debugFlags = { transform: false, mesh: false, collider: false };
+  private debugFlags: Record<string, boolean> = { transform: false, mesh: false, collider: false, camera: false };
   private activeCameraEntityId: string | null = null;
 
   // Note: textureResolver is in interface but maybe not used in new design?
@@ -187,19 +187,9 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     this.router.onFrame(dt);
   }
 
-  setSceneDebugEnabled(enabled: boolean): void {
-    this.debugFlags.transform = !!enabled;
-    this.debugFeature.setSceneDebugEnabled(!!enabled, this.context);
-  }
-
-  setSceneMeshDebugEnabled(enabled: boolean): void {
-    this.debugFlags.mesh = !!enabled;
-    this.debugFeature.setSceneMeshDebugEnabled(!!enabled, this.context);
-  }
-
-  setSceneColliderDebugEnabled(enabled: boolean): void {
-    this.debugFlags.collider = !!enabled;
-    this.debugFeature.setSceneColliderDebugEnabled(!!enabled, this.context);
+  setSceneDebugEnabled(kind: string, enabled: boolean): void {
+    this.debugFlags[kind] = !!enabled;
+    this.debugFeature.setSceneDebugEnabled(kind, !!enabled, this.context);
   }
 
   setActiveCameraEntityId(id: string | null): void {

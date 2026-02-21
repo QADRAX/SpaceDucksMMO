@@ -3,6 +3,12 @@ import type { Entity } from '@duckengine/ecs';
 import { useSceneEditorContext } from '../../SceneEditorContext';
 import { HierarchyItem } from './HierarchyItem';
 import { useHierarchyContext } from './HierarchyContext';
+import {
+    DebugTransformIcon,
+    DebugMeshIcon,
+    DebugColliderIcon,
+    CameraIcon
+} from '@/components/icons';
 
 interface EntityNodeProps {
     entity: Entity;
@@ -30,7 +36,24 @@ export function EntityNode(props: EntityNodeProps) {
 
     const hasGeometry = entity.getAllComponents().some((c: any) => String(c.type).endsWith('Geometry') || String(c.type) === 'fullMesh');
     const hasCollider = entity.getAllComponents().some((c: any) => String(c.type).toLowerCase().includes('collider'));
+    const hasCamera = entity.hasComponent('cameraView' as any);
     const canDragDrop = editor.mode === 'edit';
+
+    const availableDebugs: Array<{ kind: any; label: string; icon: React.ComponentType<any> }> = [
+        { kind: 'transform', label: 'Transform', icon: DebugTransformIcon },
+    ];
+
+    if (hasGeometry) {
+        availableDebugs.push({ kind: 'mesh', label: 'Mesh', icon: DebugMeshIcon });
+    }
+    if (hasCollider) {
+        availableDebugs.push({ kind: 'collider', label: 'Collider', icon: DebugColliderIcon });
+    }
+    if (hasCamera) {
+        availableDebugs.push({ kind: 'camera', label: 'Camera', icon: CameraIcon });
+    }
+
+    const enabledDebugs = entity.getEnabledDebugs();
 
     return (
         <div>
@@ -43,14 +66,9 @@ export function EntityNode(props: EntityNodeProps) {
                 hasChildren={hasChildren}
                 expanded={expanded}
                 gizmoIcon={entity.gizmoIcon}
-                debugTransformEnabled={entity.isDebugTransformEnabled()}
-                debugMeshEnabled={entity.isDebugMeshEnabled()}
-                debugColliderEnabled={entity.isDebugColliderEnabled()}
-                showDebugMesh={hasGeometry}
-                showDebugCollider={hasCollider}
-                onToggleDebugTransform={() => editor.onToggleEntityDebugTransform(entity.id)}
-                onToggleDebugMesh={hasGeometry ? () => editor.onToggleEntityDebugMesh(entity.id) : undefined}
-                onToggleDebugCollider={hasCollider ? () => editor.onToggleEntityDebugCollider(entity.id) : undefined}
+                availableDebugs={availableDebugs}
+                enabledDebugs={enabledDebugs}
+                onToggleDebug={(kind) => editor.onToggleEntityDebug(entity.id, kind)}
                 onToggle={hasChildren ? () => toggleExpanded(entity.id) : undefined}
                 onSelect={() => editor.setSelectedId(entity.id)}
                 draggable={canDragDrop}

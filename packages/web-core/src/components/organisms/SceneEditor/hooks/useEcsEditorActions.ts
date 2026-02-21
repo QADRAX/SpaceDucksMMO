@@ -51,31 +51,22 @@ export function useEcsEditorActions(args: {
     args.commitFromCurrentEditScene(reason);
   });
 
-  const onToggleEntityDebugTransform = useStableEvent((id: string) => {
+  const onToggleEntityDebug = useStableEvent((id: string, kind: any) => {
     const ent = getEntityById(id);
     if (!ent) return;
     try {
-      ent.setDebugTransformEnabled(!ent.isDebugTransformEnabled());
+      ent.setDebugEnabled(kind, !ent.isDebugEnabled(kind));
     } finally {
       args.bumpPresentationRevision();
     }
   });
 
-  const onToggleEntityDebugMesh = useStableEvent((id: string) => {
-    const ent = getEntityById(id);
-    if (!ent) return;
+  const onToggleSceneDebug = useStableEvent((kind: string) => {
+    if (args.modeRef.current !== 'edit') return;
+    const scene = args.editSceneRef.current;
+    if (!scene) return;
     try {
-      ent.setDebugMeshEnabled(!ent.isDebugMeshEnabled());
-    } finally {
-      args.bumpPresentationRevision();
-    }
-  });
-
-  const onToggleEntityDebugCollider = useStableEvent((id: string) => {
-    const ent = getEntityById(id);
-    if (!ent) return;
-    try {
-      ent.setDebugColliderEnabled(!ent.isDebugColliderEnabled());
+      scene.setDebugEnabled(kind, !scene.debugFlags[kind]);
     } finally {
       args.bumpPresentationRevision();
     }
@@ -87,9 +78,10 @@ export function useEcsEditorActions(args: {
     if (!scene) return;
     for (const ent of scene.getEntitiesById().values()) {
       try {
-        ent.setDebugTransformEnabled(false);
-        ent.setDebugMeshEnabled(false);
-        ent.setDebugColliderEnabled(false);
+        const enabled = ent.getEnabledDebugs();
+        for (const kind of enabled) {
+          ent.setDebugEnabled(kind, false);
+        }
       } catch {
         // ignore individual entity failures
       }
@@ -338,9 +330,8 @@ export function useEcsEditorActions(args: {
     onSetSelectedGizmoIcon,
     onSetSelectedLocalPositionAxis,
     onUpdateSelectedComponentData,
-    onToggleEntityDebugTransform,
-    onToggleEntityDebugMesh,
-    onToggleEntityDebugCollider,
+    onToggleEntityDebug,
+    onToggleSceneDebug,
     onClearAllDebug,
   };
 }

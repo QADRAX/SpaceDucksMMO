@@ -74,17 +74,10 @@ export interface IScene {
   reparentEntity?(childId: string, newParentId: string | null): void;
   /** Return id of active camera entity in the scene, or null if none */
   getActiveCameraEntityId?(): string | null;
-  /** Optional: read/write scene-level debug master flag for inspector tools */
-  getDebugTransformsEnabled?(): boolean;
-  setDebugTransformsEnabled?(enabled: boolean): void;
-
-  /** Optional: scene-level mesh (wireframe) debug master flag for inspector tools */
-  getDebugMeshesEnabled?(): boolean;
-  setDebugMeshesEnabled?(enabled: boolean): void;
-
-  /** Optional: scene-level collider debug master flag for inspector tools */
-  getDebugCollidersEnabled?(): boolean;
-  setDebugCollidersEnabled?(enabled: boolean): void;
+  /** Optional: read/write scene-level debug master flags for inspector tools */
+  readonly debugFlags?: Record<string, boolean>;
+  /** Optional: generic debug toggle for scene-level visualizations */
+  setDebugEnabled?(kind: string, enabled: boolean): void;
 
   /** Optional: collision event hub (present on BaseScene). */
   readonly collisionEvents?: CollisionEventsHub;

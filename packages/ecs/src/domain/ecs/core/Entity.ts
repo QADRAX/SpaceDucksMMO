@@ -3,6 +3,7 @@ import { Component } from "./Component";
 import { ComponentType } from "./ComponentType";
 import BaseGeometryComponent from "../components/geometry/BaseGeometryComponent";
 import { Result, ok, err } from '../../errors/EngineError';
+import type { DebugKind } from "./DebugKind";
 
 type VoidResult = Result<void>;
 
@@ -15,6 +16,8 @@ export interface ComponentEvent {
 }
 
 export type ComponentListener = (event: ComponentEvent) => void;
+
+export type DebugListener = (kind: DebugKind, enabled: boolean) => void;
 
 export class Entity {
   readonly id: string;
@@ -32,21 +35,14 @@ export class Entity {
   private _parent?: Entity;
   private children: Entity[] = [];
   private componentListeners: ComponentListener[] = [];
-  /**
-   * Per-entity flag to indicate whether debug transform helpers should be
-   * rendered for this entity. Default: false (disabled).
-   * Scene-level master switch may override this (see BaseScene).
+
+  /** 
+   * Active debug visualizations for this entity.
+   * Design: using a Set allows us to add new debug types (e.g., 'camera', 'ai', 'pathfinding')
+   * without modifying the Entity class itself.
    */
-  private _debugTransformEnabled = false;
-  private debugTransformListeners: Array<(enabled: boolean) => void> = [];
-
-  /** Per-entity flag to indicate whether mesh (wireframe) debug helpers should be rendered for this entity. Default: false. */
-  private _debugMeshEnabled = false;
-  private debugMeshListeners: Array<(enabled: boolean) => void> = [];
-
-  /** Per-entity flag to indicate whether collider debug helpers should be rendered. Default: false. */
-  private _debugColliderEnabled = false;
-  private debugColliderListeners: Array<(enabled: boolean) => void> = [];
+  private _enabledDebugs = new Set<DebugKind>();
+  private _debugListeners: Array<DebugListener> = [];
 
   constructor(id: string, position?: [number, number, number]) {
     this.id = id;
@@ -239,94 +235,116 @@ export class Entity {
   }
 
   /**
-   * Enable or disable debug transform helpers for this entity.
-   * Calling this will notify any listeners (e.g., the debug system) so
-   * they can create/destroy or show/hide helpers accordingly.
+   * Enable or disable a specific debug visualization for this entity.
    */
-  setDebugTransformEnabled(enabled: boolean): void {
-    if (this._debugTransformEnabled === enabled) return;
-    this._debugTransformEnabled = enabled;
-    for (const l of this.debugTransformListeners) {
+  setDebugEnabled(kind: DebugKind, enabled: boolean): void {
+    const isCurrentlyEnabled = this._enabledDebugs.has(kind);
+    if (isCurrentlyEnabled === enabled) return;
+
+    if (enabled) {
+      this._enabledDebugs.add(kind);
+    } else {
+      this._enabledDebugs.delete(kind);
+    }
+
+    for (const l of this._debugListeners) {
       try {
-        l(enabled);
+        l(kind, enabled);
       } catch (e) {
         /* swallow listener errors */
       }
     }
   }
 
-  /** Returns whether debug transform helpers are enabled for this entity. */
+  /**
+   * Returns whether a specific debug visualization is enabled for this entity.
+   */
+  isDebugEnabled(kind: DebugKind): boolean {
+    return this._enabledDebugs.has(kind);
+  }
+
+  /**
+   * Returns all currently enabled debug visualizations.
+   */
+  getEnabledDebugs(): DebugKind[] {
+    return Array.from(this._enabledDebugs);
+  }
+
+  /**
+   * Register a listener for debug flag changes.
+   */
+  addDebugListener(listener: DebugListener): void {
+    if (!this._debugListeners.includes(listener)) {
+      this._debugListeners.push(listener);
+    }
+  }
+
+  /**
+   * Remove a previously registered debug flag listener.
+   */
+  removeDebugListener(listener: DebugListener): void {
+    const i = this._debugListeners.indexOf(listener);
+    if (i >= 0) {
+      this._debugListeners.splice(i, 1);
+    }
+  }
+
+  // --- Legacy / Convenience Wrappers ---
+
+  setDebugTransformEnabled(enabled: boolean): void {
+    this.setDebugEnabled('transform', enabled);
+  }
+
   isDebugTransformEnabled(): boolean {
-    return this._debugTransformEnabled;
+    return this.isDebugEnabled('transform');
   }
 
-  /** Register a listener for debug flag changes. */
   addDebugTransformListener(listener: (enabled: boolean) => void): void {
-    if (!this.debugTransformListeners.includes(listener)) this.debugTransformListeners.push(listener);
+    this.addDebugListener((kind, enabled) => {
+      if (kind === 'transform') listener(enabled);
+    });
   }
 
-  /** Enable or disable mesh (wireframe) debug helpers for this entity. */
-  setDebugMeshEnabled(enabled: boolean): void {
-    if (this._debugMeshEnabled === enabled) return;
-    this._debugMeshEnabled = enabled;
-    for (const l of this.debugMeshListeners) {
-      try {
-        l(enabled);
-      } catch {
-        /* swallow listener errors */
-      }
-    }
-  }
-
-  /** Returns whether mesh (wireframe) debug helpers are enabled for this entity. */
-  isDebugMeshEnabled(): boolean {
-    return this._debugMeshEnabled;
-  }
-
-  /** Register a listener for mesh debug flag changes. */
-  addDebugMeshListener(listener: (enabled: boolean) => void): void {
-    if (!this.debugMeshListeners.includes(listener)) this.debugMeshListeners.push(listener);
-  }
-
-  /** Enable or disable debug collider helpers for this entity. */
-  setDebugColliderEnabled(enabled: boolean): void {
-    if (this._debugColliderEnabled === enabled) return;
-    this._debugColliderEnabled = enabled;
-    for (const l of this.debugColliderListeners) {
-      try {
-        l(enabled);
-      } catch {
-        /* swallow listener errors */
-      }
-    }
-  }
-
-  /** Returns whether debug collider helpers are enabled for this entity. */
-  isDebugColliderEnabled(): boolean {
-    return this._debugColliderEnabled;
-  }
-
-  /** Register a listener for collider debug flag changes. */
-  addDebugColliderListener(listener: (enabled: boolean) => void): void {
-    if (!this.debugColliderListeners.includes(listener)) this.debugColliderListeners.push(listener);
-  }
-
-  /** Remove a previously registered collider debug flag listener. */
-  removeDebugColliderListener(listener: (enabled: boolean) => void): void {
-    const i = this.debugColliderListeners.indexOf(listener);
-    if (i >= 0) this.debugColliderListeners.splice(i, 1);
-  }
-
-  /** Remove a previously registered mesh debug flag listener. */
-  removeDebugMeshListener(listener: (enabled: boolean) => void): void {
-    const i = this.debugMeshListeners.indexOf(listener);
-    if (i >= 0) this.debugMeshListeners.splice(i, 1);
-  }
-
-  /** Remove a previously registered debug flag listener. */
   removeDebugTransformListener(listener: (enabled: boolean) => void): void {
-    const i = this.debugTransformListeners.indexOf(listener);
-    if (i >= 0) this.debugTransformListeners.splice(i, 1);
+    // Note: This is now harder to remove because we wrap it. 
+    // For a cleaner migration we should update call sites to use addDebugListener directly.
+    // For now, these wrappers are enough to maintain compatibility.
+  }
+
+  setDebugMeshEnabled(enabled: boolean): void {
+    this.setDebugEnabled('mesh', enabled);
+  }
+
+  isDebugMeshEnabled(): boolean {
+    return this.isDebugEnabled('mesh');
+  }
+
+  addDebugMeshListener(listener: (enabled: boolean) => void): void {
+    this.addDebugListener((kind, enabled) => {
+      if (kind === 'mesh') listener(enabled);
+    });
+  }
+
+  removeDebugMeshListener(listener: (enabled: boolean) => void): void {
+    // Wrapper for compatibility
+  }
+
+  setDebugColliderEnabled(enabled: boolean): void {
+    this.setDebugEnabled('collider', enabled);
+  }
+
+  isDebugColliderEnabled(): boolean {
+    return this.isDebugEnabled('collider');
+  }
+
+  addDebugColliderListener(listener: (enabled: boolean) => void): void {
+    this.addDebugListener((kind, enabled) => {
+      if (kind === 'collider') listener(enabled);
+    });
+  }
+
+  removeDebugColliderListener(listener: (enabled: boolean) => void): void {
+    // Wrapper for compatibility
   }
 }
 

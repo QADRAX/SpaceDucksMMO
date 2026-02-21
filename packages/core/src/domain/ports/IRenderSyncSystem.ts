@@ -13,11 +13,7 @@ export interface IRenderSyncSystem {
   /** Optional: used by BaseScene to validate camera entities */
   getCamera?(id: string): unknown | undefined;
 
-  setSceneDebugEnabled(enabled: boolean): void;
-  /** Optional: independent master switch for mesh (wireframe) debug rendering. */
-  setSceneMeshDebugEnabled?(enabled: boolean): void;
-  /** Optional: independent master switch for collider debug rendering. */
-  setSceneColliderDebugEnabled?(enabled: boolean): void;
+  setSceneDebugEnabled(kind: string, enabled: boolean): void;
   setActiveCameraEntityId(id: string | null): void;
   update(dt: number): void;
 }

@@ -24,9 +24,12 @@ type ResolutionPolicy = 'auto' | 'scale';
 export type ViewId = string;
 
 export type ViewDebugOptions = {
-  transforms?: boolean;
+  transform?: boolean;
+  transforms?: boolean; // alias
   mesh?: boolean;
-  colliders?: boolean;
+  collider?: boolean;
+  colliders?: boolean; // alias
+  camera?: boolean;
 };
 
 export type ViewOptions = {
@@ -130,10 +133,11 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
       resolutionPolicy: viewOptions.resolutionPolicy ?? this.defaultResolutionPolicy,
       resolutionScale: viewOptions.resolutionScale ?? this.defaultResolutionScale,
       debug: {
-        transforms: viewOptions.debug?.transforms ?? false,
-        mesh: viewOptions.debug?.mesh ?? viewOptions.debug?.transforms ?? false,
-        colliders: viewOptions.debug?.colliders ?? false,
-      },
+        transform: viewOptions.debug?.transform ?? viewOptions.debug?.transforms ?? false,
+        mesh: viewOptions.debug?.mesh ?? false,
+        collider: viewOptions.debug?.collider ?? viewOptions.debug?.colliders ?? false,
+        camera: viewOptions.debug?.camera ?? false,
+      } as any,
       missingCameraWarned: false,
     };
 
@@ -162,13 +166,14 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
   setViewDebug(viewId: ViewId, debug: ViewDebugOptions): void {
     const v = this.views.get(viewId);
     if (!v) throw new Error(`[ThreeMultiRenderer] Unknown view: ${viewId}`);
-    if (debug.transforms !== undefined) {
-      v.debug.transforms = !!debug.transforms;
-      // Back-compat: old callers treated transforms as "all scene debug".
-      if (debug.mesh === undefined) v.debug.mesh = !!debug.transforms;
-    }
+
+    if (debug.transform !== undefined) v.debug.transform = !!debug.transform;
+    if (debug.transforms !== undefined) v.debug.transform = !!debug.transforms;
     if (debug.mesh !== undefined) v.debug.mesh = !!debug.mesh;
-    if (debug.colliders !== undefined) v.debug.colliders = !!debug.colliders;
+    if (debug.collider !== undefined) v.debug.collider = !!debug.collider;
+    if (debug.colliders !== undefined) v.debug.collider = !!debug.colliders;
+    if (debug.camera !== undefined) v.debug.camera = !!debug.camera;
+
     this.refreshSceneDebugAggregates();
   }
 
@@ -392,11 +397,15 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
   private applyCameraLayersForView(view: ViewRuntime, cam: THREE.Camera): () => void {
     const prevMask = cam.layers.mask;
     let nextMask = 1 << 0;
-    if (view.debug.transforms) nextMask |= 1 << DEBUG_LAYERS.transforms;
-    if (view.debug.mesh) nextMask |= 1 << DEBUG_LAYERS.mesh;
-    if (view.debug.colliders) nextMask |= 1 << DEBUG_LAYERS.colliders;
+    const d = view.debug as any;
+    if (d.transform || d.transforms) nextMask |= 1 << DEBUG_LAYERS.transforms;
+    if (d.mesh) nextMask |= 1 << DEBUG_LAYERS.mesh;
+    if (d.collider || d.colliders) nextMask |= 1 << DEBUG_LAYERS.colliders;
+    if (d.camera) nextMask |= 1 << DEBUG_LAYERS.cameras;
     cam.layers.mask = nextMask;
-    return () => { cam.layers.mask = prevMask; };
+    return () => {
+      cam.layers.mask = prevMask;
+    };
   }
 
   private warnMissingCamera(view: ViewRuntime): void {
@@ -428,7 +437,11 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
     if (view.composer) {
       deferredDispose(view.composer);
     }
-    try { view.renderer.dispose(); } catch { /* best-effort */ }
+    try {
+      view.renderer.dispose();
+    } catch {
+      /* best-effort */
+    }
 
     const renderer = new (THREE as any).WebGPURenderer({ antialias: this.antialias }) as WebGPURenderer;
     await renderer.init();
@@ -449,13 +462,16 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
   private refreshSceneDebugAggregates(): void {
     if (!this.activeIScene) return;
 
-    const anyTransforms = Array.from(this.views.values()).some((v) => v.debug.transforms);
-    const anyMesh = Array.from(this.views.values()).some((v) => v.debug.mesh);
-    const anyColliders = Array.from(this.views.values()).some((v) => v.debug.colliders);
+    const views = Array.from(this.views.values());
+    const anyTransforms = views.some((v) => (v.debug as any).transform || (v.debug as any).transforms);
+    const anyMesh = views.some((v) => v.debug.mesh);
+    const anyColliders = views.some((v) => (v.debug as any).collider || (v.debug as any).colliders);
+    const anyCamera = views.some((v) => (v.debug as any).camera);
 
-    this.activeIScene.setDebugTransformsEnabled?.(anyTransforms);
-    this.activeIScene.setDebugMeshesEnabled?.(anyMesh);
-    this.activeIScene.setDebugCollidersEnabled?.(anyColliders);
+    this.activeIScene.setDebugEnabled?.('transform', anyTransforms);
+    this.activeIScene.setDebugEnabled?.('mesh', anyMesh);
+    this.activeIScene.setDebugEnabled?.('collider', anyColliders);
+    this.activeIScene.setDebugEnabled?.('camera', anyCamera);
   }
 }
 

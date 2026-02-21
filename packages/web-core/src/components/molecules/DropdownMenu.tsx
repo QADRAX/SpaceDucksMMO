@@ -8,9 +8,10 @@ interface DropdownMenuProps {
   trigger: React.ReactNode;
   children: React.ReactNode;
   align?: 'left' | 'right';
+  closeOnSelect?: boolean;
 }
 
-export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMenuProps) {
+export function DropdownMenu({ trigger, children, align = 'right', closeOnSelect = true }: DropdownMenuProps) {
   const [open, setOpen] = React.useState(false);
   const [position, setPosition] = React.useState({ top: 0, left: 0, right: 0 });
   const triggerRef = React.useRef<HTMLDivElement>(null);
@@ -19,7 +20,7 @@ export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMen
   React.useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        menuRef.current && 
+        menuRef.current &&
         !menuRef.current.contains(event.target as Node) &&
         triggerRef.current &&
         !triggerRef.current.contains(event.target as Node)
@@ -67,13 +68,13 @@ export function DropdownMenu({ trigger, children, align = 'right' }: DropdownMen
           )}
           style={{
             top: `${position.top}px`,
-            ...(align === 'right' 
+            ...(align === 'right'
               ? { right: `${position.right}px` }
               : { left: `${position.left}px` }
             ),
           }}
         >
-          <div className="py-1" onClick={() => setOpen(false)}>
+          <div className="py-1" onClick={() => closeOnSelect && setOpen(false)}>
             {children}
           </div>
         </div>,
@@ -91,12 +92,12 @@ interface DropdownMenuItemProps {
   className?: string;
 }
 
-export function DropdownMenuItem({ 
-  onClick, 
-  children, 
-  variant = 'default', 
+export function DropdownMenuItem({
+  onClick,
+  children,
+  variant = 'default',
   asChild = false,
-  className 
+  className
 }: DropdownMenuItemProps) {
   const baseClassName = cn(
     'w-full text-left px-4 py-2 font-bold text-sm hover:bg-gray-100 transition-colors border-none cursor-pointer block',

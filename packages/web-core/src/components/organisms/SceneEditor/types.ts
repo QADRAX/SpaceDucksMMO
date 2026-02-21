@@ -1,4 +1,4 @@
-import type { Entity } from '@duckengine/ecs';
+import type { Entity, DebugKind } from '@duckengine/ecs';
 
 // Reserved selection id for the synthetic scene root node in the hierarchy tree.
 // Entity ids are GUID/random, so this should never collide in practice.
@@ -74,9 +74,10 @@ export type SceneEditorStore = {
   onUpdateSelectedComponentData: (type: string, data: Record<string, unknown>) => void;
 
   /** Toggle per-entity debug visualizations for the given entity id. */
-  onToggleEntityDebugTransform: (id: string) => void;
-  onToggleEntityDebugMesh: (id: string) => void;
-  onToggleEntityDebugCollider: (id: string) => void;
+  onToggleEntityDebug: (id: string, kind: DebugKind) => void;
+
+  /** Toggle scene-level debug visualizations. */
+  onToggleSceneDebug: (kind: string) => void;
 
   /** Clear all entity debug flags in the current edit scene. */
   onClearAllDebug: () => void;

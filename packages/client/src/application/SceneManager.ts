@@ -163,12 +163,12 @@ export class SceneManager {
     return () => {
       try {
         this._listeners.delete(listener);
-      } catch {}
+      } catch { }
       // if no more listeners, detach underlying scene subscription
       if (this._listeners.size === 0 && this._sceneUnsub) {
         try {
           this._sceneUnsub();
-        } catch {}
+        } catch { }
         this._sceneUnsub = undefined;
       }
     };
@@ -203,7 +203,7 @@ export class SceneManager {
   reparentEntity(childId: string, newParentId: string | null): void {
     try {
       this.currentScene?.reparentEntity?.(childId, newParentId);
-    } catch {}
+    } catch { }
   }
 
   /**
@@ -212,7 +212,7 @@ export class SceneManager {
   setActiveCamera(id: string): void {
     try {
       this.currentScene?.setActiveCamera?.(id);
-    } catch {}
+    } catch { }
   }
 
   /**
@@ -220,20 +220,22 @@ export class SceneManager {
    */
   setSceneDebugEnabled(enabled: boolean): void {
     try {
-      this.currentScene?.setDebugTransformsEnabled?.(enabled);
-    } catch {}
+      this.currentScene?.setDebugEnabled?.('transform', enabled);
+    } catch { }
   }
 
   /** Convenience: set the scene-level mesh (wireframe) debug flag on the current scene if supported. */
   setSceneMeshDebugEnabled(enabled: boolean): void {
     try {
-      (this.currentScene as any)?.setDebugMeshesEnabled?.(enabled);
-    } catch {}
+      this.currentScene?.setDebugEnabled?.('mesh', enabled);
+    } catch { }
   }
 
   /** Convenience: set the scene-level collider debug flag on the current scene if supported. */
   setSceneColliderDebugEnabled(enabled: boolean): void {
-    this.currentScene?.setDebugCollidersEnabled?.(enabled);
+    try {
+      this.currentScene?.setDebugEnabled?.('collider', enabled);
+    } catch { }
   }
 
   /**
@@ -242,27 +244,27 @@ export class SceneManager {
    */
   getCurrentSceneDebugEnabled(): boolean | null {
     try {
-      const v = this.currentScene?.getDebugTransformsEnabled?.();
+      const v = this.currentScene?.debugFlags?.transform;
       return typeof v === 'boolean' ? v : null;
-    } catch {}
+    } catch { }
     return null;
   }
 
   /** Read the current scene-level mesh debug flag, or null if not exposed. */
   getCurrentSceneMeshDebugEnabled(): boolean | null {
     try {
-      const v = (this.currentScene as any)?.getDebugMeshesEnabled?.();
+      const v = this.currentScene?.debugFlags?.mesh;
       return typeof v === 'boolean' ? v : null;
-    } catch {}
+    } catch { }
     return null;
   }
 
   /** Read the current scene-level collider debug flag, or null if not exposed. */
   getCurrentSceneColliderDebugEnabled(): boolean | null {
     try {
-      const v = this.currentScene?.getDebugCollidersEnabled?.();
+      const v = this.currentScene?.debugFlags?.collider;
       return typeof v === 'boolean' ? v : null;
-    } catch {}
+    } catch { }
     return null;
   }
 

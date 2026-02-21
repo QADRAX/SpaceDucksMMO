@@ -1,5 +1,7 @@
 import * as React from 'react';
-import { DebugColliderIcon, DebugMeshIcon, DebugTransformIcon } from '@/components/icons';
+import type { DebugKind } from '@duckengine/ecs';
+import { EntityDebugDropdown } from '@/components/molecules/EntityDebugDropdown';
+import { cn } from '@/lib/utils';
 
 interface HierarchyItemProps {
     id: string;
@@ -10,14 +12,14 @@ interface HierarchyItemProps {
     hasChildren: boolean;
     expanded: boolean;
     gizmoIcon?: string;
-    debugTransformEnabled?: boolean;
-    debugMeshEnabled?: boolean;
-    debugColliderEnabled?: boolean;
-    showDebugMesh?: boolean;
-    showDebugCollider?: boolean;
-    onToggleDebugTransform?: () => void;
-    onToggleDebugMesh?: () => void;
-    onToggleDebugCollider?: () => void;
+
+    /** List of debug kinds currently enabled for this entity. */
+    enabledDebugs: DebugKind[];
+    /** List of debug kinds available for this entity based on its components. */
+    availableDebugs: Array<{ kind: DebugKind; label: string; icon: React.ComponentType<any> }>;
+    /** Callback to toggle a specific debug kind. */
+    onToggleDebug: (kind: DebugKind) => void;
+
     onToggle?: () => void;
     onSelect: () => void;
     draggable?: boolean;
@@ -33,10 +35,7 @@ export function HierarchyItem(props: HierarchyItemProps) {
     const indent = props.depth * 12;
     const gizmo = (props.gizmoIcon ?? '').trim();
 
-    const showAnyDebug =
-        !!props.onToggleDebugTransform ||
-        (!!props.showDebugMesh && !!props.onToggleDebugMesh) ||
-        (!!props.showDebugCollider && !!props.onToggleDebugCollider);
+    const showDebugMenu = props.availableDebugs.length > 0;
 
     return (
         <div
@@ -87,53 +86,14 @@ export function HierarchyItem(props: HierarchyItemProps) {
                 {props.label}
             </div>
 
-            {showAnyDebug ? (
-                <div className="ml-1 flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                    {props.onToggleDebugTransform ? (
-                        <button
-                            type="button"
-                            className={
-                                'flex h-6 w-6 items-center justify-center rounded-base border border-transparent hover:bg-gray-100 ' +
-                                (props.debugTransformEnabled ? 'bg-gray-100' : '')
-                            }
-                            aria-label={props.debugTransformEnabled ? 'Disable transform debug' : 'Enable transform debug'}
-                            title="Debug transform"
-                            onClick={props.onToggleDebugTransform}
-                        >
-                            <DebugTransformIcon className="h-4 w-4" />
-                        </button>
-                    ) : null}
-
-                    {props.showDebugMesh && props.onToggleDebugMesh ? (
-                        <button
-                            type="button"
-                            className={
-                                'flex h-6 w-6 items-center justify-center rounded-base border border-transparent hover:bg-gray-100 ' +
-                                (props.debugMeshEnabled ? 'bg-gray-100' : '')
-                            }
-                            aria-label={props.debugMeshEnabled ? 'Disable mesh debug' : 'Enable mesh debug'}
-                            title="Debug mesh"
-                            onClick={props.onToggleDebugMesh}
-                        >
-                            <DebugMeshIcon className="h-4 w-4" />
-                        </button>
-                    ) : null}
-
-                    {props.showDebugCollider && props.onToggleDebugCollider ? (
-                        <button
-                            type="button"
-                            className={
-                                'flex h-6 w-6 items-center justify-center rounded-base border border-transparent hover:bg-gray-100 ' +
-                                (props.debugColliderEnabled ? 'bg-gray-100' : '')
-                            }
-                            aria-label={props.debugColliderEnabled ? 'Disable collider debug' : 'Enable collider debug'}
-                            title="Debug collider"
-                            onClick={props.onToggleDebugCollider}
-                        >
-                            <DebugColliderIcon className="h-4 w-4" />
-                        </button>
-                    ) : null}
-                </div>
+            {showDebugMenu ? (
+                <EntityDebugDropdown
+                    id={props.id}
+                    enabledDebugs={props.enabledDebugs}
+                    availableDebugs={props.availableDebugs}
+                    onToggleDebug={props.onToggleDebug}
+                    align="right"
+                />
             ) : null}
         </div>
     );

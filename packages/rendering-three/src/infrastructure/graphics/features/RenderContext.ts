@@ -18,11 +18,7 @@ export interface RenderContext {
     readonly textureResolver?: ITextureResolver;
     readonly engineResourceResolver?: EngineResourceResolver;
     readonly entities: Map<string, any>; // Using any to avoid circular deps if Entity is used in RenderFeature which imports RenderContext
-    readonly debugFlags: {
-        transform: boolean;
-        mesh: boolean;
-        collider: boolean;
-    };
+    readonly debugFlags: Record<string, boolean>;
     activeCameraEntityId: string | null;
     isInitialLoading: boolean;
 }
