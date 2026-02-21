@@ -11,7 +11,14 @@ class EditorMouseInputService implements MouseApi {
     wheelDelta: 0,
   };
 
+  isPointerLockCooldownActive(): boolean {
+    const now = Date.now();
+    return (now - this.lastExitTime < 1200);
+  }
+
   private targetElement: HTMLElement | null = null;
+  private lastRequestTime = 0;
+  private lastExitTime = 0;
 
   private mouseMoveListener = (e: MouseEvent) => this.onMouseMove(e);
   private mouseDownListener = (e: MouseEvent) => this.onMouseDown(e);
@@ -41,20 +48,40 @@ class EditorMouseInputService implements MouseApi {
 
   // ECS components call this each frame (cooperative intent), but for the editor
   // we keep pointer lock as a user-initiated action (click to lock, Esc to exit).
-  setPointerLockWanted(_v: boolean): void {}
+  setPointerLockWanted(_v: boolean): void { }
 
   requestPointerLock(): void {
     if (!this.targetElement) return;
+
+    const now = Date.now();
+    // Browser enforced cooldown after user exit is usually ~1s
+    if (now - this.lastExitTime < 1200) return;
+    if (now - this.lastRequestTime < 100) return;
+    this.lastRequestTime = now;
+
     try {
-      (this.targetElement as any).requestPointerLock?.();
-    } catch {
+      if (document.pointerLockElement === this.targetElement) return;
+
+      const promise = (this.targetElement as any).requestPointerLock?.();
+      // Modern browsers return a promise that might reject with SecurityError
+      if (promise && typeof promise.catch === 'function') {
+        promise.catch((err: any) => {
+          // Suppress noise, especially "The user has exited the lock..."
+          if (err.name !== 'SecurityError') {
+            console.warn('[EditorMouseInputService] pointer lock request failed', err);
+          }
+        });
+      }
+    } catch (e) {
       // ignore
     }
   }
 
   exitPointerLock(): void {
     try {
+      if (!document.pointerLockElement) return;
       document.exitPointerLock?.();
+      this.lastExitTime = Date.now();
     } catch {
       // ignore
     }
@@ -110,7 +137,13 @@ class EditorMouseInputService implements MouseApi {
 
   private onPointerLockChange(): void {
     try {
-      this.state.locked = !!(document && (document as any).pointerLockElement);
+      const wasLocked = this.state.locked;
+      const isLocked = !!(document && (document as any).pointerLockElement);
+      this.state.locked = isLocked;
+
+      if (wasLocked && !isLocked) {
+        this.lastExitTime = Date.now();
+      }
     } catch {
       this.state.locked = false;
     }

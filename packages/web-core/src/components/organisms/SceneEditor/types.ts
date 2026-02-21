@@ -84,4 +84,5 @@ export type SceneEditorStore = {
   commitFromCurrentEditScene: (reason: string) => void;
 
   factory: EcsComponentFactoryLike;
+  viewportState: { isLocked: boolean; isFocused: boolean; isCooldown: boolean };
 };

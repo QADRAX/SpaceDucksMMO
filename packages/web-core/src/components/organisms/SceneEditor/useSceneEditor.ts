@@ -35,6 +35,7 @@ export function useSceneEditor(args: {
   const pausedRef = React.useRef(false);
 
   const [presentationRevision, setPresentationRevision] = React.useState(0);
+  const [viewportState, setViewportState] = React.useState({ isLocked: false, isFocused: false, isCooldown: false });
 
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [sceneRevision, setSceneRevision] = React.useState(0);
@@ -77,6 +78,7 @@ export function useSceneEditor(args: {
     },
     onCapturePose: scenes.captureCameraPoseFromScene,
     onError: (msg) => setError(msg || null),
+    onViewportStateChange: setViewportState,
   });
 
   const canUndo = mode === 'edit' && history.canUndo;
@@ -279,6 +281,7 @@ export function useSceneEditor(args: {
     onClearAllDebug: actions.onClearAllDebug,
     commitFromCurrentEditScene: scenes.commitFromCurrentEditScene,
     factory: factoryRef.current,
+    viewportState,
   };
 }
 

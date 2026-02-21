@@ -29,6 +29,7 @@ export function useThreeRendererLoop(args: {
   onInit: () => void;
   onCapturePose: (scene: EcsEditorScene) => void;
   onError: (msg: string) => void;
+  onViewportStateChange?: (state: { isLocked: boolean; isFocused: boolean; isCooldown: boolean }) => void;
 }) {
   const rafRef = React.useRef<number | null>(null);
   const resizeObserverRef = React.useRef<ResizeObserver | null>(null);
@@ -105,6 +106,39 @@ export function useThreeRendererLoop(args: {
       } catch (e) {
         devWarn('EcsTreeEditor', `keyboard.setEnabled(${String(v)}) failed`, e);
       }
+      notifyViewportState();
+    };
+
+    let cooldownTimeout: any = null;
+
+    const notifyViewportState = () => {
+      const input = getInputServices();
+      const canvas = container?.querySelector('canvas') as HTMLCanvasElement | null;
+      const isLocked = !!(document && document.pointerLockElement && document.pointerLockElement === canvas);
+      const isFocused = !!(document && document.activeElement && document.activeElement === canvas);
+      const isCooldown = (input.mouse as any).isPointerLockCooldownActive?.() ?? false;
+
+      // Force cursor change on canvas for immediate feedback
+      if (canvas) {
+        canvas.style.cursor = isCooldown ? 'wait' : 'auto';
+      }
+
+      if (args.onViewportStateChange) {
+        args.onViewportStateChange({ isLocked, isFocused, isCooldown });
+      }
+
+      // If we are in cooldown, schedule a refresh to clear the cursor
+      if (isCooldown) {
+        if (cooldownTimeout) clearTimeout(cooldownTimeout);
+        cooldownTimeout = setTimeout(() => {
+          notifyViewportState();
+        }, 100);
+      } else {
+        if (cooldownTimeout) {
+          clearTimeout(cooldownTimeout);
+          cooldownTimeout = null;
+        }
+      }
     };
 
     const init = async () => {
@@ -139,6 +173,8 @@ export function useThreeRendererLoop(args: {
         // allow focus-based capture without pointer lock
         try {
           canvas.tabIndex = 0;
+          canvas.style.outline = 'none';
+          canvas.style.cursor = 'inherit';
         } catch {
           // ignore
         }
@@ -158,17 +194,32 @@ export function useThreeRendererLoop(args: {
               // ignore
             }
             setKeyboardEnabled(true);
+
+            const isCooldown = (input.mouse as any).isPointerLockCooldownActive?.() ?? false;
+            if (isCooldown) {
+              notifyViewportState();
+              return;
+            }
+
+            if (document.pointerLockElement === canvas) return;
             try {
               input.mouse.requestPointerLock();
             } catch (e) {
               devWarn('EcsTreeEditor', 'Pointer lock request failed', e);
             }
+            notifyViewportState();
           };
           canvas.addEventListener('click', canvasClickHandler);
         }
 
-        canvasFocusHandler = () => setKeyboardEnabled(true);
-        canvasBlurHandler = () => setKeyboardEnabled(false);
+        canvasFocusHandler = () => {
+          setKeyboardEnabled(true);
+          notifyViewportState();
+        };
+        canvasBlurHandler = () => {
+          setKeyboardEnabled(false);
+          notifyViewportState();
+        };
         canvas.addEventListener('focus', canvasFocusHandler);
         canvas.addEventListener('blur', canvasBlurHandler);
 
@@ -176,6 +227,7 @@ export function useThreeRendererLoop(args: {
           try {
             const locked = !!(document && (document as any).pointerLockElement);
             setKeyboardEnabled(locked);
+            notifyViewportState();
           } catch (e) {
             devWarn('EcsTreeEditor', 'pointerlockchange handler failed', e);
             setKeyboardEnabled(false);

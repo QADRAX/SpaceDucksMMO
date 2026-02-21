@@ -15,6 +15,7 @@ export interface MouseApi {
   setPointerLockWanted: (v: boolean) => void;
   requestPointerLock: () => void;
   exitPointerLock: () => void;
+  isPointerLockCooldownActive: () => boolean;
   getState: () => MouseState;
   dispose: () => void;
 }
@@ -31,19 +32,20 @@ export interface InputServices {
 }
 
 const noopMouse: MouseApi = {
-  beginFrame: () => {},
-  setTargetElement: () => {},
-  setPointerLockWanted: () => {},
-  requestPointerLock: () => {},
-  exitPointerLock: () => {},
+  beginFrame: () => { },
+  setTargetElement: () => { },
+  setPointerLockWanted: () => { },
+  requestPointerLock: () => { },
+  exitPointerLock: () => { },
+  isPointerLockCooldownActive: () => false,
   getState: () => ({ locked: false, buttons: { left: false, middle: false, right: false }, screenX: 0, screenY: 0, deltaX: 0, deltaY: 0, wheelDelta: 0 }),
-  dispose: () => {},
+  dispose: () => { },
 };
 
 const noopKeyboard: KeyboardApi = {
   isKeyPressed: () => false,
-  onKeyDown: () => {},
-  onKeyUp: () => {},
+  onKeyDown: () => { },
+  onKeyUp: () => { },
 };
 
 const INPUT_SERVICES_KEY = Symbol.for('@duckengine/ecs.inputServices');

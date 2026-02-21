@@ -17,7 +17,15 @@ export function ViewportPanel() {
   );
 
   return (
-    <div className="col-span-6 flex min-h-0 flex-col overflow-hidden rounded-base border-2 border-border bg-white">
+    <div
+      className={`col-span-6 flex min-h-0 flex-col overflow-hidden rounded-base border-2 transition-all duration-300 ${editor.viewportState.isLocked
+        ? 'border-main border-4 bg-main/5 shadow-2xl ring-4 ring-main/10'
+        : 'border-border bg-white'
+        }`}
+      style={{
+        cursor: editor.viewportState.isCooldown ? 'progress' : 'auto'
+      }}
+    >
       <div className="flex items-center justify-between border-b border-border p-2">
         <div className="flex items-center gap-1">
           <Button
@@ -114,7 +122,11 @@ export function ViewportPanel() {
         <div className="border-b border-border bg-red-100 p-2 text-sm text-red-800">{editor.error}</div>
       ) : null}
 
-      <div ref={editor.containerRef} className="min-h-0 flex-1 w-full" />
+      <div
+        ref={editor.containerRef}
+        className="min-h-0 flex-1 w-full"
+        style={{ cursor: editor.viewportState.isCooldown ? 'progress' : 'auto' }}
+      />
     </div>
   );
 }
