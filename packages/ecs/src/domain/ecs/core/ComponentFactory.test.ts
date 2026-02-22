@@ -27,7 +27,7 @@ describe("DefaultEcsComponentFactory", () => {
     expect(afterGeom).toContain("standardMaterial");
 
     // add shaderMaterial -- material should now be excluded due to conflict
-    e.addComponent(new ShaderMaterialComponent({ shaderType: "atmosphere", uniforms: {} }));
+    e.addComponent(new ShaderMaterialComponent({ shaderId: "test-shader", uniforms: {} }));
     const afterShader = factory.listCreatableComponents(e).map((d) => d.type);
     expect(afterShader).not.toContain("standardMaterial");
     expect(afterShader).not.toContain("basicMaterial");

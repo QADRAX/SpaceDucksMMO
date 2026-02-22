@@ -231,6 +231,7 @@ export class ThreeRenderer extends ThreeRendererBase {
   private async initializeRenderer(): Promise<void> {
     this.renderer = new (THREE as any).WebGPURenderer({ antialias: this.antialias }) as WebGPURenderer;
     await this.renderer.init();
+
     this.renderer.shadowMap.enabled = this.shadows;
     if (this.shadows) this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   }

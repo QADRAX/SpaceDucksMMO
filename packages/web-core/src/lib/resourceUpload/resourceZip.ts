@@ -5,23 +5,28 @@ import type { PrismaClient } from '@prisma/client';
 
 import { StorageService } from '@/lib/storage';
 import {
-  // We just need types here potentially, or schema validation
-  safeParseEcsTreeSnapshot,
-  EcsTreeSnapshot,
-  createEmptyEcsTreeSnapshot,
-  EcsTreeSnapshotSchema,
-} from '@/lib/ecs-snapshot';
-import {
-  CustomMeshComponentDataSchema,
-  MaterialComponentSchema,
-  MaterialComponentTypeSchema,
   ResourceKindSchema,
   ResourceZipManifestSchema,
   ResourceVersionZipManifestSchema,
+  MATERIAL_RESOURCE_KINDS,
 } from '@/lib/types';
 import { parseZipJson, readZipBasenameMap } from '@/lib/zip';
-import { assertCustomMeshGlbProfile } from '@/lib/glb/validateCustomMeshGlb';
-import { assertFullMeshGlbProfile } from '@/lib/glb/validateFullMeshGlb';
+
+import { ResourceUploadRegistry } from './ResourceUploadRegistry';
+import { SlotFile } from './types';
+
+// Register standard handlers
+import { MaterialUploadHandler } from './handlers/MaterialUploadHandler';
+import { MeshUploadHandler } from './handlers/MeshUploadHandler';
+import { SceneUploadHandler } from './handlers/SceneUploadHandler';
+import { SkyboxUploadHandler } from './handlers/SkyboxUploadHandler';
+import { CustomShaderUploadHandler } from './handlers/CustomShaderUploadHandler';
+
+ResourceUploadRegistry.register(MATERIAL_RESOURCE_KINDS as unknown as string[], new MaterialUploadHandler());
+ResourceUploadRegistry.register(['customMesh', 'fullMesh'], new MeshUploadHandler());
+ResourceUploadRegistry.register(['scene', 'prefab'], new SceneUploadHandler());
+ResourceUploadRegistry.register('skybox', new SkyboxUploadHandler());
+ResourceUploadRegistry.register('customShader', new CustomShaderUploadHandler());
 
 function stripExt(fileName: string): string {
   return path.posix.basename(fileName, path.posix.extname(fileName));
@@ -31,83 +36,6 @@ function toZipBasename(fileName: string): string {
   const normalized = fileName.replace(/\\/g, '/');
   return path.posix.basename(normalized);
 }
-
-function coerceComponentData(raw: unknown): Record<string, unknown> {
-  if (raw === undefined || raw === null) return {};
-  if (typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, unknown>;
-  throw new Error('componentData must be an object (or omitted)');
-}
-
-function validateComponentDataForKind(kind: string, rawComponentData: unknown) {
-  const componentDataObj = rawComponentData === undefined ? {} : rawComponentData;
-
-  const materialKind = MaterialComponentTypeSchema.safeParse(kind);
-  if (materialKind.success) {
-    const componentDataCoerced = coerceComponentData(componentDataObj);
-    const parsed = MaterialComponentSchema.safeParse({
-      componentType: materialKind.data,
-      componentData: componentDataCoerced,
-    });
-    if (!parsed.success) {
-      throw new Error('Invalid componentData for resource kind');
-    }
-
-    return {
-      componentType: parsed.data.componentType,
-      componentData: parsed.data.componentData ?? {},
-    };
-  }
-
-  if (kind === 'customMesh') {
-    const componentDataCoerced = coerceComponentData(componentDataObj);
-    const parsed = CustomMeshComponentDataSchema.safeParse(componentDataCoerced);
-    if (!parsed.success) {
-      throw new Error('Invalid componentData for resource kind');
-    }
-    return {
-      componentType: 'customMesh',
-      componentData: parsed.data ?? {},
-    };
-  }
-
-  if (kind === 'prefab' || kind === 'scene') {
-    const input =
-      rawComponentData === undefined || rawComponentData === null
-        ? createEmptyEcsTreeSnapshot()
-        : rawComponentData;
-
-    const parsed = EcsTreeSnapshotSchema.safeParse(input);
-    if (!parsed.success) {
-      throw new Error('Invalid componentData for resource kind');
-    }
-    return {
-      componentType: kind,
-      componentData: parsed.data,
-    };
-  }
-
-  if (kind === 'skybox') {
-    const componentDataCoerced = coerceComponentData(componentDataObj);
-    // Currently no structured componentData for skyboxes.
-    return {
-      componentType: 'skybox',
-      componentData: componentDataCoerced ?? {},
-    };
-  }
-
-  if (kind === 'fullMesh') {
-    // Full mesh componentData is freeform (may include animations metadata added during upload).
-    const componentDataCoerced = coerceComponentData(componentDataObj);
-    return {
-      componentType: 'fullMesh',
-      componentData: componentDataCoerced ?? {},
-    };
-  }
-
-  throw new Error(`Unsupported resource kind: ${kind}`);
-}
-
-type SlotFile = { slot: string; fileName: string; data: Buffer };
 
 function collectSlotFilesFromZip(
   files: Map<string, { name: string; data: Buffer }>,
@@ -191,52 +119,15 @@ export async function createResourceFromZip(prisma: PrismaClient, zipFile: File)
     throw new Error('componentType must match resource kind');
   }
 
-  const component = validateComponentDataForKind(kind, versionPayload.componentData);
+  const handler = ResourceUploadRegistry.getHandler(kind);
+  const component = handler.validateComponentData(kind, versionPayload.componentData);
+  const slotFiles = collectSlotFilesFromZip(files, versionPayload.files);
+  const profileMetadata = await handler.validateProfile(kind, slotFiles);
 
   const componentDataToStore: Record<string, unknown> = {
-    ...(component.componentData ?? {}),
+    ...component.componentData,
+    ...profileMetadata,
   };
-
-  const slotFiles = collectSlotFilesFromZip(files, versionPayload.files);
-
-  // Enforce custom mesh profile (single mesh GLB file).
-  if (kind === 'customMesh' || kind === 'fullMesh') {
-    const mesh = slotFiles.find((s) => s.slot.toLowerCase() === 'mesh');
-    if (!mesh) throw new Error("customMesh/fullMesh requires a 'mesh' file binding");
-    if (!mesh.fileName.toLowerCase().endsWith('.glb')) {
-      throw new Error("customMesh/fullMesh 'mesh' file must be a .glb");
-    }
-
-    if (kind === 'customMesh') {
-      // Legacy strict profile: single mesh GLB, no textures/animations/skins
-      if (slotFiles.length !== 1) {
-        throw new Error("customMesh only supports a single file binding ('mesh')");
-      }
-      // Strict GLB contents validation.
-      assertCustomMeshGlbProfile(mesh.data);
-    } else {
-      // fullMesh: allow additional files (textures etc.) and extract animation names
-      const meta = assertFullMeshGlbProfile(mesh.data);
-      // Persist extracted animation names into componentData for UI use.
-      if (meta && Array.isArray(meta.animations) && meta.animations.length) {
-        componentDataToStore.animations = meta.animations.map((n) => ({ name: n }));
-      }
-    }
-  }
-
-  // Enforce skybox profile (cube map faces).
-  if (kind === 'skybox') {
-    const required = ['px', 'nx', 'py', 'ny', 'pz', 'nz'] as const;
-    const slots = slotFiles.map((s) => String(s.slot).toLowerCase());
-    for (const r of required) {
-      if (!slots.includes(r)) {
-        throw new Error("skybox requires 6 cube face bindings: px, nx, py, ny, pz, nz");
-      }
-    }
-    if (slotFiles.length !== 6) {
-      throw new Error("skybox only supports 6 cube face bindings: px, nx, py, ny, pz, nz");
-    }
-  }
 
   const created = await prisma.$transaction(async (tx) => {
     const resource = await tx.resource.create({
@@ -256,6 +147,8 @@ export async function createResourceFromZip(prisma: PrismaClient, zipFile: File)
         componentData: JSON.stringify(componentDataToStore),
       },
     });
+
+    const resolvedBindings: Array<{ slot: string; url: string }> = [];
 
     for (const slot of slotFiles) {
       const fileId = crypto.randomUUID();
@@ -285,36 +178,11 @@ export async function createResourceFromZip(prisma: PrismaClient, zipFile: File)
         },
       });
 
-      // Material convenience: map texture bindings into componentData fields.
-      if (MaterialComponentTypeSchema.safeParse(kind).success) {
-        const supportedTextureFields = new Set([
-          'texture',
-          'normalMap',
-          'envMap',
-          'aoMap',
-          'roughnessMap',
-          'metalnessMap',
-          'specularMap',
-          'bumpMap',
-          'baseColor',
-          'albedo',
-        ]);
-
-        if (supportedTextureFields.has(slot.slot)) {
-          const url = `/api/files/${fileId}`;
-          if (slot.slot === 'baseColor' || slot.slot === 'albedo') {
-            componentDataToStore.texture = url;
-          } else {
-            componentDataToStore[slot.slot] = url;
-          }
-        }
-      }
-
-      // Custom mesh convenience: expose resolved mesh URL in componentData as well.
-      if ((kind === 'customMesh' || kind === 'fullMesh') && slot.slot.toLowerCase() === 'mesh') {
-        componentDataToStore.mesh = `/api/files/${fileId}`;
-      }
+      resolvedBindings.push({ slot: slot.slot, url: `/api/files/${fileId}` });
     }
+
+    const bindingsMetadata = handler.processBindings(kind, resolvedBindings);
+    Object.assign(componentDataToStore, bindingsMetadata);
 
     await tx.resourceVersion.update({
       where: { id: version.id },
@@ -356,42 +224,15 @@ export async function createResourceVersionFromZip(
     throw new Error('componentType must match resource kind');
   }
 
-  const component = validateComponentDataForKind(resourceKind, parsed.data.componentData);
+  const handler = ResourceUploadRegistry.getHandler(resourceKind);
+  const component = handler.validateComponentData(resourceKind, parsed.data.componentData);
+  const slotFiles = collectSlotFilesFromZip(files, parsed.data.files);
+  const profileMetadata = await handler.validateProfile(resourceKind, slotFiles);
 
   const componentDataToStore: Record<string, unknown> = {
-    ...(component.componentData ?? {}),
+    ...component.componentData,
+    ...profileMetadata,
   };
-
-  const slotFiles = collectSlotFilesFromZip(files, parsed.data.files);
-
-  // Enforce custom mesh profile (single mesh GLB file).
-  if (resourceKind === 'customMesh') {
-    const mesh = slotFiles.find((s) => s.slot.toLowerCase() === 'mesh');
-    if (!mesh) throw new Error("customMesh requires a 'mesh' file binding");
-    if (slotFiles.length !== 1) {
-      throw new Error("customMesh only supports a single file binding ('mesh')");
-    }
-    if (!mesh.fileName.toLowerCase().endsWith('.glb')) {
-      throw new Error("customMesh 'mesh' file must be a .glb");
-    }
-
-    // Strict GLB contents validation.
-    assertCustomMeshGlbProfile(mesh.data);
-  }
-
-  // Enforce skybox profile (cube map faces).
-  if (resourceKind === 'skybox') {
-    const required = ['px', 'nx', 'py', 'ny', 'pz', 'nz'] as const;
-    const slots = slotFiles.map((s) => String(s.slot).toLowerCase());
-    for (const r of required) {
-      if (!slots.includes(r)) {
-        throw new Error("skybox requires 6 cube face bindings: px, nx, py, ny, pz, nz");
-      }
-    }
-    if (slotFiles.length !== 6) {
-      throw new Error("skybox only supports 6 cube face bindings: px, nx, py, ny, pz, nz");
-    }
-  }
 
   const created = await prisma.$transaction(async (tx) => {
     const nextVersion = await (async () => {
@@ -434,6 +275,8 @@ export async function createResourceVersionFromZip(
       data: { activeVersion: nextVersion },
     });
 
+    const resolvedBindings: Array<{ slot: string; url: string }> = [];
+
     for (const slot of slotFiles) {
       const fileId = crypto.randomUUID();
       const contentType = StorageService.getContentTypeFromExtension(slot.fileName);
@@ -462,36 +305,11 @@ export async function createResourceVersionFromZip(
         },
       });
 
-      // Material convenience: map texture bindings into componentData fields.
-      if (MaterialComponentTypeSchema.safeParse(resourceKind).success) {
-        const supportedTextureFields = new Set([
-          'texture',
-          'normalMap',
-          'envMap',
-          'aoMap',
-          'roughnessMap',
-          'metalnessMap',
-          'specularMap',
-          'bumpMap',
-          'baseColor',
-          'albedo',
-        ]);
-
-        if (supportedTextureFields.has(slot.slot)) {
-          const url = `/api/files/${fileId}`;
-          if (slot.slot === 'baseColor' || slot.slot === 'albedo') {
-            componentDataToStore.texture = url;
-          } else {
-            componentDataToStore[slot.slot] = url;
-          }
-        }
-      }
-
-      // Custom mesh convenience: expose resolved mesh URL in componentData as well.
-      if (resourceKind === 'customMesh' && slot.slot.toLowerCase() === 'mesh') {
-        componentDataToStore.mesh = `/api/files/${fileId}`;
-      }
+      resolvedBindings.push({ slot: slot.slot, url: `/api/files/${fileId}` });
     }
+
+    const bindingsMetadata = handler.processBindings(resourceKind, resolvedBindings);
+    Object.assign(componentDataToStore, bindingsMetadata);
 
     await tx.resourceVersion.update({
       where: { id: version.id },
@@ -503,3 +321,4 @@ export async function createResourceVersionFromZip(
 
   return created;
 }
+

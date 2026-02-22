@@ -117,6 +117,7 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
 
     const renderer = new (THREE as any).WebGPURenderer({ antialias: this.antialias }) as WebGPURenderer;
     await renderer.init();
+
     renderer.shadowMap.enabled = this.shadows;
     if (this.shadows) renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 

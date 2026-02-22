@@ -3,6 +3,7 @@ import { BasicMaterialComponent } from "./BasicMaterialComponent";
 import { LambertMaterialComponent } from "./LambertMaterialComponent";
 import { PhongMaterialComponent } from "./PhongMaterialComponent";
 import { StandardMaterialComponent } from "./StandardMaterialComponent";
+import { ShaderMaterialComponent } from "./ShaderMaterialComponent";
 
 export type AnyMaterialComponent =
     | StandardMaterialComponent
@@ -18,6 +19,8 @@ export const MATERIAL_RESOURCE_KINDS: MaterialResourceKind[] = [
     "phongMaterial",
     "standardMaterial",
 ] as const;
+
+export const CUSTOM_SHADER_RESOURCE_KINDS = ['customShader'] as const;
 
 export const MATERIAL_RESOURCE_REF_KEY = "$resourceKey" as const;
 

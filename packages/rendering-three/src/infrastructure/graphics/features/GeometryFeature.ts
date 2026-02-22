@@ -119,10 +119,35 @@ export class GeometryFeature implements RenderFeature {
     }
 
     private recreateMesh(entity: Entity, context: RenderContext): void {
-        this.onDetach(entity, context);
-        if (this.isEligible(entity)) {
-            this.onAttach(entity, context);
+        const geometryComp = this.getGeometryComponent(entity);
+        if (!geometryComp) {
+            this.onDetach(entity, context);
+            return;
         }
+
+        const rc = context.registry.get(entity.id);
+        if (!rc || !rc.object3D || !(rc.object3D instanceof THREE.Mesh)) {
+            // Full recreation if not exist
+            this.onDetach(entity, context);
+            if (this.isEligible(entity)) {
+                this.onAttach(entity, context);
+            }
+            return;
+        }
+
+        if (geometryComp.type === "customGeometry") {
+            this.syncCustomGeometry(entity, context);
+            return;
+        }
+
+        const mesh = rc.object3D as THREE.Mesh;
+        const newGeometry = GeometryFactory.build(geometryComp);
+
+        if (rc.geometry) deferredDispose(rc.geometry);
+        mesh.geometry = newGeometry;
+        rc.geometry = newGeometry;
+
+        this.applyShadowFlags(mesh, geometryComp);
     }
 
     private applyShadowFlags(obj: THREE.Object3D, geometryComp: AnyGeometryComponent): void {

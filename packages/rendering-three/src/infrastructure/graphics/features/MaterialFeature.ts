@@ -2,7 +2,6 @@
 import * as THREE from "three/webgpu";
 import type {
     Entity,
-    ShaderMaterialComponent,
     StandardMaterialComponent,
     BasicMaterialComponent,
     PhongMaterialComponent,
@@ -13,7 +12,6 @@ import {
     MaterialFactory,
     type AnyMaterialComponent,
 } from "../factories/MaterialFactory";
-import { ShaderMaterialFactory } from "../factories/ShaderMaterialFactory";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
 import { deferredDispose } from "../debug/DebugUtils";
@@ -23,11 +21,8 @@ export class MaterialFeature implements RenderFeature {
 
     isEligible(entity: Entity): boolean {
         // Material requires an Object3D to attach to.
-        // We look for any geometry or material component.
         const materialComp = this.getMaterialComponent(entity);
-        const shaderMaterial = entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
-        return (!!materialComp && materialComp.enabled !== false) ||
-            (!!shaderMaterial && shaderMaterial.enabled !== false);
+        return !!materialComp && materialComp.enabled !== false;
     }
 
     onAttach(entity: Entity, context: RenderContext): void {
@@ -36,7 +31,6 @@ export class MaterialFeature implements RenderFeature {
 
     onUpdate(entity: Entity, componentType: ComponentType, context: RenderContext): void {
         switch (componentType) {
-            case "shaderMaterial":
             case "standardMaterial":
             case "basicMaterial":
             case "phongMaterial":
@@ -58,9 +52,6 @@ export class MaterialFeature implements RenderFeature {
     }
 
     onDetach(entity: Entity, context: RenderContext): void {
-        // Cleanup if needed? Usually the Geometry Owner handles Object3D removal.
-        // But we might want to revert to a default material if this feature detaches
-        // but the item stays eligible for Geometry.
         const rc = context.registry.get(entity.id);
         if (rc?.object3D instanceof THREE.Mesh) {
             this.applyDefaultMaterial(rc.object3D);
@@ -69,7 +60,7 @@ export class MaterialFeature implements RenderFeature {
 
     private isMaterialComponent(type: ComponentType): boolean {
         return [
-            "standardMaterial", "basicMaterial", "phongMaterial", "lambertMaterial", "shaderMaterial"
+            "standardMaterial", "basicMaterial", "phongMaterial", "lambertMaterial"
         ].includes(type);
     }
 
@@ -88,9 +79,8 @@ export class MaterialFeature implements RenderFeature {
         if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) return;
 
         const materialComp = this.getMaterialComponent(entity);
-        const shaderComp = entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
 
-        if ((!materialComp || materialComp.enabled === false) && (!shaderComp || shaderComp.enabled === false)) {
+        if (!materialComp || materialComp.enabled === false) {
             this.applyDefaultMaterial(rc.object3D);
             return;
         }
@@ -100,22 +90,15 @@ export class MaterialFeature implements RenderFeature {
             else deferredDispose(rc.material);
         }
 
-        let newMat: THREE.Material;
-        if (shaderComp) {
-            newMat = ShaderMaterialFactory.build(shaderComp, context.textureCache);
-        } else {
-            newMat = MaterialFactory.build(materialComp as AnyMaterialComponent, context.textureCache, (tex) => {
-                this.applyTextureSettings(entity, tex);
-            });
-        }
+        let newMat: THREE.Material = MaterialFactory.build(materialComp as AnyMaterialComponent, context.textureCache, (tex) => {
+            this.applyTextureSettings(entity, tex);
+        });
 
         const mesh = rc.object3D as THREE.Mesh;
         mesh.material = newMat;
         rc.material = newMat;
 
-        if (materialComp) {
-            this.resolveAndApplyTextures(entity, newMat, materialComp, context);
-        }
+        this.resolveAndApplyTextures(entity, newMat, materialComp, context);
     }
 
     private applyDefaultMaterial(mesh: THREE.Mesh): void {

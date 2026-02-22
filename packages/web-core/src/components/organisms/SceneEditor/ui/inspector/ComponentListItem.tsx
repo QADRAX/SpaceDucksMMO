@@ -103,6 +103,35 @@ export function ComponentListItem({
                     />
                     <div className="text-xs text-muted-foreground">Uses the active version of the selected resource.</div>
                 </div>
+            ) : String(c.type) === 'shaderMaterial' ? (
+                <div className="mt-3 space-y-2">
+                    <Label>Shader Resource</Label>
+                    <ResourceKeyDropdown
+                        kinds={['customShader']}
+                        value={typeof c?.shaderId === 'string' && c.shaderId.trim() ? c.shaderId : null}
+                        disabled={editor.mode !== 'edit'}
+                        placeholder="Select custom shader…"
+                        onChange={(nextKey) => {
+                            editor.onUpdateSelectedComponentData(c.type, { shaderId: nextKey ?? '' });
+                        }}
+                    />
+
+                    {fields.length ? (
+                        <div className="mt-3">
+                            <EcsInspectorFieldsForm
+                                key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}:shaderMaterial`}
+                                fields={fields.filter((f) => String((f as any)?.key) !== 'shaderId') as any}
+                                value={value}
+                                onChange={(next) => {
+                                    const delta = diffInspectorValue(value, next);
+                                    if (Object.keys(delta).length) editor.onUpdateSelectedComponentData(c.type, delta);
+                                }}
+                                disabled={editor.mode !== 'edit'}
+                                referenceOptions={referenceOptions}
+                            />
+                        </div>
+                    ) : null}
+                </div>
             ) : isCustomGeometry ? (
                 <div className="mt-3 space-y-2">
                     <Label>Custom Mesh Resource</Label>

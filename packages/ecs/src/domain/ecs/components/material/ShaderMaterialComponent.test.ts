@@ -13,7 +13,7 @@ class Observer {
 describe('ShaderMaterialComponent', () => {
   test('requires geometry enforced', () => {
     const e = new Entity('E');
-    const shader = new ShaderMaterialComponent({ shaderType: 'custom', uniforms: { time: { value: 0, type: 'float' } } });
+    const shader = new ShaderMaterialComponent({ shaderId: 'test-shader-id', uniforms: { time: { value: 0, type: 'float' } } });
     expect(() => e.addComponent(shader)).toThrow(/requires 'geometry'/);
   });
 
@@ -21,14 +21,14 @@ describe('ShaderMaterialComponent', () => {
     const e = new Entity('E');
     e.addComponent(new SphereGeometryComponent({ radius: 1 }));
     e.addComponent(new BasicMaterialComponent({}));
-    const shader = new ShaderMaterialComponent({ shaderType: 'custom', uniforms: { time: { value: 0, type: 'float' } } });
+    const shader = new ShaderMaterialComponent({ shaderId: 'test-shader-id', uniforms: { time: { value: 0, type: 'float' } } });
     expect(() => e.addComponent(shader)).toThrow(/conflicts/);
   });
 
   test('uniform setters notify', () => {
     const e = new Entity('E');
     e.addComponent(new SphereGeometryComponent({ radius: 1 }));
-    const shader = new ShaderMaterialComponent({ shaderType: 'custom', uniforms: { time: { value: 0, type: 'float' }, color: { value: '#fff', type: 'color' } }, transparent: false });
+    const shader = new ShaderMaterialComponent({ shaderId: 'test-shader-id', uniforms: { time: { value: 0, type: 'float' }, color: { value: '#fff', type: 'color' } }, transparent: false });
     const obs = new Observer(); shader.addObserver(obs); e.addComponent(shader);
     shader.setUniform('time', 1.5);
     shader.setUniforms({ color: '#000', time: 2.0 });

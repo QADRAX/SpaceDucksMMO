@@ -243,7 +243,7 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
         return new LambertMaterialComponent({ color: 0xffffff });
       case "shaderMaterial":
         return new ShaderMaterialComponent({
-          shaderType: "atmosphere",
+          shaderId: "default-shader",
           uniforms: {},
         });
       case "textureTiling":

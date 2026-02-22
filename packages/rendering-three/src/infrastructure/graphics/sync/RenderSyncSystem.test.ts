@@ -39,8 +39,7 @@ describe('RenderSyncSystem', () => {
             expect(DebugFeature).toHaveBeenCalledTimes(1);
             const routerInstance = (FeatureRouter as jest.Mock).mock.instances[0];
 
-            // Expect to add at least 8 predefined features
-            expect(routerInstance.addFeature).toHaveBeenCalledTimes(9); // Cam, Light, Geo, Full, Mat, Anim, Sky, Debug, LensFlare
+            expect(routerInstance.addFeature).toHaveBeenCalledTimes(10); // Cam, Light, Geo, Full, Mat, Shader, Anim, Sky, Debug, LensFlare
         });
     });
 

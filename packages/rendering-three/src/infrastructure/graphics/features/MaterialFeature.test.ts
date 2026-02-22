@@ -41,9 +41,7 @@ describe('MaterialFeature', () => {
         const testCases = [
             { comps: { standardMaterial: { enabled: true } }, expected: true },
             { comps: { basicMaterial: { enabled: true } }, expected: true },
-            { comps: { shaderMaterial: { enabled: true } }, expected: true },
             { comps: { standardMaterial: { enabled: false } }, expected: false },
-            { comps: { shaderMaterial: { enabled: false } }, expected: false },
             { comps: { unrelated: { enabled: true } }, expected: false },
         ];
 
@@ -66,24 +64,6 @@ describe('MaterialFeature', () => {
             expect(DebugUtils.deferredDispose).toHaveBeenCalled(); // Original material disposed
             expect(mesh.material).toBeInstanceOf(THREE.MeshStandardMaterial);
             expect((mesh.material as THREE.MeshStandardMaterial).color.getHex()).toBe(0xcccccc);
-        });
-
-        it('creates and applies ShaderMaterial using factory', () => {
-            const mesh = new THREE.Mesh();
-            mockContext.registry.add(mockEntity.id, { entityId: mockEntity.id, object3D: mesh });
-
-            const shaderComp = { enabled: true } as any;
-            mockEntity.getComponent.mockImplementation((name) => name === 'shaderMaterial' ? shaderComp : undefined);
-
-            const mockMat = new THREE.ShaderMaterial();
-            (ShaderMaterialFactory.build as jest.Mock).mockReturnValue(mockMat);
-
-            feature.onAttach(mockEntity, mockContext);
-
-            expect(ShaderMaterialFactory.build).toHaveBeenCalledWith(shaderComp, mockContext.textureCache);
-            expect(mesh.material).toBe(mockMat);
-            const rc = mockContext.registry.get(mockEntity.id);
-            expect(rc?.material).toBe(mockMat);
         });
 
         it('creates and applies StandardMaterial using factory', () => {

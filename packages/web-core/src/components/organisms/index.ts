@@ -19,4 +19,6 @@ export * from './resources/material/MaterialDetailPanel';
 export * from './resources/skybox/SkyboxDetailPanel';
 export * from './resources/full-mesh/FullMeshDetailPanel';
 export * from './resources/custom-mesh/CustomMeshDetailPanel';
+export * from './resources/shader/CreateCustomShaderDialog';
+export * from './resources/shader/CustomShaderDetailPanel';
 

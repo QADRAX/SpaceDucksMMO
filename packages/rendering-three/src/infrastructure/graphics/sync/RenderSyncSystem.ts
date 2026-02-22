@@ -23,6 +23,7 @@ import { LensFlareFeature } from "../features/LensFlareFeature";
 import { GeometryFeature } from "../features/GeometryFeature";
 import { FullMeshFeature } from "../features/FullMeshFeature";
 import { MaterialFeature } from "../features/MaterialFeature";
+import { ShaderFeature } from "../features/ShaderFeature";
 import { AnimationFeature } from "../features/AnimationFeature";
 
 export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
@@ -78,6 +79,7 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     this.router.addFeature(new GeometryFeature());
     this.router.addFeature(new FullMeshFeature());
     this.router.addFeature(new MaterialFeature());
+    this.router.addFeature(new ShaderFeature());
     this.router.addFeature(new AnimationFeature());
     this.router.addFeature(new SkyboxFeature());
     this.router.addFeature(this.debugFeature);

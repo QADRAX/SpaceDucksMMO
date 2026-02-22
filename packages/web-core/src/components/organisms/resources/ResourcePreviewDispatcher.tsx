@@ -3,6 +3,7 @@ import { CustomMeshPreview } from '@/components/molecules/previews/CustomMeshPre
 import { Skybox3DPreview } from '@/components/molecules/previews/Skybox3DPreview';
 import { ModelFilePreview } from '@/components/molecules/previews/ModelFilePreview';
 import { MaterialPreview } from '@/components/molecules/previews/MaterialPreview';
+import { CustomShaderPreview } from '@/components/molecules/previews/CustomShaderPreview';
 import { ResourceSummary } from './types';
 
 type Props = {
@@ -45,6 +46,15 @@ export function ResourcePreviewDispatcher({ resource, activeVersionId, previewCo
                 <Skybox3DPreview
                     resourceKey={resource.key}
                     activeVersion={resource.activeVersion}
+                    className="h-full w-full"
+                />
+            );
+        }
+        if (kindParsed.data === 'customShader' && activeVersionId) {
+            return (
+                <CustomShaderPreview
+                    resourceKey={resource.key}
+                    uniforms={previewComponentData?.uniforms as Record<string, any> | undefined}
                     className="h-full w-full"
                 />
             );

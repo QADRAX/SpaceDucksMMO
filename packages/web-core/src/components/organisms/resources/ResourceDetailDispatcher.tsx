@@ -2,6 +2,7 @@ import { MaterialComponentTypeSchema, ResourceKindSchema, type MaterialResourceK
 import { MaterialDetailPanel } from './material/MaterialDetailPanel';
 import { CustomMeshDetailPanel } from './custom-mesh/CustomMeshDetailPanel';
 import { FullMeshDetailPanel } from './full-mesh/FullMeshDetailPanel';
+import { CustomShaderDetailPanel } from './shader/CustomShaderDetailPanel';
 import { SkyboxDetailPanel } from './skybox/SkyboxDetailPanel';
 import { EcsTreeDetailPanel } from './ecs-tree/EcsTreeDetailPanel';
 import { ResourceSummary, VersionSummary } from './types';
@@ -31,6 +32,17 @@ export function ResourceDetailDispatcher({ resource, versions }: Props) {
 
     if (kindParsed.success) {
         switch (kindParsed.data) {
+            case 'customShader':
+                return (
+                    <CustomShaderDetailPanel
+                        resource={{
+                            id: resource.id,
+                            kind: 'customShader',
+                            activeVersion: resource.activeVersion,
+                        }}
+                        versions={versions}
+                    />
+                );
             case 'customMesh':
                 return (
                     <CustomMeshDetailPanel

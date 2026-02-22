@@ -338,13 +338,18 @@ export class Entity {
   }
 
   addDebugColliderListener(listener: (enabled: boolean) => void): void {
-    this.addDebugListener((kind, enabled) => {
+    const wrapped = (kind: DebugKind, enabled: boolean) => {
       if (kind === 'collider') listener(enabled);
-    });
+    };
+    (listener as any)._wrappedDebugCollider = wrapped;
+    this.addDebugListener(wrapped);
   }
 
   removeDebugColliderListener(listener: (enabled: boolean) => void): void {
-    // Wrapper for compatibility
+    const wrapped = (listener as any)._wrappedDebugCollider;
+    if (wrapped) {
+      this.removeDebugListener(wrapped);
+    }
   }
 }
 

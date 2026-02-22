@@ -74,7 +74,7 @@ export default async function ResourceDetailPage({
   const canPreviewMaterial = materialKindParsed.success && !!activeVersion;
 
   let previewComponentData: Record<string, unknown> = {};
-  if (canPreviewMaterial && activeVersion) {
+  if (activeVersion) {
     try {
       const parsed = JSON.parse(activeVersion.componentData ?? '{}');
       previewComponentData = typeof parsed === 'object' && parsed && !Array.isArray(parsed) ? parsed : {};
@@ -82,33 +82,35 @@ export default async function ResourceDetailPage({
       previewComponentData = {};
     }
 
-    // Best-effort: if componentData is missing texture URLs, fill them from bindings.
-    const supportedTextureFields = new Set([
-      'texture',
-      'normalMap',
-      'envMap',
-      'aoMap',
-      'roughnessMap',
-      'metalnessMap',
-      'specularMap',
-      'bumpMap',
-      'baseColor',
-      'albedo',
-    ]);
+    if (canPreviewMaterial) {
+      // Best-effort: if componentData is missing texture URLs, fill them from bindings.
+      const supportedTextureFields = new Set([
+        'texture',
+        'normalMap',
+        'envMap',
+        'aoMap',
+        'roughnessMap',
+        'metalnessMap',
+        'specularMap',
+        'bumpMap',
+        'baseColor',
+        'albedo',
+      ]);
 
-    for (const b of activeVersion.bindings ?? []) {
-      if (!supportedTextureFields.has(b.slot)) continue;
-      const url = `/api/files/${b.fileAssetId}`;
-      if ((b.slot === 'baseColor' || b.slot === 'albedo')) {
-        if (typeof previewComponentData.texture !== 'string' || previewComponentData.texture.length === 0) {
-          previewComponentData.texture = url;
+      for (const b of activeVersion.bindings ?? []) {
+        if (!supportedTextureFields.has(b.slot)) continue;
+        const url = `/api/files/${b.fileAssetId}`;
+        if ((b.slot === 'baseColor' || b.slot === 'albedo')) {
+          if (typeof previewComponentData.texture !== 'string' || previewComponentData.texture.length === 0) {
+            previewComponentData.texture = url;
+          }
+          continue;
         }
-        continue;
-      }
 
-      const current = previewComponentData[b.slot];
-      if (typeof current !== 'string' || current.length === 0) {
-        previewComponentData[b.slot] = url;
+        const current = previewComponentData[b.slot];
+        if (typeof current !== 'string' || current.length === 0) {
+          previewComponentData[b.slot] = url;
+        }
       }
     }
   }

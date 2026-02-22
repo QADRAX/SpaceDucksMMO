@@ -7,10 +7,10 @@ import type {
   StandardMaterialComponent,
 } from '@duckengine/ecs';
 
-import { MATERIAL_RESOURCE_KINDS } from '@duckengine/ecs';
+import { MATERIAL_RESOURCE_KINDS, CUSTOM_SHADER_RESOURCE_KINDS } from '@duckengine/ecs';
 
 // Re-export for other files depending on it
-export { MATERIAL_RESOURCE_KINDS };
+export { MATERIAL_RESOURCE_KINDS, CUSTOM_SHADER_RESOURCE_KINDS };
 
 // Resource kinds
 // For now, each Three material component type is treated as a distinct resource kind.
@@ -31,6 +31,7 @@ export const ECS_TREE_RESOURCE_KINDS = ['prefab', 'scene'] as const;
 
 export const RESOURCE_KINDS = [
   ...(MATERIAL_RESOURCE_KINDS as unknown as [string, ...string[]]),
+  ...CUSTOM_SHADER_RESOURCE_KINDS,
   ...CUSTOM_MESH_RESOURCE_KINDS,
   ...FULL_MESH_RESOURCE_KINDS,
   ...SKYBOX_RESOURCE_KINDS,
@@ -38,6 +39,8 @@ export const RESOURCE_KINDS = [
 ] as const;
 
 export type MaterialResourceKind = (typeof MATERIAL_RESOURCE_KINDS)[number];
+
+export type CustomShaderResourceKind = (typeof CUSTOM_SHADER_RESOURCE_KINDS)[number];
 
 export type CustomMeshResourceKind = (typeof CUSTOM_MESH_RESOURCE_KINDS)[number];
 

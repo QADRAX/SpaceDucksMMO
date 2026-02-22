@@ -3,6 +3,7 @@ import {
   MATERIAL_RESOURCE_KINDS,
   SKYBOX_RESOURCE_KINDS,
   FULL_MESH_RESOURCE_KINDS,
+  CUSTOM_SHADER_RESOURCE_KINDS,
   type MaterialResourceKind,
 } from '@/lib/types';
 
@@ -42,6 +43,14 @@ export const RESOURCE_GROUPS: readonly ResourceGroup[] = [
     kinds: SKYBOX_RESOURCE_KINDS,
     kindLabels: {
       skybox: 'Skyboxes',
+    },
+  },
+  {
+    id: 'shaders',
+    label: 'Shaders',
+    kinds: CUSTOM_SHADER_RESOURCE_KINDS,
+    kindLabels: {
+      customShader: 'Custom Shader',
     },
   },
   // 'ecs' group removed: Prefabs and Scenes have their own top-level routes
