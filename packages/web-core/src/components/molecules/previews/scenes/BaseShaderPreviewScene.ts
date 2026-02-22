@@ -14,10 +14,10 @@ import {
     type ISettingsService,
     type ComponentType,
 } from '@duckengine/rendering-three';
-import { ShaderMaterialComponent } from '@duckengine/ecs';
+import type { AnyCustomShaderComponent } from '@duckengine/ecs';
 import type { MaterialPreviewSettings } from './MaterialPreviewScene';
 
-function createGeometryComponent(settings: MaterialPreviewSettings) {
+export function createGeometryComponent(settings: MaterialPreviewSettings) {
     switch (settings.geometry.type) {
         case 'customMesh': {
             const key = String(settings.geometry.customMesh?.key ?? '').trim();
@@ -41,28 +41,33 @@ function createGeometryComponent(settings: MaterialPreviewSettings) {
     }
 }
 
-export class CustomShaderPreviewScene extends BaseScene {
-    readonly id = 'admin-custom-shader-preview';
-
-    private mesh?: Entity;
-    private camera?: Entity;
-    private ambient?: Entity;
-    private dir?: Entity;
-    private previewSettings: MaterialPreviewSettings;
-    private shaderId: string;
-    private initialUniforms?: Record<string, any>;
+export abstract class BaseShaderPreviewScene extends BaseScene {
+    abstract readonly id: string;
+    protected mesh?: Entity;
+    protected camera?: Entity;
+    protected ambient?: Entity;
+    protected dir?: Entity;
+    protected previewSettings: MaterialPreviewSettings;
+    protected shaderId: string;
+    protected initialUniforms?: Record<string, any>;
+    protected initialComponentData?: Record<string, any>;
 
     constructor(
         settings: ISettingsService,
         shaderId: string,
         previewSettings: MaterialPreviewSettings,
-        initialUniforms?: Record<string, any>
+        initialUniforms?: Record<string, any>,
+        initialComponentData?: Record<string, any>
     ) {
         super(settings);
         this.previewSettings = previewSettings;
         this.shaderId = shaderId;
         this.initialUniforms = initialUniforms;
+        this.initialComponentData = initialComponentData;
     }
+
+    abstract readonly shaderComponentType: string;
+    protected abstract createShaderComponent(): AnyCustomShaderComponent;
 
     setup(engine: any, renderScene: any): void {
         super.setup(engine, renderScene);
@@ -87,14 +92,17 @@ export class CustomShaderPreviewScene extends BaseScene {
         this.mesh.addComponent(createGeometryComponent(this.previewSettings));
 
         // Add shader material component
-        this.mesh.addComponent(new ShaderMaterialComponent({
-            shaderId: this.shaderId,
-            uniforms: this.initialUniforms ?? {}
-        } as any));
+        this.addShaderComponentToMesh();
 
         this.addEntity(this.mesh);
 
         this.applyPreviewSettings(this.previewSettings);
+    }
+
+    protected addShaderComponentToMesh() {
+        if (!this.mesh) return;
+        const comp = this.createShaderComponent();
+        this.mesh.addComponent(comp);
     }
 
     applyPreviewSettings(next: MaterialPreviewSettings) {
@@ -123,31 +131,37 @@ export class CustomShaderPreviewScene extends BaseScene {
         if (!this.mesh) return;
         this.shaderId = shaderId;
 
-        if (this.mesh.hasComponent('shaderMaterial')) {
-            this.mesh.removeComponent('shaderMaterial');
+        if (this.mesh.hasComponent(this.shaderComponentType as any)) {
+            this.mesh.removeComponent(this.shaderComponentType as any);
         }
 
-        this.mesh.addComponent(new ShaderMaterialComponent({
-            shaderId: this.shaderId,
-            uniforms: this.initialUniforms ?? {}
-        } as any));
+        this.addShaderComponentToMesh();
     }
 
     setUniforms(uniforms: Record<string, any>) {
         this.initialUniforms = uniforms;
         if (!this.mesh) return;
-        const comp = this.mesh.getComponent<ShaderMaterialComponent>('shaderMaterial');
+        const comp = this.mesh.getComponent<AnyCustomShaderComponent>(this.shaderComponentType as any);
         if (comp) {
             comp.setUniforms(uniforms);
+        }
+    }
+
+    setComponentData(data: Record<string, any>) {
+        this.initialComponentData = data;
+        if (!this.mesh) return;
+        const comp = this.mesh.getComponent<any>(this.shaderComponentType as any);
+        if (comp) {
+            Object.assign(comp, data);
         }
     }
 
     private setGeometry(next: MaterialPreviewSettings) {
         if (!this.mesh) return;
 
-        const hadMaterial = this.mesh.hasComponent('shaderMaterial');
+        const hadMaterial = this.mesh.hasComponent(this.shaderComponentType as any);
         if (hadMaterial) {
-            this.mesh.removeComponent('shaderMaterial');
+            this.mesh.removeComponent(this.shaderComponentType as any);
         }
 
         const geometryTypes: ComponentType[] = [
@@ -158,15 +172,12 @@ export class CustomShaderPreviewScene extends BaseScene {
         for (const t of geometryTypes) {
             if (this.mesh.hasComponent(t)) this.mesh.removeComponent(t);
         }
-        if (this.mesh.hasComponent('customGeometry')) this.mesh.removeComponent('customGeometry');
+        if (this.mesh.hasComponent('customGeometry' as any)) this.mesh.removeComponent('customGeometry' as any);
 
         this.mesh.addComponent(createGeometryComponent(next));
 
         if (hadMaterial) {
-            this.mesh.addComponent(new ShaderMaterialComponent({
-                shaderId: this.shaderId,
-                uniforms: this.initialUniforms ?? {}
-            } as any));
+            this.addShaderComponentToMesh();
         }
     }
 

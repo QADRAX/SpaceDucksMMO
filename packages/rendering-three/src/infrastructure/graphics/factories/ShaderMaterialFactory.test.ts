@@ -1,7 +1,7 @@
 // @ts-ignore
 import * as THREE from 'three/webgpu';
 import { ShaderMaterialFactory } from './ShaderMaterialFactory';
-import { ShaderMaterialComponent } from '@duckengine/ecs';
+import { BasicShaderMaterialComponent } from '@duckengine/ecs';
 import { TextureCache } from './TextureCache';
 
 // Mock three/tsl
@@ -33,7 +33,7 @@ describe('ShaderMaterialFactory', () => {
 
   describe('build', () => {
     it('should create MeshBasicNodeMaterial with custom uniform nodes', () => {
-      const component = new ShaderMaterialComponent({
+      const component = new BasicShaderMaterialComponent({
         shaderId: 'test-shader',
         uniforms: {
           color: { value: new THREE.Color(0xff0000), type: 'color' },
@@ -48,7 +48,7 @@ describe('ShaderMaterialFactory', () => {
     });
 
     it('should inject time uniform node if not present', () => {
-      const component = new ShaderMaterialComponent({
+      const component = new BasicShaderMaterialComponent({
         shaderId: 'test-shader',
         uniforms: {},
       });
@@ -60,7 +60,7 @@ describe('ShaderMaterialFactory', () => {
     });
 
     it('should handle multiple uniform nodes', () => {
-      const component = new ShaderMaterialComponent({
+      const component = new BasicShaderMaterialComponent({
         shaderId: 'test-shader',
         uniforms: {
           floatVal: { value: 3.14, type: 'float' },
@@ -79,7 +79,7 @@ describe('ShaderMaterialFactory', () => {
     });
 
     it('should create texture nodes and load them asynchronously', async () => {
-      const component = new ShaderMaterialComponent({
+      const component = new BasicShaderMaterialComponent({
         shaderId: 'test-shader',
         uniforms: {
           diffuseMap: { value: 'path/to/texture.png', type: 'texture' },
@@ -99,7 +99,7 @@ describe('ShaderMaterialFactory', () => {
     });
 
     it('should set transparent property', () => {
-      const component = new ShaderMaterialComponent({
+      const component = new BasicShaderMaterialComponent({
         shaderId: 'test-shader',
         uniforms: {},
         transparent: true,
@@ -111,7 +111,7 @@ describe('ShaderMaterialFactory', () => {
     });
 
     it('should default transparent to true', () => {
-      const component = new ShaderMaterialComponent({
+      const component = new BasicShaderMaterialComponent({
         shaderId: 'test-shader',
         uniforms: {},
       });
@@ -122,7 +122,7 @@ describe('ShaderMaterialFactory', () => {
     });
 
     it('should set depthWrite property', () => {
-      const component = new ShaderMaterialComponent({
+      const component = new BasicShaderMaterialComponent({
         shaderId: 'test-shader',
         uniforms: {},
         depthWrite: true,
@@ -134,7 +134,7 @@ describe('ShaderMaterialFactory', () => {
     });
 
     it('should use NormalBlending by default in refactor (or preserve legacy)', () => {
-      const component = new ShaderMaterialComponent({
+      const component = new BasicShaderMaterialComponent({
         shaderId: 'test-shader',
         uniforms: {},
       });
@@ -145,7 +145,7 @@ describe('ShaderMaterialFactory', () => {
     });
 
     it('should use AdditiveBlending when specified', () => {
-      const component = new ShaderMaterialComponent({
+      const component = new BasicShaderMaterialComponent({
         shaderId: 'test-shader',
         uniforms: {},
         blending: 'additive',

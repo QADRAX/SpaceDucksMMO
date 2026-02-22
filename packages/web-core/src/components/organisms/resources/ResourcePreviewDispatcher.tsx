@@ -3,7 +3,9 @@ import { CustomMeshPreview } from '@/components/molecules/previews/CustomMeshPre
 import { Skybox3DPreview } from '@/components/molecules/previews/Skybox3DPreview';
 import { ModelFilePreview } from '@/components/molecules/previews/ModelFilePreview';
 import { MaterialPreview } from '@/components/molecules/previews/MaterialPreview';
-import { CustomShaderPreview } from '@/components/molecules/previews/CustomShaderPreview';
+import { BasicShaderPreview } from '@/components/molecules/previews/BasicShaderPreview';
+import { StandardShaderPreview } from '@/components/molecules/previews/StandardShaderPreview';
+import { PhysicalShaderPreview } from '@/components/molecules/previews/PhysicalShaderPreview';
 import { ResourceSummary } from './types';
 
 type Props = {
@@ -50,11 +52,32 @@ export function ResourcePreviewDispatcher({ resource, activeVersionId, previewCo
                 />
             );
         }
-        if (kindParsed.data === 'customShader' && activeVersionId) {
+        if (kindParsed.data === 'basicShaderMaterial' && activeVersionId) {
             return (
-                <CustomShaderPreview
+                <BasicShaderPreview
                     resourceKey={resource.key}
                     uniforms={previewComponentData?.uniforms as Record<string, any> | undefined}
+                    componentData={previewComponentData}
+                    className="h-full w-full"
+                />
+            );
+        }
+        if (kindParsed.data === 'standardShaderMaterial' && activeVersionId) {
+            return (
+                <StandardShaderPreview
+                    resourceKey={resource.key}
+                    uniforms={previewComponentData?.uniforms as Record<string, any> | undefined}
+                    componentData={previewComponentData}
+                    className="h-full w-full"
+                />
+            );
+        }
+        if (kindParsed.data === 'physicalShaderMaterial' && activeVersionId) {
+            return (
+                <PhysicalShaderPreview
+                    resourceKey={resource.key}
+                    uniforms={previewComponentData?.uniforms as Record<string, any> | undefined}
+                    componentData={previewComponentData}
                     className="h-full w-full"
                 />
             );

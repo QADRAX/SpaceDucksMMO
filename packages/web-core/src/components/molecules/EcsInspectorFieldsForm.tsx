@@ -11,6 +11,11 @@ import { Select } from '@/components/atoms/Select';
 import { NumberPushInput } from '@/components/molecules/NumberPushInput';
 import { EntityReferenceDropdown, type EntityReferenceOption } from '@/components/molecules/EntityReferenceDropdown';
 
+import {
+  getRememberedStep,
+  setRememberedStep
+} from '../organisms/SceneEditor/ui/inspectorUiMemory';
+
 export type EcsInspectorValue = Record<string, unknown>;
 
 export type TextureFileState = {
@@ -33,7 +38,9 @@ function isNullableField(f: InspectorFieldConfig<any, unknown>): boolean {
 export function EcsInspectorFieldsForm({
   fields,
   value,
+  selectionKey,
   onChange,
+  onCommit,
   hideTypes,
   disabled,
   referenceOptions,
@@ -42,7 +49,9 @@ export function EcsInspectorFieldsForm({
 }: {
   fields: InspectorFieldConfig<any, unknown>[];
   value: EcsInspectorValue;
+  selectionKey?: string;
   onChange: (next: EcsInspectorValue) => void;
+  onCommit?: () => void;
   hideTypes?: Array<InspectorFieldConfig['type']>;
   disabled?: boolean;
   referenceOptions?: EntityReferenceOption[];
@@ -112,7 +121,10 @@ export function EcsInspectorFieldsForm({
           }
 
           if (type === 'number') {
-            const step = typeof f.step === 'number' && Number.isFinite(f.step) ? f.step : 0.1;
+            const defaultStep = typeof f.step === 'number' && Number.isFinite(f.step) ? f.step : 0.1;
+            const rememberedStep = selectionKey ? getRememberedStep(selectionKey, key) : undefined;
+            const activeStep = rememberedStep ?? defaultStep;
+
             const isNullable = !!f.nullable;
             return (
               <div key={key} className="space-y-2">
@@ -126,16 +138,20 @@ export function EcsInspectorFieldsForm({
                         ? undefined
                         : 0
                   }
-                  step={step}
+                  step={activeStep}
+                  min={f.min}
+                  max={f.max}
+                  unit={f.unit}
                   disabled={!!disabled}
                   onChange={(n) => {
-                    // For nullable numbers, allow clearing via manual delete in the input.
-                    // Note: NumberPushInput still emits numbers; we keep this aligned with existing behavior.
                     set(Number.isFinite(n) ? n : undefined);
                   }}
                   onClear={isNullable ? () => set(undefined) : undefined}
                   onCommit={() => {
-                    // Commit handled by parent (SceneEditor) or ignored in other contexts.
+                    onCommit?.();
+                  }}
+                  onStepChange={(nextStep) => {
+                    if (selectionKey) setRememberedStep(selectionKey, key, nextStep);
                   }}
                 />
                 {f.description ? <div className="text-xs text-neutral-600">{f.description}</div> : null}
@@ -218,7 +234,7 @@ export function EcsInspectorFieldsForm({
           }
 
           if (type === 'vector') {
-            const step = typeof f.step === 'number' && Number.isFinite(f.step) ? f.step : 0.1;
+            const defaultStep = typeof f.step === 'number' && Number.isFinite(f.step) ? f.step : 0.1;
             const isUnset = current === null || current === undefined;
 
             const tuple: [number | undefined, number | undefined, number | undefined] = (() => {
@@ -243,44 +259,39 @@ export function EcsInspectorFieldsForm({
               set(base);
             };
 
+            const labels = ['X', 'Y', 'Z'];
+
             return (
               <div key={key} className="space-y-2">
                 <Label>{label}</Label>
 
                 <div className="space-y-2">
-                  <NumberPushInput
-                    label="X"
-                    value={tuple[0] as any}
-                    step={step}
-                    disabled={!!disabled}
-                    onChange={(n) => setAxis(0, n)}
-                    onClear={nullable ? () => set(undefined) : undefined}
-                    onCommit={() => {
-                      // Commit handled by parent (SceneEditor) or ignored in other contexts.
-                    }}
-                  />
-                  <NumberPushInput
-                    label="Y"
-                    value={tuple[1] as any}
-                    step={step}
-                    disabled={!!disabled}
-                    onChange={(n) => setAxis(1, n)}
-                    onClear={nullable ? () => set(undefined) : undefined}
-                    onCommit={() => {
-                      // Commit handled by parent (SceneEditor) or ignored in other contexts.
-                    }}
-                  />
-                  <NumberPushInput
-                    label="Z"
-                    value={tuple[2] as any}
-                    step={step}
-                    disabled={!!disabled}
-                    onChange={(n) => setAxis(2, n)}
-                    onClear={nullable ? () => set(undefined) : undefined}
-                    onCommit={() => {
-                      // Commit handled by parent (SceneEditor) or ignored in other contexts.
-                    }}
-                  />
+                  {[0, 1, 2].map((idx) => {
+                    const subKey = `${key}_${idx}`;
+                    const rememberedStep = selectionKey ? getRememberedStep(selectionKey, subKey) : undefined;
+                    const activeStep = rememberedStep ?? defaultStep;
+
+                    return (
+                      <NumberPushInput
+                        key={idx}
+                        label={labels[idx]}
+                        value={tuple[idx] as any}
+                        step={activeStep}
+                        min={f.min}
+                        max={f.max}
+                        unit={f.unit}
+                        disabled={!!disabled}
+                        onChange={(n) => setAxis(idx as any, n)}
+                        onClear={nullable ? () => set(undefined) : undefined}
+                        onCommit={() => {
+                          onCommit?.();
+                        }}
+                        onStepChange={(nextStep) => {
+                          if (selectionKey) setRememberedStep(selectionKey, subKey, nextStep);
+                        }}
+                      />
+                    );
+                  })}
                 </div>
 
                 {f.description ? <div className="text-xs text-neutral-600">{f.description}</div> : null}

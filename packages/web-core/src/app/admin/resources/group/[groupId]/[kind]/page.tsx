@@ -9,7 +9,9 @@ import { CreateCustomMeshDialog } from '@/components/organisms/resources/custom-
 import { CreateEcsTreeDialog } from '@/components/organisms/resources/ecs-tree/CreateEcsTreeDialog';
 import { CreateSkyboxDialog } from '@/components/organisms/resources/skybox/CreateSkyboxDialog';
 import { CreateFullMeshDialog } from '@/components/organisms/resources/full-mesh/CreateFullMeshDialog';
-import { CreateCustomShaderDialog } from '@/components/organisms/resources/shader/CreateCustomShaderDialog';
+import { CreateBasicShaderDialog } from '@/components/organisms/resources/basicShaderMaterial/CreateBasicShaderDialog';
+import { CreateStandardShaderDialog } from '@/components/organisms/resources/standardShaderMaterial/CreateStandardShaderDialog';
+import { CreatePhysicalShaderDialog } from '@/components/organisms/resources/physicalShaderMaterial/CreatePhysicalShaderDialog';
 import { getKindLabel, getResourceGroup, isKindInGroup } from '@/lib/resourceGroups';
 import { MaterialComponentTypeSchema, ResourceKindSchema, type MaterialResourceKind } from '@/lib/types';
 
@@ -113,8 +115,14 @@ export default async function ResourceGroupKindPage({
             return <CreateSkyboxDialog kindLabel={getKindLabel(group, kind)} />;
           }
 
-          if (parsedKind.data === 'customShader') {
-            return <CreateCustomShaderDialog kindLabel={getKindLabel(group, kind)} />;
+          if (parsedKind.data === 'basicShaderMaterial') {
+            return <CreateBasicShaderDialog />;
+          }
+          if (parsedKind.data === 'standardShaderMaterial') {
+            return <CreateStandardShaderDialog />;
+          }
+          if (parsedKind.data === 'physicalShaderMaterial') {
+            return <CreatePhysicalShaderDialog />;
           }
 
           if (parsedKind.data === 'prefab' || parsedKind.data === 'scene') {

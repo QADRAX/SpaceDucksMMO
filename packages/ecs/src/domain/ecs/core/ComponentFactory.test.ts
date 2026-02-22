@@ -1,7 +1,7 @@
 import { Entity } from "./Entity";
 import { DefaultEcsComponentFactory } from "./ComponentFactory";
 import { BoxGeometryComponent } from "../components/geometry/BoxGeometryComponent";
-import { ShaderMaterialComponent } from "../components/material/ShaderMaterialComponent";
+import { BasicShaderMaterialComponent } from "../components/material/shaders/BasicShaderMaterialComponent";
 import { SphereColliderComponent } from "../components/physics/SphereColliderComponent";
 import { RigidBodyComponent } from "../components/physics/RigidBodyComponent";
 
@@ -25,9 +25,11 @@ describe("DefaultEcsComponentFactory", () => {
     e.addComponent(new BoxGeometryComponent({ width: 1, height: 1, depth: 1 }) as any);
     const afterGeom = factory.listCreatableComponents(e).map((d) => d.type);
     expect(afterGeom).toContain("standardMaterial");
-
+    expect(
+      factory.create("basicShaderMaterial")
+    ).toBeInstanceOf(BasicShaderMaterialComponent);
     // add shaderMaterial -- material should now be excluded due to conflict
-    e.addComponent(new ShaderMaterialComponent({ shaderId: "test-shader", uniforms: {} }));
+    e.addComponent(new BasicShaderMaterialComponent({ shaderId: "test-shader", uniforms: {} }));
     const afterShader = factory.listCreatableComponents(e).map((d) => d.type);
     expect(afterShader).not.toContain("standardMaterial");
     expect(afterShader).not.toContain("basicMaterial");

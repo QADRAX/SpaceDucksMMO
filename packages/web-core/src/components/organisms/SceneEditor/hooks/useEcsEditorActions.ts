@@ -31,7 +31,7 @@ export function useEcsEditorActions(args: {
     return scene.getEntitiesById().get(id) ?? null;
   };
 
-  const mutateSelectedEntity = useStableEvent((fn: (scene: EcsEditorScene, ent: Entity) => void, reason: string) => {
+  const mutateSelectedEntity = useStableEvent((fn: (scene: EcsEditorScene, ent: Entity) => void, reason: string, live?: boolean) => {
     if (args.modeRef.current !== 'edit') return;
     const scene = args.editSceneRef.current;
     const selectedId = args.selectedIdRef.current;
@@ -48,6 +48,7 @@ export function useEcsEditorActions(args: {
       return;
     }
 
+    if (live) return;
     args.commitFromCurrentEditScene(reason);
   });
 
@@ -299,7 +300,7 @@ export function useEcsEditorActions(args: {
     }, `transform-pos-${axis}`);
   });
 
-  const onUpdateSelectedComponentData = useStableEvent((type: string, data: Record<string, unknown>) => {
+  const onUpdateSelectedComponentData = useStableEvent((type: string, data: Record<string, unknown> & { live?: boolean }) => {
     mutateSelectedEntity((_scene, ent) => {
       const comp = ent.getComponent(type as ComponentType) as any;
       if (!comp) throw new Error(`Component '${type}' not found`);
@@ -307,7 +308,9 @@ export function useEcsEditorActions(args: {
       const fields = (comp.metadata?.inspector?.fields ?? []) as Array<{ key: string; set?: (c: any, v: any) => void }>;
       const fieldByKey = new Map(fields.map((f) => [f.key, f] as const));
 
-      for (const [k, v] of Object.entries(data)) {
+      const { live, ...actualData } = data;
+
+      for (const [k, v] of Object.entries(actualData)) {
         const f = fieldByKey.get(k);
         if (f?.set) {
           f.set(comp, v);
@@ -315,6 +318,10 @@ export function useEcsEditorActions(args: {
           (comp as any)[k] = v;
         }
       }
+
+      // If it's a live update (e.g. dragging a slider), we don't commit to history yet.
+      // EcsEditorScene uses a proxy or change detection to update the underlying Three.js objects.
+      if (live) return;
     }, `edit-component:${type}`);
   });
 

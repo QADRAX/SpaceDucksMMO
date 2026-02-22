@@ -5,6 +5,10 @@ import * as React from 'react';
 import type { Entity } from '@duckengine/ecs';
 
 import { NumberPushInput } from '@/components/molecules/NumberPushInput';
+import {
+  getRememberedStep,
+  setRememberedStep
+} from '../organisms/SceneEditor/ui/inspectorUiMemory';
 
 function toDegrees(rad: number): number {
   return (rad * 180) / Math.PI;
@@ -31,12 +35,22 @@ type Props = {
 
 export function TransformEditor({ entity, disabled, onCommit }: Props) {
   const transform = entity.transform;
+  const selectionKey = entity.id;
 
   const [pos, setPos] = React.useState<Vec3>({ x: 0, y: 0, z: 0 });
   const [rotDeg, setRotDeg] = React.useState<Vec3>({ x: 0, y: 0, z: 0 });
   const [scale, setScale] = React.useState<Vec3>({ x: 1, y: 1, z: 1 });
 
   const isInteractingRef = React.useRef(false);
+
+  // Helper for step sizes
+  const getStep = (field: string, defaultValue: number) => {
+    return getRememberedStep(selectionKey, field) ?? defaultValue;
+  };
+
+  const setStep = (field: string, step: number) => {
+    setRememberedStep(selectionKey, field, step);
+  };
 
   const commit = React.useCallback(
     (reason: string) => {
@@ -146,9 +160,6 @@ export function TransformEditor({ entity, disabled, onCommit }: Props) {
     <div
       className="space-y-3"
       onPointerDown={() => beginInteraction()}
-      onPointerUp={() => {
-        // noop: individual controls decide when to commit
-      }}
     >
       <div className="space-y-2">
         <div className="font-bold">Transform</div>
@@ -160,10 +171,12 @@ export function TransformEditor({ entity, disabled, onCommit }: Props) {
               key={`pos-${axis}`}
               label={axis.toUpperCase()}
               value={pos[axis]}
-              step={0.1}
+              step={getStep(`transform.pos.${axis}`, 0.1)}
+              unit="m"
               disabled={disabled}
               onChange={(n) => setPosAxis(axis, n)}
               onCommit={() => endInteraction(`transform-pos-${axis}`)}
+              onStepChange={(s) => setStep(`transform.pos.${axis}`, s)}
             />
           ))}
         </div>
@@ -175,10 +188,12 @@ export function TransformEditor({ entity, disabled, onCommit }: Props) {
               key={`rot-${axis}`}
               label={axis.toUpperCase()}
               value={rotDeg[axis]}
-              step={1}
+              step={getStep(`transform.rot.${axis}`, 1)}
+              unit="deg"
               disabled={disabled}
               onChange={(n) => setRotAxisDeg(axis, n)}
               onCommit={() => endInteraction(`transform-rot-${axis}`)}
+              onStepChange={(s) => setStep(`transform.rot.${axis}`, s)}
             />
           ))}
         </div>
@@ -190,10 +205,11 @@ export function TransformEditor({ entity, disabled, onCommit }: Props) {
               key={`scale-${axis}`}
               label={axis.toUpperCase()}
               value={scale[axis]}
-              step={0.01}
+              step={getStep(`transform.scale.${axis}`, 0.01)}
               disabled={disabled}
               onChange={(n) => setScaleAxis(axis, n)}
               onCommit={() => endInteraction(`transform-scale-${axis}`)}
+              onStepChange={(s) => setStep(`transform.scale.${axis}`, s)}
             />
           ))}
         </div>

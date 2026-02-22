@@ -5,22 +5,23 @@ export interface InspectorFieldConfig<TComponent = any, TValue = unknown> {
   set?(component: TComponent, value: TValue): void;
   // UI metadata
   type?:
-    | "number"
-    | "boolean"
-    | "string"
-    | "color"
-    | "texture"
-    | "enum"
-    | "vector"
-    | "object"
-    | "reference"
-    | "uniforms";
+  | "number"
+  | "boolean"
+  | "string"
+  | "color"
+  | "texture"
+  | "enum"
+  | "vector"
+  | "object"
+  | "reference"
+  | "uniforms";
   description?: string;
   nullable?: boolean;
   default?: unknown;
   min?: number;
   max?: number;
   step?: number;
+  unit?: string;
   options?: Array<{ value: string | number; label: string; icon?: any }>;
 }
 

@@ -18,7 +18,7 @@ import { PreviewSettingVector3 } from '@/components/molecules/preview-settings/P
 import { PreviewSettingCheckbox } from '@/components/molecules/preview-settings/PreviewSettingCheckbox';
 import { PreviewSettingSelect } from '@/components/molecules/preview-settings/PreviewSettingSelect';
 
-import { CustomShaderPreviewScene } from './scenes/CustomShaderPreviewScene';
+import { StandardShaderPreviewScene } from './scenes/StandardShaderPreviewScene';
 import { InlineSettingsService } from './utils/InlineSettingsService';
 import { clampNumber } from './utils/previewUtils';
 import type { MaterialPreviewSettings, GeometryType } from './scenes/MaterialPreviewScene';
@@ -34,6 +34,7 @@ type Props = {
     resourceKey: string;
     shaderSource?: string;
     uniforms?: Record<string, any>;
+    componentData?: Record<string, any>;
     className?: string;
     onError?: (error: Error | null) => void;
 };
@@ -113,10 +114,10 @@ function safeParseSettings(raw: unknown): MaterialPreviewSettings | null {
     };
 }
 
-export function CustomShaderPreview({ resourceKey, shaderSource, uniforms, className, onError }: Props) {
+export function StandardShaderPreview({ resourceKey, shaderSource, uniforms, componentData, className, onError }: Props) {
     const [previewSettings, setPreviewSettings] = usePreviewSettings(
         resourceKey,
-        'webcore.preview.customShader',
+        'webcore.preview.standardShader',
         defaultPreviewSettings,
         safeParseSettings
     );
@@ -134,9 +135,7 @@ export function CustomShaderPreview({ resourceKey, shaderSource, uniforms, class
         }
 
         if (shaderUrlRef.current) URL.revokeObjectURL(shaderUrlRef.current);
-
         shaderUrlRef.current = URL.createObjectURL(new Blob([shaderSource], { type: 'text/plain' }));
-
         setShaderId(`dev-${Date.now()}`);
     }, [shaderSource, resourceKey]);
 
@@ -153,15 +152,14 @@ export function CustomShaderPreview({ resourceKey, shaderSource, uniforms, class
     const resourceResolver: EngineResourceResolver = React.useMemo(() => {
         return {
             async resolve(key: string, version) {
-                // If we have a shader source and the key matches one of our dev keys or the original resourceKey
                 if ((shaderSource !== undefined && key === resourceKey) || key.startsWith('dev-')) {
                     const ext = isWgsl ? '.wgsl' : '.glsl';
                     return {
                         key,
                         resourceId: key,
                         version: 1,
-                        componentType: 'customShader',
-                        componentData: {},
+                        componentType: 'standardShaderMaterial',
+                        componentData: componentData ?? {},
                         files: {
                             shader: { url: shaderUrlRef.current, fileName: `shader${ext}` }
                         }
@@ -171,17 +169,12 @@ export function CustomShaderPreview({ resourceKey, shaderSource, uniforms, class
                 throw new Error('No base resolver');
             }
         };
-    }, [baseResolver, isWgsl, resourceKey, shaderSource]);
-
-    // Handle Three.js compilation errors that will be printed to console by intercepting console.error?
-    // In ShaderMaterialFactory, if it fails, it throws an error in fetch, but if compilation fails, Three.js logs to console. error.
-    // Three.js 160+ throws errors from WebGLPrograms. To catch it gracefully without intercepting console, 
-    // it's tricky because the renderer compiles asynchronously or synchronously and logs it.
-    // Setting onError with a generic notice if the engine throws is what we can do.
+    }, [baseResolver, isWgsl, resourceKey, shaderSource, componentData]);
 
     const scene = React.useMemo(() => {
         const settings = new InlineSettingsService();
-        return new CustomShaderPreviewScene(settings, shaderId, previewSettings, uniforms);
+        return new StandardShaderPreviewScene(settings, shaderId, previewSettings, uniforms, componentData);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     React.useEffect(() => {
@@ -195,6 +188,10 @@ export function CustomShaderPreview({ resourceKey, shaderSource, uniforms, class
     React.useEffect(() => {
         if (uniforms) scene.setUniforms(uniforms);
     }, [uniforms, scene]);
+
+    React.useEffect(() => {
+        if (componentData) scene.setComponentData(componentData);
+    }, [componentData, scene]);
 
     React.useEffect(() => {
         if (previewSettings.geometry.type !== 'customMesh') return;
@@ -329,4 +326,4 @@ export function CustomShaderPreview({ resourceKey, shaderSource, uniforms, class
     );
 }
 
-export default CustomShaderPreview;
+export default StandardShaderPreview;

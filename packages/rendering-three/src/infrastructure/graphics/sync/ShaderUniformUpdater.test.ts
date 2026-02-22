@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import { ShaderUniformUpdater } from './ShaderUniformUpdater';
-import { Entity, ShaderMaterialComponent, SphereGeometryComponent } from '@duckengine/ecs';
+import { Entity, BasicShaderMaterialComponent, SphereGeometryComponent } from '@duckengine/ecs';
 import type { RenderComponent } from './RenderObjectRegistry';
 
 describe('ShaderUniformUpdater', () => {
   let updater: ShaderUniformUpdater;
   let entity: Entity;
-  let shaderMatComp: ShaderMaterialComponent;
+  let shaderMatComp: BasicShaderMaterialComponent;
   let renderComponent: RenderComponent;
   let mockMesh: THREE.Mesh;
   let mockMaterial: THREE.Material;
@@ -23,7 +23,7 @@ describe('ShaderUniformUpdater', () => {
     entity.addComponent(geomComp as any);
 
     // Create shader material component
-    shaderMatComp = new ShaderMaterialComponent({
+    shaderMatComp = new BasicShaderMaterialComponent({
       shaderId: 'custom',
       uniforms: {},
     });
@@ -49,7 +49,7 @@ describe('ShaderUniformUpdater', () => {
 
   describe('update', () => {
     it('should do nothing if entity has no shader material component', () => {
-      entity.removeComponent('shaderMaterial');
+      entity.removeComponent('basicShaderMaterial');
 
       const initialTime = mockUniformNodes.time.value;
       updater.update(0.016, entity, renderComponent);

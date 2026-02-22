@@ -8,7 +8,9 @@ import {
   ResourceKindSchema,
   ResourceZipManifestSchema,
   ResourceVersionZipManifestSchema,
+  RESOURCE_KINDS,
   MATERIAL_RESOURCE_KINDS,
+  CUSTOM_SHADER_RESOURCE_KINDS,
 } from '@/lib/types';
 import { parseZipJson, readZipBasenameMap } from '@/lib/zip';
 
@@ -26,7 +28,7 @@ ResourceUploadRegistry.register(MATERIAL_RESOURCE_KINDS as unknown as string[], 
 ResourceUploadRegistry.register(['customMesh', 'fullMesh'], new MeshUploadHandler());
 ResourceUploadRegistry.register(['scene', 'prefab'], new SceneUploadHandler());
 ResourceUploadRegistry.register('skybox', new SkyboxUploadHandler());
-ResourceUploadRegistry.register('customShader', new CustomShaderUploadHandler());
+ResourceUploadRegistry.register(CUSTOM_SHADER_RESOURCE_KINDS as unknown as string[], new CustomShaderUploadHandler());
 
 function stripExt(fileName: string): string {
   return path.posix.basename(fileName, path.posix.extname(fileName));

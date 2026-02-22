@@ -43,18 +43,20 @@ export function ThreePreview({
     const rafRef = React.useRef<number | null>(null);
     const resizeObserverRef = React.useRef<ResizeObserver | null>(null);
     const { notify } = useNotifications();
+    const onRenderRef = React.useRef(onRender);
+    const notifyRef = React.useRef(notify);
+    onRenderRef.current = onRender;
+    notifyRef.current = notify;
 
-    // Handle initialization and lifecycle
+    // Handle initialization
     React.useEffect(() => {
         const container = containerRef.current;
         if (!container) return;
 
-        // Cleanup existing canvases (idempotency)
+        // Cleanup existing canvases
         try {
             container.querySelectorAll('canvas').forEach((c) => c.remove());
-        } catch {
-            // ignore
-        }
+        } catch { }
 
         let renderer: ThreeRenderer | undefined;
         let isDisposed = false;
@@ -70,7 +72,7 @@ export function ThreePreview({
                     return;
                 }
 
-                // Setup resolver
+                // Initial resolver and scene
                 if (resourceResolver) {
                     renderer.setEngineResourceResolver(resourceResolver);
                 } else {
@@ -95,37 +97,33 @@ export function ThreePreview({
             } catch (e) {
                 const msg = e instanceof Error ? e.message : 'Failed to initialize preview';
                 console.error('[ThreePreview] init failed', e);
-                notify(msg, 'error');
+                notifyRef.current(msg, 'error');
             }
         };
 
-        // Animation Loop
         const startLoop = (renderer: ThreeRenderer) => {
             let last = performance.now();
             const tick = (t: number) => {
                 if (isDisposed) return;
-
                 const dtMs = t - last;
                 last = t;
 
                 try {
+                    const currentScene = renderer.getActiveScene();
                     const isLoading = renderer.isLoading();
 
-                    if (scene && !isLoading) {
-                        scene.update(dtMs);
+                    if (currentScene && !isLoading) {
+                        currentScene.update(dtMs);
                     }
 
                     renderer.renderFrame();
 
-                    // Standard input processing
                     try {
                         const input = getInputServices();
                         if (input?.mouse?.beginFrame) input.mouse.beginFrame();
-                    } catch {
-                        // ignore
-                    }
+                    } catch { }
 
-                    onRender?.(dtMs);
+                    onRenderRef.current?.(dtMs);
 
                 } catch (e) {
                     console.error('[ThreePreview] render failed', e);
@@ -136,49 +134,55 @@ export function ThreePreview({
 
                 rafRef.current = requestAnimationFrame(tick);
             };
-
             rafRef.current = requestAnimationFrame(tick);
         };
 
         initRenderer();
 
-        // Resize Observer
         try {
             const ro = new ResizeObserver(() => {
-                try {
-                    internalRendererRef.current?.handleResize();
-                } catch {
-                    // ignore
-                }
+                try { internalRendererRef.current?.handleResize(); } catch { }
             });
             ro.observe(container);
             resizeObserverRef.current = ro;
-        } catch {
-            // ignore
-        }
+        } catch { }
 
         return () => {
             isDisposed = true;
             if (rafRef.current) cancelAnimationFrame(rafRef.current);
             rafRef.current = null;
-
-            try {
-                resizeObserverRef.current?.disconnect();
-            } catch { }
+            try { resizeObserverRef.current?.disconnect(); } catch { }
             resizeObserverRef.current = null;
-
             if (renderer) {
-                try {
-                    renderer.dispose();
-                } catch {
+                try { renderer.dispose(); } catch {
                     try { renderer.stop(); } catch { }
                 }
             }
-
             internalRendererRef.current = null;
             if (externalRendererRef) externalRendererRef.current = null;
         };
-    }, [scene, resourceResolver, externalRendererRef, notify, onRender]);
+    }, []); // Run once on mount
+
+    // Handle resourceResolver updates
+    React.useEffect(() => {
+        if (internalRendererRef.current && resourceResolver) {
+            internalRendererRef.current.setEngineResourceResolver(resourceResolver);
+        }
+    }, [resourceResolver]);
+
+    // Handle scene updates
+    React.useEffect(() => {
+        if (internalRendererRef.current && scene) {
+            internalRendererRef.current.setScene(scene);
+        }
+    }, [scene]);
+
+    // Handle external ref sync
+    React.useEffect(() => {
+        if (externalRendererRef && internalRendererRef.current) {
+            externalRendererRef.current = internalRendererRef.current;
+        }
+    }, [externalRendererRef]);
 
     return (
         <div className={cn('relative h-full w-full min-h-0', className)}>

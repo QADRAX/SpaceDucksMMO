@@ -10,6 +10,7 @@ import {
     buildInspectorValue,
     diffInspectorValue,
 } from './inspectorUtils';
+import { CUSTOM_SHADER_RESOURCE_KINDS } from '@duckengine/ecs';
 import {
     MATERIAL_RESOURCE_REF_KEY,
     isMaterialComponentType,
@@ -103,11 +104,11 @@ export function ComponentListItem({
                     />
                     <div className="text-xs text-muted-foreground">Uses the active version of the selected resource.</div>
                 </div>
-            ) : String(c.type) === 'shaderMaterial' ? (
+            ) : CUSTOM_SHADER_RESOURCE_KINDS.includes(String(c.type) as any) ? (
                 <div className="mt-3 space-y-2">
                     <Label>Shader Resource</Label>
                     <ResourceKeyDropdown
-                        kinds={['customShader']}
+                        kinds={[String(c.type)]}
                         value={typeof c?.shaderId === 'string' && c.shaderId.trim() ? c.shaderId : null}
                         disabled={editor.mode !== 'edit'}
                         placeholder="Select custom shader…"
@@ -119,12 +120,18 @@ export function ComponentListItem({
                     {fields.length ? (
                         <div className="mt-3">
                             <EcsInspectorFieldsForm
-                                key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}:shaderMaterial`}
+                                key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}:${String(c.type)}`}
                                 fields={fields.filter((f) => String((f as any)?.key) !== 'shaderId') as any}
                                 value={value}
+                                selectionKey={selectionKey}
                                 onChange={(next) => {
                                     const delta = diffInspectorValue(value, next);
-                                    if (Object.keys(delta).length) editor.onUpdateSelectedComponentData(c.type, delta);
+                                    if (Object.keys(delta).length) {
+                                        editor.onUpdateSelectedComponentData(c.type, { ...delta, live: true });
+                                    }
+                                }}
+                                onCommit={() => {
+                                    editor.onUpdateSelectedComponentData(c.type, { live: false });
                                 }}
                                 disabled={editor.mode !== 'edit'}
                                 referenceOptions={referenceOptions}
@@ -151,9 +158,15 @@ export function ComponentListItem({
                                 key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}:customGeometry`}
                                 fields={fields.filter((f) => String((f as any)?.key) !== 'key') as any}
                                 value={value}
+                                selectionKey={selectionKey}
                                 onChange={(next) => {
                                     const delta = diffInspectorValue(value, next);
-                                    if (Object.keys(delta).length) editor.onUpdateSelectedComponentData(c.type, delta);
+                                    if (Object.keys(delta).length) {
+                                        editor.onUpdateSelectedComponentData(c.type, { ...delta, live: true });
+                                    }
+                                }}
+                                onCommit={() => {
+                                    editor.onUpdateSelectedComponentData(c.type, { live: false });
                                 }}
                                 disabled={editor.mode !== 'edit'}
                                 referenceOptions={referenceOptions}
@@ -180,9 +193,15 @@ export function ComponentListItem({
                                 key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}:skybox`}
                                 fields={fields.filter((f) => String((f as any)?.key) !== 'key') as any}
                                 value={value}
+                                selectionKey={selectionKey}
                                 onChange={(next) => {
                                     const delta = diffInspectorValue(value, next);
-                                    if (Object.keys(delta).length) editor.onUpdateSelectedComponentData(c.type, delta);
+                                    if (Object.keys(delta).length) {
+                                        editor.onUpdateSelectedComponentData(c.type, { ...delta, live: true });
+                                    }
+                                }}
+                                onCommit={() => {
+                                    editor.onUpdateSelectedComponentData(c.type, { live: false });
                                 }}
                                 disabled={editor.mode !== 'edit'}
                                 referenceOptions={referenceOptions}
@@ -206,9 +225,15 @@ export function ComponentListItem({
                         key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}`}
                         fields={fields as any}
                         value={value}
+                        selectionKey={selectionKey}
                         onChange={(next) => {
                             const delta = diffInspectorValue(value, next);
-                            if (Object.keys(delta).length) editor.onUpdateSelectedComponentData(c.type, delta);
+                            if (Object.keys(delta).length) {
+                                editor.onUpdateSelectedComponentData(c.type, { ...delta, live: true });
+                            }
+                        }}
+                        onCommit={() => {
+                            editor.onUpdateSelectedComponentData(c.type, { live: false });
                         }}
                         disabled={editor.mode !== 'edit'}
                         referenceOptions={referenceOptions}

@@ -13,7 +13,9 @@ import { StandardMaterialComponent } from "../components/material/StandardMateri
 import { BasicMaterialComponent } from "../components/material/BasicMaterialComponent";
 import { PhongMaterialComponent } from "../components/material/PhongMaterialComponent";
 import { LambertMaterialComponent } from "../components/material/LambertMaterialComponent";
-import { ShaderMaterialComponent } from "../components/material/ShaderMaterialComponent";
+import { BasicShaderMaterialComponent } from "../components/material/shaders/BasicShaderMaterialComponent";
+import { StandardShaderMaterialComponent } from "../components/material/shaders/StandardShaderMaterialComponent";
+import { PhysicalShaderMaterialComponent } from "../components/material/shaders/PhysicalShaderMaterialComponent";
 import { TextureTilingComponent } from "../components/material/TextureTilingComponent";
 import { OrbitComponent } from "../components/OrbitComponent";
 import { CameraViewComponent } from "../components/CameraViewComponent";
@@ -116,7 +118,7 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       has("phongMaterial") ||
       has("lambertMaterial");
 
-    if (hasAnyGeometry && !hasAnyMaterial && !has("shaderMaterial")) {
+    if (hasAnyGeometry && !hasAnyMaterial && !has("basicShaderMaterial") && !has("standardShaderMaterial") && !has("physicalShaderMaterial")) {
       defs.push(getComponentDef("standardMaterial"));
       defs.push(getComponentDef("basicMaterial"));
       defs.push(getComponentDef("phongMaterial"));
@@ -128,9 +130,10 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
       defs.push(getComponentDef("textureTiling"));
     }
 
-    // shaderMaterial requires any geometry and conflicts with any concrete material
     if (hasAnyGeometry && !hasAnyMaterial) {
-      defs.push(getComponentDef("shaderMaterial"));
+      defs.push(getComponentDef("basicShaderMaterial"));
+      defs.push(getComponentDef("standardShaderMaterial"));
+      defs.push(getComponentDef("physicalShaderMaterial"));
     }
 
     // orbit (unique)
@@ -241,11 +244,12 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
         return new PhongMaterialComponent({ color: 0xffffff });
       case "lambertMaterial":
         return new LambertMaterialComponent({ color: 0xffffff });
-      case "shaderMaterial":
-        return new ShaderMaterialComponent({
-          shaderId: "default-shader",
-          uniforms: {},
-        });
+      case "basicShaderMaterial":
+        return new BasicShaderMaterialComponent({ shaderId: "default-shader", uniforms: {} });
+      case "standardShaderMaterial":
+        return new StandardShaderMaterialComponent({ shaderId: "default-shader", uniforms: {} });
+      case "physicalShaderMaterial":
+        return new PhysicalShaderMaterialComponent({ shaderId: "default-shader", uniforms: {} });
       case "textureTiling":
         return new TextureTilingComponent({
           repeatU: 1,

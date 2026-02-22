@@ -3,13 +3,13 @@ import * as THREE from 'three/webgpu';
 // @ts-ignore
 import { glslFn, wgslFn, uv, time, uniform, texture, color, float, normalLocal, normalView, positionLocal, positionView } from 'three/tsl';
 import type { TextureCache } from './TextureCache';
-import type { ShaderMaterialComponent } from '@duckengine/ecs';
+import type { AnyCustomShaderComponent, StandardShaderMaterialComponent, PhysicalShaderMaterialComponent } from '@duckengine/ecs';
 import type { EngineResourceResolver, EngineResolvedResource } from '../../resources/EngineResourceResolver';
 
 const SHADER_CACHE = new Map<string, Promise<string>>();
 
 export class ShaderMaterialFactory {
-  static build(comp: ShaderMaterialComponent, textureCache: TextureCache): THREE.MeshBasicNodeMaterial {
+  static build(comp: AnyCustomShaderComponent, textureCache: TextureCache): THREE.MeshBasicNodeMaterial | THREE.MeshStandardNodeMaterial | THREE.MeshPhysicalNodeMaterial {
     const customUniformNodes: Record<string, any> = {};
 
     for (const [id, u] of Object.entries(comp.uniforms)) {
@@ -39,11 +39,37 @@ export class ShaderMaterialFactory {
         ? THREE.AdditiveBlending
         : THREE.NormalBlending;
 
-    const material = new THREE.MeshBasicNodeMaterial({
-      transparent: comp.transparent,
-      depthWrite: comp.depthWrite,
-      blending,
-    });
+    let material: any;
+
+    if (comp.type === 'physicalShaderMaterial') {
+      const pComp = comp as PhysicalShaderMaterialComponent;
+      material = new THREE.MeshPhysicalNodeMaterial({
+        transparent: pComp.transparent,
+        depthWrite: pComp.depthWrite,
+        blending,
+        roughness: pComp.roughness,
+        metalness: pComp.metalness,
+        clearcoat: pComp.clearcoat,
+        transmission: pComp.transmission,
+        ior: pComp.ior,
+        thickness: pComp.thickness,
+      });
+    } else if (comp.type === 'standardShaderMaterial') {
+      const sComp = comp as StandardShaderMaterialComponent;
+      material = new THREE.MeshStandardNodeMaterial({
+        transparent: sComp.transparent,
+        depthWrite: sComp.depthWrite,
+        blending,
+        roughness: sComp.roughness,
+        metalness: sComp.metalness,
+      });
+    } else {
+      material = new THREE.MeshBasicNodeMaterial({
+        transparent: comp.transparent,
+        depthWrite: comp.depthWrite,
+        blending,
+      });
+    }
 
     // Default to magenta until resolved
     material.colorNode = color(1.0, 0.0, 1.0);
@@ -57,8 +83,8 @@ export class ShaderMaterialFactory {
   }
 
   static async resolveAndApplyShader(
-    material: THREE.MeshBasicNodeMaterial,
-    comp: ShaderMaterialComponent,
+    material: THREE.Material & { colorNode?: any, userData: any, needsUpdate: boolean },
+    comp: AnyCustomShaderComponent,
     resolver: EngineResourceResolver
   ): Promise<void> {
     if (!comp.shaderId) return;
@@ -147,42 +173,52 @@ export class ShaderMaterialFactory {
 
       // Find an entry point. TSL Fn returns an object of functions (via Proxy usually).
       // Favor 'fragmentMain' or 'color' (standard TSL names), then the first non-colliding key.
-      let entryPoint: any = null;
-      let entryName: string = '';
-
-      if (typeof fn === 'function') {
-        entryPoint = fn;
-        entryName = 'anonymous_fn';
-      } else if (fn && typeof fn === 'object') {
+      if (fn && typeof fn === 'object') {
         const keys = Object.keys(fn);
         console.log(`[ShaderMaterialFactory] Discovering TSL functions for ${comp.shaderId}:`, keys);
 
-        // Preference order
-        const candidates = ['fragmentMain', 'color', 'main'];
-        for (const cand of candidates) {
-          if (typeof fn[cand] === 'function') {
-            entryPoint = fn[cand];
-            entryName = cand;
-            break;
+        const nodeMapping: Record<string, string> = {
+          color: 'colorNode',
+          fragmentMain: 'colorNode',
+          main: 'colorNode',
+          normal: 'normalNode',
+          roughness: 'roughnessNode',
+          metalness: 'metalnessNode',
+          emissive: 'emissiveNode',
+          clearcoat: 'clearcoatNode',
+          thickness: 'thicknessNode',
+          ior: 'iorNode',
+          transmission: 'transmissionNode'
+        };
+
+        let appliedAny = false;
+        for (const [fnName, nodeName] of Object.entries(nodeMapping)) {
+          if (typeof fn[fnName] === 'function') {
+            console.log(`[ShaderMaterialFactory] Applying '${fnName}' to material.${nodeName}`);
+            material[nodeName] = fn[fnName](callArgs);
+            appliedAny = true;
           }
         }
 
-        if (!entryPoint && keys.length > 0) {
-          // Fallback: try to find the first non-standard property
-          entryName = keys[0];
-          entryPoint = fn[entryName];
+        if (!appliedAny && keys.length > 0) {
+          // Fallback: try to find the first non-standard property for color
+          const entryName = keys[0];
+          console.log(`[ShaderMaterialFactory] Fallback: Applying '${entryName}' to colorNode`);
+          material.colorNode = fn[entryName](callArgs);
+          appliedAny = true;
         }
-      }
 
-      if (typeof entryPoint === 'function') {
-        if (entryName === 'main') {
-          console.warn(`[ShaderMaterialFactory] Shader function in ${comp.shaderId} is named 'main'. This often causes collisions in WebGPU. Consider renaming it to something unique (e.g. 'plasma').`);
+        if (appliedAny) {
+          material.needsUpdate = true;
+        } else {
+          console.warn(`[ShaderMaterialFactory] No valid shader functions found in ${comp.shaderId}. Keys:`, keys);
         }
-        console.log(`[ShaderMaterialFactory] Applying entry point '${entryName}' for ${comp.shaderId}`);
-        material.colorNode = entryPoint(callArgs);
+      } else if (typeof fn === 'function') {
+        console.log(`[ShaderMaterialFactory] Applying anonymous function to colorNode`);
+        material.colorNode = fn(callArgs);
         material.needsUpdate = true;
       } else {
-        console.warn(`[ShaderMaterialFactory] No valid shader function found in ${comp.shaderId}. Type: ${typeof fn}. Keys:`, fn ? Object.keys(fn) : 'N/A');
+        console.warn(`[ShaderMaterialFactory] No valid shader function found in ${comp.shaderId}. Type: ${typeof fn}`);
       }
     } catch (err) {
       console.warn(`[ShaderMaterialFactory] Error resolving shader ${comp.shaderId}:`, err);

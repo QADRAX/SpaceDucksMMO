@@ -1,11 +1,13 @@
 // @ts-ignore
 import * as THREE from 'three/webgpu';
-import type { Entity, ShaderMaterialComponent } from '@duckengine/ecs';
+import type { Entity, AnyCustomShaderComponent } from '@duckengine/ecs';
 import type { RenderComponent } from './RenderObjectRegistry';
 
 export class ShaderUniformUpdater {
   update(dt: number, entity: Entity, rc: RenderComponent): void {
-    const shaderMatComp = entity.getComponent<ShaderMaterialComponent>('shaderMaterial');
+    const shaderMatComp = entity.getComponent<AnyCustomShaderComponent>('basicShaderMaterial') ||
+      entity.getComponent<AnyCustomShaderComponent>('standardShaderMaterial') ||
+      entity.getComponent<AnyCustomShaderComponent>('physicalShaderMaterial');
     if (!shaderMatComp || !(rc.object3D as any).isMesh) return;
 
     const mesh = rc.object3D as any;
@@ -16,6 +18,22 @@ export class ShaderUniformUpdater {
     const uniformNodes = material.userData.customUniformNodes as Record<string, any>;
     if (!uniformNodes) return;
 
+    // 1. Sync PBR Properties (Roughness, Metalness, etc.)
+    if (shaderMatComp.type === 'physicalShaderMaterial') {
+      const p = shaderMatComp as any;
+      material.roughness = p.roughness;
+      material.metalness = p.metalness;
+      material.clearcoat = p.clearcoat;
+      material.transmission = p.transmission;
+      material.ior = p.ior;
+      material.thickness = p.thickness;
+    } else if (shaderMatComp.type === 'standardShaderMaterial') {
+      const s = shaderMatComp as any;
+      material.roughness = s.roughness;
+      material.metalness = s.metalness;
+    }
+
+    // 2. Sync Custom Uniforms
     // Update time uniform
     if (uniformNodes['time']) {
       uniformNodes['time'].value += dt;
@@ -23,15 +41,15 @@ export class ShaderUniformUpdater {
 
     // Sync component uniforms to material uniforms
     for (const [key, uni] of Object.entries(shaderMatComp.uniforms)) {
-      if (uniformNodes[key] && uni.type !== 'texture') {
+      const uniAny = uni as any;
+      if (uniformNodes[key] && uniAny.type !== 'texture') {
         const node = uniformNodes[key];
         // Use .set() for color objects to avoid replacing the object identity
-        if (uni.type === 'color' && node.value && node.value.isColor) {
-          node.value.set(uni.value);
+        if (uniAny.type === 'color' && node.value && node.value.isColor) {
+          node.value.set(uniAny.value);
         } else {
-          if (node.value !== uni.value) {
-            console.log(`[ShaderUniformUpdater] Syncing ${key}: ${node.value} -> ${uni.value}`);
-            node.value = uni.value;
+          if (node.value !== uniAny.value) {
+            node.value = uniAny.value;
           }
         }
       }

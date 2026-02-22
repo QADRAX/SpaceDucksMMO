@@ -4,19 +4,19 @@ export class CustomShaderUploadHandler implements ResourceUploadHandler {
     validateComponentData(kind: string, rawComponentData: unknown): ValidationResult {
         const componentDataCoerced = coerceComponentData(rawComponentData);
         return {
-            componentType: 'customShader',
+            componentType: kind,
             componentData: componentDataCoerced,
         };
     }
 
     validateProfile(kind: string, slotFiles: SlotFile[]): Record<string, unknown> {
         if (slotFiles.length !== 1) {
-            throw new Error("customShader requires exactly one file binding");
+            throw new Error(`${kind} requires exactly one file binding`);
         }
 
         const filename = slotFiles[0].fileName.toLowerCase();
         if (!filename.endsWith('.glsl') && !filename.endsWith('.wgsl') && !filename.endsWith('.tsl')) {
-            throw new Error("customShader file must be .glsl, .wgsl, or .tsl");
+            throw new Error(`${kind} file must be .glsl, .wgsl, or .tsl`);
         }
 
         return {};

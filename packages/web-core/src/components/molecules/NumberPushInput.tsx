@@ -9,9 +9,14 @@ function safeNumber(n: unknown, fallback: number): number {
   return typeof n === 'number' && Number.isFinite(n) ? n : fallback;
 }
 
+const STEPS = [0.001, 0.01, 0.1, 1, 10];
+
 type Props = {
   value: number | undefined;
   step: number;
+  min?: number;
+  max?: number;
+  unit?: string;
   disabled?: boolean;
   /** Optional label shown at the left (e.g. X/Y/Z). */
   label?: React.ReactNode;
@@ -19,209 +24,300 @@ type Props = {
   /** Called when the user clears the input (blank). Useful for nullable fields. */
   onClear?: () => void;
   /** Called once at the end of an interaction so it becomes undo/redo-able. */
-  onCommit: () => void;
+  onCommit?: () => void; // Made optional as it has a default
+  /** Called when the step size is changed via mouse wheel. */
+  onStepChange?: (nextStep: number) => void;
 };
 
-export function NumberPushInput({ value, step, disabled, label, onChange, onClear, onCommit }: Props) {
-  const valueRef = React.useRef(value);
-  React.useEffect(() => {
-    valueRef.current = value;
-  }, [value]);
+import { MagnitudeGauge } from "../atoms/MagnitudeGauge";
 
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
-  const focusedRef = React.useRef(false);
-
+export function NumberPushInput({
+  label,
+  value,
+  min,
+  max,
+  step = 1,
+  onChange,
+  onCommit = () => { },
+  onClear,
+  onStepChange,
+  unit,
+  disabled
+}: Props) {
+  // Internal text state for the input field
   const [text, setText] = React.useState<string>(() => {
     return typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
   });
 
+  // Local step state for immediate feedback and reliable scrolling
+  const [localStep, setLocalStep] = React.useState(step);
   React.useEffect(() => {
-    // Keep display in sync with external value changes, but don't clobber
-    // the user's in-progress typing while the input is focused.
-    const next = typeof value === 'number' && Number.isFinite(value) ? String(value) : '';
-    const pushing = !!pushRef.current;
-    if (!focusedRef.current || pushing) setText(next);
+    let nextStep = step;
+    if (typeof min === 'number' && typeof max === 'number') {
+      const range = Math.abs(max - min);
+      if (range > 0) {
+        nextStep = Math.min(nextStep, range);
+      }
+    }
+    setLocalStep(Math.max(0.00001, nextStep));
+  }, [step, min, max]);
+
+  const isFocusedRef = React.useRef(false);
+  const isInteractingRef = React.useRef(false);
+
+  // Tracks the "live" value during continuous interaction
+  const liveValueRef = React.useRef<number>(safeNumber(value, 0));
+
+  // Comprehensive state ref to avoid stale closures in setInterval and other async logic
+  const stateRef = React.useRef({ value, localStep, min, max, onChange });
+  React.useLayoutEffect(() => {
+    const nextVal = safeNumber(value, 0);
+    stateRef.current = { value, localStep, min, max, onChange };
+    if (!isInteractingRef.current) {
+      liveValueRef.current = nextVal;
+    }
+  });
+
+  // Sync text with external value changes
+  React.useEffect(() => {
+    if (isFocusedRef.current || isInteractingRef.current) return;
+    setText(typeof value === 'number' && Number.isFinite(value) ? String(value) : '');
   }, [value]);
 
-  const pushRef = React.useRef<{
-    pointerId: number;
-    direction: 1 | -1;
-    startTimeMs: number;
-    lastTimeMs: number;
-  } | null>(null);
+  const intervalRef = React.useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const stopPush = React.useCallback(
-    (commit: boolean) => {
-      if (!pushRef.current) return;
-      pushRef.current = null;
-      if (commit && !disabled) onCommit();
-    },
-    [disabled, onCommit]
-  );
+  const performStep = React.useCallback(
+    (direction: 1 | -1) => {
+      const { localStep: cStep, min: cMin, max: cMax, onChange: cOnChange } = stateRef.current;
 
-  const pushLoop = React.useCallback(
-    (nowMs: number) => {
-      const st = pushRef.current;
-      if (!st) return;
+      // Calculate precision based on step
+      const stepStr = String(cStep);
+      const decimalPlaces = stepStr.indexOf('.') !== -1 ? stepStr.split('.')[1].length : 0;
+      const precision = Math.max(decimalPlaces, 4);
 
-      const dt = Math.max(0, (nowMs - st.lastTimeMs) / 1000);
-      st.lastTimeMs = nowMs;
+      let next = liveValueRef.current + direction * cStep;
 
-      const elapsedMs = Math.max(0, nowMs - st.startTimeMs);
-      const elapsedSec = elapsedMs / 1000;
+      // Fix floating point math
+      next = parseFloat(next.toFixed(precision));
 
-      // Time-based push acceleration.
-      const speedStepsPerSec = Math.min(80, 2 + elapsedSec * 18);
-      const delta = st.direction * step * speedStepsPerSec * dt;
+      // Clamp
+      if (typeof cMin === 'number') next = Math.max(cMin, next);
+      if (typeof cMax === 'number') next = Math.min(cMax, next);
 
-      const next = safeNumber(valueRef.current, 0) + delta;
-      valueRef.current = next;
-      onChange(next);
+      liveValueRef.current = next;
+      cOnChange(next);
       setText(String(next));
-
-      window.requestAnimationFrame(pushLoop);
     },
-    [onChange, step]
+    []
   );
 
-  const startPush = React.useCallback(
-    (args: { pointerId: number; direction: 1 | -1 }) => {
+  const stopRepeating = React.useCallback((e?: React.PointerEvent) => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    timeoutRef.current = null;
+    intervalRef.current = null;
+
+    if (isInteractingRef.current) {
+      isInteractingRef.current = false;
+      onCommit();
+    }
+  }, [onCommit]);
+
+  const startRepeating = React.useCallback(
+    (direction: 1 | -1) => {
       if (disabled) return;
+      isInteractingRef.current = true;
+      liveValueRef.current = safeNumber(stateRef.current.value, 0);
 
-      // Stop any previous push (should be rare, but keeps things deterministic).
-      pushRef.current = null;
+      // Perform first step immediately
+      performStep(direction);
 
-      const now = typeof performance !== 'undefined' ? performance.now() : Date.now();
-      pushRef.current = {
-        pointerId: args.pointerId,
-        direction: args.direction,
-        startTimeMs: now,
-        lastTimeMs: now,
-      };
-
-      // Immediate nudge so clicks feel responsive.
-      const nudged = safeNumber(valueRef.current, 0) + args.direction * step;
-      valueRef.current = nudged;
-      onChange(nudged);
-      setText(String(nudged));
-
-      window.requestAnimationFrame(pushLoop);
+      // Initial delay then fast repeat
+      timeoutRef.current = setTimeout(() => {
+        intervalRef.current = setInterval(() => {
+          performStep(direction);
+        }, 50);
+      }, 400);
     },
-    [disabled, onChange, pushLoop, step]
+    [disabled, performStep]
   );
 
-  const onButtonPointerDown = React.useCallback(
-    (direction: 1 | -1) => (e: React.PointerEvent<HTMLButtonElement>) => {
-      if (disabled) return;
-      if (typeof e.button === 'number' && e.button !== 0) return;
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+    if (e.key === 'Enter') {
+      (e.target as HTMLInputElement).blur();
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      performStep(1);
+      onCommit();
+    }
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      performStep(-1);
+      onCommit();
+    }
+  };
 
-      const el = e.currentTarget;
-      try {
-        el.setPointerCapture(e.pointerId);
-      } catch {
-        // ignore
-      }
-
-      startPush({ pointerId: e.pointerId, direction });
-    },
-    [disabled, startPush]
-  );
-
-  const onButtonPointerUp = React.useCallback(
-    (e: React.PointerEvent<HTMLButtonElement>) => {
-      const st = pushRef.current;
-      if (!st) return;
-      if (st.pointerId !== e.pointerId) return;
-      stopPush(true);
-    },
-    [stopPush]
-  );
-
-  const onButtonPointerCancel = React.useCallback(
-    (e: React.PointerEvent<HTMLButtonElement>) => {
-      const st = pushRef.current;
-      if (!st) return;
-      if (st.pointerId !== e.pointerId) return;
-      stopPush(true);
-    },
-    [stopPush]
-  );
-
-  const onInputBlur = React.useCallback(() => {
-    focusedRef.current = false;
+  const onBlur = () => {
+    isFocusedRef.current = false;
     if (disabled) return;
 
-    const raw = text.trim();
-    if (!raw.length) {
+    const trimmed = text.trim();
+    if (trimmed === '') {
       onClear?.();
       onCommit();
       return;
     }
 
-    const n = Number(raw);
-    if (!Number.isFinite(n)) return;
-    onChange(n);
-    onCommit();
-  }, [disabled, onChange, onClear, onCommit, text]);
+    let n = Number(trimmed);
+    if (Number.isFinite(n)) {
+      // Clamp on blur too
+      if (typeof min === 'number') n = Math.max(min, n);
+      if (typeof max === 'number') n = Math.min(max, n);
+
+      if (n !== value) {
+        onChange(n);
+        onCommit();
+      }
+      setText(String(n));
+      liveValueRef.current = n;
+    } else {
+      // Revert to current value if invalid
+      setText(typeof value === 'number' && Number.isFinite(value) ? String(value) : '');
+    }
+  };
+
+  // Logarithmic step changing via scroll wheel
+  const lastWheelTimeRef = React.useRef(0);
+  const WHEEL_COOLDOWN = 150; // ms between discrete step jumps
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  // Overlay state for showing step changes
+  const [overlayStep, setOverlayStep] = React.useState<number | null>(null);
+  const overlayTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  React.useEffect(() => {
+    const el = containerRef.current;
+    if (!el || disabled || !onStepChange) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Prevent scrolling parent while hovering
+      e.preventDefault();
+      e.stopPropagation();
+
+      const now = Date.now();
+      if (now - lastWheelTimeRef.current < WHEEL_COOLDOWN) return;
+      lastWheelTimeRef.current = now;
+
+      const direction = e.deltaY > 0 ? -1 : 1;
+      const { localStep: currentLocalStep, min: cMin, max: cMax } = stateRef.current;
+
+      // Calculate range-based max step
+      let allowedMaxStep = 100000;
+      if (typeof cMin === 'number' && typeof cMax === 'number') {
+        const range = Math.abs(cMax - cMin);
+        if (range > 0) {
+          allowedMaxStep = Math.min(100000, range);
+        }
+      }
+
+      let nextStep = direction > 0 ? currentLocalStep * 10 : currentLocalStep / 10;
+
+      // Clamp between 0.00001 and the allowed maximum
+      nextStep = Math.max(0.00001, Math.min(allowedMaxStep, nextStep));
+      nextStep = parseFloat(nextStep.toPrecision(12));
+
+      if (nextStep !== currentLocalStep) {
+        setLocalStep(nextStep);
+        onStepChange(nextStep);
+        setOverlayStep(nextStep);
+        if (overlayTimeoutRef.current) clearTimeout(overlayTimeoutRef.current);
+        overlayTimeoutRef.current = setTimeout(() => {
+          setOverlayStep(null);
+        }, 1500); // Slightly longer to appreciate the animation
+      }
+    };
+
+    el.addEventListener('wheel', handleWheel, { passive: false });
+    return () => el.removeEventListener('wheel', handleWheel);
+  }, [disabled, onStepChange]);
 
   return (
-    <div className="grid grid-cols-[18px_32px_1fr_32px] items-center gap-2">
-      <div className="text-xs font-bold text-neutral-700">{label}</div>
+    <div
+      ref={containerRef}
+      className="group relative flex h-8 items-center gap-1 rounded-md border border-neutral-200 bg-neutral-50 p-0.5 transition-colors focus-within:border-primary/30 focus-within:bg-white hover:border-neutral-300"
+    >
+      <MagnitudeGauge activeMagnitude={overlayStep || 0} isVisible={overlayStep !== null} />
+
+      {label && (
+        <div className="flex w-5 shrink-0 items-center justify-center text-[10px] font-bold text-neutral-400 select-none">
+          {label}
+        </div>
+      )}
 
       <Button
         type="button"
         variant="ghost"
-        size="sm"
-        className="h-8 w-8 px-0"
+        className="h-full w-6 shrink-0 rounded-[4px] p-0 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-900 disabled:opacity-30"
         disabled={disabled}
-        onPointerDown={onButtonPointerDown(-1)}
-        onPointerUp={onButtonPointerUp}
-        onPointerCancel={onButtonPointerCancel}
-        onClick={() => {
-          // click is handled by pointerdown; avoid double-step
+        onPointerDown={(e) => {
+          if (e.button !== 0) return;
+          e.preventDefault();
+          e.stopPropagation();
+          e.currentTarget.setPointerCapture(e.pointerId);
+          startRepeating(-1);
         }}
-        aria-label="Decrement (hold)"
+        onPointerUp={stopRepeating}
+        onPointerCancel={stopRepeating}
+        tabIndex={-1}
       >
-        −
+        <span className="text-xs">−</span>
       </Button>
 
-      <Input
-        ref={inputRef}
-        type="number"
-        step={step}
-        value={text}
-        onFocus={() => {
-          focusedRef.current = true;
-        }}
-        onChange={(e) => {
-          const raw = e.currentTarget.value;
-          setText(raw);
-          if (!raw.length) return;
-          const n = Number(raw);
-          if (!Number.isFinite(n)) return;
-          onChange(n);
-        }}
-        onBlur={() => onInputBlur()}
-        disabled={disabled}
-        className="h-8 px-2 py-1 text-xs shadow-none"
-        aria-label="Value"
-      />
+      <div className="relative flex flex-1 items-center">
+        <Input
+          type="text"
+          value={text}
+          disabled={disabled}
+          className="h-full w-full border-none bg-transparent px-1 py-0 text-center text-xs shadow-none outline-none focus-visible:ring-0"
+          onFocus={() => {
+            isFocusedRef.current = true;
+          }}
+          onChange={(e) => {
+            const val = e.target.value;
+            setText(val);
+            const n = Number(val);
+            if (val.trim() !== '' && Number.isFinite(n)) {
+              onChange(n);
+            }
+          }}
+          onBlur={onBlur}
+          onKeyDown={onKeyDown}
+        />
+        {unit && !isFocusedRef.current && (
+          <div className="pointer-events-none absolute right-1 text-[10px] text-neutral-400">
+            {unit}
+          </div>
+        )}
+      </div>
 
       <Button
         type="button"
         variant="ghost"
-        size="sm"
-        className="h-8 w-8 px-0"
+        className="h-full w-6 shrink-0 rounded-[4px] p-0 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-900 disabled:opacity-30"
         disabled={disabled}
-        onPointerDown={onButtonPointerDown(1)}
-        onPointerUp={onButtonPointerUp}
-        onPointerCancel={onButtonPointerCancel}
-        onClick={() => {
-          // click is handled by pointerdown; avoid double-step
+        onPointerDown={(e) => {
+          if (e.button !== 0) return;
+          e.currentTarget.setPointerCapture(e.pointerId);
+          startRepeating(1);
         }}
-        aria-label="Increment (hold)"
+        onPointerUp={stopRepeating}
+        onPointerCancel={stopRepeating}
+        tabIndex={-1}
       >
-        +
+        <span className="text-xs">+</span>
       </Button>
     </div>
   );

@@ -19,6 +19,11 @@ export * from './resources/material/MaterialDetailPanel';
 export * from './resources/skybox/SkyboxDetailPanel';
 export * from './resources/full-mesh/FullMeshDetailPanel';
 export * from './resources/custom-mesh/CustomMeshDetailPanel';
-export * from './resources/shader/CreateCustomShaderDialog';
-export * from './resources/shader/CustomShaderDetailPanel';
+export * from './resources/basicShaderMaterial/CreateBasicShaderDialog';
+export * from './resources/standardShaderMaterial/CreateStandardShaderDialog';
+export * from './resources/physicalShaderMaterial/CreatePhysicalShaderDialog';
+
+export * from './resources/basicShaderMaterial/BasicShaderDetailPanel';
+export * from './resources/standardShaderMaterial/StandardShaderDetailPanel';
+export * from './resources/physicalShaderMaterial/PhysicalShaderDetailPanel';
 

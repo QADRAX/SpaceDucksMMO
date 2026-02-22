@@ -50,7 +50,9 @@ export const RESOURCE_GROUPS: readonly ResourceGroup[] = [
     label: 'Shaders',
     kinds: CUSTOM_SHADER_RESOURCE_KINDS,
     kindLabels: {
-      customShader: 'Custom Shader',
+      basicShaderMaterial: 'Basic Shader',
+      standardShaderMaterial: 'Standard Shader',
+      physicalShaderMaterial: 'Physical Shader',
     },
   },
   // 'ecs' group removed: Prefabs and Scenes have their own top-level routes

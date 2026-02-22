@@ -1,6 +1,6 @@
 // @ts-ignore
 import * as THREE from "three/webgpu";
-import type { Entity, ShaderMaterialComponent, ComponentType } from "@duckengine/ecs";
+import type { Entity, AnyCustomShaderComponent, ComponentType } from "@duckengine/ecs";
 import { ShaderMaterialFactory } from "../factories/ShaderMaterialFactory";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
@@ -9,8 +9,18 @@ import { deferredDispose } from "../debug/DebugUtils";
 export class ShaderFeature implements RenderFeature {
     readonly name = "ShaderFeature";
 
+    private getShaderComponent(entity: Entity): AnyCustomShaderComponent | undefined {
+        return entity.getComponent<AnyCustomShaderComponent>("basicShaderMaterial") ||
+            entity.getComponent<AnyCustomShaderComponent>("standardShaderMaterial") ||
+            entity.getComponent<AnyCustomShaderComponent>("physicalShaderMaterial");
+    }
+
+    private isCustomShaderType(type: string): boolean {
+        return type === "basicShaderMaterial" || type === "standardShaderMaterial" || type === "physicalShaderMaterial";
+    }
+
     isEligible(entity: Entity): boolean {
-        const shaderComp = entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
+        const shaderComp = this.getShaderComponent(entity);
         return !!shaderComp && shaderComp.enabled !== false;
     }
 
@@ -19,13 +29,13 @@ export class ShaderFeature implements RenderFeature {
     }
 
     onUpdate(entity: Entity, componentType: ComponentType, context: RenderContext): void {
-        if (componentType === "shaderMaterial") {
+        if (this.isCustomShaderType(componentType)) {
             this.syncMaterial(entity, context);
         }
     }
 
     onComponentRemoved(entity: Entity, componentType: ComponentType, context: RenderContext): void {
-        if (componentType === "shaderMaterial") {
+        if (this.isCustomShaderType(componentType)) {
             this.syncMaterial(entity, context);
         }
     }
@@ -41,7 +51,7 @@ export class ShaderFeature implements RenderFeature {
         const rc = context.registry.get(entity.id);
         if (!rc?.object3D || !(rc.object3D instanceof THREE.Mesh)) return;
 
-        const shaderComp = entity.getComponent<ShaderMaterialComponent>("shaderMaterial");
+        const shaderComp = this.getShaderComponent(entity);
 
         if (!shaderComp || shaderComp.enabled === false) {
             this.applyDefaultMaterial(rc.object3D);
@@ -59,6 +69,7 @@ export class ShaderFeature implements RenderFeature {
         const nextUniformKeys = Object.keys(shaderComp.uniforms).sort().join(',');
 
         if (currentShaderId === nextShaderId && currentUniformKeys === nextUniformKeys) {
+            this.syncMaterialProperties(currentMat, shaderComp);
             return;
         }
 
@@ -84,6 +95,30 @@ export class ShaderFeature implements RenderFeature {
                     context.loadingTracker?.endTask(taskName);
                 });
         }
+    }
+
+    private syncMaterialProperties(material: any, comp: AnyCustomShaderComponent): void {
+        if (!material) return;
+
+        material.transparent = comp.transparent;
+        material.depthWrite = comp.depthWrite;
+        material.blending = comp.blending === 'additive' ? THREE.AdditiveBlending : THREE.NormalBlending;
+
+        if (comp.type === 'physicalShaderMaterial') {
+            const p = comp as any;
+            material.roughness = p.roughness;
+            material.metalness = p.metalness;
+            material.clearcoat = p.clearcoat;
+            material.transmission = p.transmission;
+            material.ior = p.ior;
+            material.thickness = p.thickness;
+        } else if (comp.type === 'standardShaderMaterial') {
+            const s = comp as any;
+            material.roughness = s.roughness;
+            material.metalness = s.metalness;
+        }
+
+        material.needsUpdate = true;
     }
 
     private applyDefaultMaterial(mesh: THREE.Mesh): void {
