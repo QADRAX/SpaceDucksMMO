@@ -1,7 +1,11 @@
 import * as THREE from 'three';
 import { TextureCache } from './TextureCache';
 
-// After the WebGPU migration, TextureCache now uses THREE.ImageBitmapLoader.
+jest.mock('../debug/DebugUtils', () => ({
+  deferredDispose: jest.fn((obj) => obj?.dispose?.())
+}));
+
+// Mock THREE.TextureLoader to have control over loading behaviorgeBitmapLoader.
 // We mock the entire three/webgpu module (via the jest.config.js mapper) which
 // re-exports three, so mocking 'three' here is sufficient.
 jest.mock('three', () => {

@@ -1,5 +1,11 @@
 import * as THREE from 'three';
 import { RenderObjectRegistry, RenderComponent } from './RenderObjectRegistry';
+import type { RenderContext } from '../features/RenderContext';
+
+jest.mock('../debug/DebugUtils', () => ({
+  deferredDispose: jest.fn((obj) => obj?.dispose?.()),
+  deferredDisposeObject: jest.fn((obj) => obj?.dispose?.())
+}));
 
 describe('RenderObjectRegistry', () => {
   let registry: RenderObjectRegistry;
@@ -14,10 +20,10 @@ describe('RenderObjectRegistry', () => {
     mockScene.remove = jest.fn();
 
     mockObject3D = new THREE.Mesh();
-    
+
     mockGeometry = new THREE.BufferGeometry();
     mockGeometry.dispose = jest.fn();
-    
+
     mockMaterial = new THREE.MeshBasicMaterial();
     mockMaterial.dispose = jest.fn();
   });
