@@ -1,7 +1,7 @@
 // @ts-ignore
 import * as THREE from 'three/webgpu';
 // @ts-ignore
-import { glslFn, wgslFn, uv, time, uniform, texture, color, float, normalLocal, normalView, positionLocal, positionView } from 'three/tsl';
+import { glslFn, wgslFn, uv, time, uniform, texture, color, float, normalLocal, normalView, positionLocal, positionView, cameraPosition, screenSize } from 'three/tsl';
 import type { TextureCache } from './TextureCache';
 import type { AnyCustomShaderComponent, StandardShaderMaterialComponent, PhysicalShaderMaterialComponent } from '@duckengine/ecs';
 import type { EngineResourceResolver, EngineResolvedResource } from '../../resources/EngineResourceResolver';
@@ -19,20 +19,26 @@ export class ShaderMaterialFactory {
       const shaderKey = (u && typeof u === 'object' && 'key' in u && u.key) ? u.key : id;
 
       if (type === 'texture' && typeof val === 'string') {
-        const texNode = texture(null).label(shaderKey);
+        const texNode = texture(null).setName(shaderKey);
         customUniformNodes[id] = texNode;
         textureCache.load(val).then((tex) => {
           texNode.value = tex;
         }).catch(console.error);
+      } else if (type === 'vec2') {
+        const v = Array.isArray(val) ? val : [0, 0];
+        customUniformNodes[id] = uniform(new THREE.Vector2(v[0], v[1])).setName(shaderKey);
+      } else if (type === 'vec3') {
+        const v = Array.isArray(val) ? val : [0, 0, 0];
+        customUniformNodes[id] = uniform(new THREE.Vector3(v[0], v[1], v[2])).setName(shaderKey);
       } else if (type === 'color') {
-        customUniformNodes[id] = uniform(new THREE.Color(val ?? '#ffffff')).label(shaderKey);
+        customUniformNodes[id] = uniform(new THREE.Color(val ?? '#ffffff')).setName(shaderKey);
       } else {
-        customUniformNodes[id] = uniform(val ?? 0).label(shaderKey);
+        customUniformNodes[id] = uniform(val ?? 0).setName(shaderKey);
       }
       console.log(`[ShaderMaterialFactory] Built uniform node: id=${id}, key=${shaderKey}, type=${type}, val=${val}`);
     }
 
-    if (!customUniformNodes['time']) customUniformNodes['time'] = uniform(0).label('time');
+    if (!customUniformNodes['time']) customUniformNodes['time'] = uniform(0).setName('time');
 
     const blending =
       comp.blending === 'additive'
@@ -148,7 +154,9 @@ export class ShaderMaterialFactory {
 
       const baseArgs: Record<string, any> = {
         uv: uv(),
-        time: time,
+        time: (material.userData.customUniformNodes as any)?.['time'] || time,
+        cameraPosition: cameraPosition,
+        screenSize: screenSize,
         normalLocal: normalLocal,
         normalView: normalView,
         positionLocal: positionLocal,
@@ -161,8 +169,9 @@ export class ShaderMaterialFactory {
       const callArgs = new Proxy(baseArgs, {
         get: (target, prop) => {
           if (typeof prop === 'string' && !(prop in target)) {
-            // Avoid warning for standard JS/TSL internals if any
-            if (prop !== 'then' && prop !== 'toJSON' && !prop.startsWith('__')) {
+            // Avoid warning for standard JS/TSL internals or common initialization lookups
+            const internalProps = ['isNode', 'scale', 'then', 'toJSON'];
+            if (!internalProps.includes(prop) && !prop.startsWith('__')) {
               console.warn(`[ShaderMaterialFactory] Shader ${comp.shaderId} requested missing input '${prop}'. Providing default float(0).`);
             }
             return float(0);

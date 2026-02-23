@@ -36,21 +36,37 @@ export class ShaderUniformUpdater {
     // 2. Sync Custom Uniforms
     // Update time uniform
     if (uniformNodes['time']) {
-      uniformNodes['time'].value += dt;
+      uniformNodes['time'].value += dt / 1000;
     }
 
     // Sync component uniforms to material uniforms
-    for (const [key, uni] of Object.entries(shaderMatComp.uniforms)) {
+    for (const [id, uni] of Object.entries(shaderMatComp.uniforms)) {
       const uniAny = uni as any;
-      if (uniformNodes[key] && uniAny.type !== 'texture') {
-        const node = uniformNodes[key];
-        // Use .set() for color objects to avoid replacing the object identity
+      if (uniAny.type === 'texture') continue;
+
+      // Try to find node by ID first, then fallback to key
+      let node = uniformNodes[id];
+      if (!node && uniAny.key) {
+        // Search nodes for one with a matching name (shaderKey)
+        node = Object.values(uniformNodes).find(n => n.name === uniAny.key);
+      }
+
+      if (node) {
+        // 1. Color sync
         if (uniAny.type === 'color' && node.value && node.value.isColor) {
           node.value.set(uniAny.value);
-        } else {
-          if (node.value !== uniAny.value) {
+        }
+        // 2. Vector sync (vec2, vec3)
+        else if (Array.isArray(uniAny.value) && node.value) {
+          if (node.value.isVector2 || node.value.isVector3 || node.value.isVector4) {
+            node.value.fromArray(uniAny.value);
+          } else {
             node.value = uniAny.value;
           }
+        }
+        // 3. Scalar/Generic sync
+        else if (node.value !== uniAny.value) {
+          node.value = uniAny.value;
         }
       }
     }

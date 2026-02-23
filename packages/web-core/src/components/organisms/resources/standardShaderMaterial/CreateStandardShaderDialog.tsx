@@ -12,10 +12,8 @@ import { Label } from '@/components/atoms/Label';
 import { ResourceDialogLayout, ResourceDialogFormPanel, ResourceDialogPreviewPanel } from '@/components/molecules/resource-ui/ResourceDialogLayout';
 import { ResourceKeyInput, ResourceDisplayNameInput } from '@/components/molecules/resource-ui/ResourceFormFields';
 import { StandardShaderPreview } from '@/components/molecules/previews/StandardShaderPreview';
-import { Select } from '@/components/atoms/Select';
-import { Input } from '@/components/atoms/Input';
-import { TrashIcon } from '@/components/icons';
 import { EcsInspectorFieldsForm } from '@/components/molecules/EcsInspectorFieldsForm';
+import { UniformItem } from '@/components/molecules/resource-ui/UniformItem';
 import { StandardShaderMaterialComponent } from '@duckengine/ecs';
 
 export function CreateStandardShaderDialog() {
@@ -79,9 +77,93 @@ export function CreateStandardShaderDialog() {
 
     const getFinalUniforms = () => {
         const result: Record<string, any> = {};
-        Object.values(uniforms).forEach(u => { if (u.key.trim()) result[u.key.trim()] = { value: u.value, type: u.type }; });
+        Object.entries(uniforms).forEach(([id, u]) => {
+            if (u.key.trim()) {
+                result[id] = { key: u.key.trim(), value: u.value, type: u.type };
+            }
+        });
         return result;
     };
+
+    const detectUniformsFromSource = () => {
+        if (!shaderSource) return;
+        const clean = shaderSource
+            .replace(/\/\*[\s\S]*?\*\//g, '')
+            .replace(/\/\/.*$/gm, '')
+            .trim();
+
+        const wgslRegex = /\bfn\s+\w+\s*\(([^)]*)\)/g;
+        const glslRegex = /(?:vec[234]|float|void)\s+\w+\s*\(([^)]*)\)/g;
+
+        const nextUniforms = { ...uniforms };
+        let added = false;
+
+        const processArgString = (argString: string) => {
+            const args = argString.split(',').map(a => a.trim());
+            args.forEach(arg => {
+                let key = '';
+                let typeStr = '';
+
+                if (arg.includes(':')) {
+                    const parts = arg.split(':').map(p => p.trim());
+                    key = parts[0];
+                    typeStr = parts[1];
+                } else {
+                    const parts = arg.split(/\s+/).map(p => p.trim());
+                    if (parts.length >= 2) {
+                        typeStr = parts[0];
+                        key = parts[1];
+                    }
+                }
+
+                const standardKeys = ['uv', 'time', 'cameraPosition', 'screenSize', 'normalLocal', 'normalView', 'positionLocal', 'positionView'];
+                if (key && !standardKeys.includes(key)) {
+                    let type: any = 'float';
+                    if (typeStr.includes('vec2')) type = 'vec2';
+                    else if (typeStr.includes('vec3')) {
+                        const lowerKey = key.toLowerCase();
+                        if (lowerKey.includes('color') || lowerKey.includes('tint')) type = 'color';
+                        else type = 'vec3';
+                    }
+                    else if (typeStr.includes('vec4')) type = 'vec4';
+                    else if (typeStr.includes('color')) type = 'color';
+
+                    const existingIdx = Object.values(nextUniforms).findIndex((u: any) => u.key === key);
+                    if (existingIdx === -1) {
+                        const id = `u_auto_${key}`;
+                        nextUniforms[id] = {
+                            key,
+                            type,
+                            value: type === 'color' ? '#ffffff' : (type === 'float' ? 1.0 : (type === 'vec2' ? [0, 0] : [0, 0, 0]))
+                        };
+                        added = true;
+                    } else {
+                        // Update type if it was generic before or detected as color now
+                        const existingId = Object.keys(nextUniforms)[existingIdx];
+                        if (nextUniforms[existingId].type !== type && (nextUniforms[existingId].type === 'vec3' || nextUniforms[existingId].type === 'float')) {
+                            nextUniforms[existingId].type = type;
+                            if (type === 'color' && typeof nextUniforms[existingId].value !== 'string') {
+                                nextUniforms[existingId].value = '#ffffff';
+                            }
+                            added = true;
+                        }
+                    }
+                }
+            });
+        };
+
+        let match;
+        while ((match = wgslRegex.exec(clean)) !== null) processArgString(match[1]);
+        while ((match = glslRegex.exec(clean)) !== null) processArgString(match[1]);
+
+        if (added) setUniforms(nextUniforms);
+    };
+
+    React.useEffect(() => {
+        if (shaderSource && Object.keys(uniforms).length === 0) {
+            detectUniformsFromSource();
+        }
+    }, [shaderSource]);
 
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -137,22 +219,21 @@ export function CreateStandardShaderDialog() {
                         <div className="space-y-3 pt-4 border-t border-neutral-800">
                             <div className="flex items-center justify-between">
                                 <Label>Uniforms</Label>
-                                <Button type="button" variant="secondary" size="sm" onClick={addUniform}>+ Add</Button>
+                                <div className="flex gap-2">
+                                    <Button type="button" variant="secondary" size="sm" onClick={detectUniformsFromSource} disabled={submitting || !shaderSource}>Auto-detect</Button>
+                                    <Button type="button" variant="secondary" size="sm" onClick={addUniform}>+ Add</Button>
+                                </div>
                             </div>
-                            <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1">
+                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1">
                                 {Object.entries(uniforms).map(([id, u]) => (
-                                    <div key={id} className="flex items-center gap-2 bg-neutral-900/50 p-2 rounded-md border border-neutral-800">
-                                        <Input className="h-8 text-xs flex-1" value={u.key} onChange={(e) => updateUniform(id, 'key', e.target.value)} />
-                                        <Select className="h-8 text-xs w-24" value={u.type} onChange={(e) => updateUniform(id, 'type', e.target.value)}>
-                                            <option value="float">Float</option>
-                                            <option value="color">Color</option>
-                                            <option value="vec2">Vec2</option>
-                                            <option value="vec3">Vec3</option>
-                                            <option value="texture">Texture</option>
-                                        </Select>
-                                        <Input className="h-8 text-xs w-20" type={u.type === 'float' ? 'number' : 'text'} step="0.01" value={u.value} onChange={(e) => updateUniform(id, 'value', u.type === 'float' ? parseFloat(e.target.value) : e.target.value)} />
-                                        <Button type="button" variant="ghost" size="sm" onClick={() => removeUniform(id)}><TrashIcon className="w-4 h-4" /></Button>
-                                    </div>
+                                    <UniformItem
+                                        key={id}
+                                        id={id}
+                                        uniform={u}
+                                        onChange={updateUniform}
+                                        onRemove={removeUniform}
+                                        disabled={submitting}
+                                    />
                                 ))}
                             </div>
                         </div>
