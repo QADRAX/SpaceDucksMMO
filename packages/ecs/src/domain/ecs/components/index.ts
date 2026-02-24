@@ -14,3 +14,6 @@ export * from './light';
 export * from './material';
 
 export * from './physics';
+
+export * from './scripting/ScriptSlot';
+export * from './scripting/ScriptComponent';

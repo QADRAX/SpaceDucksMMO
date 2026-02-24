@@ -11,6 +11,9 @@ describe("DefaultEcsComponentFactory", () => {
   test("create returns component instance with correct type", () => {
     const comp = factory.create("orbit");
     expect((comp as any).type).toBe("orbit");
+
+    const scriptComp = factory.create("script");
+    expect((scriptComp as any).type).toBe("script");
   });
 
   test("listCreatableComponents respects 'unique' and 'requires' and 'conflicts'", () => {
@@ -43,6 +46,8 @@ describe("DefaultEcsComponentFactory", () => {
     // Colliders require a rigidBody owner (self or ancestor)
     expect(initial).not.toContain("sphereCollider");
     expect(initial).not.toContain("boxCollider");
+
+    expect(initial).toContain("script");
   });
 
   test("listCreatableComponents offers colliders when entity has rigidBody", () => {

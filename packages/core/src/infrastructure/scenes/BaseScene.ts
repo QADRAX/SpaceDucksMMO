@@ -9,6 +9,7 @@ import IRenderSyncSystem from '../../domain/ports/IRenderSyncSystem';
 import ISettingsService from '../../domain/ports/ISettingsService';
 import type { IPhysicsSystem } from '../../domain/physics/IPhysicsSystem';
 import CollisionEventsHub from '../../domain/physics/CollisionEventsHub';
+import { ScriptSystem } from '../../domain/scripting/ScriptSystem';
 import { SceneValidator } from './SceneValidator';
 import { SceneObserverManager } from './SceneObserverManager';
 
@@ -32,6 +33,8 @@ export abstract class BaseScene implements IScene {
   protected physicsSystem?: IPhysicsSystem;
 
   public readonly collisionEvents = new CollisionEventsHub();
+  public scriptSystem?: ScriptSystem;
+
   public debugFlags: Record<string, boolean> = {
     transform: false,
     mesh: false,
@@ -210,6 +213,9 @@ export abstract class BaseScene implements IScene {
       this.renderSyncSystem?.addEntity(ent);
       this.physicsSystem?.addEntity(ent);
     }
+
+    this.scriptSystem = new ScriptSystem(this.collisionEvents);
+    this.scriptSystem.setup(this.entities, this);
   }
 
   private initializePhysics(): void {
@@ -259,6 +265,9 @@ export abstract class BaseScene implements IScene {
   }
 
   teardown(engine: IRenderingEngine, renderScene: any): void {
+    this.scriptSystem?.teardown();
+    this.scriptSystem = undefined;
+
     this.cleanupPhysics();
     this.cleanupSettings();
     this.cleanupEntities();
@@ -301,8 +310,12 @@ export abstract class BaseScene implements IScene {
   // ─── Helpers & Events ──────────────────────────────────────────────────────
 
   update(dt: number): void {
+    this.scriptSystem?.earlyUpdate(dt);
     for (const ent of this.entities.values()) ent.update(dt);
     this.physicsSystem?.update(dt);
+    this.scriptSystem?.update(dt);
+    this.scriptSystem?.eventBus.flush();
+    this.scriptSystem?.lateUpdate(dt);
     this.renderSyncSystem?.update(dt);
   }
 

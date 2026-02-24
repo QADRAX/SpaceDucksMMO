@@ -25,6 +25,7 @@ import { FirstPersonMoveComponent } from "../components/FirstPersonMoveComponent
 import { FirstPersonPhysicsMoveComponent } from "../components/FirstPersonPhysicsMoveComponent";
 import { LookAtEntityComponent } from "../components/LookAtEntityComponent";
 import { LookAtPointComponent } from "../components/LookAtPointComponent";
+import { ScriptComponent } from "../components/scripting/ScriptComponent";
 
 import AmbientLightComponent from "../components/light/AmbientLightComponent";
 import DirectionalLightComponent from "../components/light/DirectionalLightComponent";
@@ -141,6 +142,9 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
 
     // name (unique)
     if (!has("name")) defs.push(getComponentDef("name"));
+
+    // script (unique)
+    if (!has("script")) defs.push(getComponentDef("script"));
 
     // camera view (unique)
     if (!has("cameraView")) {
@@ -309,6 +313,9 @@ export class DefaultEcsComponentFactory implements IEcsComponentFactory {
 
       case "skybox":
         return new SkyboxComponent(params ?? { key: "", enabled: true });
+
+      case "script":
+        return new ScriptComponent(params ?? {});
 
       case "rigidBody":
         return new RigidBodyComponent(params ?? { bodyType: "dynamic" });

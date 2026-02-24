@@ -37,4 +37,6 @@ export type ComponentType =
     | "coneCollider"
     | "terrainCollider"
     | "lensFlare"
-    | "postProcess";
+    | "postProcess"
+    | "script"
+    | "metadata";
