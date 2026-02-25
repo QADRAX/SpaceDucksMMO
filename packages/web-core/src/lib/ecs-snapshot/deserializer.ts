@@ -149,6 +149,38 @@ export function deserializeEcsTreeSnapshotToEntities(
                 continue;
             }
 
+            // --- LEGACY COMPONENT MIGRATION ---
+            const legacyMaps: Record<string, string> = {
+                'firstPersonMove': 'builtin://first_person_move.lua',
+                'firstPersonPhysicsMove': 'builtin://first_person_physics_move.lua',
+                'mouseLook': 'builtin://mouse_look.lua',
+                'orbit': 'builtin://orbit_camera.lua',
+                'lookAtEntity': 'builtin://look_at_entity.lua',
+                'lookAtPoint': 'builtin://look_at_point.lua'
+            };
+
+            if (legacyMaps[compSnap.type]) {
+                const scriptId = legacyMaps[compSnap.type];
+
+                // Ensure entity has a ScriptComponent to hold the converted slot
+                let sc = e.getComponent('script') as any;
+                if (!sc) {
+                    sc = factory.create('script' as any, {});
+                    e.addComponent(sc);
+                }
+
+                // Push new slot using the data from the legacy component as properties
+                sc.addSlot({
+                    slotId: crypto.randomUUID(), // Assume crypto is available or we generate a simple UUID
+                    scriptId: scriptId,
+                    enabled: true,
+                    executionOrder: sc.scripts.length, // Append to end
+                    properties: coerceComponentDataToRecord(compSnap.data)
+                });
+                continue;
+            }
+            // ----------------------------------
+
             createAndAttachComponent(e, compSnap, factory, errors);
         }
     }

@@ -6,3 +6,14 @@ window.HTMLCanvasElement.prototype.getContext = function (contextType) {
   }
   return null;
 };
+
+// Mock localStorage for wasmoon/jsdom compatibility
+const localStorageMock = {
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn(),
+  length: 0,
+  key: jest.fn()
+};
+Object.defineProperty(window, 'localStorage', { value: localStorageMock });

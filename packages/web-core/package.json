@@ -2,6 +2,12 @@
   "name": "@duckengine/web-core",
   "version": "1.0.0",
   "private": true,
+  "browser": {
+    "fs": false,
+    "path": false,
+    "crypto": false,
+    "module": false
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",

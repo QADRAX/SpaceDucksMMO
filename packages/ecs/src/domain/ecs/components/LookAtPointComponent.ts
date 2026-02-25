@@ -3,6 +3,10 @@ import type { ComponentMetadata } from "../core/ComponentMetadata";
 import { getCurrentEcsWorld } from "../core/EcsWorldContext";
 import type { Vec3Like } from "../core/MathTypes";
 
+/**
+ * @deprecated Use ScriptComponent with 'builtin://look_at_point.lua' instead.
+ * Automatically migrated during snapshot deserialization.
+ */
 export class LookAtPointComponent extends Component {
   readonly type = "lookAtPoint";
   readonly metadata: ComponentMetadata = {

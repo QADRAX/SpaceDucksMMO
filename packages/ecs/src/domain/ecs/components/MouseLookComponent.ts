@@ -3,6 +3,10 @@ import type { ComponentMetadata } from "../core/ComponentMetadata";
 import { getCurrentEcsWorld } from "../core/EcsWorldContext";
 import { getInputServices } from "../core/InputContext";
 
+/**
+ * @deprecated Use ScriptComponent with 'builtin://mouse_look.lua' instead.
+ * Automatically migrated during snapshot deserialization.
+ */
 export class MouseLookComponent extends Component {
   readonly type = "mouseLook";
   readonly metadata: ComponentMetadata = {

@@ -2,6 +2,17 @@ import type { Entity, ScriptComponent, ScriptSlot } from "@duckengine/ecs";
 import type { CollisionEventsHub } from "../physics/CollisionEventsHub";
 import type SceneChangeEvent from "../scene/SceneChangeEvent";
 import { SceneEventBus } from "./SceneEventBus";
+import { LuaSandbox, type LuaScriptInstance } from "./LuaSandbox";
+import { LuaSelfFactory, type LuaSelfInstance } from "./LuaSelfFactory";
+import type { LuaEngine } from "wasmoon";
+import {
+    registerInputBridge,
+    registerPhysicsBridge,
+    registerSceneBridge,
+    registerTimeBridge,
+    registerTransformBridge
+} from "./bridge";
+import { BuiltInScripts } from "./BuiltInScripts";
 
 export class ScriptSystem {
     public readonly eventBus = new SceneEventBus();
@@ -10,6 +21,18 @@ export class ScriptSystem {
     private entities = new Map<string, Entity>();
     // To cleanup collision subscriptions when entities are removed
     private collisionUnsubs = new Map<string, () => void>();
+    private collisionUnsubMap = new Map<string, () => void>();
+
+    // Lua Sandbox
+    private sandbox = new LuaSandbox();
+    private luaEngine: LuaEngine | null = null;
+
+    // Per-slot compiled scripts and state context
+    private scriptInstances = new Map<string, LuaScriptInstance>();
+    private scriptContexts = new Map<string, LuaSelfInstance>();
+    private lastProperties = new Map<string, string>(); // JSON stringified properties for change detection
+
+    private timeBridgeSync?: { setDelta: (dt: number) => void };
 
     constructor(private collisionEvents?: CollisionEventsHub) { }
 
@@ -17,7 +40,6 @@ export class ScriptSystem {
         const sc = entity.getComponent<ScriptComponent>("script");
         if (!sc) return;
         this.entities.set(entity.id, entity);
-        this.subscribeCollisionsIfNeeded(entity, sc);
     }
 
     public unregisterEntity(entityId: string): void {
@@ -28,7 +50,23 @@ export class ScriptSystem {
         if (sc) {
             for (const slot of sc.getSlots()) {
                 this.eventBus.unsubscribeAll(slot.slotId);
-                // TODO: call onDestroy hook via LuaSandbox in Phase 3
+
+                const instance = this.scriptInstances.get(slot.slotId);
+                const ctx = this.scriptContexts.get(slot.slotId);
+                if (this.luaEngine && instance && ctx && instance.onDestroy) {
+                    this.sandbox.pcall(this.luaEngine, instance.onDestroy, ctx);
+                }
+
+                this.scriptInstances.delete(slot.slotId);
+                this.scriptContexts.delete(slot.slotId);
+                this.lastProperties.delete(slot.slotId);
+
+                // clear slot specific collision handlers
+                const cUnsub = this.collisionUnsubMap.get(slot.slotId);
+                if (cUnsub) {
+                    cUnsub();
+                    this.collisionUnsubMap.delete(slot.slotId);
+                }
             }
         }
 
@@ -42,12 +80,9 @@ export class ScriptSystem {
         }
     }
 
-    private subscribeCollisionsIfNeeded(entity: Entity, scriptComponent: ScriptComponent) {
+    private subscribeCollisionsIfNeeded(entity: Entity, scriptComponent: ScriptComponent, slot: ScriptSlot) {
         if (!this.collisionEvents) return;
 
-        // TODO: In Phase 3 we will check if the Lua hooks actually exist before subscribing.
-        // For now in Phase 2, we just check if it has a rigidbody or collider. 
-        // This will be expanded in Phase 3 once LuaSandbox gives us the hooks.
         const hasPhysicsBody = entity.hasComponent("rigidBody") ||
             entity.hasComponent("sphereCollider") ||
             entity.hasComponent("boxCollider") ||
@@ -55,55 +90,188 @@ export class ScriptSystem {
             entity.hasComponent("cylinderCollider") ||
             entity.hasComponent("coneCollider") ||
             entity.hasComponent("terrainCollider");
+
         if (!hasPhysicsBody) return;
 
-        // Simplified subscription for Phase 2 before Lua comes in
+        // Check if the script *actually* implements either collision hook
+        const instance = this.scriptInstances.get(slot.slotId);
+        if (!instance) return;
+
+        if (!instance.onCollisionEnter && !instance.onCollisionExit) return;
+
         const unsub = this.collisionEvents.onEntity(entity.id, (ev) => {
-            // In Phase 3 we will call `onCollisionEnter`/`onCollisionExit` hooks here
+            if (!this.luaEngine) return;
+            // Only fire if the slot is still enabled
+            if (!slot.enabled) return;
+
+            const ctx = this.scriptContexts.get(slot.slotId);
+            if (!ctx) return;
+
+            if (ev.kind === 'enter' && instance.onCollisionEnter) {
+                if (!this.sandbox.pcall(this.luaEngine, instance.onCollisionEnter, ctx, ev.other)) {
+                    slot.enabled = false;
+                }
+            } else if (ev.kind === 'exit' && instance.onCollisionExit) {
+                if (!this.sandbox.pcall(this.luaEngine, instance.onCollisionExit, ctx, ev.other)) {
+                    slot.enabled = false;
+                }
+            }
         });
 
-        this.collisionUnsubs.set(entity.id, unsub);
+        this.collisionUnsubMap.set(slot.slotId, unsub);
+    }
+
+    private compileScriptsForEntity(entity: Entity, scriptComponent: ScriptComponent) {
+        if (!this.luaEngine) return;
+
+        for (const slot of scriptComponent.getSlots()) {
+            if (this.scriptInstances.has(slot.slotId)) continue; // Already compiled
+
+            // Fetch source code. Fallback to an empty script if not found.
+            const source = BuiltInScripts[slot.scriptId] || `return {} -- Script not found: ${slot.scriptId}`;
+
+            try {
+                const instance = this.sandbox.compile(this.luaEngine, source);
+                const ctx = LuaSelfFactory.create(entity, slot);
+
+                this.scriptInstances.set(slot.slotId, instance);
+                this.scriptContexts.set(slot.slotId, ctx);
+
+                if (instance.init) {
+                    if (!this.sandbox.pcall(this.luaEngine, instance.init, ctx)) {
+                        slot.enabled = false;
+                    }
+                }
+                if (slot.enabled && instance.onEnable) {
+                    if (!this.sandbox.pcall(this.luaEngine, instance.onEnable, ctx)) {
+                        slot.enabled = false;
+                    }
+                }
+
+                // Initial property snapshot
+                this.lastProperties.set(slot.slotId, JSON.stringify(slot.properties));
+
+                // Now wire collisions based on if the script defined the hooks
+                this.subscribeCollisionsIfNeeded(entity, scriptComponent, slot);
+            } catch (err) {
+                console.error(`[ScriptSystem] Failed to compile script for slot ${slot.slotId}:`, err);
+            }
+        }
+    }
+
+    private checkPropertyChanges() {
+        if (!this.luaEngine) return;
+        for (const entity of this.entities.values()) {
+            const sc = entity.getComponent<ScriptComponent>("script");
+            if (!sc) continue;
+            for (const slot of sc.getSlots()) {
+                const instance = this.scriptInstances.get(slot.slotId);
+                const ctx = this.scriptContexts.get(slot.slotId);
+                if (!instance?.onPropertyChanged || !ctx) continue;
+
+                const currentProps = JSON.stringify(slot.properties);
+                const lastPropsStr = this.lastProperties.get(slot.slotId);
+
+                if (currentProps !== lastPropsStr) {
+                    const lastProps = lastPropsStr ? JSON.parse(lastPropsStr) : {};
+                    // Find which specific keys changed
+                    for (const key of Object.keys(slot.properties)) {
+                        if (slot.properties[key] !== lastProps[key]) {
+                            this.sandbox.pcall(this.luaEngine, instance.onPropertyChanged, ctx, key, slot.properties[key]);
+                        }
+                    }
+                    this.lastProperties.set(slot.slotId, currentProps);
+                }
+            }
+        }
     }
 
     public earlyUpdate(dt: number): void {
+        if (!this.luaEngine) return;
+        this.checkPropertyChanges();
+        this.timeBridgeSync?.setDelta(dt);
         for (const entity of this.entities.values()) {
             const sc = entity.getComponent<ScriptComponent>("script");
             if (!sc || !sc.enabled) continue;
             for (const slot of sc.getSlots()) {
                 if (!slot.enabled) continue;
-                // TODO: Call Lua earlyUpdate
+                const instance = this.scriptInstances.get(slot.slotId);
+                const ctx = this.scriptContexts.get(slot.slotId);
+                if (instance?.earlyUpdate && ctx) {
+                    if (!this.sandbox.pcall(this.luaEngine, instance.earlyUpdate, ctx, dt)) {
+                        slot.enabled = false;
+                    }
+                }
             }
         }
     }
 
     public update(dt: number): void {
+        if (!this.luaEngine) return;
+        this.timeBridgeSync?.setDelta(dt);
         for (const entity of this.entities.values()) {
             const sc = entity.getComponent<ScriptComponent>("script");
             if (!sc || !sc.enabled) continue;
             for (const slot of sc.getSlots()) {
                 if (!slot.enabled) continue;
-                // TODO: Call Lua update
+                const instance = this.scriptInstances.get(slot.slotId);
+                const ctx = this.scriptContexts.get(slot.slotId);
+                if (instance?.update && ctx) {
+                    if (!this.sandbox.pcall(this.luaEngine, instance.update, ctx, dt)) {
+                        slot.enabled = false;
+                    }
+                }
             }
         }
     }
 
     public lateUpdate(dt: number): void {
+        if (!this.luaEngine) return;
+        this.timeBridgeSync?.setDelta(dt);
         for (const entity of this.entities.values()) {
             const sc = entity.getComponent<ScriptComponent>("script");
             if (!sc || !sc.enabled) continue;
             for (const slot of sc.getSlots()) {
                 if (!slot.enabled) continue;
-                // TODO: Call Lua lateUpdate
+                const instance = this.scriptInstances.get(slot.slotId);
+                const ctx = this.scriptContexts.get(slot.slotId);
+                if (instance?.lateUpdate && ctx) {
+                    if (!this.sandbox.pcall(this.luaEngine, instance.lateUpdate, ctx, dt)) {
+                        slot.enabled = false;
+                    }
+                }
             }
         }
     }
 
     private sceneUnsub?: () => void;
 
-    public setup(allEntities: Map<string, Entity>, scene: { subscribeChanges: (listener: (ev: SceneChangeEvent) => void) => () => void }): void {
+    public async setupAsync(allEntities: Map<string, Entity>, scene: { subscribeChanges: (listener: (ev: SceneChangeEvent) => void) => () => void }): Promise<void> {
+        this.luaEngine = await this.sandbox.createEngine();
+
+        const getEntity = (id: string) => allEntities.get(id);
+        const getAllEntities = () => Array.from(allEntities.values());
+        const getEventBus = () => this.eventBus;
+
+        const bridgeCtx = { getEntity, getAllEntities, getEventBus };
+        registerTransformBridge(this.luaEngine, bridgeCtx);
+        registerSceneBridge(this.luaEngine, bridgeCtx);
+        registerInputBridge(this.luaEngine);
+        registerPhysicsBridge(this.luaEngine);
+        this.timeBridgeSync = registerTimeBridge(this.luaEngine);
+
+        // 1. Initial registering of entities
         for (const entity of allEntities.values()) {
             if (entity.hasComponent("script")) {
                 this.registerEntity(entity);
+            }
+        }
+
+        // 2. Compile hooks for already registered entities
+        for (const entity of this.entities.values()) {
+            const sc = entity.getComponent<ScriptComponent>("script");
+            if (sc) {
+                this.compileScriptsForEntity(entity, sc);
             }
         }
 
@@ -117,14 +285,22 @@ export class ScriptSystem {
                 if (ent) {
                     const hasScript = ent.hasComponent("script");
                     const registered = this.entities.has(ent.id);
-                    if (hasScript && !registered) this.registerEntity(ent);
+                    if (hasScript && !registered) {
+                        this.registerEntity(ent);
+                        this.compileScriptsForEntity(ent, ent.getComponent<ScriptComponent>("script")!);
+                    }
                     else if (!hasScript && registered) this.unregisterEntity(ent.id);
                 }
             }
         });
 
-        // TODO: In Phase 3, this is where we compile scripts and run `init()`
         this.eventBus.fire("SceneReady");
+    }
+
+    public setup(allEntities: Map<string, Entity>, scene: { subscribeChanges: (listener: (ev: SceneChangeEvent) => void) => () => void }): void {
+        this.setupAsync(allEntities, scene).catch(err => {
+            console.error("[ScriptSystem] failed to initialize wasmoon async", err);
+        });
     }
 
     public teardown(): void {

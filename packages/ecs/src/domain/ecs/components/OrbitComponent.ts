@@ -5,6 +5,10 @@ import BaseGeometryComponent from "./geometry/BaseGeometryComponent";
 
 export type OrbitPlane = "xz" | "xy" | "yz";
 
+/**
+ * @deprecated Use ScriptComponent with 'builtin://orbit_camera.lua' instead.
+ * Automatically migrated during snapshot deserialization.
+ */
 export class OrbitComponent extends Component {
   readonly type = "orbit";
   readonly metadata: ComponentMetadata = {

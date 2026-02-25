@@ -3,6 +3,8 @@ import { ScriptSystem } from "./ScriptSystem";
 import type { CollisionEventsHub } from "../physics/CollisionEventsHub";
 import type SceneChangeEvent from "../scene/SceneChangeEvent";
 
+jest.mock("wasmoon");
+
 describe("ScriptSystem", () => {
     let system: ScriptSystem;
     let collisionEvents: jest.Mocked<CollisionEventsHub>;
@@ -26,7 +28,7 @@ describe("ScriptSystem", () => {
         system.teardown();
     });
 
-    it("registers entities with ScriptComponent", () => {
+    it("registers entities with ScriptComponent", async () => {
         const e1 = new Entity("e1");
         // add ScriptComponent
         const sc1 = new ScriptComponent();
@@ -36,16 +38,23 @@ describe("ScriptSystem", () => {
         const e2 = new Entity("e2");
         allEntities.set(e2.id, e2);
 
-        system.setup(allEntities, mockScene);
+        await system.setupAsync(allEntities, mockScene);
 
         // we can observe side-effects like eventBus or collisionEvents
         // e1 has no physics body so it shouldn't call onEntity
         expect(collisionEvents.onEntity).not.toHaveBeenCalled();
     });
 
-    it("subscribes to collisions if entity has physics body", () => {
+    it("subscribes to collisions if entity has physics body", async () => {
         const e1 = new Entity("phys-ent");
         const sc = new ScriptComponent();
+        sc.addSlot({
+            slotId: "test-slot",
+            scriptId: "test-script",
+            enabled: true,
+            properties: {},
+            executionOrder: 0
+        });
         e1.addComponent(sc as any);
         e1.addComponent({
             type: "rigidBody",
@@ -56,27 +65,27 @@ describe("ScriptSystem", () => {
 
         allEntities.set(e1.id, e1);
 
-        system.setup(allEntities, mockScene);
+        await system.setupAsync(allEntities, mockScene);
 
         expect(collisionEvents.onEntity).toHaveBeenCalledWith("phys-ent", expect.any(Function));
     });
 
-    it("teardown unsubscribes from the scene", () => {
+    it("teardown unsubscribes from the scene", async () => {
         const unsub = jest.fn();
         mockScene.subscribeChanges.mockReturnValue(unsub);
-        system.setup(allEntities, mockScene);
+        await system.setupAsync(allEntities, mockScene);
 
         system.teardown();
         expect(unsub).toHaveBeenCalled();
     });
 
-    it("executing phases traverses components", () => {
+    it("executing phases traverses components", async () => {
         // Here we just test it doesn't crash since execution requires LuaSandbox (Phase 3)
         const e = new Entity("e1");
         e.addComponent(new ScriptComponent() as any);
         allEntities.set(e.id, e);
 
-        system.setup(allEntities, mockScene);
+        await system.setupAsync(allEntities, mockScene);
 
         expect(() => system.earlyUpdate(16)).not.toThrow();
         expect(() => system.update(16)).not.toThrow();

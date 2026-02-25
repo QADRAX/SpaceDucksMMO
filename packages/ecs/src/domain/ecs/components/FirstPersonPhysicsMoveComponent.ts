@@ -12,6 +12,10 @@ function clampMagnitude(v: { x: number; y: number; z: number }, maxLen: number) 
   return { x: v.x * s, y: v.y * s, z: v.z * s };
 }
 
+/**
+ * @deprecated Use ScriptComponent with 'builtin://first_person_physics_move.lua' instead.
+ * Automatically migrated during snapshot deserialization.
+ */
 export class FirstPersonPhysicsMoveComponent extends Component {
   readonly type = "firstPersonPhysicsMove";
   readonly metadata: ComponentMetadata = {

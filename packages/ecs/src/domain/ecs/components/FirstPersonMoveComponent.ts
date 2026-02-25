@@ -3,6 +3,10 @@ import type { ComponentMetadata } from "../core/ComponentMetadata";
 import { getCurrentEcsWorld } from "../core/EcsWorldContext";
 import { getInputServices } from "../core/InputContext";
 
+/**
+ * @deprecated Use ScriptComponent with 'builtin://first_person_move.lua' instead.
+ * Automatically migrated during snapshot deserialization.
+ */
 export class FirstPersonMoveComponent extends Component {
   readonly type = "firstPersonMove";
   readonly metadata: ComponentMetadata = {
@@ -147,8 +151,8 @@ export class FirstPersonMoveComponent extends Component {
     const mlen =
       Math.sqrt(
         moveWorld.x * moveWorld.x +
-          moveWorld.y * moveWorld.y +
-          moveWorld.z * moveWorld.z
+        moveWorld.y * moveWorld.y +
+        moveWorld.z * moveWorld.z
       ) || 1;
     moveWorld.x /= mlen;
     moveWorld.y /= mlen;
