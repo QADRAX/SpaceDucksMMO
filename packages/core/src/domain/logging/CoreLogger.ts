@@ -19,16 +19,8 @@ class CoreLoggerService {
     }
 
     private emit(severity: LogSeverity, system: string, message: string, data?: any) {
-        // We still output to console by default for non-editor contexts
-        // but subscribers can disable it or we can add a config flag.
-        // For now, always output so headless tests show them, just format nicely.
-
-        switch (severity) {
-            case 'info': console.log(`[${system}] ${message}`, data ? data : ''); break;
-            case 'warn': console.warn(`[${system}] ${message}`, data ? data : ''); break;
-            case 'error': console.error(`[${system}] ${message}`, data ? data : ''); break;
-            case 'debug': console.debug(`[${system}] ${message}`, data ? data : ''); break;
-        }
+        // Output to console is now strictly forbidden in core.
+        // Subscribers (like the Web Core Editor UI) are responsible for showing these logs.
 
         const msg: LogMessage = { severity, system, message, data, timestamp: Date.now() };
         this.listeners.forEach((l) => l(msg));

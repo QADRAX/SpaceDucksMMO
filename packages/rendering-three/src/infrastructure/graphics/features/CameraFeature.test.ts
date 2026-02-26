@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { CameraFeature } from './CameraFeature';
 import { RenderObjectRegistry } from '../sync/RenderObjectRegistry';
 import type { RenderContext } from './RenderContext';
-import type { Entity, CameraViewComponent } from '@duckengine/ecs';
+import type { Entity, CameraViewComponent } from '@duckengine/core';
 import { CameraFactory } from '../factories/CameraFactory';
 import * as TransformSync from '../sync/TransformSync';
 

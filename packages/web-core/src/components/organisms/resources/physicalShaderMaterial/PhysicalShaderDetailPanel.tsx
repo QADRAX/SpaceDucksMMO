@@ -16,7 +16,7 @@ import { useResourceMutations } from '@/hooks/useResourceMutations';
 import { PhysicalShaderPreview } from '@/components/molecules/previews/PhysicalShaderPreview';
 import { EcsInspectorFieldsForm } from '@/components/molecules/EcsInspectorFieldsForm';
 import { UniformItem } from '@/components/molecules/resource-ui/UniformItem';
-import { PhysicalShaderMaterialComponent } from '@duckengine/ecs';
+import { PhysicalShaderMaterialComponent } from '@duckengine/core';
 
 import { VersionSummary } from '../types';
 

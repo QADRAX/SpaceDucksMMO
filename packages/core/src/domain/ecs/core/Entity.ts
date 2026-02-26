@@ -4,6 +4,7 @@ import { ComponentType } from "./ComponentType";
 import BaseGeometryComponent from "../components/geometry/BaseGeometryComponent";
 import { Result, ok, err } from '../../errors/EngineError';
 import type { DebugKind } from "./DebugKind";
+import { CoreLogger } from "../../logging/CoreLogger";
 
 type VoidResult = Result<void>;
 
@@ -93,13 +94,17 @@ export class Entity {
   addComponent<T extends Component>(component: T): this {
     const res = this.safeAddComponent(component);
     if (!res.ok) {
+      CoreLogger.error('ecs', res.error.message, { entityId: this.id, componentType: component.type });
       throw new Error(res.error.message);
     }
     return this;
   }
   removeComponent(type: ComponentType): void {
     const res = this.safeRemoveComponent(type);
-    if (!res.ok) throw new Error(res.error.message);
+    if (!res.ok) {
+      CoreLogger.error('ecs', res.error.message, { entityId: this.id, componentType: type });
+      throw new Error(res.error.message);
+    }
   }
 
   // New: safe Result-based variants which return structured errors instead of throwing

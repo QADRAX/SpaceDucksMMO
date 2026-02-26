@@ -16,9 +16,6 @@ module.exports = {
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
-    '^@duckengine/ecs$': '<rootDir>/../ecs/src/index.ts',
-    '^@duckengine/ecs/(.*)$': '<rootDir>/../ecs/src/$1',
-    '^@client/domain/ecs/(.*)$': '<rootDir>/../ecs/src/domain/ecs/$1',
     '^@client/(.*)$': '<rootDir>/src/$1'
   },
   testMatch: ['**/*.(test|spec).(ts|tsx)'],

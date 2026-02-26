@@ -11,7 +11,7 @@ import {
   PhongMaterialComponent,
   StandardMaterialComponent,
   type InspectorFieldConfig,
-} from '@duckengine/ecs';
+} from '@duckengine/core';
 
 import type { MaterialResourceKind } from '@/lib/types';
 import { Button } from '@/components/atoms/Button';

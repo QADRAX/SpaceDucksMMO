@@ -1,4 +1,4 @@
-import type { Entity, IEcsComponentFactory } from "@duckengine/ecs";
+import type { Entity, IEcsComponentFactory } from "../../ecs";
 import type { SceneEventBus } from "../SceneEventBus";
 import type { AssetResolver } from "./AssetResolver";
 import type { IPrefabRegistry } from "../../ports/IPrefabRegistry";

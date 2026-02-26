@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { SkyboxFeature } from './SkyboxFeature';
 import type { RenderContext } from './RenderContext';
-import type { Entity, SkyboxComponent } from '@duckengine/ecs';
+import type { Entity, SkyboxComponent } from '@duckengine/core';
 import { deferredDispose } from '../debug/DebugUtils';
 
 jest.mock('../debug/DebugUtils');

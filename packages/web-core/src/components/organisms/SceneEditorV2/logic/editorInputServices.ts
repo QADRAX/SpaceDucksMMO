@@ -1,4 +1,4 @@
-import type { InputServices, MouseApi, KeyboardApi, MouseState } from '@duckengine/ecs';
+import type { InputServices, MouseApi, KeyboardApi, MouseState } from '@duckengine/core';
 
 class EditorMouseInputService implements MouseApi {
   private state: MouseState = {

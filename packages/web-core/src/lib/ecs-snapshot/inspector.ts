@@ -1,6 +1,6 @@
 import {
     type InspectorFieldConfig,
-} from '@duckengine/ecs';
+} from '@duckengine/core';
 
 /**
  * Applies a dictionary of data to a component instance, using the component's inspector metadata.

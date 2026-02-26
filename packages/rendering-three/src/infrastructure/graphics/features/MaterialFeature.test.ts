@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { MaterialFeature } from './MaterialFeature';
 import { RenderObjectRegistry } from '../sync/RenderObjectRegistry';
 import type { RenderContext } from './RenderContext';
-import type { Entity } from '@duckengine/ecs';
+import type { Entity } from '@duckengine/core';
 import { MaterialFactory } from '../factories/MaterialFactory';
 import { ShaderMaterialFactory } from '../factories/ShaderMaterialFactory';
 import * as DebugUtils from '../debug/DebugUtils';

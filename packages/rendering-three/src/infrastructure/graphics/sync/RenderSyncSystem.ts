@@ -6,7 +6,7 @@ import type {
   ComponentListener,
   IComponentObserver,
   ComponentType,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 import type { IRenderSyncSystem, ITextureResolver, TextureCatalogService, LoadingTracker } from "@duckengine/core";
 import { RenderObjectRegistry } from "./RenderObjectRegistry";
 import { ShaderUniformUpdater } from "./ShaderUniformUpdater";

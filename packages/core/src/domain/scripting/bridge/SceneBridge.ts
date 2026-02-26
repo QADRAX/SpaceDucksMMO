@@ -1,7 +1,7 @@
 import type { LuaEngine } from "wasmoon";
 import { CoreLogger } from "../../logging/CoreLogger";
 import type { BridgeContext } from "./BridgeContext";
-import type { ComponentType } from "@duckengine/ecs";
+import { Entity, ComponentType } from "../../ecs";
 
 export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
     const sceneApi = {

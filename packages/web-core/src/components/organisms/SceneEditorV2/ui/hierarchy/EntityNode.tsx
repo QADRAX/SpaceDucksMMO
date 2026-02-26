@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { Entity } from '@duckengine/ecs';
+import type { Entity } from '@duckengine/core';
 import { useSceneEditorV2Context } from '../../SceneEditorV2Context';
 import { HierarchyItem } from './HierarchyItem';
 import { useHierarchyContext } from './HierarchyContext';

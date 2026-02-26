@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "@duckengine/core": "^0.1.0",
-    "@duckengine/ecs": "^0.1.0",
     "three": "^0.181.1"
   }
 }

@@ -1,6 +1,6 @@
 // @ts-ignore
 import * as THREE from "three/webgpu";
-import type { Entity } from "@duckengine/ecs";
+import type { Entity } from "@duckengine/core";
 import { DEBUG_LAYERS } from "./DebugLayers";
 import { deferredDisposeObject } from "./DebugUtils";
 

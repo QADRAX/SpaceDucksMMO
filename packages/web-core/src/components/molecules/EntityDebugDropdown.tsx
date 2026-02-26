@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import type { DebugKind } from '@duckengine/ecs';
+import type { DebugKind } from '@duckengine/core';
 import {
     EyeIcon,
     DebugTransformIcon,

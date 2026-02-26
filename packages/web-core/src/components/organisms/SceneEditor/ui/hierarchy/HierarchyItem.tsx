@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { DebugKind } from '@duckengine/ecs';
+import type { DebugKind } from '@duckengine/core';
 import { EntityDebugDropdown } from '@/components/molecules/EntityDebugDropdown';
 import { cn } from '@/lib/utils';
 

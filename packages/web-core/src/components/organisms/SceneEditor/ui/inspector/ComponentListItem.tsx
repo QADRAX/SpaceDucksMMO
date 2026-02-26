@@ -10,7 +10,7 @@ import {
     buildInspectorValue,
     diffInspectorValue,
 } from './inspectorUtils';
-import { CUSTOM_SHADER_RESOURCE_KINDS } from '@duckengine/ecs';
+import { CUSTOM_SHADER_RESOURCE_KINDS } from '@duckengine/core';
 import {
     MATERIAL_RESOURCE_REF_KEY,
     isMaterialComponentType,

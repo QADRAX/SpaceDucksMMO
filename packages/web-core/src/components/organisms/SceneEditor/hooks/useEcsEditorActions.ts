@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import { Entity, type DefaultEcsComponentFactory, type ComponentType } from '@duckengine/ecs';
+import { Entity, type DefaultEcsComponentFactory, type ComponentType } from '@duckengine/core';
 
 import {
   serializeSnapshotFromScene,

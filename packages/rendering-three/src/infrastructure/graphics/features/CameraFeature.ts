@@ -1,6 +1,6 @@
 // @ts-ignore
 import * as THREE from "three/webgpu";
-import type { Entity, CameraViewComponent, ComponentType } from "@duckengine/ecs";
+import type { Entity, CameraViewComponent, ComponentType } from "@duckengine/core";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
 import { CameraFactory } from "../factories/CameraFactory";

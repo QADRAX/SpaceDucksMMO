@@ -5,7 +5,7 @@ export interface EcsWorldContext {
   getAllEntities(): Iterable<Entity>;
 }
 
-const ECS_WORLD_KEY = Symbol.for('@duckengine/ecs.currentWorld');
+const ECS_WORLD_KEY = Symbol.for('@duckengine/core.currentWorld');
 
 function getGlobalStore(): any {
   return globalThis as any;

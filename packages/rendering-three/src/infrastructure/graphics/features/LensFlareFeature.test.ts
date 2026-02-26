@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { LensFlareFeature } from './LensFlareFeature';
 import { RenderObjectRegistry } from '../sync/RenderObjectRegistry';
 import type { RenderContext } from './RenderContext';
-import type { Entity, LensFlareComponent } from '@duckengine/ecs';
+import type { Entity, LensFlareComponent } from '@duckengine/core';
 import * as TransformSync from '../sync/TransformSync';
 import LensFlareFactory from '../factories/LensFlareFactory';
 

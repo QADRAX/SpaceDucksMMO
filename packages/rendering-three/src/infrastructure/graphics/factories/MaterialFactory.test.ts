@@ -5,7 +5,7 @@ import {
   BasicMaterialComponent,
   PhongMaterialComponent,
   LambertMaterialComponent,
-} from '@duckengine/ecs';
+} from '@duckengine/core';
 import { TextureCache } from './TextureCache';
 
 // Mock TextureCache

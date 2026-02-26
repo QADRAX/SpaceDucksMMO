@@ -5,9 +5,9 @@ import type {
   LambertMaterialComponent,
   PhongMaterialComponent,
   StandardMaterialComponent,
-} from '@duckengine/ecs';
+} from '@duckengine/core';
 
-import { MATERIAL_RESOURCE_KINDS, CUSTOM_SHADER_RESOURCE_KINDS } from '@duckengine/ecs';
+import { MATERIAL_RESOURCE_KINDS, CUSTOM_SHADER_RESOURCE_KINDS } from '@duckengine/core';
 
 // Re-export for other files depending on it
 export { MATERIAL_RESOURCE_KINDS, CUSTOM_SHADER_RESOURCE_KINDS };

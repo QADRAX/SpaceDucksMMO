@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { ShaderUniformUpdater } from './ShaderUniformUpdater';
-import { Entity, BasicShaderMaterialComponent, SphereGeometryComponent } from '@duckengine/ecs';
+import { Entity, BasicShaderMaterialComponent, SphereGeometryComponent } from '@duckengine/core';
 import type { RenderComponent } from './RenderObjectRegistry';
 
 describe('ShaderUniformUpdater', () => {

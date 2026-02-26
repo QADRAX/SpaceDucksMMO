@@ -10,7 +10,7 @@ import {
     StandardMaterialComponent,
     type ISettingsService,
 } from '@duckengine/rendering-three';
-import { CustomGeometryComponent, FullMeshComponent, TextureTilingComponent } from '@duckengine/ecs';
+import { CustomGeometryComponent, FullMeshComponent, TextureTilingComponent } from '@duckengine/core';
 import type { BasePreviewSettings } from '../utils/previewUtils';
 import type { MaterialResourceKind } from '@/lib/types';
 

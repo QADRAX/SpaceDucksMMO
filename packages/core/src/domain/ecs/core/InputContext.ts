@@ -48,7 +48,7 @@ const noopKeyboard: KeyboardApi = {
   onKeyUp: () => { },
 };
 
-const INPUT_SERVICES_KEY = Symbol.for('@duckengine/ecs.inputServices');
+const INPUT_SERVICES_KEY = Symbol.for('@duckengine/core.inputServices');
 
 function getGlobalStore(): any {
   return globalThis as any;

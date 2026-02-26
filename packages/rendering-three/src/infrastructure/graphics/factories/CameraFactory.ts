@@ -1,6 +1,6 @@
 // @ts-ignore
 import * as THREE from "three/webgpu";
-import type { CameraViewComponent } from '@duckengine/ecs';
+import type { CameraViewComponent } from '@duckengine/core';
 
 export class CameraFactory {
   static build(cameraView: CameraViewComponent): THREE.PerspectiveCamera {

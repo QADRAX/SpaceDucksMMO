@@ -4,7 +4,7 @@ import * as THREE from 'three/webgpu';
 import { glslFn, wgslFn, uv, time, uniform, texture, color, float, normalLocal, normalView, positionLocal, positionView, cameraPosition, screenSize } from 'three/tsl';
 import { CoreLogger } from '@duckengine/core';
 import type { TextureCache } from './TextureCache';
-import type { AnyCustomShaderComponent, StandardShaderMaterialComponent, PhysicalShaderMaterialComponent } from '@duckengine/ecs';
+import type { AnyCustomShaderComponent, StandardShaderMaterialComponent, PhysicalShaderMaterialComponent } from '@duckengine/core';
 import type { EngineResourceResolver, EngineResolvedResource } from '../../resources/EngineResourceResolver';
 
 const SHADER_CACHE = new Map<string, Promise<string>>();

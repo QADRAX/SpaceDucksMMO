@@ -1,4 +1,4 @@
-import type { Entity, ScriptComponent, ScriptSlot, IEcsComponentFactory } from "@duckengine/ecs";
+import type { Entity, ScriptComponent, ScriptSlot, IEcsComponentFactory } from "../ecs";
 import type { CollisionEventsHub } from "../physics/CollisionEventsHub";
 import type SceneChangeEvent from "../scene/SceneChangeEvent";
 import { CoreLogger } from "../logging/CoreLogger";
@@ -386,14 +386,14 @@ export class ScriptSystem {
                 if (!ent) return [];
                 const sc = ent.getComponent<ScriptComponent>("script");
                 if (!sc) return [];
-                return sc.getSlots().map(s => ({ scriptId: s.scriptId, slotId: s.slotId }));
+                return sc.getSlots().map((s: ScriptSlot) => ({ scriptId: s.scriptId, slotId: s.slotId }));
             },
             getSlotProperty: (entityId: string, scriptId: string, key: string): unknown => {
                 const ent = allEntities.get(entityId);
                 if (!ent) return null;
                 const sc = ent.getComponent<ScriptComponent>("script");
                 if (!sc) return null;
-                const slot = sc.getSlots().find(s => s.scriptId === scriptId);
+                const slot = sc.getSlots().find((s: ScriptSlot) => s.scriptId === scriptId);
                 if (!slot) return null;
 
                 // Try to get hydrated value from context if available
@@ -409,7 +409,7 @@ export class ScriptSystem {
                 if (!ent) return;
                 const sc = ent.getComponent<ScriptComponent>("script");
                 if (!sc) return;
-                const slot = sc.getSlots().find(s => s.scriptId === scriptId);
+                const slot = sc.getSlots().find((s: ScriptSlot) => s.scriptId === scriptId);
                 if (!slot) return;
                 slot.properties[key] = value;
                 // The next checkPropertyChanges() cycle will detect the change,

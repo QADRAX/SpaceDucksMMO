@@ -1,6 +1,6 @@
 // @ts-ignore
 import * as THREE from "three/webgpu";
-import type { Entity, SkyboxComponent, ComponentType } from "@duckengine/ecs";
+import type { Entity, SkyboxComponent, ComponentType } from "@duckengine/core";
 import { CoreLogger } from "@duckengine/core";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";

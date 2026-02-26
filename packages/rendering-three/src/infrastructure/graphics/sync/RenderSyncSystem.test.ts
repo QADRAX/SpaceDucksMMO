@@ -3,7 +3,7 @@ import { RenderSyncSystem } from './RenderSyncSystem';
 import { FeatureRouter } from '../features/FeatureRouter';
 import { DebugFeature } from '../features/DebugFeature';
 import { ShaderUniformUpdater } from './ShaderUniformUpdater';
-import type { Entity, ComponentType } from '@duckengine/ecs';
+import type { Entity, ComponentType } from '@duckengine/core';
 
 jest.mock('../features/FeatureRouter');
 jest.mock('../features/DebugFeature');

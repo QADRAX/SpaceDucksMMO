@@ -7,7 +7,7 @@ import type {
     PointLightComponent,
     SpotLightComponent,
     ComponentType,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
 import { LightFactory, type AnyLightComponent } from "../factories/LightFactory";

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import type { Entity } from '@duckengine/ecs';
+import type { Entity } from '@duckengine/core';
 
 import { NumberPushInput } from '@/components/molecules/NumberPushInput';
 import {

@@ -1,4 +1,4 @@
-import type { Entity } from '@duckengine/ecs';
+import { Entity } from '../ecs';
 
 /**
  * Renderer-facing sync system interface.
@@ -18,4 +18,5 @@ export interface IRenderSyncSystem {
   update(dt: number): void;
 }
 
-export default IRenderSyncSystem;
+/** Token to force module emission */
+export const IRenderSyncSystem_TOKEN = 'IRenderSyncSystem';

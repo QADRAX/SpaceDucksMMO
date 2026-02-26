@@ -1,4 +1,4 @@
-import { Entity, GravityComponent, RigidBodyComponent, SphereColliderComponent } from "@duckengine/ecs";
+import { Entity, GravityComponent, RigidBodyComponent, SphereColliderComponent } from "@duckengine/core";
 import RapierPhysicsSystem from "./RapierPhysicsSystem";
 import { initRapier } from "./rapier/RapierInit";
 

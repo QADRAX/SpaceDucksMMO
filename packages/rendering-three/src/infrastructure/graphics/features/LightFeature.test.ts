@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { LightFeature } from './LightFeature';
 import { RenderObjectRegistry } from '../sync/RenderObjectRegistry';
 import type { RenderContext } from './RenderContext';
-import type { Entity } from '@duckengine/ecs';
+import type { Entity } from '@duckengine/core';
 import * as TransformSync from '../sync/TransformSync';
 import { LightFactory } from '../factories/LightFactory';
 

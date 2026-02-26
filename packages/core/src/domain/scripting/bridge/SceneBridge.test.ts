@@ -1,7 +1,7 @@
 import { registerSceneBridge } from "./SceneBridge";
 import type { BridgeContext } from "./BridgeContext";
 import { SceneEventBus } from "../SceneEventBus";
-import { Entity } from "@duckengine/ecs";
+import { Entity } from "../../ecs";
 
 describe("SceneBridge", () => {
     let mockEngine: any;

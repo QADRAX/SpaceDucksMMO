@@ -8,7 +8,7 @@ import {
     Entity,
     FirstPersonMoveComponent,
     MouseLookComponent,
-} from '@duckengine/ecs';
+} from '@duckengine/core';
 import type { EcsLiveScene } from './EcsLiveScene';
 
 const defaultSettings: GameSettings = {

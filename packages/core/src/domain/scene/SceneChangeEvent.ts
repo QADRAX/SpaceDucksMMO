@@ -1,4 +1,4 @@
-import type { Entity } from '@duckengine/ecs';
+import type { Entity } from '../ecs';
 
 export type SceneChangeEvent =
   | { kind: 'entity-added'; entity: Entity }

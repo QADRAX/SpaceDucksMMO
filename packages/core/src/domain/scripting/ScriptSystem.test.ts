@@ -1,4 +1,4 @@
-import { Entity, ScriptComponent } from "@duckengine/ecs";
+import { Entity, ScriptComponent } from "../ecs";
 import { ScriptSystem } from "./ScriptSystem";
 import type { CollisionEventsHub } from "../physics/CollisionEventsHub";
 import type SceneChangeEvent from "../scene/SceneChangeEvent";

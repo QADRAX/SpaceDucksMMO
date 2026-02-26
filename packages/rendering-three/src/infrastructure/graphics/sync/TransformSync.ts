@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { Entity } from "@duckengine/ecs";
+import type { Entity } from "@duckengine/core";
 
 /**
  * Sync ECS transform state into a THREE.Object3D.

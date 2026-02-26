@@ -1,5 +1,5 @@
-import type IRenderingEngine from './IRenderingEngine';
-import type { Entity } from '@duckengine/ecs';
+import type { IRenderingEngine } from './IRenderingEngine';
+import { Entity, ComponentType } from '../ecs';
 import type SceneChangeEvent from '../scene/SceneChangeEvent';
 import type CollisionEventsHub from '../physics/CollisionEventsHub';
 
@@ -83,4 +83,5 @@ export interface IScene {
   readonly collisionEvents?: CollisionEventsHub;
 }
 
-export default IScene;
+/** Token to force module emission */
+export const IScene_TOKEN = 'IScene';

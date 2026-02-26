@@ -10,7 +10,7 @@ import type {
     TorusGeometryComponent,
     CustomGeometryComponent,
     ComponentType,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 import { CoreLogger } from "@duckengine/core";
 import {
     GeometryFactory,

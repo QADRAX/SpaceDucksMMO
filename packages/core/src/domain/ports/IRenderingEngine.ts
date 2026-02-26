@@ -1,6 +1,6 @@
-import type IScene from './IScene';
+import type { IScene } from './IScene';
 import type { TextureCatalogService } from '../assets/TextureCatalog';
-import IRenderSyncSystem from './IRenderSyncSystem';
+import { IRenderSyncSystem } from './IRenderSyncSystem';
 import { ITextureResolver } from './ITextureResolver';
 import type { IPhysicsSystem } from '../physics/IPhysicsSystem';
 
@@ -112,6 +112,9 @@ export interface IRenderingEngine {
   setLoadingOverlayEnabled?(enabled: boolean): void;
 }
 
+/** Token to force module emission */
+export const IRenderingEngine_TOKEN = 'IRenderingEngine';
+
 export type RenderViewId = string;
 
 export type RenderViewDebugOptions = {
@@ -131,5 +134,3 @@ export type RenderViewOptions = {
   resolutionPolicy?: 'auto' | 'scale';
   resolutionScale?: number;
 };
-
-export default IRenderingEngine;

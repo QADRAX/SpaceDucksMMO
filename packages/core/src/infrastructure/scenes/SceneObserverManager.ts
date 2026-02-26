@@ -1,4 +1,4 @@
-import { Entity, Component, ComponentType, IComponentObserver } from '@duckengine/ecs';
+import { Entity, Component, ComponentType, IComponentObserver } from '../../domain/ecs';
 import { CoreLogger } from '../../domain/logging/CoreLogger';
 import SceneChangeEvent from '../../domain/scene/SceneChangeEvent';
 import { SceneValidator } from './SceneValidator';

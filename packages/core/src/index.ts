@@ -1,13 +1,8 @@
 // Minimal source entrypoint for @duckengine/core (build is deferred).
 
-export type { default as IScene } from './domain/ports/IScene';
-export type {
-	default as IRenderingEngine,
-	RenderViewId,
-	RenderViewOptions,
-	RenderViewDebugOptions,
-} from './domain/ports/IRenderingEngine';
-export type { default as IRenderSyncSystem } from './domain/ports/IRenderSyncSystem';
+export * from './domain/ports/IScene';
+export * from './domain/ports/IRenderingEngine';
+export * from './domain/ports/IRenderSyncSystem';
 export type { ITextureResolver } from './domain/ports/ITextureResolver';
 export type { default as ISettingsService } from './domain/ports/ISettingsService';
 export type { IGizmoRenderer } from './domain/ports/IGizmoRenderer';
@@ -55,3 +50,7 @@ export { LuaSandbox } from './domain/scripting/LuaSandbox';
 
 // ── Logging ───────────────────────────────────────────────────────────────
 export { CoreLogger, type LogMessage, type LogListener, type LogSeverity } from './domain/logging/CoreLogger';
+
+// ── ECS (Merged from @duckengine/core) ───────────────────────────────────────
+export * from './domain/ecs';
+export { EngineError } from './domain/errors/EngineError';

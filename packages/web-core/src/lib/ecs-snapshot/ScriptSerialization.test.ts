@@ -1,4 +1,4 @@
-import { Entity, ScriptComponent, DefaultEcsComponentFactory } from '@duckengine/ecs';
+import { Entity, ScriptComponent, DefaultEcsComponentFactory } from '@duckengine/core';
 import { serializeEcsTreeFromRoots } from './serializer';
 import { deserializeEcsTreeSnapshotToEntities } from './deserializer';
 

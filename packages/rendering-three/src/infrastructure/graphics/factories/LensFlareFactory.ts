@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { LensFlareComponent } from "@duckengine/ecs";
+import type { LensFlareComponent } from "@duckengine/core";
 
 function makeCircleTexture(size = 128, color = "#ffffff") {
   const c = document.createElement("canvas");

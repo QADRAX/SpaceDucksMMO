@@ -1,6 +1,6 @@
 import { registerTransformBridge } from "./TransformBridge";
 import type { BridgeContext } from "./BridgeContext";
-import { Entity, Transform } from "@duckengine/ecs";
+import { Entity } from "../../ecs";
 
 describe("TransformBridge", () => {
     let mockEngine: any;

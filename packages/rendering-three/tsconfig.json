@@ -13,10 +13,21 @@
     "skipLibCheck": true,
     "baseUrl": "src",
     "paths": {
-      "@client/*": ["*"]
+      "@client/*": [
+        "*"
+      ]
     },
-    "types": ["jest", "node"]
+    "types": [
+      "jest",
+      "node"
+    ]
   },
-  "include": ["src/**/*"],
-  "references": [{ "path": "../core" }, { "path": "../ecs" }]
+  "include": [
+    "src/**/*"
+  ],
+  "references": [
+    {
+      "path": "../core"
+    }
+  ]
 }

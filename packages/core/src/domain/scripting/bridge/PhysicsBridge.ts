@@ -1,5 +1,5 @@
 import type { LuaEngine } from "wasmoon";
-import { getPhysicsServices } from "@duckengine/ecs";
+import { getPhysicsServices, type Vec3Like } from "../../ecs";
 import type { LuaSelfInstance } from "../LuaSelfFactory";
 
 export function registerPhysicsBridge(engine: LuaEngine) {

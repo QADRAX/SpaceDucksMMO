@@ -1,5 +1,5 @@
 import type * as React from 'react';
-import type { Entity } from '@duckengine/ecs';
+import type { Entity } from '@duckengine/core';
 
 // ─── Editor Resource ───────────────────────────────────────────────────────
 

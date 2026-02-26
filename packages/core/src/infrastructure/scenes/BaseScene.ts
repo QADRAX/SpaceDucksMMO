@@ -1,11 +1,11 @@
-import type IScene from '../../domain/ports/IScene';
-import type IRenderingEngine from '../../domain/ports/IRenderingEngine';
+import type { IScene } from '../../domain/ports/IScene';
+import type { IRenderingEngine } from '../../domain/ports/IRenderingEngine';
 import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
 import TextureResolverService from '../../application/TextureResolverService';
-import { setCurrentEcsWorld, setPhysicsServices, Result, ok, err, DefaultEcsComponentFactory } from '@duckengine/ecs';
-import type { Entity, ComponentType, IEcsComponentFactory } from '@duckengine/ecs';
+import { setCurrentEcsWorld, setPhysicsServices, Result, ok, err, DefaultEcsComponentFactory } from '../../domain/ecs';
+import type { Entity, ComponentType, IEcsComponentFactory, Vec3Like, EcsPhysicsRay } from '../../domain/ecs';
 import type SceneChangeEvent from '../../domain/scene/SceneChangeEvent';
-import IRenderSyncSystem from '../../domain/ports/IRenderSyncSystem';
+import { IRenderSyncSystem } from '../../domain/ports/IRenderSyncSystem';
 import ISettingsService from '../../domain/ports/ISettingsService';
 import type { IPhysicsSystem } from '../../domain/physics/IPhysicsSystem';
 import CollisionEventsHub from '../../domain/physics/CollisionEventsHub';
@@ -84,7 +84,7 @@ export abstract class BaseScene implements IScene {
     const errors = [...hierarchyErrors, ...uniqueErrors];
 
     if (errors.length) {
-      throw new Error(`Cannot add entity '${entity.id}' to scene '${this.id}':\n${errors.map(e => `  - ${e}`).join("\n")}`);
+      throw new Error(`Cannot add entity '${entity.id}' to scene '${this.id}': \n${errors.map(e => `  - ${e}`).join("\n")} `);
     }
 
     this.entities.set(entity.id, entity);
@@ -152,7 +152,7 @@ export abstract class BaseScene implements IScene {
       newParent?.removeChild(childId);
       oldParent?.addChild(child);
 
-      return err("invalid-reparent", `Hierarchy violation moved subtree: ${hierarchyErrors[0]}`, { childId, newParentId, errors: hierarchyErrors });
+      return err("invalid-reparent", `Hierarchy violation moved subtree: ${hierarchyErrors[0]} `, { childId, newParentId, errors: hierarchyErrors });
     }
 
     this.emitChange({ kind: "hierarchy-changed", childId, newParentId });
@@ -231,10 +231,10 @@ export abstract class BaseScene implements IScene {
 
       if (sys) {
         setPhysicsServices({
-          applyImpulse: (id, imp) => sys.applyImpulse?.(id, imp),
-          applyForce: (id, force) => sys.applyForce?.(id, force),
-          getLinearVelocity: (id) => sys.getLinearVelocity?.(id) ?? null,
-          raycast: (ray) => sys.raycast?.(ray) ?? null,
+          applyImpulse: (id: string, imp: Vec3Like) => sys.applyImpulse?.(id, imp),
+          applyForce: (id: string, force: Vec3Like) => sys.applyForce?.(id, force),
+          getLinearVelocity: (id: string) => sys.getLinearVelocity?.(id) ?? null,
+          raycast: (ray: EcsPhysicsRay) => sys.raycast?.(ray) ?? null,
         });
         this.collisionEvents.attach(sys);
       }

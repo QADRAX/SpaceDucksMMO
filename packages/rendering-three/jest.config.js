@@ -23,8 +23,6 @@ module.exports = {
     '^three/tsl$': '<rootDir>/src/__mocks__/three-tsl.ts',
     '^@duckengine/core$': '<rootDir>/../core/src/index.ts',
     '^@duckengine/core/(.*)$': '<rootDir>/../core/src/$1',
-    '^@duckengine/ecs$': '<rootDir>/../ecs/src/index.ts',
-    '^@duckengine/ecs/(.*)$': '<rootDir>/../ecs/src/$1',
     '^@client/(.*)$': '<rootDir>/src/$1'
   },
   testMatch: ['**/*.(test|spec).(ts|tsx)'],

@@ -1,4 +1,4 @@
-import type { Entity, ComponentType, ScriptSlot } from "@duckengine/ecs";
+import { Entity, ComponentType, ScriptSlot } from "../ecs";
 
 export interface LuaSelfInstance {
     id: string; // Entity ID

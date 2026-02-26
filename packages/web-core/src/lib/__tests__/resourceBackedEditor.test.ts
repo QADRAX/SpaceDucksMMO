@@ -1,5 +1,5 @@
 
-import { Entity, StandardMaterialComponent, BoxGeometryComponent } from '@duckengine/ecs';
+import { Entity, StandardMaterialComponent, BoxGeometryComponent } from '@duckengine/core';
 import { hydrateResourceBackedMaterials, MATERIAL_RESOURCE_REF_KEY } from '../resourceBackedEditor';
 import * as resolution from '@/lib/engineResourceResolution';
 

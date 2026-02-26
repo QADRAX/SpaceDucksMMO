@@ -7,7 +7,7 @@ import type {
     PhongMaterialComponent,
     LambertMaterialComponent,
     ComponentType,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 import {
     MaterialFactory,
     type AnyMaterialComponent,

@@ -14,7 +14,7 @@ import {
     type ISettingsService,
     type ComponentType,
 } from '@duckengine/rendering-three';
-import type { AnyCustomShaderComponent } from '@duckengine/ecs';
+import type { AnyCustomShaderComponent } from '@duckengine/core';
 import type { MaterialPreviewSettings } from './MaterialPreviewScene';
 
 export function createGeometryComponent(settings: MaterialPreviewSettings) {

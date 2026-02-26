@@ -2,4 +2,4 @@
 // Importing from `@duckengine/rendering-three` pulls in Three.js renderer code,
 // which is not Jest-friendly (ESM-only dependencies). This entrypoint avoids that.
 
-export * from '@duckengine/ecs';
+export * from '@duckengine/core';

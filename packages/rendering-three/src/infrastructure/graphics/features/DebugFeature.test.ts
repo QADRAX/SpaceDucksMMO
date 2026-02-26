@@ -6,7 +6,7 @@ import DebugMeshSystem from '../debug/DebugMeshSystem';
 import DebugColliderSystem from '../debug/DebugColliderSystem';
 import DebugCameraSystem from '../debug/DebugCameraSystem';
 import type { RenderContext } from './RenderContext';
-import type { Entity } from '@duckengine/ecs';
+import type { Entity } from '@duckengine/core';
 
 // Mock all internal debug systems
 jest.mock('../debug/DebugTransformSystem');

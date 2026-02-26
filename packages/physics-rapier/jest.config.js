@@ -14,8 +14,6 @@ module.exports = {
   ],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   moduleNameMapper: {
-    '^@duckengine/ecs$': '<rootDir>/../ecs/src/index.ts',
-    '^@duckengine/ecs/(.*)$': '<rootDir>/../ecs/src/$1',
     '^@duckengine/core$': '<rootDir>/../core/src/index.ts',
     '^@duckengine/core/(.*)$': '<rootDir>/../core/src/$1',
     '^@duckengine/physics-rapier$': '<rootDir>/src/index.ts',

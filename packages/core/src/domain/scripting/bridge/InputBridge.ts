@@ -1,5 +1,5 @@
 import type { LuaEngine } from "wasmoon";
-import { getInputServices } from "@duckengine/ecs";
+import { Entity, getInputServices } from "../../ecs";
 
 export function registerInputBridge(engine: LuaEngine) {
     const inputApi = {

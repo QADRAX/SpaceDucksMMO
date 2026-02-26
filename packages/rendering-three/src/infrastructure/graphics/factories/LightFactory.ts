@@ -6,7 +6,7 @@ import type {
   DirectionalLightComponent,
   PointLightComponent,
   SpotLightComponent,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 
 export type AnyLightComponent =
   | AmbientLightComponent

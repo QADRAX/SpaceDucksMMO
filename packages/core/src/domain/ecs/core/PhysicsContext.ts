@@ -27,7 +27,7 @@ const noopPhysics: PhysicsApi = {
   raycast: () => null,
 };
 
-const PHYSICS_KEY = Symbol.for("@duckengine/ecs.physicsServices");
+const PHYSICS_KEY = Symbol.for("@duckengine/core.physicsServices");
 
 function getGlobalStore(): any {
   return globalThis as any;

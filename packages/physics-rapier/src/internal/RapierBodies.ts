@@ -1,6 +1,6 @@
-import type { Entity, Vec3Like } from "@duckengine/ecs";
-import { quatFromEulerYXZ, quatNormalize } from "@duckengine/ecs";
-import type { RigidBodyComponent } from "@duckengine/ecs";
+import type { Entity, Vec3Like } from "@duckengine/core";
+import { quatFromEulerYXZ, quatNormalize } from "@duckengine/core";
+import type { RigidBodyComponent } from "@duckengine/core";
 
 function callOptional(receiver: any, methodName: string, ...args: any[]): void {
   const fn = receiver?.[methodName];

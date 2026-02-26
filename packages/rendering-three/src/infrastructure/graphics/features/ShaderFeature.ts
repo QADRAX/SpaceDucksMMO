@@ -1,6 +1,6 @@
 // @ts-ignore
 import * as THREE from "three/webgpu";
-import type { Entity, AnyCustomShaderComponent, ComponentType } from "@duckengine/ecs";
+import type { Entity, AnyCustomShaderComponent, ComponentType } from "@duckengine/core";
 import { CoreLogger } from "@duckengine/core";
 import { ShaderMaterialFactory } from "../factories/ShaderMaterialFactory";
 import type { RenderFeature } from "./RenderFeature";

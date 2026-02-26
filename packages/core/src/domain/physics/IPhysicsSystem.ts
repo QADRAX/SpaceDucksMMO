@@ -1,4 +1,4 @@
-import type { Entity, Vec3Like } from "@duckengine/ecs";
+import type { Entity, Vec3Like } from "../ecs";
 import type {
   PhysicsCollisionEvent,
   PhysicsRay,

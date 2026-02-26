@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { AnimationFeature } from './AnimationFeature';
 import { RenderObjectRegistry } from '../sync/RenderObjectRegistry';
 import type { RenderContext } from './RenderContext';
-import type { Entity } from '@duckengine/ecs';
+import type { Entity } from '@duckengine/core';
 
 describe('AnimationFeature', () => {
     let feature: AnimationFeature;

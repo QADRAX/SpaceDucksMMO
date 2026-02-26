@@ -9,7 +9,7 @@ import type {
   TorusGeometryComponent,
   CustomGeometryComponent,
   FullMeshComponent,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 
 export type AnyGeometryComponent = BoxGeometryComponent | SphereGeometryComponent | PlaneGeometryComponent | CylinderGeometryComponent | ConeGeometryComponent | TorusGeometryComponent | CustomGeometryComponent | FullMeshComponent;
 

@@ -4,7 +4,7 @@ import {
     type MaterialResourceKind,
     MATERIAL_RESOURCE_REF_KEY,
     MATERIAL_RESOURCE_KINDS,
-} from '@duckengine/ecs';
+} from '@duckengine/core';
 
 import {
     ECS_SNAPSHOT_SCHEMA_VERSION,

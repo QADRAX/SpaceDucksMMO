@@ -1,4 +1,4 @@
-import { Entity, Component, ComponentType } from '@duckengine/ecs';
+import { Entity, Component, ComponentType } from '../../domain/ecs';
 
 /**
  * Helper class for scene-level validations.

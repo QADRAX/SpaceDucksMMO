@@ -2,7 +2,7 @@
 
 // Re-export core + ecs so consumers only need this package.
 export * from '@duckengine/core';
-export * from '@duckengine/ecs';
+export * from '@duckengine/core';
 
 // Make commonly-used texture types explicit for downstream type re-exports.
 export type {

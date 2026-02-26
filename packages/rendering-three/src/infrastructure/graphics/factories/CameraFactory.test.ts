@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { CameraFactory } from './CameraFactory';
-import { CameraViewComponent } from '@duckengine/ecs';
+import { CameraViewComponent } from '@duckengine/core';
 
 describe('CameraFactory', () => {
   describe('build', () => {

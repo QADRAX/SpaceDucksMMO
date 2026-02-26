@@ -1,5 +1,5 @@
 import * as React from 'react';
-import type { DebugKind } from '@duckengine/ecs';
+import type { DebugKind } from '@duckengine/core';
 import { Button } from '@/components/atoms/Button';
 import { DebugTransformIcon, DebugMeshIcon, DebugColliderIcon, CameraIcon } from '@/components/icons';
 import { EntityDebugDropdown } from '@/components/molecules/EntityDebugDropdown';

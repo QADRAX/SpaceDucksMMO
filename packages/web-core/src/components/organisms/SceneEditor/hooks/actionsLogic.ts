@@ -1,4 +1,4 @@
-import { Entity } from '@duckengine/ecs';
+import { Entity } from '@duckengine/core';
 
 export type ValidationResult =
   | { ok: true }

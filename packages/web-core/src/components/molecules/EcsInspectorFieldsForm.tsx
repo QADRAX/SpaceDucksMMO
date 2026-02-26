@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 
-import type { InspectorFieldConfig } from '@duckengine/ecs';
+import type { InspectorFieldConfig } from '@duckengine/core';
 
 import { Button } from '@/components/atoms/Button';
 import { Input } from '@/components/atoms/Input';

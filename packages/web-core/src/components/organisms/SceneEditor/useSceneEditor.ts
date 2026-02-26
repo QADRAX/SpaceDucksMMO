@@ -4,7 +4,7 @@ import * as React from 'react';
 
 import { ThreeRenderer } from '@duckengine/rendering-three';
 
-import { DefaultEcsComponentFactory } from '@duckengine/ecs';
+import { DefaultEcsComponentFactory } from '@duckengine/core';
 
 import type { EditorMode, EditorResource, SceneEditorStore } from './types';
 import { useStableEvent } from './useStableEvent';

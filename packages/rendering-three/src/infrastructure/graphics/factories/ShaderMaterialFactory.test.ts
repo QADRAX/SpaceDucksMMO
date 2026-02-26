@@ -1,7 +1,7 @@
 // @ts-ignore
 import * as THREE from 'three/webgpu';
 import { ShaderMaterialFactory } from './ShaderMaterialFactory';
-import { BasicShaderMaterialComponent } from '@duckengine/ecs';
+import { BasicShaderMaterialComponent } from '@duckengine/core';
 import { TextureCache } from './TextureCache';
 
 // Mock three/tsl

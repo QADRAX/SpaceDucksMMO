@@ -9,7 +9,7 @@ import {
   StandardMaterialComponent,
   BoxColliderComponent,
   type Component,
-} from '@duckengine/ecs';
+} from '@duckengine/core';
 
 function getComponent<T extends Component>(entity: Entity, type: string): T | null {
   // getAllComponents() exists; no typed getter.

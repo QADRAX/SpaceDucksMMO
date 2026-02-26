@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { GeometryFeature } from './GeometryFeature';
 import { RenderObjectRegistry } from '../sync/RenderObjectRegistry';
 import type { RenderContext } from './RenderContext';
-import type { Entity } from '@duckengine/ecs';
+import type { Entity } from '@duckengine/core';
 import * as TransformSync from '../sync/TransformSync';
 import { GeometryFactory } from '../factories/GeometryFactory';
 import { CustomGeometryLoader } from '../loaders/CustomGeometryLoader';

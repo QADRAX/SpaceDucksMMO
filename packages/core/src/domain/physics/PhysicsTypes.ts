@@ -1,4 +1,4 @@
-import type { Vec3Like } from "@duckengine/ecs";
+import type { Vec3Like } from "../ecs";
 
 /** Fixed-timestep settings for a physics simulation. */
 export interface PhysicsTimestepConfig {

@@ -1,4 +1,4 @@
-import { Entity, DefaultEcsComponentFactory } from '@duckengine/ecs';
+import { Entity, DefaultEcsComponentFactory } from '@duckengine/core';
 import {
     type EcsTreeSnapshot,
     createEmptyEcsTreeSnapshot,

@@ -17,7 +17,6 @@
     "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
   },
   "dependencies": {
-    "@duckengine/ecs": "^0.1.0",
     "@duckengine/web-core-api-client": "^0.1.0",
     "wasmoon": "^1.16.0"
   }

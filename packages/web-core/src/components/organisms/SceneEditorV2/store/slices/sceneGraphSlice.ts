@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import { Entity, type ComponentType, type DefaultEcsComponentFactory } from '@duckengine/ecs';
+import { Entity, type ComponentType, type DefaultEcsComponentFactory } from '@duckengine/core';
 import { collectAllFromRoots } from '../../logic/EcsLiveScene';
 import type { EditorSceneGraphSlice, SceneEditorState } from '../types';
 

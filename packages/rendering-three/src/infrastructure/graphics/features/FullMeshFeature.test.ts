@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { FullMeshFeature } from './FullMeshFeature';
 import { RenderObjectRegistry } from '../sync/RenderObjectRegistry';
 import type { RenderContext } from './RenderContext';
-import type { Entity, FullMeshComponent } from '@duckengine/ecs';
+import type { Entity, FullMeshComponent } from '@duckengine/core';
 import * as TransformSync from '../sync/TransformSync';
 import * as DebugUtils from '../debug/DebugUtils';
 

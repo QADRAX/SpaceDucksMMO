@@ -1,7 +1,7 @@
 import { FeatureRouter } from './FeatureRouter';
 import type { RenderFeature } from './RenderFeature';
 import type { RenderContext } from './RenderContext';
-import type { Entity } from '@duckengine/ecs';
+import type { Entity } from '@duckengine/core';
 
 describe('FeatureRouter', () => {
     let router: FeatureRouter;

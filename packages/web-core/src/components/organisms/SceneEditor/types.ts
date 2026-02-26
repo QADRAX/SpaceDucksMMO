@@ -1,4 +1,4 @@
-import type { Entity, DebugKind } from '@duckengine/ecs';
+import type { Entity, DebugKind } from '@duckengine/core';
 
 // Reserved selection id for the synthetic scene root node in the hierarchy tree.
 // Entity ids are GUID/random, so this should never collide in practice.

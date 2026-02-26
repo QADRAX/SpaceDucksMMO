@@ -9,7 +9,7 @@ import {
     Entity,
     FirstPersonMoveComponent,
     MouseLookComponent,
-} from '@duckengine/ecs';
+} from '@duckengine/core';
 
 const defaultSettings: GameSettings = {
     graphics: {

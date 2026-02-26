@@ -1,6 +1,6 @@
 // @ts-ignore
 import * as THREE from "three/webgpu";
-import type { Entity, LensFlareComponent, ComponentType } from "@duckengine/ecs";
+import type { Entity, LensFlareComponent, ComponentType } from "@duckengine/core";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
 import LensFlareFactory from "../factories/LensFlareFactory";

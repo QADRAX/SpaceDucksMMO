@@ -14,7 +14,7 @@ import { ResourceKeyInput, ResourceDisplayNameInput } from '@/components/molecul
 import { StandardShaderPreview } from '@/components/molecules/previews/StandardShaderPreview';
 import { EcsInspectorFieldsForm } from '@/components/molecules/EcsInspectorFieldsForm';
 import { UniformItem } from '@/components/molecules/resource-ui/UniformItem';
-import { StandardShaderMaterialComponent } from '@duckengine/ecs';
+import { StandardShaderMaterialComponent } from '@duckengine/core';
 
 export function CreateStandardShaderDialog() {
     const router = useRouter();

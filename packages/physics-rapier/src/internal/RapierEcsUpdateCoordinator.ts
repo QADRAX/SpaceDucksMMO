@@ -1,4 +1,4 @@
-import type { Entity } from "@duckengine/ecs";
+import type { Entity } from "@duckengine/core";
 import {
   applyQuatToVec,
   isColliderComponentType,
@@ -7,8 +7,8 @@ import {
   quatMul,
   quatNormalize,
   type QuatLike,
-} from "@duckengine/ecs";
-import type { AnyColliderComponent, RigidBodyComponent } from "@duckengine/ecs";
+} from "@duckengine/core";
+import type { AnyColliderComponent, RigidBodyComponent } from "@duckengine/core";
 import type {
   BoxColliderComponent,
   CapsuleColliderComponent,
@@ -16,7 +16,7 @@ import type {
   CylinderColliderComponent,
   SphereColliderComponent,
   TerrainColliderComponent,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 import type { RapierModule } from "../rapier/RapierInit";
 
 // Minimal method surface we use from Rapier runtime objects.

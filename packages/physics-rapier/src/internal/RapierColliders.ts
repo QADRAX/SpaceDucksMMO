@@ -1,4 +1,4 @@
-import type { Entity } from "@duckengine/ecs";
+import type { Entity } from "@duckengine/core";
 import {
   applyQuatToVec,
   quatFromEulerYXZ,
@@ -6,8 +6,8 @@ import {
   quatMul,
   quatNormalize,
   type QuatLike,
-} from "@duckengine/ecs";
-import { BaseColliderComponent } from "@duckengine/ecs";
+} from "@duckengine/core";
+import { BaseColliderComponent } from "@duckengine/core";
 import type {
   AnyColliderComponent,
   BoxColliderComponent,
@@ -17,7 +17,7 @@ import type {
   RigidBodyComponent,
   SphereColliderComponent,
   TerrainColliderComponent,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 import type RapierBodies from "./RapierBodies";
 import type RapierCollisionEvents from "./RapierCollisionEvents";
 

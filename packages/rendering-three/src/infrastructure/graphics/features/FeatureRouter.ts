@@ -1,4 +1,4 @@
-import type { Entity, ComponentType } from "@duckengine/ecs";
+import type { Entity, ComponentType } from "@duckengine/core";
 import { CoreLogger } from "@duckengine/core";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";

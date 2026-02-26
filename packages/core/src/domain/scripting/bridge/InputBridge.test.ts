@@ -1,5 +1,5 @@
 import { registerInputBridge } from "./InputBridge";
-import { setInputServices, getInputServices } from "@duckengine/ecs";
+import { setInputServices, getInputServices } from "../../ecs";
 
 describe("InputBridge", () => {
     let mockEngine: any;

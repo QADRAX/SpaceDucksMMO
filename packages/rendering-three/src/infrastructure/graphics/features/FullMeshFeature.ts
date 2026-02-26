@@ -4,7 +4,7 @@ import type {
     Entity,
     FullMeshComponent,
     ComponentType,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 import { CoreLogger } from "@duckengine/core";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";

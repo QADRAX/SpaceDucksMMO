@@ -7,7 +7,7 @@ import type {
   BasicMaterialComponent,
   PhongMaterialComponent,
   LambertMaterialComponent,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 
 export type AnyMaterialComponent =
   | StandardMaterialComponent

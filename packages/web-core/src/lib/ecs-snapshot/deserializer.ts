@@ -4,7 +4,7 @@ import {
     Entity,
     DefaultEcsComponentFactory,
     type Component,
-} from '@duckengine/ecs';
+} from '@duckengine/core';
 
 import {
     type EcsTreeSnapshot,

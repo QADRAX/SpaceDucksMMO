@@ -4,7 +4,7 @@ import {
     Entity,
     type ISettingsService,
 } from '@duckengine/rendering-three';
-import { SkyboxComponent } from '@duckengine/ecs';
+import { SkyboxComponent } from '@duckengine/core';
 import type { BasePreviewSettings } from '../utils/previewUtils';
 
 export type SkyboxPreviewSettings = BasePreviewSettings & {

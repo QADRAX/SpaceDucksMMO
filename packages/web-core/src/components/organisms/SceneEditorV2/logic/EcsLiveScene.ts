@@ -1,4 +1,4 @@
-import { Entity } from '@duckengine/ecs';
+import { Entity } from '@duckengine/core';
 import {
     type EcsTreeSnapshot,
     parseEcsTreeSnapshot,

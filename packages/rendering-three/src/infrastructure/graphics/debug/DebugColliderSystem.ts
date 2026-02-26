@@ -10,7 +10,7 @@ import type {
   RigidBodyComponent,
   SphereColliderComponent,
   TerrainColliderComponent,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 import type { RenderObjectRegistry } from "../sync/RenderObjectRegistry";
 import { DEBUG_LAYERS } from "./DebugLayers";
 import { deferredDisposeObject } from "./DebugUtils";

@@ -14,6 +14,7 @@ export * from './light';
 export * from './material';
 
 export * from './physics';
+export * from './environment/SkyboxComponent';
 
 export * from './scripting/ScriptSlot';
 export * from './scripting/ScriptComponent';

@@ -1,4 +1,4 @@
-import { StandardShaderMaterialComponent } from '@duckengine/ecs';
+import { StandardShaderMaterialComponent } from '@duckengine/core';
 import { BaseShaderPreviewScene } from './BaseShaderPreviewScene';
 
 export class StandardShaderPreviewScene extends BaseShaderPreviewScene {

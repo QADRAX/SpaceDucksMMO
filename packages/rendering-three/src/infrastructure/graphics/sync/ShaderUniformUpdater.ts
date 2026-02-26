@@ -1,6 +1,6 @@
 // @ts-ignore
 import * as THREE from 'three/webgpu';
-import type { Entity, AnyCustomShaderComponent } from '@duckengine/ecs';
+import type { Entity, AnyCustomShaderComponent } from '@duckengine/core';
 import type { RenderComponent } from './RenderObjectRegistry';
 
 export class ShaderUniformUpdater {

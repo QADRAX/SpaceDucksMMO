@@ -1,4 +1,4 @@
-import type { Entity, Component } from '@duckengine/ecs';
+import type { Entity, Component } from '@duckengine/core';
 import {
   isMaterialComponent,
   MATERIAL_RESOURCE_REF_KEY,
@@ -6,7 +6,7 @@ import {
   type MaterialResourceKind,
   type MaterialResourceRef,
   type AnyMaterialComponent,
-} from '@duckengine/ecs';
+} from '@duckengine/core';
 
 import type { EcsEditorScene } from '@/components/organisms/SceneEditor/logic/EcsEditorScene';
 import { applyComponentDataWithInspector } from '@/lib/ecs-snapshot';

@@ -1,6 +1,6 @@
 import BaseScene from './BaseScene';
-import { Entity, Component, type ComponentType } from '@duckengine/ecs';
-import { RigidBodyComponent, SphereColliderComponent, SkyboxComponent } from '@duckengine/ecs';
+import { Entity, Component, type ComponentType } from '../../domain/ecs';
+import { RigidBodyComponent, SphereColliderComponent, SkyboxComponent } from '../../domain/ecs';
 import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
 
 class TestComp extends Component {

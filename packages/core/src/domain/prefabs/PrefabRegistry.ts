@@ -1,4 +1,4 @@
-import { Entity, type IEcsComponentFactory } from "@duckengine/ecs";
+import { Entity, IEcsComponentFactory } from "../ecs";
 import { CoreLogger } from "../logging/CoreLogger";
 import { IPrefabRegistry, type PrefabTemplate } from "../ports/IPrefabRegistry";
 

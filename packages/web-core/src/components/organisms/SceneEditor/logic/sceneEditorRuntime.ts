@@ -1,6 +1,6 @@
 import {
   Entity,
-} from '@duckengine/ecs';
+} from '@duckengine/core';
 
 import {
   deserializeEcsTreeSnapshotToEntities,

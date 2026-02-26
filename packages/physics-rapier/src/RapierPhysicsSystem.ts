@@ -1,10 +1,10 @@
-import type { ComponentEvent, ComponentListener, Entity, Vec3Like, IComponentObserver, ComponentType } from "@duckengine/ecs";
-import { BaseColliderComponent } from "@duckengine/ecs";
+import type { ComponentEvent, ComponentListener, Entity, Vec3Like, IComponentObserver, ComponentType } from "@duckengine/core";
+import { BaseColliderComponent } from "@duckengine/core";
 import type {
   AnyColliderComponent,
   GravityComponent,
   RigidBodyComponent,
-} from "@duckengine/ecs";
+} from "@duckengine/core";
 import type { IPhysicsSystem, PhysicsTimestepConfig, PhysicsCollisionEvent } from "@duckengine/core";
 import { getRapier } from "./rapier/RapierInit";
 import type { RapierModule } from "./rapier/RapierInit";
@@ -26,7 +26,7 @@ import { RapierEcsUpdateCoordinator } from "./internal/RapierEcsUpdateCoordinato
  * Coordinate & rotation conventions:
  * - World axes match Three.js (right-handed).
  * - ECS Transform rotations use Euler order YXZ (see TransformSync).
- * - Rapier uses quaternions; conversion is handled via shared Math3D utilities in @duckengine/ecs.
+ * - Rapier uses quaternions; conversion is handled via shared Math3D utilities in @duckengine/core.
  */
 export class RapierPhysicsSystem implements IPhysicsSystem {
   private readonly R: RapierModule = getRapier();
