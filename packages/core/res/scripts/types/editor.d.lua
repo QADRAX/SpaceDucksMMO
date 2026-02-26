@@ -15,12 +15,12 @@ editor = {}
 ---Finds the first entity in the scene matching the given name.
 ---Note: This is an expensive O(N) operation and shouldn't be used in tight loops.
 ---@param name string The name or displayName of the entity to find.
----@return LuaEntity? entity The found entity, or `nil` if not found.
+---@return DuckEntity? entity The found entity, or `nil` if not found.
 function editor.findEntityByName(name) end
 
 ---Retrieves an entity by its unique UUID string.
 ---@param id string The UUID of the entity.
----@return LuaEntity? entity The found entity, or `nil` if not found.
+---@return DuckEntity? entity The found entity, or `nil` if not found.
 function editor.getEntity(id) end
 
 ---Checks if an entity with the given ID still exists in the active scene.

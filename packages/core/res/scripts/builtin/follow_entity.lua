@@ -5,14 +5,18 @@
 -- a smooth "camera lag" effect commonly used for chase cameras.
 -- =======================================================================
 
----@type ScriptModule
+---@class FollowEntityState
+---@field history        table[]
+
+---@class FollowEntity : DuckEntity<FollowEntityProps, FollowEntityState>
+
+---@type ScriptModule<FollowEntity>
 return {
     schema = {
         name = "Follow Entity (Kinematic)",
         description = "Follows a target entity with smoothing and optional time delay.",
-        requires = { "targetEntityId" },
         properties = {
-            targetEntityId = { type = "entity", default = "", description = "Target entity to follow." },
+            targetEntityId = { type = "entity", required = true, default = "", description = "Target entity to follow." },
             delay          = { type = "number", default = 0.5, description = "How far behind (seconds) to trail the target." },
             speed          = { type = "number", default = 5, description = "Smoothing speed for position interpolation." },
             offset         = { type = "vec3", default = { 0, 5, 5 }, description = "World-space offset from the target." }
@@ -25,17 +29,17 @@ return {
     end,
 
     update = function(self, dt)
-        -- targetEntityId is guaranteed valid by schema.requires
-        local target = self.targetEntityId
+        local props  = self.properties
+        local target = props.targetEntityId
+        local delay  = props.delay
+        local speed  = props.speed
+        local offset = props.offset
 
-        local props  = self.properties or {}
-        local delay  = props.delay or 0
-        local speed  = props.speed or 5
-        local offset = props.offset or { 0, 0, 0 }
+
 
         -- 1. Record current target position with timestamp
-        local tp     = target:getPosition()
-        local now    = time.now()
+        local tp  = target:getPosition()
+        local now = time.now()
         if not tp then return end
         table.insert(self.state.history, { t = now, pos = tp:clone() })
 

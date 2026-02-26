@@ -140,24 +140,7 @@ export class ScriptSystem {
         this.collisionUnsubMap.set(slot.slotId, unsub);
     }
 
-    /**
-     * Checks if a guarded slot should skip its update hook.
-     * Returns true if any property listed in `schema.requires` is nil
-     * or is an entity reference pointing to a destroyed entity.
-     */
-    private shouldSkipGuarded(slotId: string): boolean {
-        const requires = this.slotRequires.get(slotId);
-        if (!requires || requires.length === 0) return false;
-        const ctx = this.scriptContexts.get(slotId);
-        if (!ctx) return true;
-        for (const key of requires) {
-            const val = (ctx as any)[key];
-            if (val == null) return true;
-            // If it's a hydrated entity ref, check it still exists
-            if (typeof val === 'object' && val.id && this.allEntities && !this.allEntities.has(val.id)) return true;
-        }
-        return false;
-    }
+
 
     private hydrateManagedRefs(instance: any, ctx: LuaSelfInstance, slot: ScriptSlot) {
         if (!this.luaEngine) return;
@@ -172,19 +155,16 @@ export class ScriptSystem {
             const val = slot.properties[key];
 
             if (type === 'entity' && wrapEntity) {
-                if (val && typeof val === 'string') {
-                    (ctx as any)[key] = wrapEntity(val);
-                } else {
-                    (ctx as any)[key] = null;
-                }
+                (ctx as any)[key] = (val && typeof val === 'string') ? wrapEntity(val) : null;
             } else if (type === 'prefab' && wrapPrefab) {
-                if (val && typeof val === 'string' && this.prefabRegistry?.has(val)) {
-                    (ctx as any)[key] = wrapPrefab(val);
-                } else {
-                    (ctx as any)[key] = null;
-                }
+                (ctx as any)[key] = (val && typeof val === 'string' && this.prefabRegistry?.has(val)) ? wrapPrefab(val) : null;
+            } else {
+                // Hydrate simple types (number, string, boolean, vec3, enum) directly onto ctx
+                // This allows the self.propertyName pattern with IDE type warnings.
+                (ctx as any)[key] = val !== undefined ? val : null;
             }
         }
+
     }
 
     private compileScriptsForEntity(entity: Entity, scriptComponent: ScriptComponent) {
@@ -205,20 +185,43 @@ export class ScriptSystem {
 
                 // Cache schema.requires for guard checks
                 const schema = (instance as any).schema;
-                if (schema?.requires && Array.isArray(schema.requires)) {
-                    this.slotRequires.set(slot.slotId, schema.requires as string[]);
+                const requires: string[] = [];
+
+
+                // Support per-property 'required' flag
+                if (schema?.properties) {
+                    for (const [key, prop] of Object.entries(schema.properties)) {
+                        if ((prop as any).required) {
+                            requires.push(key);
+                        }
+                    }
                 }
+
+
+                if (requires.length > 0) {
+                    this.slotRequires.set(slot.slotId, requires);
+                }
+
+
+                // Wrap ctx for Lua
+                const wrapSelf = (this.luaEngine.global as any).get("__WrapSelf");
+                const wrappedCtx = wrapSelf ? wrapSelf(ctx) : ctx;
+
+
+                this.scriptInstances.set(slot.slotId, instance);
+                this.scriptContexts.set(slot.slotId, wrappedCtx);
+
 
                 // Perform living ref hydration
                 this.hydrateManagedRefs(instance, ctx, slot);
 
                 if (instance.init) {
-                    if (!this.sandbox.pcall(this.luaEngine, instance.init, ctx)) {
+                    if (!this.sandbox.pcall(this.luaEngine, instance.init, wrappedCtx)) {
                         slot.enabled = false;
                     }
                 }
                 if (slot.enabled && instance.onEnable) {
-                    if (!this.sandbox.pcall(this.luaEngine, instance.onEnable, ctx)) {
+                    if (!this.sandbox.pcall(this.luaEngine, instance.onEnable, wrappedCtx)) {
                         slot.enabled = false;
                     }
                 }
@@ -233,6 +236,7 @@ export class ScriptSystem {
             }
         }
     }
+
 
     private checkPropertyChanges() {
         if (!this.luaEngine) return;
@@ -264,7 +268,11 @@ export class ScriptSystem {
                             } else if (propDef?.type === 'prefab') {
                                 const wrapPrefab = (this.luaEngine.global as any).get("__WrapPrefab");
                                 (ctx as any)[key] = (val && wrapPrefab) ? wrapPrefab(val) : null;
+                            } else {
+                                // Update simple types directly on ctx
+                                (ctx as any)[key] = val !== undefined ? val : null;
                             }
+
 
                             if (instance.onPropertyChanged) {
                                 this.sandbox.pcall(this.luaEngine, instance.onPropertyChanged, ctx, key, slot.properties[key]);
@@ -289,7 +297,6 @@ export class ScriptSystem {
                 const instance = this.scriptInstances.get(slot.slotId);
                 const ctx = this.scriptContexts.get(slot.slotId);
                 if (instance?.earlyUpdate && ctx) {
-                    if (this.shouldSkipGuarded(slot.slotId)) continue;
                     if (!this.sandbox.pcall(this.luaEngine, instance.earlyUpdate, ctx, dt)) {
                         slot.enabled = false;
                     }
@@ -309,7 +316,6 @@ export class ScriptSystem {
                 const instance = this.scriptInstances.get(slot.slotId);
                 const ctx = this.scriptContexts.get(slot.slotId);
                 if (instance?.update && ctx) {
-                    if (this.shouldSkipGuarded(slot.slotId)) continue;
                     if (!this.sandbox.pcall(this.luaEngine, instance.update, ctx, dt)) {
                         slot.enabled = false;
                     }
@@ -331,7 +337,6 @@ export class ScriptSystem {
                 const instance = this.scriptInstances.get(slot.slotId);
                 const ctx = this.scriptContexts.get(slot.slotId);
                 if (instance?.lateUpdate && ctx) {
-                    if (this.shouldSkipGuarded(slot.slotId)) continue;
                     if (!this.sandbox.pcall(this.luaEngine, instance.lateUpdate, ctx, dt)) {
                         slot.enabled = false;
                     }
@@ -353,7 +358,6 @@ export class ScriptSystem {
                 const instance = this.scriptInstances.get(slot.slotId);
                 const ctx = this.scriptContexts.get(slot.slotId);
                 if (instance?.onDrawGizmos && ctx) {
-                    if (this.shouldSkipGuarded(slot.slotId)) continue;
                     if (!this.sandbox.pcall(this.luaEngine, instance.onDrawGizmos, ctx, dt)) {
                         slot.enabled = false;
                     }
@@ -402,7 +406,9 @@ export class ScriptSystem {
                     return (ctx as any)[key];
                 }
 
+                // Fallback to raw property if not hydrated yet (e.g. cross-script access before init)
                 return slot.properties[key] ?? null;
+
             },
             setSlotProperty: (entityId: string, scriptId: string, key: string, value: unknown) => {
                 const ent = allEntities.get(entityId);

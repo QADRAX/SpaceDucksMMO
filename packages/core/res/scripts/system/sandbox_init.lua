@@ -9,6 +9,26 @@ debug = nil
 loadfile = nil
 dofile = nil
 
+
+
+__SelfMT = {
+    __index = function(t, k)
+        return t.__jsCtx[k]
+    end,
+    __newindex = function(t, k, v)
+        t.__jsCtx[k] = v
+    end
+}
+
+function __WrapSelf(jsCtx)
+    local s = { __jsCtx = jsCtx }
+    -- Copy ID and slotId for easy access without going through proxy
+    s.id = jsCtx.id
+    s.slotId = jsCtx.slotId
+    setmetatable(s, __SelfMT)
+    return s
+end
+
 -- Setup OOP Metatable logic for Entities and Components
 __ComponentMT = {
     __index = function(t, k)

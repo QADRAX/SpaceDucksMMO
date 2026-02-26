@@ -36,7 +36,7 @@ describe("TransformBridge", () => {
         const ent = new Entity("ent-1");
         mockCtx.getEntity.mockReturnValue(ent);
 
-        const selfCtx = { id: "ent-1", slotId: "s1", state: {}, properties: {}, getComponent: jest.fn() };
+        const selfCtx = { id: "ent-1", slotId: "s1", state: {}, getComponent: jest.fn() };
 
         transformApi.setPosition(selfCtx, 10, 20, 30);
         expect(ent.transform.localPosition).toEqual({ x: 10, y: 20, z: 30 });
@@ -48,7 +48,7 @@ describe("TransformBridge", () => {
     it("handles missing entity gracefully", () => {
         registerTransformBridge(mockEngine, mockCtx);
         mockCtx.getEntity.mockReturnValue(undefined);
-        const selfCtx = { id: "missing", slotId: "s1", state: {}, properties: {}, getComponent: jest.fn() };
+        const selfCtx = { id: "missing", slotId: "s1", state: {}, getComponent: jest.fn() };
 
         expect(() => transformApi.setPosition(selfCtx, 1, 1, 1)).not.toThrow();
         expect(transformApi.getPosition(selfCtx)).toEqual({ x: 0, y: 0, z: 0 });

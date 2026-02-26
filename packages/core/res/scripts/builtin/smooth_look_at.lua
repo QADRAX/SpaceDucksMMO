@@ -32,9 +32,9 @@ return {
     schema = {
         name = "Smooth Look At",
         description = "Smoothly rotates to face a target using easing curves.",
-        requires = { "targetEntityId" },
         properties = {
-            targetEntityId = { type = "entity", default = "", description = "Target entity to look at." },
+            targetEntityId = { type = "entity", required = true, default = "", description = "Target entity to look at." },
+
             speed          = { type = "number", default = 3, description = "Rotation speed (higher = faster convergence)." },
             easing         = { type = "string", default = "sineOut", description = "Easing function: sineOut, quadOut, cubicInOut, etc." },
             offset         = { type = "vec3", default = { 0, 0, 0 }, description = "Offset applied to target position." }

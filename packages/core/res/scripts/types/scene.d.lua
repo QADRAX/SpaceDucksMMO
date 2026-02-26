@@ -34,7 +34,7 @@ function scene.fireEvent(eventName, data) end
 ---    print("Player " .. data.entityId .. " died!")
 ---end)
 ---```
----@param self LuaEntity The calling script's `self` context (used for automatic cleanup).
+---@param self DuckEntity The calling script's `self` context (used for automatic cleanup).
 ---@param eventName string The event name to listen for.
 ---@param listener fun(data: table) Callback invoked with the event payload.
 function scene.onEvent(self, eventName, listener) end
@@ -44,7 +44,7 @@ function scene.onEvent(self, eventName, listener) end
 ---Instantiates a prefab from the registry.
 ---@param key string The prefab ID/key.
 ---@param overrides? { position?: Vec3|number[], rotation?: Vec3|number[], scale?: Vec3|number[] } Optional overrides.
----@return LuaEntity? root The primary root entity of the new instance.
+---@return DuckEntity? root The primary root entity of the new instance.
 function scene.instantiatePrefab(key, overrides) end
 
 -- ─── Internal / System methods ──────────────────────────────────────

@@ -176,7 +176,7 @@ function LuaMathExt.clamp(v, min, max) end
 ---@operator sub(Vec3): Vec3
 ---@operator mul(Vec3|number): Vec3
 ---@operator div(Vec3|number): Vec3
----@operator unm(): Vec3
+---@operator unm: Vec3
 local Vec3 = {}
 
 ---Returns the magnitude (length) of the vector.
@@ -249,3 +249,4 @@ math.vec3.right = function() return {} end
 math.vec3.forward = function() return {} end
 ---@return Vec3 back
 math.vec3.back = function() return {} end
+

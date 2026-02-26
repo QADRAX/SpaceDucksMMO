@@ -5,14 +5,18 @@
 -- instead of teleporting, making it interact with obstacles naturally.
 -- =======================================================================
 
----@type ScriptModule
+---@class FollowEntityPhysicsState
+---@field flyModeEnabled boolean
+
+---@class FollowEntityPhysics : DuckEntity<FollowEntityPhysicsProps, FollowEntityPhysicsState>
+
+---@type ScriptModule<FollowEntityPhysics>
 return {
     schema = {
         name = "Follow Entity (Physics)",
         description = "Follows a target entity via physics impulses. Requires rigidBody.",
-        requires = { "targetEntityId" },
         properties = {
-            targetEntityId = { type = "entity", default = "", description = "Target entity to follow." },
+            targetEntityId = { type = "entity", required = true, default = "", description = "Target entity to follow." },
             strength       = { type = "number", default = 10, description = "Force multiplier for the attraction." },
             damping        = { type = "number", default = 0.9, description = "Velocity damping factor (0..1). Lower = more damping." },
             offset         = { type = "vec3", default = { 0, 5, 5 }, description = "World-space offset from the target." }
@@ -20,15 +24,15 @@ return {
     },
 
     update = function(self, dt)
-        -- targetEntityId is guaranteed valid by schema.requires
-        local target   = self.targetEntityId
+        -- targetEntityId is guaranteed valid by schema.required flag
+        local props    = self.properties
+        local target   = props.targetEntityId
+        local strength = props.strength
+        local offset   = props.offset
 
-        local props    = self.properties or {}
-        local strength = props.strength or 10
-        local offset   = props.offset or { 0, 0, 0 }
 
         -- 1. Calculate desired world position
-        local tp       = target:getPosition()
+        local tp = target:getPosition()
         if not tp then return end
 
         local offsetVec = math.vec3(offset[1], offset[2], offset[3])

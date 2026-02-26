@@ -4,7 +4,12 @@
 -- Does NOT require a physics rigid body — directly sets entity position.
 -- =======================================================================
 
----@type ScriptModule
+---@class FirstPersonMoveState
+---@field flyModeEnabled boolean
+
+---@class FirstPersonMove : DuckEntity<FirstPersonMoveProps, FirstPersonMoveState>
+
+---@type ScriptModule<FirstPersonMove>
 return {
     schema = {
         name = "First Person Move (Kinematic)",
@@ -33,10 +38,11 @@ return {
         if a then mv.x = mv.x - 1 end
         if d then mv.x = mv.x + 1 end
 
-        local props            = self.properties or {}
-        local moveSpeed        = props.moveSpeed or 5
-        local sprintMultiplier = props.sprintMultiplier or 2
-        local flyMode          = props.flyMode or false
+        local props            = self.properties
+        local moveSpeed        = props.moveSpeed
+        local sprintMultiplier = props.sprintMultiplier
+        local flyMode          = props.flyMode
+
 
         if flyMode then
             if up then mv.y = mv.y + 1 end

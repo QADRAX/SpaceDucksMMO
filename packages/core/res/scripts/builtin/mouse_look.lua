@@ -4,7 +4,13 @@
 -- via yaw (horizontal) and pitch (vertical) stored in state.
 -- =======================================================================
 
----@type ScriptModule
+---@class MouseLookState
+---@field yaw          number
+---@field pitch        number
+
+---@class MouseLook : DuckEntity<MouseLookProps, MouseLookState>
+
+---@type ScriptModule<MouseLook>
 return {
     schema = {
         name = "Mouse Look",
@@ -23,10 +29,12 @@ return {
         local md = input.getMouseDelta()
         if md.x == 0 and md.y == 0 then return end
 
-        local props        = self.properties or {}
-        local sensitivityX = props.sensitivityX or 0.002
-        local sensitivityY = props.sensitivityY or 0.002
-        local invertY      = props.invertY or false
+        local props        = self.properties
+        local sensitivityX = props.sensitivityX
+        local sensitivityY = props.sensitivityY
+        local invertY      = props.invertY
+
+
 
         -- Initialize accumulated angles on first frame
         if not self.state.yaw then self.state.yaw = 0 end

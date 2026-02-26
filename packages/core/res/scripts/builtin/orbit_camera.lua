@@ -3,14 +3,19 @@
 -- Orbits the entity around a target entity on a configurable plane.
 -- =======================================================================
 
----@type ScriptModule
+---@class OrbitCameraState
+---@field angle               number
+
+---@class OrbitCamera : DuckEntity<OrbitCameraProps, OrbitCameraState>
+
+---@type ScriptModule<OrbitCamera>
 return {
     schema = {
         name = "Orbit Camera",
         description = "Orbits this entity around a target at a fixed distance and speed.",
-        requires = { "targetEntityId" },
         properties = {
-            targetEntityId      = { type = "entity", default = "", description = "Central entity to orbit around." },
+            targetEntityId      = { type = "entity", required = true, default = "", description = "Central entity to orbit around." },
+
             altitudeFromSurface = { type = "number", default = 0, description = "Distance buffer from the target's center." },
             speed               = { type = "number", default = 0.5, description = "Orbit speed (radians per second)." },
             orbitPlane          = { type = "string", default = "xz", description = "Orbit plane: 'xz', 'xy', or 'yz'." },
@@ -19,17 +24,17 @@ return {
     },
 
     update = function(self, dt)
-        -- targetEntityId is guaranteed valid by schema.requires
-        local target              = self.targetEntityId
+        local props               = self.properties
+        local target              = props.targetEntityId
+        local altitudeFromSurface = props.altitudeFromSurface
+        local speed               = props.speed
+        local orbitPlane          = props.orbitPlane
 
-        local props               = self.properties or {}
-        local altitudeFromSurface = props.altitudeFromSurface or 0
-        local speed               = props.speed or 0.5
-        local orbitPlane          = props.orbitPlane or "xz"
+
 
         -- Initialize angle from property on first frame
         if not self.state.angle then
-            self.state.angle = props.initialAngle or 0
+            self.state.angle = props.initialAngle
         end
 
         local orbitDistance = 1 + altitudeFromSurface

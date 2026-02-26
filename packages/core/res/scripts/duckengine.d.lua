@@ -6,7 +6,7 @@
 -- have been split into dedicated files under `types/`:
 --
 --   types/core.d.lua    — ScriptModule, Vec3, ComponentType, PropertyType enums
---   types/entity.d.lua  — LuaEntity class (transform, physics, components, resources)
+--   types/entity.d.lua  — DuckEntity class (transform, physics, components, resources)
 --   types/scene.d.lua   — SceneAPI (events, entity queries)
 --   types/input.d.lua   — InputAPI (keyboard, mouse, pointer lock, KeyName enum)
 --   types/physics.d.lua — PhysicsAPI (raycast, RaycastHit)

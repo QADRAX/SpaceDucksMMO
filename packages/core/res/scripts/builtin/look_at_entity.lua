@@ -4,14 +4,15 @@
 -- Only affects rotation — does NOT move the entity.
 -- =======================================================================
 
----@type ScriptModule
+---@class LookAtEntity : DuckEntity<LookAtEntityProps, any>
+
+---@type ScriptModule<LookAtEntity>
 return {
     schema = {
         name = "Look at Entity",
         description = "Smoothly rotates this entity to face a target entity. Rotation only.",
-        requires = { "targetEntityId" },
         properties = {
-            targetEntityId = { type = "entity", default = "", description = "Target entity to look at." },
+            targetEntityId = { type = "entity", required = true, default = "", description = "Target entity to look at." },
             speed          = { type = "number", default = 5, description = "Rotation smoothing speed." },
             lookAtOffset   = { type = "vec3", default = { 0, 0, 0 }, description = "World-space offset applied to the target position." }
         }
@@ -19,14 +20,16 @@ return {
 
     update = function(self, dt)
         -- targetEntityId is guaranteed valid by schema.requires
-        local target = self.targetEntityId
+        local props  = self.properties
+        local target = props.targetEntityId
+        if not target then return end
 
-        local tp     = target:getPosition()
+        local tp = target:getPosition()
         if not tp then return end
 
-        local props     = self.properties or {}
-        local offset    = props.lookAtOffset or { 0, 0, 0 }
+        local offset    = props.lookAtOffset
         local offsetVec = math.vec3(offset[1], offset[2], offset[3])
+
 
         self:lookAt(tp + offsetVec)
     end

@@ -78,7 +78,7 @@ describe("SceneBridge", () => {
 
     it("subscribes to events", () => {
         registerSceneBridge(mockEngine, mockCtx);
-        const selfCtx = { id: "ent", slotId: "slot-1", state: {}, properties: {}, getComponent: jest.fn() };
+        const selfCtx = { id: "ent", slotId: "slot-1", state: {}, getComponent: jest.fn() };
 
         const listener = jest.fn();
         sceneApi.onEvent(selfCtx, "CustomEvent", listener);

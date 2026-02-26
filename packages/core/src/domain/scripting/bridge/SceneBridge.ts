@@ -1,14 +1,16 @@
 import type { LuaEngine } from "wasmoon";
 import { CoreLogger } from "../../logging/CoreLogger";
 import type { BridgeContext } from "./BridgeContext";
-import { Entity, ComponentType } from "../../ecs";
+import { ComponentType } from "../../ecs";
+
+type EntityTarget = string | { id: string };
 
 export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
     const sceneApi = {
-        fireEvent: (eventName: string, data?: any) => {
+        fireEvent: (eventName: string, data?: Record<string, any>) => {
             ctx.getEventBus().fire(eventName, data || {});
         },
-        onEvent: (self: any, eventName: string, listener: any) => {
+        onEvent: (self: { slotId: string }, eventName: string, listener: (data: any) => void) => {
             ctx.getEventBus().subscribe(eventName, self.slotId, (payload) => {
                 try {
                     listener(payload);
@@ -17,7 +19,7 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
                 }
             });
         },
-        addComponent: (entityId: string, type: string, params?: any) => {
+        addComponent: (entityId: string, type: string, params?: Record<string, any>) => {
             const ent = ctx.getEntity(entityId);
             if (!ent) return null;
             const comp = ctx.componentFactory.create(type as ComponentType, params);
@@ -54,7 +56,7 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
                 if (typeof comp.notifyChanged === 'function') comp.notifyChanged();
             }
         },
-        applyResource: async (entityId: string, key: string, kind?: string, overrides?: any) => {
+        applyResource: async (entityId: string, key: string, kind?: string, overrides?: Record<string, any>) => {
             if (!ctx.assetResolver) {
                 CoreLogger.warn("SceneBridge", "No AssetResolver provided to applyResource");
                 return;
@@ -95,7 +97,7 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
         },
 
         // ── Prefab support (Phase 13) ──────────────────────────
-        instantiatePrefab: (key: string, overrides?: any): any => {
+        instantiatePrefab: (key: string, overrides?: Record<string, any>): any => {
             if (!ctx.prefabRegistry) {
                 CoreLogger.warn("SceneBridge", "No PrefabRegistry provided to instantiatePrefab");
                 return null;
@@ -129,15 +131,16 @@ export function registerEditorBridge(engine: LuaEngine, ctx: BridgeContext) {
             });
             return match ? (engine.global as any).get('__WrapEntity')(match.id) : null;
         },
-        getEntity: (idOrSelf: any) => {
+        getEntity: (idOrSelf: EntityTarget) => {
             const id = typeof idOrSelf === 'string' ? idOrSelf : (idOrSelf?.id);
             if (!id) return null;
             return (engine.global as any).get('__WrapEntity')(id);
         },
-        exists: (idOrObject: any) => {
+        exists: (idOrObject: EntityTarget) => {
             const id = typeof idOrObject === 'string' ? idOrObject : idOrObject?.id;
             return !!ctx.getEntity(id);
         }
     };
     engine.global.set("editor", editorApi);
 }
+

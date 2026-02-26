@@ -1,7 +1,7 @@
 ---@meta
 -- ═══════════════════════════════════════════════════════════════════════
 -- DuckEngine Lua API — Entity
--- The LuaEntity class representing an ECS entity with OOP methods
+-- The DuckEntity class representing an ECS entity with OOP methods
 -- for transform, physics, components, and resource application.
 --
 -- 💡 DESIGN PRINCIPLE: Closed Scripting
@@ -11,87 +11,88 @@
 -- ═══════════════════════════════════════════════════════════════════════
 
 ---An ECS entity exposed to Lua via the `__EntityMT` metatable.
----Scripts receive `self` as a LuaEntity in all lifecycle hooks.
----Any entity referenced via schema properties is also a LuaEntity.
----@class LuaEntity
+---Scripts receive `self` as a DuckEntity in all lifecycle hooks.
+---Any entity referenced via schema properties is also a DuckEntity.
+---@class DuckEntity<P, S>
 ---@field id string The unique UUID of this entity in the scene.
----@field state table Persistent per-slot state table. Survives across frames. Use it to store script variables.
----@field properties table Read-only access to the script slot's inspector properties. Values come from the editor or defaults.
+---@field state S Persistent per-slot state table. Survives across frames. Use it to store script variables.
+---@field properties P Read-only access to the script slot's inspector properties.
 ---@field scripts LuaScriptsProxy Cross-script property access. Read/write other scripts' properties via `entity.scripts.scriptName.property`.
 ---@field [string] LuaComponentProxy Dynamic component access via dot notation (e.g., `entity.pointLight`, `entity.standardMaterial`).
-local LuaEntity = {}
+
+local DuckEntity = {}
 
 -- ─── Lifecycle ──────────────────────────────────────────────────────
 
 ---Returns `true` if this entity still exists in the scene.
 ---An entity may be destroyed by another script or by scene teardown.
 ---@return boolean alive `true` if entity is alive, `false` if destroyed.
-function LuaEntity:isValid() end
+function DuckEntity:isValid() end
 
 -- ─── Transform: Position ────────────────────────────────────────────
 
 ---Gets this entity's local position in world units.
 ---@return Vec3 position Table with `x`, `y`, `z` fields.
-function LuaEntity:getPosition() end
+function DuckEntity:getPosition() end
 
 ---Sets this entity's local position.
 ---@param position Vec3
-function LuaEntity:setPosition(position) end
+function DuckEntity:setPosition(position) end
 
 -- ─── Transform: Rotation ────────────────────────────────────────────
 
 ---Gets this entity's local rotation as Euler angles in radians.
 ---@return Vec3 rotation Table with `x` (pitch), `y` (yaw), `z` (roll) in radians.
-function LuaEntity:getRotation() end
+function DuckEntity:getRotation() end
 
 ---Sets this entity's local rotation using Euler angles.
 ---@param rotation Vec3 Euler angles in radians (pitch, yaw, roll).
-function LuaEntity:setRotation(rotation) end
+function DuckEntity:setRotation(rotation) end
 
 -- ─── Transform: Scale ───────────────────────────────────────────────
 
 ---Gets this entity's local scale.
 ---@return Vec3 scale Table with `x`, `y`, `z` scale factors. Default is `{1, 1, 1}`.
-function LuaEntity:getScale() end
+function DuckEntity:getScale() end
 
 ---Sets this entity's local scale.
 ---@param scale Vec3 Scale factors on the X, Y, and Z axes.
-function LuaEntity:setScale(scale) end
+function DuckEntity:setScale(scale) end
 
 -- ─── Transform: Direction Vectors ───────────────────────────────────
 
 ---Returns the entity's forward direction vector (local -Z axis transformed to world space).
 ---@return Vec3 forward Normalized direction vector.
-function LuaEntity:getForward() end
+function DuckEntity:getForward() end
 
 ---Returns the entity's right direction vector (local +X axis transformed to world space).
 ---@return Vec3 right Normalized direction vector.
-function LuaEntity:getRight() end
+function DuckEntity:getRight() end
 
 ---Returns the entity's up direction vector (local +Y axis transformed to world space).
 ---@return Vec3 up Normalized direction vector.
-function LuaEntity:getUp() end
+function DuckEntity:getUp() end
 
 ---Instantly rotates the entity so its forward vector (-Z) points at the given world coordinate.
 ---@param target Vec3 Target world coordinate.
-function LuaEntity:lookAt(target) end
+function DuckEntity:lookAt(target) end
 
 -- ─── Physics ────────────────────────────────────────────────────────
 
 ---Gets the linear velocity of this entity's rigid body.
 ---Returns `{0,0,0}` if the entity has no rigid body.
 ---@return Vec3 velocity Current velocity in units per second.
-function LuaEntity:getLinearVelocity() end
+function DuckEntity:getLinearVelocity() end
 
 ---Applies an instantaneous impulse to this entity's rigid body.
 ---This changes the velocity immediately. Requires a `rigidBody` component.
 ---@param impulse Vec3 Impulse force vector.
-function LuaEntity:applyImpulse(impulse) end
+function DuckEntity:applyImpulse(impulse) end
 
 ---Applies a continuous force to this entity's rigid body.
 ---Force is accumulated and applied during the next physics step.
 ---@param force Vec3 Force magnitude vector.
-function LuaEntity:applyForce(force) end
+function DuckEntity:applyForce(force) end
 
 -- ─── Components ─────────────────────────────────────────────────────
 
@@ -100,13 +101,13 @@ function LuaEntity:applyForce(force) end
 ---@param type ComponentType The component type to add.
 ---@param params? table Initial properties for the component (e.g., `{ intensity = 2, color = "red" }`).
 ---@return boolean success `true` if the component was added successfully.
-function LuaEntity:addComponent(type, params) end
+function DuckEntity:addComponent(type, params) end
 
 ---Removes an ECS component from this entity.
 ---The component's render objects (if any) are cleaned up automatically.
 ---@param type ComponentType The component type to remove.
 ---@return boolean success `true` if the component existed and was removed.
-function LuaEntity:removeComponent(type) end
+function DuckEntity:removeComponent(type) end
 
 -- ─── Resources ──────────────────────────────────────────────────────
 
@@ -114,19 +115,19 @@ function LuaEntity:removeComponent(type) end
 ---Replaces the entity's current material component with the resource data.
 ---@param key string The resource key, e.g. `"rusty_iron"`, `"glossy_metal"`.
 ---@param overrides? table Optional property overrides, e.g. `{ metalness = 1.0, color = "#ff0000" }`.
-function LuaEntity:applyMaterial(key, overrides) end
+function DuckEntity:applyMaterial(key, overrides) end
 
 ---Applies a geometry resource from the resource catalog to this entity.
 ---Replaces the entity's current geometry component with the resource data.
 ---@param key string The resource key, e.g. `"hero_ship_model"`.
 ---@param overrides? table Optional property overrides, e.g. `{ radius = 5 }`.
-function LuaEntity:applyGeometry(key, overrides) end
+function DuckEntity:applyGeometry(key, overrides) end
 
 ---Applies any resource from the resource catalog to this entity.
 ---Automatically determines the resource type and applies accordingly.
 ---@param key string The resource key.
 ---@param overrides? table Optional property overrides.
-function LuaEntity:applyResource(key, overrides) end
+function DuckEntity:applyResource(key, overrides) end
 
 -- ─── Cross-Script Property Access ───────────────────────────────────
 
@@ -136,7 +137,7 @@ function LuaEntity:applyResource(key, overrides) end
 ---
 ---Example:
 ---```lua
----local other = self.targetEntityId -- Hydrated LuaEntity from schema property
+---local other = self.targetEntityId -- Hydrated DuckEntity from schema property
 ---local speed = other.scripts.follow_entity.speed  -- read
 ---other.scripts.follow_entity.speed = 20           -- write (triggers onPropertyChanged)
 ---```

@@ -14,14 +14,20 @@ local function getEasing(name)
     return math.ext.easing.smoothstep
 end
 
----@type ScriptModule
+---@class SmoothFollowState
+---@field startPos       Vec3?
+---@field elapsed        number
+---@field lastGoal       Vec3?
+
+---@class SmoothFollow : DuckEntity<SmoothFollowProps, SmoothFollowState>
+
+---@type ScriptModule<SmoothFollow>
 return {
     schema = {
         name = "Smooth Follow (Eased)",
         description = "Follows a target using configurable easing curves for cinematic motion.",
-        requires = { "targetEntityId" },
         properties = {
-            targetEntityId = { type = "entity", default = "", description = "Target entity to follow." },
+            targetEntityId = { type = "entity", required = true, default = "", description = "Target entity to follow." },
             duration       = { type = "number", default = 1.0, description = "Time in seconds to reach the target." },
             easing         = { type = "string", default = "quadOut", description = "Easing function: linear, quadOut, cubicInOut, bounceOut, smoothstep, etc." },
             offset         = { type = "vec3", default = { 0, 5, 5 }, description = "World-space offset from target." }
@@ -35,16 +41,16 @@ return {
     end,
 
     update = function(self, dt)
-        -- targetEntityId is guaranteed valid by schema.requires
-        local target   = self.targetEntityId
+        local props    = self.properties
+        local target   = props.targetEntityId
+        local duration = math.max(0.01, props.duration)
+        local ease     = getEasing(props.easing)
+        local offset   = props.offset
 
-        local props    = self.properties or {}
-        local duration = math.max(0.01, props.duration or 1.0)
-        local ease     = getEasing(props.easing or "quadOut")
-        local offset   = props.offset or { 0, 0, 0 }
+
 
         -- Calculate goal position (target + offset)
-        local tp       = target:getPosition()
+        local tp = target:getPosition()
         if not tp then return end
         local offsetVec = math.vec3(offset[1], offset[2], offset[3])
         local goal      = tp + offsetVec

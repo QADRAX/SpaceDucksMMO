@@ -8,32 +8,70 @@
 -- Script Module
 -- ───────────────────────────────────────────────────────────────────────
 
+-- 💡 DUCKENGINE STANDARD: The "Double Generic Pattern"
+-- For the best IDE experience (null warnings, autocomplete), define a class
+-- that inherits from DuckEntity and provide your properties and state interfaces.
+--
+-- EXAMPLE:
+-- ---@class MyProps
+-- ---@field target   DuckEntity  -- Required property (non-nil)
+-- ---@field speed    number      -- Required property (non-nil)
+-- ---@field damping? number      -- Optional property (nullable)
+--
+-- ---@class MyState
+-- ---@field timer    number
+--
+-- ---@class MyScript : DuckEntity<MyProps, MyState>
+--
+-- ---@type ScriptModule<MyScript>
+-- return {
+--    schema = {
+--        properties = {
+--            target = { type = "entity", required = true },
+--            speed  = { type = "number", required = true },
+--            damping = { type = "number", default = 0.5 }
+--        }
+--    },
+--    update = function(self, dt)
+--        self.state.timer = (self.state.timer or 0) + dt
+--        print(self.properties.target.id) -- Perfect Autocomplete!
+--        if self.properties.damping then print(self.properties.damping) end
+--    end
+-- }
+
+
+
+
 ---The table returned by every script file. Contains optional schema,
 ---lifecycle hooks, and the script's behavior logic.
+---@generic T : DuckEntity<any, any>
 ---@class ScriptModule
 ---@field schema? SchemaDefinition Declarative metadata and property definitions.
----@field init? fun(self: LuaEntity) Called once when the scene starts playing.
----@field onEnable? fun(self: LuaEntity) Called when the slot is enabled.
----@field earlyUpdate? fun(self: LuaEntity, dt: number) Called every frame, before physics. `dt` is in milliseconds.
----@field update? fun(self: LuaEntity, dt: number) Called every frame, after physics. `dt` is in milliseconds.
----@field lateUpdate? fun(self: LuaEntity, dt: number) Called every frame, after event flush. `dt` is in milliseconds.
----@field onCollisionEnter? fun(self: LuaEntity, other: string) Called when a collision begins. `other` is the colliding entity ID.
----@field onCollisionExit? fun(self: LuaEntity, other: string) Called when a collision ends.
----@field onPropertyChanged? fun(self: LuaEntity, key: string, value: any) Called when a property changes from the inspector or cross-script write.
----@field onDisable? fun(self: LuaEntity) Called when the slot is disabled.
----@field onDestroy? fun(self: LuaEntity) Called when the entity or slot is destroyed.
----@field onDrawGizmos? fun(self: LuaEntity, dt: number) Called every frame in the Gizmo phase. Use the `gizmos` global here.
+---@field init? fun(self: T) Called once when the scene starts playing.
+---@field onEnable? fun(self: T) Called when the slot is enabled.
+---@field earlyUpdate? fun(self: T, dt: number) Called every frame, before physics. `dt` is in milliseconds.
+---@field update? fun(self: T, dt: number) Called every frame, after physics. `dt` is in milliseconds.
+---@field lateUpdate? fun(self: T, dt: number) Called every frame, after event flush. `dt` is in milliseconds.
+---@field onCollisionEnter? fun(self: T, other: string) Called when a collision begins. `other` is the colliding entity ID.
+---@field onCollisionExit? fun(self: T, other: string) Called when a collision ends.
+---@field onPropertyChanged? fun(self: T, key: string, value: any) Called when a property changes from the inspector or cross-script write.
+---@field onDisable? fun(self: T) Called when the slot is disabled.
+---@field onDestroy? fun(self: T) Called when the entity or slot is destroyed.
+---@field onDrawGizmos? fun(self: T, dt: number) Called every frame in the Gizmo phase. Use the `gizmos` global here.
 
 ---@class SchemaDefinition
 ---@field name? string Human-readable display name for the script.
 ---@field description? string Description shown in the inspector tooltip.
 ---@field properties? table<string, PropertyDefinition> Map of property key → definition.
----@field requires? string[] List of property keys that must be non-nil for update hooks to run.
+---@field requires? string[] [DEPRECATED] Use `required = true` in each property instead.
 
 ---@class PropertyDefinition
 ---@field type PropertyType The data type of this property.
+---@field required? boolean If true, the engine ensures this is non-nil for hooks (managed by ScriptSystem).
 ---@field default? any Default value when the property is unset.
+---@field options? string[] Only for "enum" type. List of valid string options.
 ---@field description? string Tooltip text shown in the editor inspector.
+
 
 -- ───────────────────────────────────────────────────────────────────────
 -- Property Type Enum
@@ -45,13 +83,12 @@
 ---| "string"   # A text value.
 ---| "boolean"  # A true/false toggle.
 ---| "vec3"     # A 3-component vector { x, y, z } (rendered as 3 inputs).
----| "entity"   # An entity reference (rendered as entity picker). Auto-hydrated to LuaEntity.
+---| "entity"   # An entity reference (rendered as entity picker). Auto-hydrated to DuckEntity.
 ---| "material" # A material resource reference (rendered as material picker).
 ---| "mesh"     # A mesh resource reference (rendered as mesh picker).
 ---| "skybox"   # A skybox resource reference (rendered as skybox picker).
 ---| "prefab"   # A prefab resource reference. Hydrated to LuaPrefab with :instantiate().
-
-
+---| "enum"     # A dropdown list of string options (defined in `options`).
 
 -- ───────────────────────────────────────────────────────────────────────
 -- Component Type Enum
@@ -117,7 +154,7 @@ local LuaPrefab = {}
 
 ---Instantiates this prefab in the scene.
 ---@param overrides? { position?: Vec3|number[], rotation?: Vec3|number[], scale?: Vec3|number[] } Optional overrides.
----@return LuaEntity? root The primary root entity of the new instance. Returns nil if failed.
+---@return DuckEntity? root The primary root entity of the new instance. Returns nil if failed.
 function LuaPrefab:instantiate(overrides) end
 
 -- ───────────────────────────────────────────────────────────────────────

@@ -15,7 +15,12 @@ local function clampMagnitude(v, maxLen)
     return v * (maxLen / len)
 end
 
----@type ScriptModule
+---@class FirstPersonPhysicsMoveState
+---@field flyModeEnabled boolean
+
+---@class FirstPersonPhysicsMove : DuckEntity<FirstPersonPhysicsMoveProps, FirstPersonPhysicsMoveState>
+
+---@type ScriptModule<FirstPersonPhysicsMove>
 return {
     schema = {
         name = "First Person Physics Move",
@@ -45,12 +50,13 @@ return {
         if a then mv.x = mv.x - 1 end
         if d then mv.x = mv.x + 1 end
 
-        local props             = self.properties or {}
-        local moveSpeed         = props.moveSpeed or 6
-        local sprintMultiplier  = props.sprintMultiplier or 1.75
-        local maxAcceleration   = math.max(0, props.maxAcceleration or 30)
-        local brakeDeceleration = math.max(0, props.brakeDeceleration or 40)
-        local flyMode           = props.flyMode or false
+        local props             = self.properties
+        local moveSpeed         = props.moveSpeed
+        local sprintMultiplier  = props.sprintMultiplier
+        local maxAcceleration   = math.max(0, props.maxAcceleration)
+        local brakeDeceleration = math.max(0, props.brakeDeceleration)
+        local flyMode           = props.flyMode
+
 
         if flyMode then
             if up then mv.y = mv.y + 1 end
@@ -94,7 +100,7 @@ return {
         end
 
         -- 4. Brake: no input, slow down
-        local brakeTarget = -curVel
+        local brakeTarget = curVel * -1
         if not flyMode then brakeTarget.y = 0 end
         local brakeDeltaV = clampMagnitude(brakeTarget, brakeDeceleration * secs)
         self:applyImpulse(brakeDeltaV)

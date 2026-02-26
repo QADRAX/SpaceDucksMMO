@@ -15,9 +15,9 @@ export interface BridgeContext {
     /** Returns an array of { scriptId, slotId } for all script slots on the entity. */
     getScriptSlots?: (entityId: string) => { scriptId: string; slotId: string }[];
     /** Reads a single property from a script slot identified by scriptId on the given entity. */
-    getSlotProperty?: (entityId: string, scriptId: string, key: string) => unknown;
+    getSlotProperty?: (entityId: string, scriptId: string, key: string) => any;
     /** Writes a single property to a script slot identified by scriptId on the given entity. */
-    setSlotProperty?: (entityId: string, scriptId: string, key: string, value: unknown) => void;
+    setSlotProperty?: (entityId: string, scriptId: string, key: string, value: any) => void;
 
     // Prefab support (Phase 13)
     prefabRegistry?: IPrefabRegistry;
@@ -25,5 +25,6 @@ export interface BridgeContext {
     // Gizmo rendering (Phase 18)
     gizmoRenderer?: IGizmoRenderer;
 }
+
 
 

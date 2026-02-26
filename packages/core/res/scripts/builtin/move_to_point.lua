@@ -15,7 +15,15 @@ local function getEasing(name)
     return math.ext.easing.smoothstep
 end
 
----@type ScriptModule
+---@class MoveToPointState
+---@field startPos       Vec3?
+---@field elapsed        number
+---@field active         boolean
+---@field lastGoal       Vec3?
+
+---@class MoveToPoint : DuckEntity<MoveToPointProps, MoveToPointState>
+
+---@type ScriptModule<MoveToPoint>
 return {
     schema = {
         name = "Move to Point (Eased)",
@@ -44,13 +52,14 @@ return {
     end,
 
     update = function(self, dt)
-        local props  = self.properties or {}
+        local props  = self.properties
         local target = props.targetPoint
         if not target then return end
 
-        local duration     = math.max(0.01, props.duration or 2.0)
-        local delay        = math.max(0, props.delay or 0)
-        local ease         = getEasing(props.easing or "cubicInOut")
+        local duration = math.max(0.01, props.duration)
+        local delay    = math.max(0, props.delay)
+        local ease     = getEasing(props.easing)
+
 
         local secs         = dt / 1000
         self.state.elapsed = self.state.elapsed + secs
