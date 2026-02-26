@@ -111,7 +111,7 @@ export class LuaSandbox {
 
                     -- 1. Helper methods
                     if k == "isValid" then
-                        return function(self) return scene.exists(self.id) end
+                        return function(self) return scene.__exists(self.id) end
                     end
                     if k == "addComponent" then
                         return function(self, type, params) return scene.addComponent(self.id, type, params) end

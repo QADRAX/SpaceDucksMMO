@@ -1,14 +1,14 @@
 ---@meta
 -- ═══════════════════════════════════════════════════════════════════════
 -- DuckEngine Lua API — Scene
--- Global `scene` table for event-driven communication and entity lookup.
+-- Global `scene` table for event-driven communication and instantiation.
 -- ═══════════════════════════════════════════════════════════════════════
 
 ---@class SceneAPI
----The global scene API table. Used for event communication and entity queries.
+---The global scene API table. Used for event communication and prefabs.
 ---
----**Note:** `getEntity`, `findEntityByName`, and `exists` are available but
----will be deprecated in favor of schema-managed entity references.
+---**Note:** Direct entity lookups are restricted in Game Mode.
+---Use managed references or events for cross-entity interaction.
 scene = {}
 
 -- ─── Events ─────────────────────────────────────────────────────────
@@ -39,6 +39,14 @@ function scene.fireEvent(eventName, data) end
 ---@param listener fun(data: table) Callback invoked with the event payload.
 function scene.onEvent(self, eventName, listener) end
 
+-- ─── Prefabs ────────────────────────────────────────────────────────
+
+---Instantiates a prefab from the registry.
+---@param key string The prefab ID/key.
+---@param overrides? { position?: Vec3|number[], rotation?: Vec3|number[], scale?: Vec3|number[] } Optional overrides.
+---@return LuaEntity? root The primary root entity of the new instance.
+function scene.instantiatePrefab(key, overrides) end
+
 -- ─── Reserved Events ────────────────────────────────────────────────
 -- The following events are fired automatically by the engine:
 --
@@ -47,26 +55,3 @@ function scene.onEvent(self, eventName, listener) end
 -- | "SceneReady"     | {}                  | After all init() hooks run     |
 -- | "EntityAdded"    | { entityId: string }| When an entity is added        |
 -- | "EntityRemoved"  | { entityId: string }| When an entity is removed      |
-
--- ─── Entity Queries (will be deprecated) ────────────────────────────
-
----Finds the first entity matching the given display name or name component value.
----
----**⚠️ Prefer schema-managed entity references instead of this function.**
----@param name string The display name to search for.
----@return LuaEntity? entity The found entity, or `nil` if not found.
-function scene.findEntityByName(name) end
-
----Returns the entity with the given ID, wrapped as a LuaEntity.
----
----**⚠️ Prefer schema-managed entity references instead of this function.**
----@param id string|LuaEntity An entity ID string or a LuaEntity object.
----@return LuaEntity? entity The entity, or `nil` if not found.
-function scene.getEntity(id) end
-
----Checks whether an entity with the given ID exists in the scene.
----
----**⚠️ Prefer `entity:isValid()` on managed references instead.**
----@param id string|LuaEntity An entity ID string or a LuaEntity object.
----@return boolean exists `true` if the entity exists.
-function scene.exists(id) end

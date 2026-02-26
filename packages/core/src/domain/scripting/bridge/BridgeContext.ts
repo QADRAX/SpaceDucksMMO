@@ -4,6 +4,7 @@ import type { AssetResolver } from "./AssetResolver";
 import type { IPrefabRegistry } from "../../ports/IPrefabRegistry";
 
 export interface BridgeContext {
+    mode: 'game' | 'editor';
     getEntity: (id: string) => Entity | undefined;
     getAllEntities: () => Entity[];
     getEventBus: () => SceneEventBus;

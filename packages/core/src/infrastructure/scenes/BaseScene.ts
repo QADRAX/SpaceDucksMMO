@@ -217,7 +217,7 @@ export abstract class BaseScene implements IScene {
       this.physicsSystem?.addEntity(ent);
     }
 
-    this.scriptSystem = new ScriptSystem(this.componentFactory, this.assetResolver, this.collisionEvents);
+    this.scriptSystem = new ScriptSystem(this.componentFactory, 'game', this.assetResolver, this.collisionEvents);
     this.scriptSystem.setup(this.entities, this);
   }
 

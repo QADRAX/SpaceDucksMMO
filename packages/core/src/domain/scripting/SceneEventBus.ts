@@ -23,10 +23,14 @@ export class SceneEventBus {
 
     unsubscribeAll(slotId: string): void {
         for (const set of this.listeners.values()) {
+            const listenersToRemove: ScriptEventListener[] = [];
             for (const listener of set) {
                 if (listener.slotId === slotId) {
-                    set.delete(listener);
+                    listenersToRemove.push(listener);
                 }
+            }
+            for (const listener of listenersToRemove) {
+                set.delete(listener);
             }
         }
     }

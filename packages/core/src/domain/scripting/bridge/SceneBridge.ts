@@ -17,6 +17,9 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
             });
         },
         findEntityByName: (name: string) => {
+            if (ctx.mode !== 'editor') {
+                throw new Error("[Security] scene.findEntityByName is only available in Editor mode. Use schema-managed references instead.");
+            }
             const match = ctx.getAllEntities().find(e => {
                 const nameComp = e.getComponent<any>("name");
                 return nameComp?.value === name || e.displayName === name;
@@ -24,11 +27,17 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
             return match ? (engine.global as any).get('__WrapEntity')(match.id) : null;
         },
         getEntity: (idOrSelf: any) => {
+            if (ctx.mode !== 'editor') {
+                throw new Error("[Security] scene.getEntity is only available in Editor mode. Use schema-managed references instead.");
+            }
             const id = typeof idOrSelf === 'string' ? idOrSelf : (idOrSelf?.id);
             if (!id) return null;
             return (engine.global as any).get('__WrapEntity')(id);
         },
         exists: (idOrObject: any) => {
+            if (ctx.mode !== 'editor') {
+                throw new Error("[Security] scene.exists is only available in Editor mode. Use entity:isValid() on managed references instead.");
+            }
             const id = typeof idOrObject === 'string' ? idOrObject : idOrObject?.id;
             return !!ctx.getEntity(id);
         },
@@ -122,6 +131,14 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
             // Return the first root entity wrapped for Lua
             const wrap = (engine.global as any).get("__WrapEntity");
             return wrap ? wrap(entities[0].id) : null;
+        },
+
+        // ── Internal methods (Phase 17) ──────────────────────────
+        // These are used by metatables and not documented in scene.d.lua
+        __exists: (id: string) => !!ctx.getEntity(id),
+        __getEntity: (id: string) => {
+            const ent = ctx.getEntity(id);
+            return ent ? (engine.global as any).get('__WrapEntity')(ent.id) : null;
         }
     };
     engine.global.set("scene", sceneApi);

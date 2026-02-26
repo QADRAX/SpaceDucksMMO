@@ -21,6 +21,7 @@ describe("SceneBridge", () => {
         eventBus = new SceneEventBus();
 
         mockCtx = {
+            mode: 'game',
             getEntity: jest.fn(),
             getAllEntities: jest.fn(),
             getEventBus: jest.fn().mockReturnValue(eventBus),

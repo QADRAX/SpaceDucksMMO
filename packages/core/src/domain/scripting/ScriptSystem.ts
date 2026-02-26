@@ -44,6 +44,7 @@ export class ScriptSystem {
 
     constructor(
         private componentFactory: IEcsComponentFactory,
+        private mode: 'game' | 'editor' = 'game',
         private assetResolver?: AssetResolver,
         private collisionEvents?: CollisionEventsHub,
         private prefabRegistry?: IPrefabRegistry
@@ -310,6 +311,8 @@ export class ScriptSystem {
                 }
             }
         }
+        // Flush events after all update() hooks have finished
+        this.eventBus.flush();
     }
 
     public lateUpdate(dt: number): void {
@@ -343,6 +346,7 @@ export class ScriptSystem {
         const getEventBus = () => this.eventBus;
 
         const bridgeCtx = {
+            mode: this.mode,
             getEntity,
             getAllEntities,
             getEventBus,

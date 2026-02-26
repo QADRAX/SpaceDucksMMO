@@ -3,6 +3,11 @@
 -- DuckEngine Lua API — Entity
 -- The LuaEntity class representing an ECS entity with OOP methods
 -- for transform, physics, components, and resource application.
+--
+-- 💡 DESIGN PRINCIPLE: Closed Scripting
+-- DuckEngine uses a "Closed Scripting" model for gameplay. Scripts are restricted
+-- from global scene queries. Instead, entities must be referenced via the script's
+-- `schema.properties`, allowing the engine to manage lifetimes and dependencies.
 -- ═══════════════════════════════════════════════════════════════════════
 
 ---An ECS entity exposed to Lua via the `__EntityMT` metatable.
@@ -143,7 +148,7 @@ function LuaEntity:applyResource(key, overrides) end
 ---
 ---Example:
 ---```lua
----local other = scene.findEntityByName("Player")
+---local other = self.targetEntityId -- Hydrated LuaEntity from schema property
 ---local speed = other.scripts.follow_entity.speed  -- read
 ---other.scripts.follow_entity.speed = 20           -- write (triggers onPropertyChanged)
 ---```

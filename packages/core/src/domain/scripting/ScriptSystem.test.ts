@@ -22,7 +22,7 @@ describe("ScriptSystem", () => {
 
         allEntities = new Map<string, Entity>();
         const mockComponentFactory = { listCreatableComponents: jest.fn().mockReturnValue([]), create: jest.fn() } as any;
-        system = new ScriptSystem(mockComponentFactory, undefined, collisionEvents);
+        system = new ScriptSystem(mockComponentFactory, 'game', undefined, collisionEvents);
     });
 
     afterEach(() => {
