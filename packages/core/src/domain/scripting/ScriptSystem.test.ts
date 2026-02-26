@@ -21,7 +21,8 @@ describe("ScriptSystem", () => {
         };
 
         allEntities = new Map<string, Entity>();
-        system = new ScriptSystem(collisionEvents);
+        const mockComponentFactory = { listCreatableComponents: jest.fn().mockReturnValue([]), create: jest.fn() } as any;
+        system = new ScriptSystem(mockComponentFactory, undefined, collisionEvents);
     });
 
     afterEach(() => {

@@ -1,4 +1,4 @@
-import type { Entity, ScriptComponent, ScriptSlot } from "@duckengine/ecs";
+import type { Entity, ScriptComponent, ScriptSlot, IEcsComponentFactory } from "@duckengine/ecs";
 import type { CollisionEventsHub } from "../physics/CollisionEventsHub";
 import type SceneChangeEvent from "../scene/SceneChangeEvent";
 import { SceneEventBus } from "./SceneEventBus";
@@ -7,12 +7,14 @@ import { LuaSelfFactory, type LuaSelfInstance } from "./LuaSelfFactory";
 import type { LuaEngine } from "wasmoon";
 import {
     registerInputBridge,
+    registerMathBridge,
     registerPhysicsBridge,
     registerSceneBridge,
     registerTimeBridge,
     registerTransformBridge
 } from "./bridge";
 import { BuiltInScripts } from "./BuiltInScripts";
+import type { AssetResolver } from "./bridge/AssetResolver";
 
 export class ScriptSystem {
     public readonly eventBus = new SceneEventBus();
@@ -32,9 +34,18 @@ export class ScriptSystem {
     private scriptContexts = new Map<string, LuaSelfInstance>();
     private lastProperties = new Map<string, string>(); // JSON stringified properties for change detection
 
+    // Schema guards: cached `requires` array per slot
+    private slotRequires = new Map<string, string[]>();
+    // Reference to all entities in the scene (for guard existence checks)
+    private allEntities: Map<string, Entity> | null = null;
+
     private timeBridgeSync?: { setDelta: (dt: number) => void };
 
-    constructor(private collisionEvents?: CollisionEventsHub) { }
+    constructor(
+        private componentFactory: IEcsComponentFactory,
+        private assetResolver?: AssetResolver,
+        private collisionEvents?: CollisionEventsHub
+    ) { }
 
     public registerEntity(entity: Entity): void {
         const sc = entity.getComponent<ScriptComponent>("script");
@@ -121,6 +132,47 @@ export class ScriptSystem {
         this.collisionUnsubMap.set(slot.slotId, unsub);
     }
 
+    /**
+     * Checks if a guarded slot should skip its update hook.
+     * Returns true if any property listed in `schema.requires` is nil
+     * or is an entity reference pointing to a destroyed entity.
+     */
+    private shouldSkipGuarded(slotId: string): boolean {
+        const requires = this.slotRequires.get(slotId);
+        if (!requires || requires.length === 0) return false;
+        const ctx = this.scriptContexts.get(slotId);
+        if (!ctx) return true;
+        for (const key of requires) {
+            const val = (ctx as any)[key];
+            if (val == null) return true;
+            // If it's a hydrated entity ref, check it still exists
+            if (typeof val === 'object' && val.id && this.allEntities && !this.allEntities.has(val.id)) return true;
+        }
+        return false;
+    }
+
+    private hydrateManagedRefs(instance: any, ctx: LuaSelfInstance, slot: ScriptSlot) {
+        if (!this.luaEngine) return;
+        const schema = (instance as any).schema;
+        if (!schema || !schema.properties) return;
+
+        const wrap = (this.luaEngine.global as any).get("__WrapEntity");
+        if (!wrap) return;
+
+        for (const [key, propDef] of Object.entries(schema.properties)) {
+            if ((propDef as any).type === 'entity') {
+                const val = slot.properties[key];
+                if (val && typeof val === 'string') {
+                    // Inject directly onto the Lua 'self' object (ctx)
+                    const entityObj = wrap(val);
+                    (ctx as any)[key] = entityObj;
+                } else {
+                    (ctx as any)[key] = null;
+                }
+            }
+        }
+    }
+
     private compileScriptsForEntity(entity: Entity, scriptComponent: ScriptComponent) {
         if (!this.luaEngine) return;
 
@@ -136,6 +188,15 @@ export class ScriptSystem {
 
                 this.scriptInstances.set(slot.slotId, instance);
                 this.scriptContexts.set(slot.slotId, ctx);
+
+                // Cache schema.requires for guard checks
+                const schema = (instance as any).schema;
+                if (schema?.requires && Array.isArray(schema.requires)) {
+                    this.slotRequires.set(slot.slotId, schema.requires as string[]);
+                }
+
+                // Perform living ref hydration
+                this.hydrateManagedRefs(instance, ctx, slot);
 
                 if (instance.init) {
                     if (!this.sandbox.pcall(this.luaEngine, instance.init, ctx)) {
@@ -161,23 +222,35 @@ export class ScriptSystem {
 
     private checkPropertyChanges() {
         if (!this.luaEngine) return;
+        const wrap = (this.luaEngine.global as any).get("__WrapEntity");
+
         for (const entity of this.entities.values()) {
             const sc = entity.getComponent<ScriptComponent>("script");
             if (!sc) continue;
             for (const slot of sc.getSlots()) {
                 const instance = this.scriptInstances.get(slot.slotId);
                 const ctx = this.scriptContexts.get(slot.slotId);
-                if (!instance?.onPropertyChanged || !ctx) continue;
+                if (!instance || !ctx) continue;
 
                 const currentProps = JSON.stringify(slot.properties);
                 const lastPropsStr = this.lastProperties.get(slot.slotId);
 
                 if (currentProps !== lastPropsStr) {
                     const lastProps = lastPropsStr ? JSON.parse(lastPropsStr) : {};
+                    const schema = (instance as any).schema;
+
                     // Find which specific keys changed
                     for (const key of Object.keys(slot.properties)) {
                         if (slot.properties[key] !== lastProps[key]) {
-                            this.sandbox.pcall(this.luaEngine, instance.onPropertyChanged, ctx, key, slot.properties[key]);
+                            // Update living ref if it's an entity type
+                            const propDef = schema?.properties?.[key];
+                            if (propDef?.type === 'entity' && wrap) {
+                                (ctx as any)[key] = slot.properties[key] ? wrap(slot.properties[key]) : null;
+                            }
+
+                            if (instance.onPropertyChanged) {
+                                this.sandbox.pcall(this.luaEngine, instance.onPropertyChanged, ctx, key, slot.properties[key]);
+                            }
                         }
                     }
                     this.lastProperties.set(slot.slotId, currentProps);
@@ -198,6 +271,7 @@ export class ScriptSystem {
                 const instance = this.scriptInstances.get(slot.slotId);
                 const ctx = this.scriptContexts.get(slot.slotId);
                 if (instance?.earlyUpdate && ctx) {
+                    if (this.shouldSkipGuarded(slot.slotId)) continue;
                     if (!this.sandbox.pcall(this.luaEngine, instance.earlyUpdate, ctx, dt)) {
                         slot.enabled = false;
                     }
@@ -217,6 +291,7 @@ export class ScriptSystem {
                 const instance = this.scriptInstances.get(slot.slotId);
                 const ctx = this.scriptContexts.get(slot.slotId);
                 if (instance?.update && ctx) {
+                    if (this.shouldSkipGuarded(slot.slotId)) continue;
                     if (!this.sandbox.pcall(this.luaEngine, instance.update, ctx, dt)) {
                         slot.enabled = false;
                     }
@@ -236,6 +311,7 @@ export class ScriptSystem {
                 const instance = this.scriptInstances.get(slot.slotId);
                 const ctx = this.scriptContexts.get(slot.slotId);
                 if (instance?.lateUpdate && ctx) {
+                    if (this.shouldSkipGuarded(slot.slotId)) continue;
                     if (!this.sandbox.pcall(this.luaEngine, instance.lateUpdate, ctx, dt)) {
                         slot.enabled = false;
                     }
@@ -248,14 +324,23 @@ export class ScriptSystem {
 
     public async setupAsync(allEntities: Map<string, Entity>, scene: { subscribeChanges: (listener: (ev: SceneChangeEvent) => void) => () => void }): Promise<void> {
         this.luaEngine = await this.sandbox.createEngine();
+        this.allEntities = allEntities;
 
         const getEntity = (id: string) => allEntities.get(id);
         const getAllEntities = () => Array.from(allEntities.values());
         const getEventBus = () => this.eventBus;
 
-        const bridgeCtx = { getEntity, getAllEntities, getEventBus };
+        const bridgeCtx = {
+            getEntity,
+            getAllEntities,
+            getEventBus,
+            componentFactory: this.componentFactory,
+            assetResolver: this.assetResolver
+        };
+
         registerTransformBridge(this.luaEngine, bridgeCtx);
         registerSceneBridge(this.luaEngine, bridgeCtx);
+        registerMathBridge(this.luaEngine);
         registerInputBridge(this.luaEngine);
         registerPhysicsBridge(this.luaEngine);
         this.timeBridgeSync = registerTimeBridge(this.luaEngine);

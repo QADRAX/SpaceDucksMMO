@@ -1,16 +1,20 @@
+-- =======================================================================
+-- look_at_point.lua
+-- Continuously rotates the entity to face a fixed world-space coordinate.
+-- =======================================================================
+
 ---@type ScriptModule
 return {
     schema = {
         name = "Look at Point",
-        description =
-        "Continuously rotates the entity so that its forward vector points towards a specific static 3D coordinate.",
+        description = "Continuously rotates this entity to face a static 3D world coordinate.",
         properties = {
-            targetPoint = { type = "vec3", default = { 0, 0, 0 }, description = "The [x, y, z] world coordinate array to look at." }
+            targetPoint = { type = "vec3", default = { 0, 0, 0 }, description = "World [x, y, z] coordinate to look at." }
         }
     },
 
     update = function(self, dt)
-        local props = self.properties or {}
+        local props       = self.properties or {}
         local targetPoint = props.targetPoint
         if not targetPoint then return end
 

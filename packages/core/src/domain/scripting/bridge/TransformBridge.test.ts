@@ -19,7 +19,8 @@ describe("TransformBridge", () => {
         mockCtx = {
             getEntity: jest.fn(),
             getAllEntities: jest.fn(),
-            getEventBus: jest.fn()
+            getEventBus: jest.fn(),
+            componentFactory: { listCreatableComponents: jest.fn().mockReturnValue([]), create: jest.fn() } as any
         };
     });
 

@@ -23,7 +23,8 @@ describe("SceneBridge", () => {
         mockCtx = {
             getEntity: jest.fn(),
             getAllEntities: jest.fn(),
-            getEventBus: jest.fn().mockReturnValue(eventBus)
+            getEventBus: jest.fn().mockReturnValue(eventBus),
+            componentFactory: { listCreatableComponents: jest.fn().mockReturnValue([]), create: jest.fn() } as any
         };
     });
 

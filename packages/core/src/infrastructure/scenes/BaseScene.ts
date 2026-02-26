@@ -2,14 +2,15 @@ import type IScene from '../../domain/ports/IScene';
 import type IRenderingEngine from '../../domain/ports/IRenderingEngine';
 import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
 import TextureResolverService from '../../application/TextureResolverService';
-import { setCurrentEcsWorld, setPhysicsServices, Result, ok, err } from '@duckengine/ecs';
-import type { Entity, ComponentType } from '@duckengine/ecs';
+import { setCurrentEcsWorld, setPhysicsServices, Result, ok, err, DefaultEcsComponentFactory } from '@duckengine/ecs';
+import type { Entity, ComponentType, IEcsComponentFactory } from '@duckengine/ecs';
 import type SceneChangeEvent from '../../domain/scene/SceneChangeEvent';
 import IRenderSyncSystem from '../../domain/ports/IRenderSyncSystem';
 import ISettingsService from '../../domain/ports/ISettingsService';
 import type { IPhysicsSystem } from '../../domain/physics/IPhysicsSystem';
 import CollisionEventsHub from '../../domain/physics/CollisionEventsHub';
 import { ScriptSystem } from '../../domain/scripting/ScriptSystem';
+import type { AssetResolver } from '../../domain/scripting/bridge/AssetResolver';
 import { SceneValidator } from './SceneValidator';
 import { SceneObserverManager } from './SceneObserverManager';
 
@@ -34,6 +35,8 @@ export abstract class BaseScene implements IScene {
 
   public readonly collisionEvents = new CollisionEventsHub();
   public scriptSystem?: ScriptSystem;
+  protected componentFactory: IEcsComponentFactory = new DefaultEcsComponentFactory();
+  public assetResolver?: AssetResolver;
 
   public debugFlags: Record<string, boolean> = {
     transform: false,
@@ -214,7 +217,7 @@ export abstract class BaseScene implements IScene {
       this.physicsSystem?.addEntity(ent);
     }
 
-    this.scriptSystem = new ScriptSystem(this.collisionEvents);
+    this.scriptSystem = new ScriptSystem(this.componentFactory, this.assetResolver, this.collisionEvents);
     this.scriptSystem.setup(this.entities, this);
   }
 

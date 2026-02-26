@@ -14,52 +14,80 @@ export interface LuaScriptInstance {
     onDestroy?: LuaHookFunction;
     onPropertyChanged?: (key: string, value: any) => void;
 }
+
 export class LuaSandbox {
     private factory: LuaFactory | null = null;
 
     constructor() { }
 
-    /**
-     * Creates a new isolated LuaEngine instance with standard libraries restricted 
-     * and a maximum instruction count to prevent infinite loops.
-     */
-    public async createEngine(maxInstructions: number = 100_000): Promise<LuaEngine> {
+    public async createEngine(): Promise<LuaEngine> {
         if (!this.factory) {
             const { LuaFactory } = await import('wasmoon');
             this.factory = new LuaFactory();
         }
         const engine = await this.factory!.createEngine();
 
-        // Enforce instruction limits to prevent infinite loops
-        engine.global.setMemoryMax(1024 * 1024 * 10); // 10MB max memory limit
-        engine.global.setTimeout(Date.now() + 1000); // 1s timeout for initialization
-        // Wasmoon handles instruction limits internally through the underlying fengari-web if needed,
-        // but a Timeout/MemoryLimit is typically safer and more standard for Wasmoon.
-        // The requirement specified 100k instructions; we will rely on timeout/memory limits 
-        // for wasmoon as its instruction counting API varies.
+        engine.global.setMemoryMax(1024 * 1024 * 10);
+        engine.global.setTimeout(Date.now() + 1000);
 
-        // Sandbox restrictions: remove potentially unsafe OS/IO modules
-        const L = engine.global.address;
         engine.doStringSync(`
-      os = nil
-      io = nil
-      debug = nil
-      loadfile = nil
-      dofile = nil
-    `);
+            os = nil
+            io = nil
+            debug = nil
+            loadfile = nil
+            dofile = nil
+        `);
 
-        // Inject a safe print function that prepends [Lua]
         engine.global.set('print', (...args: any[]) => {
             console.log('[Lua]', ...args);
         });
 
-        // Setup OOP Metatable logic for Entities
-        // This allows 'scene.getEntity(id)' to return an object that can do 'entity:getPosition()'
+        // Setup OOP Metatable logic for Entities and Components
         engine.doStringSync(`
+            __ComponentMT = {
+                __index = function(t, k)
+                    return scene.getComponentProperty(t.entityId, t.type, k)
+                end,
+                __newindex = function(t, k, v)
+                    scene.setComponentProperty(t.entityId, t.type, k, v)
+                end
+            }
+
+            function __WrapComponent(entityId, type)
+                local c = { entityId = entityId, type = type }
+                setmetatable(c, __ComponentMT)
+                return c
+            end
+
             __EntityMT = {
                 __index = function(t, k)
-                    -- First check if the key exists in k-v bridges (transform, physics, etc)
-                    -- We'll assume the bridges are registered as globals.
+                    -- 1. Helper methods
+                    if k == "isValid" then
+                        return function(self) return scene.exists(self.id) end
+                    end
+                    if k == "addComponent" then
+                        return function(self, type, params) return scene.addComponent(self.id, type, params) end
+                    end
+                    if k == "removeComponent" then
+                        return function(self, type) return scene.removeComponent(self.id, type) end
+                    end
+                    if k == "applyMaterial" then
+                        return function(self, key, overrides) 
+                            return scene.applyResource(self.id, key, "standardMaterial", overrides) 
+                        end
+                    end
+                    if k == "applyGeometry" then
+                        -- We use "boxGeometry" or similar as a generic kin, but asset resolver defines the specific kind.
+                        -- For now let's just use it as a generic resource but we can expand filter logic.
+                        return function(self, key, overrides) 
+                            return scene.applyResource(self.id, key, nil, overrides) 
+                        end
+                    end
+                    if k == "applyResource" then
+                        return function(self, key, overrides) return scene.applyResource(self.id, key, nil, overrides) end
+                    end
+
+                    -- 2. Transform / Physics explicit bridge helpers
                     if transform[k] then 
                         return function(self, ...) return transform[k](self, ...) end 
                     end
@@ -69,7 +97,12 @@ export class LuaSandbox {
                     if scene[k] then 
                         return function(self, ...) return scene[k](self, ...) end 
                     end
-                    return nil
+
+                    -- 3. Dynamic Component Access (UCA)
+                    -- If we reach here, we check if the entity has the component
+                    -- Note: This is slightly expensive to do in every frame if done carelessly in Lua,
+                    -- but for scripting it's the "solid" way.
+                    return __WrapComponent(t.id, k)
                 end
             }
 
@@ -84,15 +117,8 @@ export class LuaSandbox {
         return engine;
     }
 
-    /**
-     * Compiles the source string in the provided engine and returns 
-     * the cached hook functions for fast invocation.
-     */
     public compile(engine: LuaEngine, source: string): LuaScriptInstance {
-        // Reset timeout just for compilation
         engine.global.setTimeout(Date.now() + 1000);
-
-        // Execute the script. It should return a table containing the hooks.
         const result = engine.doStringSync(source);
 
         if (typeof result !== 'object' || result === null) {
@@ -100,7 +126,6 @@ export class LuaSandbox {
         }
 
         const instance: LuaScriptInstance = {};
-
         const hooks = [
             'init', 'onEnable', 'earlyUpdate', 'update', 'lateUpdate',
             'onCollisionEnter', 'onCollisionExit', 'onDisable', 'onDestroy',
@@ -116,15 +141,8 @@ export class LuaSandbox {
         return instance;
     }
 
-    /**
-     * Safely invokes a Lua hook function with error catching and timeout limits.
-     */
     public pcall(engine: LuaEngine, hookFn: LuaHookFunction | undefined, ...args: any[]): boolean {
         if (!hookFn) return true;
-
-        // Set timeout for this specific invocation (e.g. 100ms max per script hook)
-        // In a real high-performance scenario we'd use fengari instruction limits directly, 
-        // but Wasmoon's timeout wrapper is the closest high-level API.
         engine.global.setTimeout(Date.now() + 100);
 
         try {
