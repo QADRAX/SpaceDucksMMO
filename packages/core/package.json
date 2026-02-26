@@ -12,7 +12,7 @@
     }
   },
   "scripts": {
-    "build:scripts": "tsx scripts/generate-builtin-scripts.ts",
+    "build:scripts": "tsx scripts/generate-scripts.ts",
     "build": "npm run build:scripts && tsc -b tsconfig.json",
     "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
   },

@@ -5,3 +5,4 @@ dist/
 npm-debug.log
 yarn-error.log
 tsconfig.tsbuildinfo
+packages/core/src/domain/scripting/generated/

@@ -15,7 +15,7 @@ import {
     registerTransformBridge,
     registerGizmoBridge
 } from "./bridge";
-import { BuiltInScripts } from "./BuiltInScripts";
+import { BuiltInScripts } from "./generated/ScriptAssets";
 import type { AssetResolver } from "./bridge/AssetResolver";
 import type { IPrefabRegistry } from "../ports/IPrefabRegistry";
 import type { IGizmoRenderer } from "../ports/IGizmoRenderer";

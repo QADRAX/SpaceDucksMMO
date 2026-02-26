@@ -1,4 +1,5 @@
 import type { LuaEngine } from "wasmoon";
+import { SystemScripts } from "../generated/ScriptAssets";
 
 /**
  * Exposes mathematical utilities and easing functions to the Lua environment.
@@ -55,5 +56,5 @@ export function registerMathBridge(engine: LuaEngine) {
 
     engine.global.set("math_ext", mathApi);
     // Shortcut for ease of use in Lua
-    engine.doStringSync("math.ext = math_ext");
+    engine.doStringSync(SystemScripts["math_ext.lua"]);
 }

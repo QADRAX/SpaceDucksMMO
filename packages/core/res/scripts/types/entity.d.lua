@@ -35,10 +35,8 @@ function LuaEntity:isValid() end
 function LuaEntity:getPosition() end
 
 ---Sets this entity's local position.
----@param x number World-space X coordinate.
----@param y number World-space Y coordinate.
----@param z number World-space Z coordinate.
-function LuaEntity:setPosition(x, y, z) end
+---@param position Vec3
+function LuaEntity:setPosition(position) end
 
 -- ─── Transform: Rotation ────────────────────────────────────────────
 
@@ -47,10 +45,8 @@ function LuaEntity:setPosition(x, y, z) end
 function LuaEntity:getRotation() end
 
 ---Sets this entity's local rotation using Euler angles.
----@param x number Pitch in radians (rotation around local X axis).
----@param y number Yaw in radians (rotation around local Y axis).
----@param z number Roll in radians (rotation around local Z axis).
-function LuaEntity:setRotation(x, y, z) end
+---@param rotation Vec3 Euler angles in radians (pitch, yaw, roll).
+function LuaEntity:setRotation(rotation) end
 
 -- ─── Transform: Scale ───────────────────────────────────────────────
 
@@ -59,10 +55,8 @@ function LuaEntity:setRotation(x, y, z) end
 function LuaEntity:getScale() end
 
 ---Sets this entity's local scale.
----@param x number Scale factor on the X axis.
----@param y number Scale factor on the Y axis.
----@param z number Scale factor on the Z axis.
-function LuaEntity:setScale(x, y, z) end
+---@param scale Vec3 Scale factors on the X, Y, and Z axes.
+function LuaEntity:setScale(scale) end
 
 -- ─── Transform: Direction Vectors ───────────────────────────────────
 
@@ -79,10 +73,8 @@ function LuaEntity:getRight() end
 function LuaEntity:getUp() end
 
 ---Instantly rotates the entity so its forward vector (-Z) points at the given world coordinate.
----@param x number Target X world coordinate.
----@param y number Target Y world coordinate.
----@param z number Target Z world coordinate.
-function LuaEntity:lookAt(x, y, z) end
+---@param target Vec3 Target world coordinate.
+function LuaEntity:lookAt(target) end
 
 -- ─── Physics ────────────────────────────────────────────────────────
 
@@ -93,17 +85,13 @@ function LuaEntity:getLinearVelocity() end
 
 ---Applies an instantaneous impulse to this entity's rigid body.
 ---This changes the velocity immediately. Requires a `rigidBody` component.
----@param x number Impulse force on the X axis.
----@param y number Impulse force on the Y axis.
----@param z number Impulse force on the Z axis.
-function LuaEntity:applyImpulse(x, y, z) end
+---@param impulse Vec3 Impulse force vector.
+function LuaEntity:applyImpulse(impulse) end
 
 ---Applies a continuous force to this entity's rigid body.
 ---Force is accumulated and applied during the next physics step.
----@param x number Force magnitude on the X axis.
----@param y number Force magnitude on the Y axis.
----@param z number Force magnitude on the Z axis.
-function LuaEntity:applyForce(x, y, z) end
+---@param force Vec3 Force magnitude vector.
+function LuaEntity:applyForce(force) end
 
 -- ─── Components ─────────────────────────────────────────────────────
 

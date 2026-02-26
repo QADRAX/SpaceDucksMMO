@@ -11,10 +11,12 @@ export function registerTransformBridge(engine: LuaEngine, ctx: BridgeContext) {
             const p = ent.transform.localPosition;
             return { x: p.x, y: p.y, z: p.z };
         },
-        setPosition: (target: any, x: number, y: number, z: number) => {
+        setPosition: (target: any, vec: any) => {
             const id = typeof target === 'string' ? target : target?.id;
             const ent = ctx.getEntity(id);
-            if (ent) ent.transform.setPosition(x, y, z);
+            if (ent && vec) {
+                ent.transform.setPosition(vec.x, vec.y, vec.z);
+            }
         },
         getRotation: (target: any) => {
             const id = typeof target === 'string' ? target : target?.id;
@@ -23,10 +25,12 @@ export function registerTransformBridge(engine: LuaEngine, ctx: BridgeContext) {
             const r = ent.transform.localRotation;
             return { x: r.x, y: r.y, z: r.z };
         },
-        setRotation: (target: any, x: number, y: number, z: number) => {
+        setRotation: (target: any, vec: any) => {
             const id = typeof target === 'string' ? target : target?.id;
             const ent = ctx.getEntity(id);
-            if (ent) ent.transform.setRotation(x, y, z);
+            if (ent && vec) {
+                ent.transform.setRotation(vec.x, vec.y, vec.z);
+            }
         },
         getScale: (target: any) => {
             const id = typeof target === 'string' ? target : target?.id;
@@ -35,15 +39,19 @@ export function registerTransformBridge(engine: LuaEngine, ctx: BridgeContext) {
             const s = ent.transform.localScale;
             return { x: s.x, y: s.y, z: s.z };
         },
-        setScale: (target: any, x: number, y: number, z: number) => {
+        setScale: (target: any, vec: any) => {
             const id = typeof target === 'string' ? target : target?.id;
             const ent = ctx.getEntity(id);
-            if (ent) ent.transform.setScale(x, y, z);
+            if (ent && vec) {
+                ent.transform.setScale(vec.x, vec.y, vec.z);
+            }
         },
-        lookAt: (target: any, x: number, y: number, z: number) => {
+        lookAt: (target: any, vec: any) => {
             const id = typeof target === 'string' ? target : target?.id;
             const ent = ctx.getEntity(id);
-            if (ent) ent.transform.lookAt({ x, y, z });
+            if (ent && vec) {
+                ent.transform.lookAt({ x: vec.x, y: vec.y, z: vec.z });
+            }
         },
         getForward: (target: any) => {
             const id = typeof target === 'string' ? target : target?.id;

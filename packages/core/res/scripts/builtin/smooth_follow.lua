@@ -45,23 +45,18 @@ return {
 
         -- Calculate goal position (target + offset)
         local tp       = target:getPosition()
-        local goal     = {
-            x = tp.x + offset[1],
-            y = tp.y + offset[2],
-            z = tp.z + offset[3]
-        }
+        if not tp then return end
+        local offsetVec = math.vec3(offset[1], offset[2], offset[3])
+        local goal      = tp + offsetVec
 
         -- Detect if goal changed significantly → restart easing
-        local last     = self.state.lastGoal
+        local last      = self.state.lastGoal
         if not last or not self.state.startPos then
             self.state.startPos = self:getPosition()
             self.state.elapsed  = 0
             self.state.lastGoal = goal
         else
-            local dx = goal.x - last.x
-            local dy = goal.y - last.y
-            local dz = goal.z - last.z
-            local dist = math.sqrt(dx * dx + dy * dy + dz * dz)
+            local dist = goal:distanceTo(last)
             if dist > 0.01 then
                 -- Target moved — restart easing from current pos
                 self.state.startPos = self:getPosition()
@@ -80,10 +75,10 @@ return {
 
         -- Interpolate from start position to goal using the eased `t`
         local sp           = self.state.startPos
-        self:setPosition(
+        self:setPosition(math.vec3(
             math.ext.lerp(sp.x, goal.x, t),
             math.ext.lerp(sp.y, goal.y, t),
             math.ext.lerp(sp.z, goal.z, t)
-        )
+        ))
     end
 }

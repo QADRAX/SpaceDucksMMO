@@ -43,25 +43,26 @@ return {
 
     update = function(self, dt)
         -- targetEntityId is guaranteed valid by schema.requires
-        local target         = self.targetEntityId
+        local target = self.targetEntityId
 
-        local props          = self.properties or {}
-        local speed          = props.speed or 3
-        local ease           = getEasing(props.easing or "sineOut")
-        local offset         = props.offset or { 0, 0, 0 }
+        local props  = self.properties or {}
+        local speed  = props.speed or 3
+        local ease   = getEasing(props.easing or "sineOut")
+        local offset = props.offset or { 0, 0, 0 }
 
-        local tp             = target:getPosition()
+        local tp     = target:getPosition()
+        if not tp then return end
         local cur            = self:getPosition()
 
         -- Direction from self to target+offset
-        local dx             = (tp.x + offset[1]) - cur.x
-        local dy             = (tp.y + offset[2]) - cur.y
-        local dz             = (tp.z + offset[3]) - cur.z
+        local offsetVec      = math.vec3(offset[1], offset[2], offset[3])
+        local desired        = tp + offsetVec
+        local dir            = desired - cur
 
         -- Calculate desired yaw and pitch from direction
-        local desiredYaw     = math.atan(dx, dz)
-        local horizontalDist = math.sqrt(dx * dx + dz * dz)
-        local desiredPitch   = -math.atan(dy, horizontalDist)
+        local desiredYaw     = math.atan(dir.x, dir.z)
+        local horizontalDist = math.sqrt(dir.x * dir.x + dir.z * dir.z)
+        local desiredPitch   = -math.atan(dir.y, horizontalDist)
 
         -- Get current rotation
         local rot            = self:getRotation()
@@ -75,6 +76,6 @@ return {
         local newPitch       = lerpAngle(rot.x, desiredPitch, t)
         local newYaw         = lerpAngle(rot.y, desiredYaw, t)
 
-        self:setRotation(newPitch, newYaw, 0)
+        self:setRotation(math.vec3(newPitch, newYaw, 0))
     end
 }

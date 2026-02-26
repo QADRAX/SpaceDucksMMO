@@ -51,15 +51,7 @@
 ---| "skybox"   # A skybox resource reference (rendered as skybox picker).
 ---| "prefab"   # A prefab resource reference. Hydrated to LuaPrefab with :instantiate().
 
--- ───────────────────────────────────────────────────────────────────────
--- Vec3
--- ───────────────────────────────────────────────────────────────────────
 
----A 3-component vector used for positions, rotations, scales, and directions.
----@class Vec3
----@field x number The X component.
----@field y number The Y component.
----@field z number The Z component.
 
 -- ───────────────────────────────────────────────────────────────────────
 -- Component Type Enum

@@ -65,10 +65,11 @@ return {
 
         -- Interpolate from starting position to target
         local sp     = self.state.startPos
-        self:setPosition(
-            math.ext.lerp(sp.x, target[1], t),
-            math.ext.lerp(sp.y, target[2], t),
-            math.ext.lerp(sp.z, target[3], t)
-        )
+        local tp     = math.vec3(target[1], target[2], target[3])
+        self:setPosition(math.vec3(
+            math.ext.lerp(sp.x, tp.x, t),
+            math.ext.lerp(sp.y, tp.y, t),
+            math.ext.lerp(sp.z, tp.z, t)
+        ))
     end
 }

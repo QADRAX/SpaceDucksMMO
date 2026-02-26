@@ -22,13 +22,12 @@ return {
         local target = self.targetEntityId
 
         local tp     = target:getPosition()
-        local props  = self.properties or {}
-        local offset = props.lookAtOffset or { 0, 0, 0 }
+        if not tp then return end
 
-        self:lookAt(
-            tp.x + offset[1],
-            tp.y + offset[2],
-            tp.z + offset[3]
-        )
+        local props     = self.properties or {}
+        local offset    = props.lookAtOffset or { 0, 0, 0 }
+        local offsetVec = math.vec3(offset[1], offset[2], offset[3])
+
+        self:lookAt(tp + offsetVec)
     end
 }

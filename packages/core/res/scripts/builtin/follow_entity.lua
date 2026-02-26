@@ -36,7 +36,8 @@ return {
         -- 1. Record current target position with timestamp
         local tp     = target:getPosition()
         local now    = time.now()
-        table.insert(self.state.history, { t = now, x = tp.x, y = tp.y, z = tp.z })
+        if not tp then return end
+        table.insert(self.state.history, { t = now, pos = tp:clone() })
 
         -- 2. Evict stale entries (keep only entries within the delay window)
         while #self.state.history > 1 and (now - self.state.history[2].t) > delay do
@@ -44,25 +45,22 @@ return {
         end
 
         -- 3. Pick the oldest buffered position (= delayed target)
-        local targetPos = { x = tp.x, y = tp.y, z = tp.z }
+        local targetPos = tp
         if delay > 0 and #self.state.history > 0 then
-            targetPos = self.state.history[1]
+            targetPos = self.state.history[1].pos
         end
 
         -- 4. Smoothly interpolate towards delayed target + offset
-        local desired = {
-            x = targetPos.x + offset[1],
-            y = targetPos.y + offset[2],
-            z = targetPos.z + offset[3]
-        }
+        local offsetVec = math.vec3(offset[1], offset[2], offset[3])
+        local desired   = targetPos + offsetVec
 
-        local cur     = self:getPosition()
-        local t       = math.min(1, speed * (dt / 1000))
+        local cur       = self:getPosition()
+        local t         = math.min(1, speed * (dt / 1000))
 
-        self:setPosition(
+        self:setPosition(math.vec3(
             math.ext.lerp(cur.x, desired.x, t),
             math.ext.lerp(cur.y, desired.y, t),
             math.ext.lerp(cur.z, desired.z, t)
-        )
+        ))
     end
 }

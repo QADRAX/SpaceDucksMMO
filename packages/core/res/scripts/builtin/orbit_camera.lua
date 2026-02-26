@@ -40,20 +40,20 @@ return {
         local tp            = target:getPosition()
         if not tp then return end
 
-        local x, y, z = tp.x, tp.y, tp.z
+        local offset = math.vec3.zero()
 
         -- Calculate orbital position on the chosen plane
         if orbitPlane == "xz" then
-            x = tp.x + math.cos(a) * orbitDistance
-            z = tp.z + math.sin(a) * orbitDistance
+            offset.x = math.cos(a) * orbitDistance
+            offset.z = math.sin(a) * orbitDistance
         elseif orbitPlane == "xy" then
-            x = tp.x + math.cos(a) * orbitDistance
-            y = tp.y + math.sin(a) * orbitDistance
+            offset.x = math.cos(a) * orbitDistance
+            offset.y = math.sin(a) * orbitDistance
         elseif orbitPlane == "yz" then
-            y = tp.y + math.cos(a) * orbitDistance
-            z = tp.z + math.sin(a) * orbitDistance
+            offset.y = math.cos(a) * orbitDistance
+            offset.z = math.sin(a) * orbitDistance
         end
 
-        self:setPosition(x, y, z)
+        self:setPosition(tp + offset)
     end
 }

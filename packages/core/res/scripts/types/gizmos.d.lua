@@ -11,29 +11,43 @@
 gizmos = {}
 
 ---Draws a line segment between two points in world space for a single frame.
----@param x1 number
----@param y1 number
----@param z1 number
----@param x2 number
----@param y2 number
----@param z2 number
+---@param startPos Vec3
+---@param endPos Vec3
 ---@param color? string Hex string like "#ff0000". Defaults to yellow if omitted.
-function gizmos.drawLine(x1, y1, z1, x2, y2, z2, color) end
+function gizmos.drawLine(startPos, endPos, color) end
 
 ---Draws a wireframe sphere in world space for a single frame.
----@param x number
----@param y number
----@param z number
+---@param center Vec3
 ---@param radius number
 ---@param color? string Hex string like "#ff0000". Defaults to yellow if omitted.
-function gizmos.drawSphere(x, y, z, radius, color) end
+function gizmos.drawSphere(center, radius, color) end
 
 ---Draws a wireframe box in world space for a single frame.
----@param x number
----@param y number
----@param z number
----@param w number
----@param h number
----@param d number
+---@param center Vec3
+---@param w number Width of the box
+---@param h number Height of the box
+---@param d number Depth of the box
 ---@param color? string Hex string like "#ff0000". Defaults to yellow if omitted.
-function gizmos.drawBox(x, y, z, w, h, d, color) end
+function gizmos.drawBox(center, w, h, d, color) end
+
+---Draws a text label billboard in world space for a single frame.
+---@param text string The text content to display.
+---@param position Vec3
+---@param color? string Hex string like "#ffffff". Defaults to white if omitted.
+function gizmos.drawLabel(text, position, color) end
+
+---Draws a grid aligned to the XZ plane for a single frame.
+---@param size number The total physical size of the grid.
+---@param divisions number The number of subdivisions.
+---@param color? string Hex string like "#888888". Defaults to gray if omitted.
+function gizmos.drawGrid(size, divisions, color) end
+
+---Draws a camera frustum in world space for a single frame.
+---@param fov number Field of view in degrees.
+---@param aspect number Aspect ratio (width / height).
+---@param near number Near clipping plane distance.
+---@param far number Far clipping plane distance.
+---@param position Vec3 World position of the camera.
+---@param rotation Vec3 Euler rotation in radians.
+---@param color? string Hex string like "#ff0000". Defaults to yellow if omitted.
+function gizmos.drawFrustum(fov, aspect, near, far, position, rotation, color) end

@@ -18,6 +18,6 @@ return {
         local targetPoint = props.targetPoint
         if not targetPoint then return end
 
-        self:lookAt(targetPoint[1], targetPoint[2], targetPoint[3])
+        self:lookAt(math.vec3(targetPoint[1], targetPoint[2], targetPoint[3]))
     end
 }

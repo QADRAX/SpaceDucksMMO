@@ -29,26 +29,17 @@ return {
 
         -- 1. Calculate desired world position
         local tp       = target:getPosition()
-        local desired  = {
-            x = tp.x + offset[1],
-            y = tp.y + offset[2],
-            z = tp.z + offset[3]
-        }
+        if not tp then return end
+
+        local offsetVec = math.vec3(offset[1], offset[2], offset[3])
+        local desired   = tp + offsetVec
 
         -- 2. Get direction and distance to desired position
-        local cur      = self:getPosition()
-        local dir      = {
-            x = desired.x - cur.x,
-            y = desired.y - cur.y,
-            z = desired.z - cur.z
-        }
+        local cur       = self:getPosition()
+        local dir       = desired - cur
 
         -- 3. Apply proportional impulse (P-controller)
-        local secs     = dt / 1000
-        self:applyImpulse(
-            dir.x * strength * secs,
-            dir.y * strength * secs,
-            dir.z * strength * secs
-        )
+        local secs      = dt / 1000
+        self:applyImpulse(dir * strength * secs)
     end
 }

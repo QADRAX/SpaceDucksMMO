@@ -9,11 +9,10 @@
 ---@param maxLen number
 ---@return Vec3
 local function clampMagnitude(v, maxLen)
-    local len = math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z)
-    if len <= 0 then return { x = 0, y = 0, z = 0 } end
-    if len <= maxLen then return v end
-    local s = maxLen / len
-    return { x = v.x * s, y = v.y * s, z = v.z * s }
+    local len = v:length()
+    if len <= 0 then return math.vec3.zero() end
+    if len <= maxLen then return v:clone() end
+    return v * (maxLen / len)
 end
 
 ---@type ScriptModule
@@ -40,7 +39,7 @@ return {
         local down  = input.isKeyPressed("control")
         local shift = input.isKeyPressed("shift")
 
-        local mv    = { x = 0, y = 0, z = 0 }
+        local mv    = math.vec3.zero()
         if w then mv.z = mv.z + 1 end
         if s then mv.z = mv.z - 1 end
         if a then mv.x = mv.x - 1 end
@@ -68,52 +67,36 @@ return {
         -- Flatten forward for grounded movement
         if not flyMode then
             forward.y = 0
-            local flen = math.sqrt(forward.x * forward.x + forward.z * forward.z)
-            if flen == 0 then flen = 1 end
-            forward.x = forward.x / flen
-            forward.z = forward.z / flen
+            if forward.x == 0 and forward.z == 0 then forward.z = 1 end
+            forward = forward:normalize()
         end
 
         -- 2. Transform local input to world-space direction
-        local moveWorld = {
-            x = forward.x * mv.z + right.x * mv.x,
-            y = forward.y * mv.z + right.y * mv.x + (flyMode and mv.y or 0),
-            z = forward.z * mv.z + right.z * mv.x,
-        }
+        local moveWorld = (forward * mv.z) + (right * mv.x)
+        if flyMode then moveWorld.y = moveWorld.y + mv.y end
 
-        local mlen      = math.sqrt(moveWorld.x * moveWorld.x + moveWorld.y * moveWorld.y + moveWorld.z * moveWorld.z)
-        local curVel    = self:getLinearVelocity() or { x = 0, y = 0, z = 0 }
+        local mlen   = moveWorld:length()
+        local curVel = self:getLinearVelocity()
 
         -- 3. Accelerate towards desired velocity
         if mlen > 1e-6 then
-            moveWorld.x = moveWorld.x / mlen
-            moveWorld.y = moveWorld.y / mlen
-            moveWorld.z = moveWorld.z / mlen
+            moveWorld = moveWorld:normalize()
 
-            local desiredVel = {
-                x = moveWorld.x * speed,
-                y = flyMode and (moveWorld.y * speed) or curVel.y,
-                z = moveWorld.z * speed,
-            }
+            local desiredVel = moveWorld * speed
+            if not flyMode then desiredVel.y = curVel.y end
 
-            local velErr = {
-                x = desiredVel.x - curVel.x,
-                y = flyMode and (desiredVel.y - curVel.y) or 0,
-                z = desiredVel.z - curVel.z,
-            }
+            local velErr = desiredVel - curVel
+            if not flyMode then velErr.y = 0 end
 
             local deltaV = clampMagnitude(velErr, maxAcceleration * secs)
-            self:applyImpulse(deltaV.x, deltaV.y, deltaV.z)
+            self:applyImpulse(deltaV)
             return
         end
 
         -- 4. Brake: no input, slow down
-        local brakeTarget = {
-            x = -curVel.x,
-            y = flyMode and -curVel.y or 0,
-            z = -curVel.z,
-        }
+        local brakeTarget = -curVel
+        if not flyMode then brakeTarget.y = 0 end
         local brakeDeltaV = clampMagnitude(brakeTarget, brakeDeceleration * secs)
-        self:applyImpulse(brakeDeltaV.x, brakeDeltaV.y, brakeDeltaV.z)
+        self:applyImpulse(brakeDeltaV)
     end
 }

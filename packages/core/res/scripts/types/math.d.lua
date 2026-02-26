@@ -164,10 +164,88 @@ function LuaMathExt.lerp(a, b, t) end
 function LuaMathExt.clamp(v, min, max) end
 
 -- ───────────────────────────────────────────────────────────────────────
+-- Vec3 Object API
+-- ───────────────────────────────────────────────────────────────────────
+
+---A 3-component vector used for mathematical operations, positions, and rotations.
+---@class Vec3
+---@field x number
+---@field y number
+---@field z number
+---@operator add(Vec3|number): Vec3
+---@operator sub(Vec3): Vec3
+---@operator mul(Vec3|number): Vec3
+---@operator div(Vec3|number): Vec3
+---@operator unm(): Vec3
+local Vec3 = {}
+
+---Returns the magnitude (length) of the vector.
+---@return number length
+function Vec3:length() end
+
+---Returns the squared magnitude of the vector (faster than length()).
+---@return number sqrLength
+function Vec3:sqrLength() end
+
+---Returns a newly allocated, normalized clone of this vector.
+---@return Vec3 normalized
+function Vec3:normalize() end
+
+---Calculates the Euclidean distance to another vector.
+---@param other Vec3
+---@return number distance
+function Vec3:distanceTo(other) end
+
+---Calculates the dot product with another vector.
+---@param other Vec3
+---@return number dot
+function Vec3:dot(other) end
+
+---Calculates the cross product with another vector.
+---@param other Vec3
+---@return Vec3 cross
+function Vec3:cross(other) end
+
+---Clones this vector.
+---@return Vec3 clone
+function Vec3:clone() end
+
+-- ───────────────────────────────────────────────────────────────────────
 -- Global binding
 -- ───────────────────────────────────────────────────────────────────────
 
+---@class MathVec3Constructor
+---@field zero fun(): Vec3
+---@field one fun(): Vec3
+---@field up fun(): Vec3
+---@field down fun(): Vec3
+---@field left fun(): Vec3
+---@field right fun(): Vec3
+---@field forward fun(): Vec3
+---@field back fun(): Vec3
+
 ---@class MathAPI
----The standard Lua `math` library, extended with `math.ext`.
+---The standard Lua `math` library, extended with `math.ext` and `math.vec3`.
 ---@field ext LuaMathExt DuckEngine math extensions (lerp, clamp, easing).
+---@field vec3 fun(x: number|nil, y: number|nil, z: number|nil): Vec3 Retrieves a new Vec3 object. Call as `math.vec3(x, y, z)`. Can also access constant factories e.g., `math.vec3.zero()`.
 math = {}
+
+-- Note: In EmmyLua, fields on callables are best handled through intersects or unions.
+-- For autocomplete, we manually define math.vec3 constant factories here:
+math.vec3 = {}
+---@return Vec3 zero
+math.vec3.zero = function() return {} end
+---@return Vec3 one
+math.vec3.one = function() return {} end
+---@return Vec3 up
+math.vec3.up = function() return {} end
+---@return Vec3 down
+math.vec3.down = function() return {} end
+---@return Vec3 left
+math.vec3.left = function() return {} end
+---@return Vec3 right
+math.vec3.right = function() return {} end
+---@return Vec3 forward
+math.vec3.forward = function() return {} end
+---@return Vec3 back
+math.vec3.back = function() return {} end

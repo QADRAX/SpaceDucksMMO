@@ -40,6 +40,6 @@ return {
         local limit      = (math.pi / 2) - 0.01
         self.state.pitch = math.ext.clamp(self.state.pitch, -limit, limit)
 
-        self:setRotation(self.state.pitch, self.state.yaw, 0)
+        self:setRotation(math.vec3(self.state.pitch, self.state.yaw, 0))
     end
 }

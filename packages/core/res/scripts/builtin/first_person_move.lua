@@ -27,7 +27,7 @@ return {
         local shift = input.isKeyPressed("shift")
 
         -- 2. Build local-space movement vector
-        local mv    = { x = 0, y = 0, z = 0 }
+        local mv    = math.vec3.zero()
         if w then mv.z = mv.z + 1 end
         if s then mv.z = mv.z - 1 end
         if a then mv.x = mv.x - 1 end
@@ -44,11 +44,8 @@ return {
         end
 
         -- 3. Normalize to prevent faster diagonal movement
-        local len = math.sqrt(mv.x * mv.x + mv.y * mv.y + mv.z * mv.z)
-        if len <= 0 then return end
-        mv.x          = mv.x / len
-        mv.y          = mv.y / len
-        mv.z          = mv.z / len
+        if mv:length() <= 0 then return end
+        mv            = mv:normalize()
 
         -- 4. Transform to world space using entity orientation
         local forward = self:getForward()
@@ -57,34 +54,29 @@ return {
         if not flyMode then
             -- Flatten forward onto XZ plane so vertical look doesn't affect speed
             forward.y = 0
-            local flen = math.sqrt(forward.x * forward.x + forward.z * forward.z)
-            if flen == 0 then flen = 1 end
-            forward.x = forward.x / flen
-            forward.z = forward.z / flen
+            if forward.x == 0 and forward.z == 0 then forward.z = 1 end
+            forward = forward:normalize()
+
+            -- Keep right strictly horizontal as well
+            right.y = 0
+            right = right:normalize()
         end
 
-        local worldMove = {
-            x = forward.x * mv.z + right.x * mv.x + (flyMode and mv.y or 0) * 0,
-            y = forward.y * mv.z + right.y * mv.x + (flyMode and mv.y or 0),
-            z = forward.z * mv.z + right.z * mv.x + (flyMode and mv.y or 0) * 0
-        }
+        local worldMove = (forward * mv.z) + (right * mv.x)
+        if flyMode then
+            worldMove.y = worldMove.y + mv.y
+        end
 
         -- Re-normalize after world transform
-        local mlen = math.sqrt(worldMove.x * worldMove.x + worldMove.y * worldMove.y + worldMove.z * worldMove.z)
-        if mlen == 0 then return end
-        worldMove.x = worldMove.x / mlen
-        worldMove.y = worldMove.y / mlen
-        worldMove.z = worldMove.z / mlen
+        if worldMove:length() == 0 then return end
+        worldMove   = worldMove:normalize()
 
         -- 5. Apply movement
         local secs  = dt / 1000
         local speed = moveSpeed * (shift and sprintMultiplier or 1)
         local cur   = self:getPosition()
 
-        self:setPosition(
-            cur.x + worldMove.x * speed * secs,
-            cur.y + worldMove.y * speed * secs,
-            cur.z + worldMove.z * speed * secs
-        )
+        -- Look at how clean this is compared to manually adding x, y, z!
+        self:setPosition(cur + (worldMove * speed * secs))
     end
 }
