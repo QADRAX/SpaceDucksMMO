@@ -4,6 +4,7 @@ import { Label } from '@/components/atoms/Label';
 import { ResourceKeyDropdown } from '@/components/molecules/ResourceKeyDropdown';
 import { EcsInspectorFieldsForm } from '@/components/molecules/EcsInspectorFieldsForm';
 import { useSceneEditorV2Context } from '../../SceneEditorV2Context';
+import { useEditorStore, type SceneEditorState } from '../../store';
 import { FullMeshInspector } from './FullMeshInspector';
 import { ComponentIcon } from '@/components/icons/ComponentIcon';
 import {
@@ -19,7 +20,6 @@ import { resolveMaterialResourceActive } from '@/lib/engineResourceResolution';
 
 interface ComponentListItemProps {
     component: any;
-    editor: ReturnType<typeof useSceneEditorV2Context>;
     selectionKey: string;
     tab: string;
     referenceOptions: any[];
@@ -27,7 +27,6 @@ interface ComponentListItemProps {
 
 export function ComponentListItem({
     component: c,
-    editor,
     selectionKey,
     tab,
     referenceOptions,
@@ -45,7 +44,15 @@ export function ComponentListItem({
 
     const componentLabel = c?.metadata?.label || c.type;
     const componentDescription = typeof c?.metadata?.description === 'string' ? c.metadata.description.trim() : '';
-    const disabled = editor.gameState !== 'stopped';
+
+    const gameState = useEditorStore((s: SceneEditorState) => s.gameState);
+    const sceneRevision = useEditorStore((s: SceneEditorState) => s.sceneRevision);
+    const onRemoveComponent = useEditorStore((s: SceneEditorState) => s.onRemoveComponent);
+    const setError = useEditorStore((s: SceneEditorState) => s.setError);
+    const onUpdateSelectedComponentData = useEditorStore((s: SceneEditorState) => s.onUpdateSelectedComponentData);
+    const commitFromCurrentScene = useEditorStore((s: SceneEditorState) => s.commitFromCurrentScene);
+
+    const disabled = gameState !== 'stopped';
 
     return (
         <div className="border-b border-black/10 px-3 py-3">
@@ -63,7 +70,7 @@ export function ComponentListItem({
                 <button
                     type="button"
                     className="text-xs font-bold text-red-600 hover:underline disabled:opacity-50"
-                    onClick={() => editor.onRemoveComponent(c.type)}
+                    onClick={() => onRemoveComponent(c.type)}
                     disabled={disabled}
                 >
                     ✕ Remove
@@ -80,11 +87,11 @@ export function ComponentListItem({
                         placeholder="Select material resource…"
                         onChange={async (nextKey) => {
                             if (!nextKey) {
-                                editor.onUpdateSelectedComponentData(c.type, { [MATERIAL_RESOURCE_REF_KEY]: '' });
+                                onUpdateSelectedComponentData(c.type, { [MATERIAL_RESOURCE_REF_KEY]: '' });
                                 return;
                             }
 
-                            editor.setError(null);
+                            setError(null);
                             try {
                                 const resolved = await resolveMaterialResourceActive(nextKey);
                                 if (resolved.kind !== String(c.type)) {
@@ -93,12 +100,12 @@ export function ComponentListItem({
                                     );
                                 }
 
-                                editor.onUpdateSelectedComponentData(c.type, {
+                                onUpdateSelectedComponentData(c.type, {
                                     [MATERIAL_RESOURCE_REF_KEY]: nextKey,
                                     ...resolved.componentData,
                                 });
                             } catch (e) {
-                                editor.setError(e instanceof Error ? e.message : 'Failed to apply material resource');
+                                setError(e instanceof Error ? e.message : 'Failed to apply material resource');
                             }
                         }}
                     />
@@ -113,26 +120,26 @@ export function ComponentListItem({
                         disabled={disabled}
                         placeholder="Select custom shader…"
                         onChange={(nextKey) => {
-                            editor.onUpdateSelectedComponentData(c.type, { shaderId: nextKey ?? '' });
+                            onUpdateSelectedComponentData(c.type, { shaderId: nextKey ?? '' });
                         }}
                     />
 
                     {fields.length ? (
                         <div className="mt-3 border-l-2 border-black/10 pl-2">
                             <EcsInspectorFieldsForm
-                                key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}:${String(c.type)}`}
+                                key={`${selectionKey}:${tab}:${String(c.type)}:${sceneRevision}:${String(c.type)}`}
                                 fields={fields.filter((f) => String((f as any)?.key) !== 'shaderId') as any}
                                 value={value}
                                 selectionKey={selectionKey}
                                 onChange={(next) => {
                                     const delta = diffInspectorValue(value, next);
                                     if (Object.keys(delta).length) {
-                                        editor.onUpdateSelectedComponentData(c.type, { ...delta, live: true });
+                                        onUpdateSelectedComponentData(c.type, { ...delta, live: true });
                                     }
                                 }}
                                 onCommit={() => {
-                                    editor.onUpdateSelectedComponentData(c.type, { live: false });
-                                    editor.commitFromCurrentScene();
+                                    onUpdateSelectedComponentData(c.type, { live: false });
+                                    commitFromCurrentScene();
                                 }}
                                 disabled={disabled}
                                 referenceOptions={referenceOptions}
@@ -149,26 +156,26 @@ export function ComponentListItem({
                         disabled={disabled}
                         placeholder="Select custom mesh…"
                         onChange={(nextKey) => {
-                            editor.onUpdateSelectedComponentData(c.type, { key: nextKey ?? '' });
+                            onUpdateSelectedComponentData(c.type, { key: nextKey ?? '' });
                         }}
                     />
 
                     {fields.length ? (
                         <div className="mt-3 border-l-2 border-black/10 pl-2">
                             <EcsInspectorFieldsForm
-                                key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}:customGeometry`}
+                                key={`${selectionKey}:${tab}:${String(c.type)}:${sceneRevision}:customGeometry`}
                                 fields={fields.filter((f) => String((f as any)?.key) !== 'key') as any}
                                 value={value}
                                 selectionKey={selectionKey}
                                 onChange={(next) => {
                                     const delta = diffInspectorValue(value, next);
                                     if (Object.keys(delta).length) {
-                                        editor.onUpdateSelectedComponentData(c.type, { ...delta, live: true });
+                                        onUpdateSelectedComponentData(c.type, { ...delta, live: true });
                                     }
                                 }}
                                 onCommit={() => {
-                                    editor.onUpdateSelectedComponentData(c.type, { live: false });
-                                    editor.commitFromCurrentScene();
+                                    onUpdateSelectedComponentData(c.type, { live: false });
+                                    commitFromCurrentScene();
                                 }}
                                 disabled={disabled}
                                 referenceOptions={referenceOptions}
@@ -185,26 +192,26 @@ export function ComponentListItem({
                         disabled={disabled}
                         placeholder="Select skybox…"
                         onChange={(nextKey) => {
-                            editor.onUpdateSelectedComponentData(c.type, { key: nextKey ?? '' });
+                            onUpdateSelectedComponentData(c.type, { key: nextKey ?? '' });
                         }}
                     />
 
                     {fields.length ? (
                         <div className="mt-3 border-l-2 border-black/10 pl-2">
                             <EcsInspectorFieldsForm
-                                key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}:skybox`}
+                                key={`${selectionKey}:${tab}:${String(c.type)}:${sceneRevision}:skybox`}
                                 fields={fields.filter((f) => String((f as any)?.key) !== 'key') as any}
                                 value={value}
                                 selectionKey={selectionKey}
                                 onChange={(next) => {
                                     const delta = diffInspectorValue(value, next);
                                     if (Object.keys(delta).length) {
-                                        editor.onUpdateSelectedComponentData(c.type, { ...delta, live: true });
+                                        onUpdateSelectedComponentData(c.type, { ...delta, live: true });
                                     }
                                 }}
                                 onCommit={() => {
-                                    editor.onUpdateSelectedComponentData(c.type, { live: false });
-                                    editor.commitFromCurrentScene();
+                                    onUpdateSelectedComponentData(c.type, { live: false });
+                                    commitFromCurrentScene();
                                 }}
                                 disabled={disabled}
                                 referenceOptions={referenceOptions}
@@ -216,7 +223,7 @@ export function ComponentListItem({
                 <FullMeshInspector
                     key={`${selectionKey}:${tab}:${String(c.type)}:fullMeshfrag`}
                     comp={c}
-                    editor={editor}
+                    editor={useSceneEditorV2Context()}
                     value={value}
                     fields={fields as any}
                     referenceOptions={referenceOptions}
@@ -225,19 +232,19 @@ export function ComponentListItem({
             ) : fields.length ? (
                 <div className="mt-3">
                     <EcsInspectorFieldsForm
-                        key={`${selectionKey}:${tab}:${String(c.type)}:${editor.sceneRevision}`}
+                        key={`${selectionKey}:${tab}:${String(c.type)}:${sceneRevision}`}
                         fields={fields as any}
                         value={value}
                         selectionKey={selectionKey}
                         onChange={(next) => {
                             const delta = diffInspectorValue(value, next);
                             if (Object.keys(delta).length) {
-                                editor.onUpdateSelectedComponentData(c.type, { ...delta, live: true });
+                                onUpdateSelectedComponentData(c.type, { ...delta, live: true });
                             }
                         }}
                         onCommit={() => {
-                            editor.onUpdateSelectedComponentData(c.type, { live: false });
-                            editor.commitFromCurrentScene();
+                            onUpdateSelectedComponentData(c.type, { live: false });
+                            commitFromCurrentScene();
                         }}
                         disabled={disabled}
                         referenceOptions={referenceOptions}

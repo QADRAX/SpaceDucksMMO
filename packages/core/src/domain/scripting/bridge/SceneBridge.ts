@@ -1,4 +1,5 @@
 import type { LuaEngine } from "wasmoon";
+import { CoreLogger } from "../../logging/CoreLogger";
 import type { BridgeContext } from "./BridgeContext";
 import type { ComponentType } from "@duckengine/ecs";
 
@@ -12,7 +13,7 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
                 try {
                     listener(payload);
                 } catch (e) {
-                    console.error(`[Lua error in event ${eventName}]`, e);
+                    CoreLogger.error("Lua", `Lua error in event ${eventName}`, e);
                 }
             });
         },
@@ -55,19 +56,19 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
         },
         applyResource: async (entityId: string, key: string, kind?: string, overrides?: any) => {
             if (!ctx.assetResolver) {
-                console.warn("[SceneBridge] No AssetResolver provided to applyResource");
+                CoreLogger.warn("SceneBridge", "No AssetResolver provided to applyResource");
                 return;
             }
 
             const res = await ctx.assetResolver.resolve(key);
             if (!res) {
                 // In Lua, async errors might need to be handled carefully but for now let's just log
-                console.error(`[Lua] Failed to resolve resource: ${key}`);
+                CoreLogger.error("Lua", `Failed to resolve resource: ${key}`);
                 return;
             }
 
             if (kind && res.kind !== kind) {
-                console.error(`[Lua] Resource type mismatch. Expected ${kind}, got ${res.kind}`);
+                CoreLogger.error("Lua", `Resource type mismatch. Expected ${kind}, got ${res.kind}`);
                 return;
             }
 
@@ -96,7 +97,7 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
         // ── Prefab support (Phase 13) ──────────────────────────
         instantiatePrefab: (key: string, overrides?: any): any => {
             if (!ctx.prefabRegistry) {
-                console.warn("[SceneBridge] No PrefabRegistry provided to instantiatePrefab");
+                CoreLogger.warn("SceneBridge", "No PrefabRegistry provided to instantiatePrefab");
                 return null;
             }
 

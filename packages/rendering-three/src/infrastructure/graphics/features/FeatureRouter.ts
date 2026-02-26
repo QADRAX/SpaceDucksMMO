@@ -1,4 +1,5 @@
 import type { Entity, ComponentType } from "@duckengine/ecs";
+import { CoreLogger } from "@duckengine/core";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
 
@@ -27,7 +28,7 @@ export class FeatureRouter {
                 try {
                     feature.onDetach(entity, this.context);
                 } catch (e) {
-                    console.error(`[FeatureRouter] Error detaching feature ${feature.name} from entity ${entity.id}:`, e);
+                    CoreLogger.error("FeatureRouter", `Error detaching feature ${feature.name} from entity ${entity.id}:`, e);
                 }
             }
             this.activeFeatures.delete(entity.id);
@@ -45,7 +46,7 @@ export class FeatureRouter {
                 try {
                     feature.onUpdate(entity, componentType, this.context);
                 } catch (e) {
-                    console.error(`[FeatureRouter] Error updating feature ${feature.name} for entity ${entity.id}:`, e);
+                    CoreLogger.error("FeatureRouter", `Error updating feature ${feature.name} for entity ${entity.id}:`, e);
                 }
             }
         }
@@ -63,7 +64,7 @@ export class FeatureRouter {
                     try {
                         feature.onComponentRemoved(entity, componentType, this.context);
                     } catch (e) {
-                        console.error(`[FeatureRouter] Error notifying removal to feature ${feature.name} for entity ${entity.id}:`, e);
+                        CoreLogger.error("FeatureRouter", `Error notifying removal to feature ${feature.name} for entity ${entity.id}:`, e);
                     }
                 }
             }
@@ -78,8 +79,9 @@ export class FeatureRouter {
                     try {
                         feature.onTransformChanged(entity, this.context);
                     } catch (e) {
-                        console.error(
-                            `[FeatureRouter] Error syncing transform for feature ${feature.name} on entity ${entity.id}:`,
+                        CoreLogger.error(
+                            "FeatureRouter",
+                            `Error syncing transform for feature ${feature.name} on entity ${entity.id}:`,
                             e
                         );
                     }
@@ -94,7 +96,7 @@ export class FeatureRouter {
                 try {
                     feature.onFrame(dt, this.context);
                 } catch (e) {
-                    console.error(`[FeatureRouter] Error in onFrame for feature ${feature.name}:`, e);
+                    CoreLogger.error("FeatureRouter", `Error in onFrame for feature ${feature.name}:`, e);
                 }
             }
         }
@@ -126,14 +128,14 @@ export class FeatureRouter {
                     feature.onAttach(entity, this.context);
                     activeSet.add(feature);
                 } catch (e) {
-                    console.error(`[FeatureRouter] Error attaching feature ${feature.name} to entity ${entity.id}:`, e);
+                    CoreLogger.error("FeatureRouter", `Error attaching feature ${feature.name} to entity ${entity.id}:`, e);
                 }
             } else if (!isEligible && isAttached) {
                 try {
                     feature.onDetach(entity, this.context);
                     activeSet.delete(feature);
                 } catch (e) {
-                    console.error(`[FeatureRouter] Error detaching feature ${feature.name} from entity ${entity.id}:`, e);
+                    CoreLogger.error("FeatureRouter", `Error detaching feature ${feature.name} from entity ${entity.id}:`, e);
                 }
             }
         }

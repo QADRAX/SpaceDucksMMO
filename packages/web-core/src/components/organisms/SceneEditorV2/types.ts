@@ -61,6 +61,7 @@ export type EcsComponentFactoryLike = {
  */
 export type SceneEditorV2Store = {
     // ── Resource metadata ─────────────────────────────────────────────────
+    sceneId: string;
     resourceDisplayName: string;
     onSetResourceDisplayName: (v: string) => void;
     onSaveResourceDisplayName: (v: string) => Promise<void>;
@@ -71,15 +72,17 @@ export type SceneEditorV2Store = {
 
     // ── Game state ────────────────────────────────────────────────────────
     gameState: GameState;
-    onPlay: () => Promise<void>;
+    onPlay: () => void;
     onPause: () => void;
     onResume: () => void;
-    onStop: () => Promise<void>;
+    onStop: () => void;
 
-    // ── Persistence ───────────────────────────────────────────────────────
+    // ── Persistence & History ─────────────────────────────────────────────
     dirty: boolean;
     canUndo: boolean;
     canRedo: boolean;
+    undo: () => void;
+    redo: () => void;
     onUndo: () => void;
     onRedo: () => void;
     onSave: () => Promise<void>;
@@ -96,19 +99,30 @@ export type SceneEditorV2Store = {
 
     // ── Hierarchy ─────────────────────────────────────────────────────────
     hierarchyRoots: Entity[];
-    allEntitiesForHierarchy: Entity[];
+    allEntities: Entity[];
 
-    // ── Active camera ─────────────────────────────────────────────────────
+    // ── Layout & Viewports ────────────────────────────────────────────────
+    layout: {
+        viewports: ReadonlyArray<ViewportDef>;
+        registerViewport: (def: ViewportDef) => void;
+        unregisterViewport: (id: string) => void;
+    };
+    registerViewport: (def: ViewportDef) => void;
+    unregisterViewport: (id: string) => void;
     activeCameraEntityId: string | null;
     onSetActiveCameraEntityId: (id: string | null) => void;
 
-    // ── Entity actions ────────────────────────────────────────────────────
+    // ── Entity meta ───────────────────────────────────────────────────────
+    onSetSelectedName: (v: string) => void;
+    onSetSelectedGizmoIcon: (v: string) => void;
+    onSetSelectedLocalPositionAxis: (axis: 'x' | 'y' | 'z', n: number) => void;
+
+    // ── Entity actions (now grouped) ──────────────────────────────────────
+    actions: Record<string, any>;
+    onReparentEntity: (childId: string, newParentId: string | null) => void;
     onCreateEmpty: () => void;
     onDeleteSelected: () => void;
-    onReparent: (newParentId: string | null) => void;
-    onReparentEntity: (childId: string, newParentId: string | null) => void;
-
-    // ── Component actions ─────────────────────────────────────────────────
+    onDuplicateSelected: () => void;
     onAddComponent: (type: string) => void;
     onRemoveComponent: (type: string) => void;
     onUpdateSelectedComponentData: (
@@ -116,25 +130,13 @@ export type SceneEditorV2Store = {
         data: Record<string, unknown> & { live?: boolean }
     ) => void;
 
-    // ── Entity meta ───────────────────────────────────────────────────────
-    onSetSelectedName: (v: string) => void;
-    onSetSelectedGizmoIcon: (v: string) => void;
-    onSetSelectedLocalPositionAxis: (axis: 'x' | 'y' | 'z', n: number) => void;
-
-
-    // ── Component factory ─────────────────────────────────────────────────
-    factory: EcsComponentFactoryLike;
-    creatableComponents: CreatableComponentDef[];
-    referenceOptions: { id: string; label: string }[];
-
-    // ── Viewports ─────────────────────────────────────────────────────────    /** Viewport dimensions & positions */
-    viewports: ReadonlyArray<ViewportDef>;
-    registerViewport: (def: ViewportDef) => void;
-    unregisterViewport: (id: string) => void;
-
-    /** Engine instance */
-    engine?: any; // ThreeMultiRenderer but duck-typed to avoid strict dep
-    input?: any; // EditorInputServices
+    // ── Engines & Factories ───────────────────────────────────────────────
+    sceneRef: { current: any };
+    engineRef: { current: any };
+    engine?: any;
+    factory: any;
+    inputRef: { current: any };
+    input?: any;
 
     /** Action trigger — called when UI components or plugins commit changes */
     commitFromCurrentScene: (reason?: string) => void;

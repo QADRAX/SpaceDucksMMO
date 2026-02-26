@@ -1,5 +1,6 @@
 // @ts-ignore
 import * as THREE from "three/webgpu";
+import { CoreLogger } from "@duckengine/core";
 import type { TextureCache } from "./TextureCache";
 import type {
   StandardMaterialComponent,
@@ -77,7 +78,7 @@ export class MaterialFactory {
             // the original texture preserves behavior without runtime typeof checks.
             t = (tex as THREE.Texture).clone();
           } catch (cloneErr) {
-            console.warn('[MaterialFactory] Texture.clone() failed, using original texture', cloneErr);
+            CoreLogger.warn("MaterialFactory", 'Texture.clone() failed, using original texture', cloneErr);
             t = tex;
           }
 
@@ -86,7 +87,7 @@ export class MaterialFactory {
           material.needsUpdate = true;
         })
         .catch((err) => {
-          console.warn(`[MaterialFactory] Failed to load ${label}`, url, err);
+          CoreLogger.warn("MaterialFactory", `Failed to load ${label}`, { url, err });
         });
     };
 

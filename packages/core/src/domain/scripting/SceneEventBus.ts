@@ -2,6 +2,7 @@ export type ScriptEventListener = {
     slotId: string;
     callback: (data: Record<string, unknown>) => void;
 };
+import { CoreLogger } from "../logging/CoreLogger";
 
 export class SceneEventBus {
     private listeners = new Map<string, Set<ScriptEventListener>>();
@@ -54,7 +55,7 @@ export class SceneEventBus {
                     try {
                         listener.callback(event.data);
                     } catch (err) {
-                        console.error(`[SceneEventBus] Error in event listener for event '${event.name}':`, err);
+                        CoreLogger.error("SceneEventBus", `Error in event listener for event '${event.name}':`, err);
                     }
                 }
             }

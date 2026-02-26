@@ -7,7 +7,7 @@ import type {
     TextureCatalogService,
     IRenderSyncSystem,
 } from '@duckengine/core';
-import { LoadingTracker } from '@duckengine/core';
+import { LoadingTracker, CoreLogger } from '@duckengine/core';
 import type { IFpsController } from '../ui/dev/FpsController';
 import { RenderSyncSystem } from '../graphics/sync/RenderSyncSystem';
 import type { EngineResourceResolver } from '../resources/EngineResourceResolver';
@@ -190,7 +190,7 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
             if (obj instanceof THREE.Camera) return obj;
             return null;
         } catch (err) {
-            console.warn(`[${this.logPrefix}] Error calling scene.getActiveCamera():`, err);
+            CoreLogger.warn(this.logPrefix, 'Error calling scene.getActiveCamera():', err);
             return null;
         }
     }
@@ -215,7 +215,7 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
                 this.renderFrame();
                 this.rafId = requestAnimationFrame(loop);
             } catch (err) {
-                console.error(`[${this.logPrefix}] Fatal loop error`, err);
+                CoreLogger.error(this.logPrefix, 'Fatal loop error', err);
                 this.stop();
             }
         };
@@ -294,7 +294,7 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
         this.afterSceneSetup();
 
         if (!this.getActiveCamera()) {
-            console.warn(`[${this.logPrefix}] Scene setup did not register an active camera.`);
+            CoreLogger.warn(this.logPrefix, 'Scene setup did not register an active camera.');
         }
 
         this.startInitialLoading();
@@ -305,7 +305,7 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
             try {
                 this.activeIScene.teardown(this, this.scene);
             } catch (e) {
-                console.warn(`[${this.logPrefix}] Error during previous scene teardown`, e);
+                CoreLogger.warn(this.logPrefix, 'Error during previous scene teardown', e);
             }
         }
         if (this.scene) this.scene.clear();
@@ -337,7 +337,7 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
         try {
             this.fpsController.update();
         } catch (err) {
-            console.warn(`[${this.logPrefix}] fpsController.update() failed`, err);
+            CoreLogger.warn(this.logPrefix, 'fpsController.update() failed', err);
         }
     }
 
@@ -369,7 +369,7 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
                 try {
                     await this.warmupGPU(sessionId, camera);
                 } catch (e) {
-                    console.warn(`[${this.logPrefix}] GPU Warm-up failed`, e);
+                    CoreLogger.warn(this.logPrefix, 'GPU Warm-up failed', e);
                 }
             }
         } finally {

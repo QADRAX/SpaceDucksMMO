@@ -8,6 +8,7 @@ import type {
   RenderViewOptions,
   RenderViewDebugOptions,
 } from '@duckengine/core';
+import { CoreLogger } from '@duckengine/core';
 import type { IFpsController } from '../ui/dev/FpsController';
 import { DEBUG_LAYERS } from '../graphics/debug/DebugLayers';
 import { GIZMO_LAYER } from '../graphics/debug/GizmoOverlaySystem';
@@ -101,7 +102,7 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
     try {
       this.fpsController?.dispose?.();
     } catch (err) {
-      console.warn(`[${this.logPrefix}] fpsController.dispose() failed`, err);
+      CoreLogger.warn(this.logPrefix, 'fpsController.dispose() failed', err);
     }
   }
 
@@ -252,7 +253,7 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
       try {
         this.activeIScene?.update(0);
       } catch (e) {
-        console.warn('[ThreeMultiRenderer] Initial load update(0) failed', e);
+        CoreLogger.warn(this.logPrefix, 'Initial load update(0) failed', e);
       }
       for (const v of this.views.values()) this.clearRenderer(v);
       this.updateOverlayProgress();
@@ -412,7 +413,7 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
 
   private warnMissingCamera(view: ViewRuntime): void {
     if (!view.missingCameraWarned) {
-      console.warn(`[ThreeMultiRenderer] No camera for view '${view.id}' — skipping render.`);
+      CoreLogger.warn(this.logPrefix, `No camera for view '${view.id}' — skipping render.`);
       view.missingCameraWarned = true;
     }
   }
@@ -430,7 +431,7 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
     try {
       view.renderer.dispose();
     } catch (err) {
-      console.warn(`[${this.logPrefix}] renderer.dispose() failed for view '${view.id}'`, err);
+      CoreLogger.warn(this.logPrefix, `renderer.dispose() failed for view '${view.id}'`, err);
     }
   }
 

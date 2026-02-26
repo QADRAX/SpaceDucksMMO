@@ -1,49 +1,75 @@
 'use client';
 
 import * as React from 'react';
+import { useEditorStore } from '../../store';
 
-type LogEntry = {
-    id: number;
-    level: 'log' | 'warn' | 'error';
-    message: string;
-    time: string;
-};
-
-/** ConsolePanel — Lua script logs and engine warnings. Wire-up in Phase 4. */
+/** ConsolePanel — Displays engine, Lua, and editor logs from the centralized store. */
 export function ConsolePanel() {
-    const [entries, setEntries] = React.useState<LogEntry[]>([]);
+    const logs = useEditorStore((s) => s.logs);
+    const clearLogs = useEditorStore((s) => s.clearLogs);
 
-    const levelColor = (l: LogEntry['level']) =>
-        l === 'error' ? 'text-red-600 font-bold'
-            : l === 'warn' ? 'text-amber-600 font-bold'
-                : 'text-black';
+    const scrollRef = React.useRef<HTMLDivElement>(null);
+
+    // Auto-scroll to bottom when new logs arrive
+    React.useEffect(() => {
+        if (scrollRef.current) {
+            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+    }, [logs.length]);
+
+    const getSeverityStyles = (severity: string) => {
+        switch (severity) {
+            case 'error': return 'text-red-500 font-bold bg-red-500/5';
+            case 'warn': return 'text-amber-500 font-bold bg-amber-500/5';
+            default: return 'text-white/80';
+        }
+    };
+
+    const formatTime = (ts: number) => {
+        const d = new Date(ts);
+        return d.toLocaleTimeString([], { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    };
 
     return (
-        <div className="flex h-full flex-col overflow-hidden">
+        <div className="flex h-full flex-col overflow-hidden bg-[#0A0A0A]">
             {/* Header */}
-            <div className="flex shrink-0 items-center justify-between border-b-2 border-black bg-black px-3 py-1.5">
-                <span className="text-xs font-black uppercase tracking-widest text-white">Console</span>
+            <div className="flex shrink-0 items-center justify-between border-b border-white/10 bg-black px-3 py-1.5">
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40">Output</span>
+                    <span className="rounded bg-white/10 px-1.5 py-0.5 text-[10px] font-bold text-white/60">
+                        {logs.length}
+                    </span>
+                </div>
                 <button
-                    className="text-xs font-bold text-white/60 hover:text-white transition-colors"
-                    onClick={() => setEntries([])}
+                    className="text-[10px] font-bold uppercase tracking-widest text-white/40 hover:text-white transition-colors"
+                    onClick={clearLogs}
                 >
                     Clear
                 </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto font-mono text-xs">
-                {entries.length === 0 ? (
-                    <p className="px-3 py-4 text-center text-black/30 uppercase tracking-widest font-bold text-xs">
-                        No output
-                    </p>
+            {/* Log List */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto font-mono text-[11px] leading-relaxed">
+                {logs.length === 0 ? (
+                    <div className="flex h-full flex-col items-center justify-center opacity-20">
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em]">No Logs</span>
+                    </div>
                 ) : (
-                    entries.map((e) => (
+                    logs.map((e: any) => (
                         <div
                             key={e.id}
-                            className={`flex gap-3 border-b border-black/10 px-3 py-0.5 ${levelColor(e.level)}`}
+                            className={`group flex items-start gap-3 border-b border-white/5 px-3 py-1.5 hover:bg-white/5 ${getSeverityStyles(e.severity)}`}
                         >
-                            <span className="shrink-0 text-black/30">{e.time}</span>
-                            <span className="break-all">{e.message}</span>
+                            <span className="shrink-0 opacity-30 select-none">{formatTime(e.timestamp)}</span>
+                            <span className="shrink-0 rounded bg-white/10 px-1 py-0 text-[10px] font-bold uppercase tracking-tight text-white/40 group-hover:text-white/60 transition-colors">
+                                {e.system}
+                            </span>
+                            <span className="break-all whitespace-pre-wrap">{e.message}</span>
+                            {e.data && (
+                                <span className="opacity-40 italic ml-1 text-[10px]">
+                                    {typeof e.data === 'object' ? JSON.stringify(e.data) : String(e.data)}
+                                </span>
+                            )}
                         </div>
                     ))
                 )}
@@ -51,3 +77,4 @@ export function ConsolePanel() {
         </div>
     );
 }
+

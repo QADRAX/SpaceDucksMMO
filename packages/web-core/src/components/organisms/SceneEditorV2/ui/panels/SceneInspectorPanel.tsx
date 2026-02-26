@@ -10,14 +10,14 @@ export function SceneInspectorPanel() {
     const scrollRef = React.useRef<HTMLDivElement | null>(null);
 
     const cameraEntities = React.useMemo(() => {
-        return editor.allEntitiesForHierarchy
-            .filter((e) => Boolean(e.getComponent('cameraView' as any)))
-            .map((e) => {
+        return editor.allEntities
+            .filter((e: any) => Boolean(e.getComponent('cameraView' as any)))
+            .map((e: any) => {
                 const label = (e.displayName && e.displayName.trim()) ? e.displayName.trim() : e.id;
                 return { id: e.id, label };
             })
-            .sort((a, b) => a.label.localeCompare(b.label));
-    }, [editor.allEntitiesForHierarchy]);
+            .sort((a: any, b: any) => a.label.localeCompare(b.label));
+    }, [editor.allEntities]);
 
     const selectedCameraValue = editor.activeCameraEntityId ?? '';
 

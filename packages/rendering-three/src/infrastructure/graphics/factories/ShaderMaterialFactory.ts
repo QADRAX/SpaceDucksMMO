@@ -2,6 +2,7 @@
 import * as THREE from 'three/webgpu';
 // @ts-ignore
 import { glslFn, wgslFn, uv, time, uniform, texture, color, float, normalLocal, normalView, positionLocal, positionView, cameraPosition, screenSize } from 'three/tsl';
+import { CoreLogger } from '@duckengine/core';
 import type { TextureCache } from './TextureCache';
 import type { AnyCustomShaderComponent, StandardShaderMaterialComponent, PhysicalShaderMaterialComponent } from '@duckengine/ecs';
 import type { EngineResourceResolver, EngineResolvedResource } from '../../resources/EngineResourceResolver';
@@ -23,7 +24,7 @@ export class ShaderMaterialFactory {
         customUniformNodes[id] = texNode;
         textureCache.load(val).then((tex) => {
           texNode.value = tex;
-        }).catch(console.error);
+        }).catch((err) => CoreLogger.error("ShaderMaterialFactory", "Texture load failed", err));
       } else if (type === 'vec2') {
         const v = Array.isArray(val) ? val : [0, 0];
         customUniformNodes[id] = uniform(new THREE.Vector2(v[0], v[1])).setName(shaderKey);
@@ -35,7 +36,7 @@ export class ShaderMaterialFactory {
       } else {
         customUniformNodes[id] = uniform(val ?? 0).setName(shaderKey);
       }
-      console.log(`[ShaderMaterialFactory] Built uniform node: id=${id}, key=${shaderKey}, type=${type}, val=${val}`);
+      CoreLogger.debug("ShaderMaterialFactory", `Built uniform node: id=${id}, key=${shaderKey}, type=${type}, val=${val}`);
     }
 
     if (!customUniformNodes['time']) customUniformNodes['time'] = uniform(0).setName('time');
@@ -133,13 +134,13 @@ export class ShaderMaterialFactory {
       try {
         fn = isWgsl ? wgslFn(cleanSource) : glslFn(cleanSource);
       } catch (err) {
-        console.error(`[ShaderMaterialFactory] Error parsing ${isWgsl ? 'WGSL' : 'GLSL'} source for ${comp.shaderId}:`, err);
-        console.log(`[ShaderMaterialFactory] Cleaned source attempted:`, cleanSource.substring(0, 100));
+        CoreLogger.error("ShaderMaterialFactory", `Error parsing ${isWgsl ? 'WGSL' : 'GLSL'} source for ${comp.shaderId}:`, err);
+        CoreLogger.debug("ShaderMaterialFactory", `Cleaned source attempted:`, cleanSource.substring(0, 100));
         return;
       }
 
-      console.log(`[ShaderMaterialFactory] Shader ${comp.shaderId} detected as ${isWgsl ? 'WGSL' : 'GLSL'}.`);
-      console.log(`[ShaderMaterialFactory] TSL Object type:`, typeof fn);
+      CoreLogger.debug("ShaderMaterialFactory", `Shader ${comp.shaderId} detected as ${isWgsl ? 'WGSL' : 'GLSL'}.`);
+      CoreLogger.debug("ShaderMaterialFactory", `TSL Object type:`, typeof fn);
 
       // Map of shaderKey -> node for the Proxy to use
       const nodesByName: Record<string, any> = {};
@@ -148,7 +149,7 @@ export class ShaderMaterialFactory {
         const node = (material.userData.customUniformNodes as any)?.[id];
         if (node) {
           nodesByName[shaderKey] = node;
-          console.log(`[ShaderMaterialFactory] Mapping node to shader key: ${shaderKey} (id: ${id})`);
+          CoreLogger.debug("ShaderMaterialFactory", `Mapping node to shader key: ${shaderKey} (id: ${id})`);
         }
       }
 
@@ -172,7 +173,7 @@ export class ShaderMaterialFactory {
             // Avoid warning for standard JS/TSL internals or common initialization lookups
             const internalProps = ['isNode', 'scale', 'then', 'toJSON'];
             if (!internalProps.includes(prop) && !prop.startsWith('__')) {
-              console.warn(`[ShaderMaterialFactory] Shader ${comp.shaderId} requested missing input '${prop}'. Providing default float(0).`);
+              CoreLogger.warn("ShaderMaterialFactory", `Shader ${comp.shaderId} requested missing input '${prop}'. Providing default float(0).`);
             }
             return float(0);
           }
@@ -184,7 +185,7 @@ export class ShaderMaterialFactory {
       // Favor 'fragmentMain' or 'color' (standard TSL names), then the first non-colliding key.
       if (fn && typeof fn === 'object') {
         const keys = Object.keys(fn);
-        console.log(`[ShaderMaterialFactory] Discovering TSL functions for ${comp.shaderId}:`, keys);
+        CoreLogger.debug("ShaderMaterialFactory", `Discovering TSL functions for ${comp.shaderId}:`, keys);
 
         const nodeMapping: Record<string, string> = {
           color: 'colorNode',
@@ -203,7 +204,7 @@ export class ShaderMaterialFactory {
         let appliedAny = false;
         for (const [fnName, nodeName] of Object.entries(nodeMapping)) {
           if (typeof fn[fnName] === 'function') {
-            console.log(`[ShaderMaterialFactory] Applying '${fnName}' to material.${nodeName}`);
+            CoreLogger.debug("ShaderMaterialFactory", `Applying '${fnName}' to material.${nodeName}`);
             material[nodeName] = fn[fnName](callArgs);
             appliedAny = true;
           }
@@ -212,7 +213,7 @@ export class ShaderMaterialFactory {
         if (!appliedAny && keys.length > 0) {
           // Fallback: try to find the first non-standard property for color
           const entryName = keys[0];
-          console.log(`[ShaderMaterialFactory] Fallback: Applying '${entryName}' to colorNode`);
+          CoreLogger.debug("ShaderMaterialFactory", `Fallback: Applying '${entryName}' to colorNode`);
           material.colorNode = fn[entryName](callArgs);
           appliedAny = true;
         }
@@ -220,17 +221,17 @@ export class ShaderMaterialFactory {
         if (appliedAny) {
           material.needsUpdate = true;
         } else {
-          console.warn(`[ShaderMaterialFactory] No valid shader functions found in ${comp.shaderId}. Keys:`, keys);
+          CoreLogger.warn("ShaderMaterialFactory", `No valid shader functions found in ${comp.shaderId}. Keys:`, keys);
         }
       } else if (typeof fn === 'function') {
-        console.log(`[ShaderMaterialFactory] Applying anonymous function to colorNode`);
+        CoreLogger.debug("ShaderMaterialFactory", `Applying anonymous function to colorNode`);
         material.colorNode = fn(callArgs);
         material.needsUpdate = true;
       } else {
-        console.warn(`[ShaderMaterialFactory] No valid shader function found in ${comp.shaderId}. Type: ${typeof fn}`);
+        CoreLogger.warn("ShaderMaterialFactory", `No valid shader function found in ${comp.shaderId}. Type: ${typeof fn}`);
       }
     } catch (err) {
-      console.warn(`[ShaderMaterialFactory] Error resolving shader ${comp.shaderId}:`, err);
+      CoreLogger.warn("ShaderMaterialFactory", `Error resolving shader ${comp.shaderId}:`, err);
     }
   }
 

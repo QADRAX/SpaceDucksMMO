@@ -1,5 +1,6 @@
 // @ts-ignore
 import * as THREE from 'three/webgpu';
+import { CoreLogger } from '@duckengine/core';
 import { deferredDispose } from '../debug/DebugUtils';
 
 export class TextureCache {
@@ -40,7 +41,7 @@ export class TextureCache {
         (error: ErrorEvent) => {
           this.pendingLoads.delete(url);
           // Fallback or reject? Rejecting is cleaner for now.
-          console.warn(`[TextureCache] Failed to load texture: ${url}`, error);
+          CoreLogger.warn("TextureCache", `Failed to load texture: ${url}`, error);
           reject(error);
           if (useTracker) this.loadingTracker.endTask(taskName);
         }

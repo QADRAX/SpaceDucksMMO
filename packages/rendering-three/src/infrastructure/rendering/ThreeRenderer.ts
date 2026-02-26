@@ -3,6 +3,7 @@ import * as THREE from "three/webgpu";
 // @ts-ignore
 import { pass } from 'three/tsl';
 import type { IRenderSyncSystem, TextureCatalogService, ITextureResolver } from "@duckengine/core";
+import { CoreLogger } from "@duckengine/core";
 import type { IFpsController } from "../ui/dev/FpsController";
 import { DEBUG_LAYERS } from "../graphics/debug/DebugLayers";
 import { GIZMO_LAYER } from "../graphics/debug/GizmoOverlaySystem";
@@ -61,12 +62,12 @@ export class ThreeRenderer extends ThreeRendererBase {
     try {
       this.renderer?.dispose?.();
     } catch (err) {
-      console.warn(`[${this.logPrefix}] renderer.dispose() failed`, err);
+      CoreLogger.warn(this.logPrefix, 'renderer.dispose() failed', err);
     }
     try {
       this.fpsController?.dispose?.();
     } catch (err) {
-      console.warn(`[${this.logPrefix}] fpsController.dispose() failed`, err);
+      CoreLogger.warn(this.logPrefix, 'fpsController.dispose() failed', err);
     }
   }
 
@@ -87,7 +88,7 @@ export class ThreeRenderer extends ThreeRendererBase {
       try {
         this.activeIScene?.update(0);
       } catch (e) {
-        console.warn('[ThreeRenderer] Initial load update(0) failed', e);
+        CoreLogger.warn(this.logPrefix, 'Initial load update(0) failed', e);
       }
       this.clearRenderer();
       this.updateOverlayProgress();
@@ -153,7 +154,7 @@ export class ThreeRenderer extends ThreeRendererBase {
       this.composer.outputNode = pass(this.scene, cam);
     }
 
-    console.log('[ThreeRenderer] Node-based post-processing enabled.');
+    CoreLogger.info(this.logPrefix, 'Node-based post-processing enabled.');
     return this.composer;
   }
 
@@ -270,7 +271,7 @@ export class ThreeRenderer extends ThreeRendererBase {
 
   private warnMissingCamera(): void {
     if (!this.missingCameraWarned) {
-      console.warn('[ThreeRenderer] No active camera for current scene — skipping render frame.');
+      CoreLogger.warn(this.logPrefix, 'No active camera for current scene — skipping render frame.');
       this.missingCameraWarned = true;
     }
   }

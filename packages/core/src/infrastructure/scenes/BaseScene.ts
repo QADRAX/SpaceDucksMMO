@@ -13,6 +13,7 @@ import { ScriptSystem } from '../../domain/scripting/ScriptSystem';
 import type { AssetResolver } from '../../domain/scripting/bridge/AssetResolver';
 import { SceneValidator } from './SceneValidator';
 import { SceneObserverManager } from './SceneObserverManager';
+import { CoreLogger } from '../../domain/logging/CoreLogger';
 
 type VoidResult = Result<void>;
 
@@ -74,7 +75,7 @@ export abstract class BaseScene implements IScene {
    */
   addEntity(entity: Entity): void {
     if (this.entities.has(entity.id)) {
-      console.warn(`[${this.id}] addEntity: entity '${entity.id}' already added`);
+      CoreLogger.warn(this.id, `addEntity: entity '${entity.id}' already added`);
       return;
     }
 
@@ -100,7 +101,7 @@ export abstract class BaseScene implements IScene {
   removeEntity(id: string): void {
     const ent = this.entities.get(id);
     if (!ent) {
-      console.warn(`[${this.id}] removeEntity: entity '${id}' not found`);
+      CoreLogger.warn(this.id, `removeEntity: entity '${id}' not found`);
       return;
     }
 
@@ -173,13 +174,13 @@ export abstract class BaseScene implements IScene {
   setActiveCamera(id: string): void {
     const ent = this.entities.get(id);
     if (!ent || !this.renderSyncSystem) {
-      console.warn(`[${this.id}] setActiveCamera: entity '${id}' not found or sync system missing`);
+      CoreLogger.warn(this.id, `setActiveCamera: entity '${id}' not found or sync system missing`);
       return;
     }
 
     const camera = this.renderSyncSystem.getCamera?.(id);
     if (this.renderSyncSystem.getCamera && !camera) {
-      console.warn(`[${this.id}] setActiveCamera: entity '${id}' has no CameraViewComponent`);
+      CoreLogger.warn(this.id, `setActiveCamera: entity '${id}' has no CameraViewComponent`);
       return;
     }
 
@@ -238,7 +239,7 @@ export abstract class BaseScene implements IScene {
         this.collisionEvents.attach(sys);
       }
     } catch (err) {
-      console.error(`[${this.id}] Failed to initialize physics`, err);
+      CoreLogger.error(this.id, `Failed to initialize physics`, err);
     }
   }
 
@@ -289,7 +290,7 @@ export abstract class BaseScene implements IScene {
       try {
         this.physicsSystem.dispose();
       } catch (err) {
-        console.error(`[${this.id}] Error disposing physics system`, err);
+        CoreLogger.error(this.id, `Error disposing physics system`, err);
       }
       this.physicsSystem = undefined;
     }
@@ -343,7 +344,7 @@ export abstract class BaseScene implements IScene {
       try {
         l(ev);
       } catch (err) {
-        console.warn(`[${this.id}] Error in change listener`, err);
+        CoreLogger.warn(this.id, `Error in change listener`, err);
       }
     }
   }

@@ -9,6 +9,7 @@ import type {
   TextureRequest,
   TextureResource,
 } from '../domain/assets/TextureTypes';
+import { CoreLogger } from '../domain/logging/CoreLogger';
 
 export type TextureFallbackPathBuilder = (
   id: string,
@@ -89,9 +90,9 @@ export class TextureResolverService implements ITextureResolver {
 
     const path = this.buildFallbackPath(request.id, preferred);
 
-    console.warn(
-      `[TextureResolver] Catalog not ready or id not found: ${request.id}. ` +
-        `Using best-effort path: ${path}`
+    CoreLogger.warn("TextureResolver",
+      `Catalog not ready or id not found: ${request.id}. ` +
+      `Using best-effort path: ${path}`
     );
 
     return {
@@ -142,9 +143,9 @@ export class TextureResolverService implements ITextureResolver {
 
     const path = this.buildFallbackPath(request.id, preferred);
 
-    console.warn(
-      `[TextureResolver] No catalog entry found for id "${request.id}". ` +
-        `Using best-effort path: ${path}`
+    CoreLogger.warn("TextureResolver",
+      `No catalog entry found for id "${request.id}". ` +
+      `Using best-effort path: ${path}`
     );
 
     return {

@@ -1,4 +1,5 @@
 import { Entity, type IEcsComponentFactory } from "@duckengine/ecs";
+import { CoreLogger } from "../logging/CoreLogger";
 import { IPrefabRegistry, type PrefabTemplate } from "../ports/IPrefabRegistry";
 
 export class PrefabRegistry implements IPrefabRegistry {
@@ -25,7 +26,7 @@ export class PrefabRegistry implements IPrefabRegistry {
     }): Entity[] {
         const template = this.templates.get(key);
         if (!template) {
-            console.warn(`[PrefabRegistry] Template not found: ${key}`);
+            CoreLogger.warn("PrefabRegistry", `Template not found: ${key}`);
             return [];
         }
 
@@ -81,7 +82,7 @@ export class PrefabRegistry implements IPrefabRegistry {
                     newComp.enabled = oldComp.enabled;
                     newEntity.addComponent(newComp);
                 } catch (e) {
-                    console.error(`[PrefabRegistry] Failed to clone component ${oldComp.type} for entity ${oldEntity.displayName}:`, e);
+                    CoreLogger.error("PrefabRegistry", `Failed to clone component ${oldComp.type} for entity ${oldEntity.displayName}:`, e);
                 }
             }
 

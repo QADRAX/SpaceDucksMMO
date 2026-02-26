@@ -1,6 +1,7 @@
 // @ts-ignore
 import * as THREE from "three/webgpu";
 import type { Entity, SkyboxComponent, ComponentType } from "@duckengine/ecs";
+import { CoreLogger } from "@duckengine/core";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
 import { deferredDispose } from "../debug/DebugUtils";
@@ -140,7 +141,7 @@ export class SkyboxFeature implements RenderFeature {
             this.currentSkyboxTexture = nextTexture;
             context.scene.background = nextTexture;
         } catch (e) {
-            console.warn("[SkyboxFeature] Load error", e);
+            CoreLogger.warn("SkyboxFeature", "Load error", e);
         } finally {
             if (useTracker) context.loadingTracker!.endTask(taskName);
         }

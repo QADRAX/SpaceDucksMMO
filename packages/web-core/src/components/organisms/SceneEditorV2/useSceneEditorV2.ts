@@ -3,40 +3,33 @@
 import * as React from 'react';
 import type { EditorResource, SceneEditorV2Store } from './types';
 import { makeSceneFromSnapshotJson, serializeLiveScene, restoreSceneFromSnapshot, collectAllFromRoots } from './logic/liveSceneRuntime';
-import { EcsLiveScene } from './logic/EcsLiveScene';
 import { EditorThreeScene } from './logic/EditorThreeScene';
 import { ThreeMultiRenderer } from '@duckengine/rendering-three';
-import { useSceneHistory } from './hooks/useSceneHistory';
-import { useLiveScene } from './hooks/useLiveScene';
-import { useEditorActions } from './hooks/useEditorActions';
 import { useEditorLayout } from './hooks/useEditorLayout';
 import { useEditorPlugins } from './hooks/useEditorPlugins';
 import { useRendererLoop } from './hooks/useRendererLoop';
 import { createEditorInputServices, type EditorInputServices } from './logic/editorInputServices';
 import { setInputServices } from '@duckengine/rendering-three/ecs';
+import { useEditorStore } from './store';
 
 
 /**
  * useSceneEditorV2 — composes sub-hooks into one SceneEditorV2Store.
  *
- *   useSceneHistory  → undo/redo stack of EcsTreeSnapshot
- *   useLiveScene     → play/pause/stop, applySnapshot
- *   useEditorActions → entity/component mutations
- *   useEditorLayout  → viewport registration
+ *   useSceneHistory  → undo/redo stack of EcsTreeSnapshot (Moved to Store)
+ *   useLiveScene     → play/pause/stop, applySnapshot (Moved to Store)
+ *   useEditorActions → entity/component mutations (Moved to Store)
+ *   useEditorLayout  → viewport registration 
  *   useEditorPlugins → plugin tick stub
  */
 export function useSceneEditorV2(args: {
     resource: EditorResource;
     initialComponentDataJson: string | null;
 }): SceneEditorV2Store {
-    // ── Error ──────────────────────────────────────────────────────────────
-
     const [error, setError] = React.useState<string | null>(null);
 
-    // ── Scene ref ──────────────────────────────────────────────────────────
-
-    const sceneRef = React.useRef<EcsLiveScene | null>(null);
-    const engineRef = React.useRef<ThreeMultiRenderer | null>(null);
+    const isReadyRef = React.useRef(false);
+    const rendererRef = React.useRef<ThreeMultiRenderer | null>(null);
     const editorSceneRef = React.useRef<EditorThreeScene | null>(null);
     const inputRef = React.useRef<EditorInputServices | null>(null);
 
@@ -46,12 +39,9 @@ export function useSceneEditorV2(args: {
         const input = createEditorInputServices();
         inputRef.current = input;
 
-        // Start disabled so typing in inputs doesn't trigger game actions
         try {
             input.keyboard.setEnabled(false);
-        } catch (e) {
-            // ignore
-        }
+        } catch (e) { }
 
         setInputServices({ mouse: input.mouse, keyboard: input.keyboard });
 
@@ -69,86 +59,57 @@ export function useSceneEditorV2(args: {
 
     // ── Initial scene build ────────────────────────────────────────────────
 
-    const [initialSnapshot] = React.useState(() => {
-        // 1. Create purely ECS model
-        const { scene, canonicalSnapshot } = makeSceneFromSnapshotJson({
-            id: args.resource.id,
-            snapshotJson: args.initialComponentDataJson,
-        });
-        sceneRef.current = scene;
-
-        // 2. Create Engine
-        const engine = new ThreeMultiRenderer({} as any);
-        engineRef.current = engine;
-
-        // 3. Create EditorThreeScene (binds ECS to Engine)
-        const editorScene = new EditorThreeScene(scene);
-        editorSceneRef.current = editorScene;
-        engine.setScene(editorScene);
-
-        return canonicalSnapshot;
-    });
-
-    // ── History ────────────────────────────────────────────────────────────
-
-    const history = useSceneHistory(initialSnapshot);
-
-    // ── Revisions ──────────────────────────────────────────────────────────
-
-    const [presentationRevision, setPresentationRevision] = React.useState(0);
-    const bumpPresentationRevision = React.useCallback(() => {
-        setPresentationRevision((r) => r + 1);
-    }, []);
-
-    const [sceneRevision, setSceneRevision] = React.useState(0);
-
-    // ── Live scene lifecycle ───────────────────────────────────────────────
-
-    const liveScene = useLiveScene({
-        sceneRef,
-        commitToHistory: history.commit,
-        setSceneRevision,
-        setError,
-    });
-
-    // Apply history cursor changes (undo/redo) → restore scene
     React.useEffect(() => {
-        liveScene.applySnapshot(history.current);
-    }, [history.current]); // eslint-disable-line react-hooks/exhaustive-deps
+        if (isReadyRef.current) return;
+        isReadyRef.current = true;
 
-    // ── Selection ──────────────────────────────────────────────────────────
+        try {
+            // 1. Create purely ECS model
+            const { scene } = makeSceneFromSnapshotJson({
+                id: args.resource.id,
+                snapshotJson: args.initialComponentDataJson,
+            });
 
-    const [selectedId, setSelectedId] = React.useState<string | null>(null);
-    const selectedIdRef = React.useRef<string | null>(null);
-    React.useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
+            // 2. Create Engine
+            const engine = new ThreeMultiRenderer({ antialias: true, alpha: true } as any);
+            rendererRef.current = engine;
 
-    const factoryRef = React.useRef<any>(null);
+            // 3. Create Editor wrapper and bind them
+            const editorScene = new EditorThreeScene(scene);
+            editorSceneRef.current = editorScene;
+            engine.setScene(editorScene);
 
-    // ── Actions (Entity Mutation) ──────────────────────────────────────────
+            // 4. Initialize Store
+            useEditorStore.getState().initialize(scene, engine);
+            useEditorStore.getState().syncHierarchy();
 
-    const actions = useEditorActions({
-        gameStateRef: liveScene.gameStateRef,
-        sceneRef,
-        selectedIdRef,
-        setSelectedId,
-        setError,
-        commitFromCurrentScene: liveScene.commitFromCurrentScene,
-        factoryRef,
-        bumpPresentationRevision,
-    });
+        } catch (e) {
+            console.error('Failed to initialize Scene Editor V2:', e);
+            setError(e instanceof Error ? e.message : 'Unknown error during init');
+        }
 
-    // Sync ECS entity additions/removals to the Three.js wrapper
+        return () => {
+            rendererRef.current?.dispose();
+        };
+    }, [args.resource.id, args.initialComponentDataJson]);
+
+    // ── Sync ECS entity additions/removals to the Three.js wrapper ─────────
+
+    // We bind it effectively based on the initialized store reference.
+    const activeScene = useEditorStore(s => s.scene);
     React.useEffect(() => {
-        const scene = sceneRef.current;
+        const scene = activeScene;
         const editorScene = editorSceneRef.current;
         if (!scene || !editorScene) return;
 
-        const unsubscribe = scene.subscribeEntitiesChanged((ev) => {
+        const unsubscribe = scene.subscribeEntitiesChanged((ev: any) => {
             if (ev.type === 'added') editorScene.syncEntityAdded(ev.entity);
             if (ev.type === 'removed') editorScene.syncEntityRemoved(ev.id);
         });
+
         return unsubscribe;
-    }, []);
+    }, [activeScene]);
+
 
     // ── Layout ─────────────────────────────────────────────────────────────
 
@@ -157,29 +118,23 @@ export function useSceneEditorV2(args: {
     // ── Editor plugins ─────────────────────────────────────────────────────
 
     const plugins = useEditorPlugins({
-        gameState: liveScene.gameState,
-        selectedId,
-        actions,
+        gameState: useEditorStore(s => s.gameState),
+        selectedId: useEditorStore(s => s.selectedId),
+        actions: {} as any,
         inputRef,
     });
 
     React.useEffect(() => {
-        plugins.notifyGameStateChanged(liveScene.gameState);
-    }, [liveScene.gameState]); // eslint-disable-line react-hooks/exhaustive-deps
+        plugins.notifyGameStateChanged(useEditorStore.getState().gameState);
+    }, [useEditorStore(s => s.gameState)]);
 
     React.useEffect(() => {
-        plugins.notifySelectionChanged(selectedId ? [selectedId] : []);
-    }, [selectedId]); // eslint-disable-line react-hooks/exhaustive-deps
+        plugins.notifySelectionChanged(useEditorStore.getState().selectedId ? [useEditorStore.getState().selectedId!] : []);
+    }, [useEditorStore(s => s.selectedId)]);
 
     // ── Renderer Loop ──────────────────────────────────────────────────────
 
-    // We start the RAF loop here and pass the refs. We use a placeholder for primaryViewportRef
-    // since we use ThreeMultiRenderer which manages its own viewports via .addView()
     const rendererLoop = useRendererLoop({
-        primaryViewportRef: { current: null },
-        rendererRef: engineRef as React.RefObject<ThreeMultiRenderer | null>,
-        sceneRef: sceneRef as React.RefObject<EcsLiveScene | null>,
-        gameStateRef: liveScene.gameStateRef,
         getEditorPluginTick: () => plugins.tick,
         onError: setError,
     });
@@ -189,97 +144,87 @@ export function useSceneEditorV2(args: {
         return () => rendererLoop.stopLoop();
     }, [rendererLoop]);
 
-    // ── Derived ────────────────────────────────────────────────────────────
+    // ── Formatting public API ──────────────────────────────────────────────
 
+    const sceneRevision = useEditorStore(s => s.sceneRevision);
     const { allEntities, hierarchyRoots } = React.useMemo(() => {
-        const scene = sceneRef.current;
+        const scene = useEditorStore.getState().scene;
         if (!scene) return { allEntities: [], hierarchyRoots: [] };
         const roots = Array.from(scene.getRoots());
-        return { hierarchyRoots: roots, allEntities: collectAllFromRoots(roots) };
-    }, [sceneRevision, presentationRevision]); // eslint-disable-line react-hooks/exhaustive-deps
-
-    const selectedEntity = React.useMemo(
-        () => !selectedId ? undefined : sceneRef.current?.getMutableEntitiesById().get(selectedId),
-        [selectedId, presentationRevision] // eslint-disable-line react-hooks/exhaustive-deps
-    );
-
-    // ── Save / persistence ─────────────────────────────────────────────────
-
-    const [resourceDisplayName, setResourceDisplayName] = React.useState(args.resource.displayName);
-    const [dirty, setDirty] = React.useState(false);
-
-    React.useEffect(() => { setDirty(history.canUndo); }, [history.canUndo]);
-
-    const onSaveResourceDisplayName = React.useCallback(async (_v: string) => {
-        // TODO: call API
-    }, []);
-
-    const onSave = React.useCallback(async () => {
-        if (liveScene.gameState !== 'stopped') return;
-        // TODO: call API with serializeLiveScene(sceneRef.current)
-        setDirty(false);
-    }, [liveScene.gameState]);
-
-    // ── Assemble store ─────────────────────────────────────────────────────
+        return { hierarchyRoots: roots, allEntities: collectAllFromRoots(roots) as any[] };
+    }, [sceneRevision]);
 
     return {
-        resourceDisplayName,
-        onSetResourceDisplayName: setResourceDisplayName,
-        onSaveResourceDisplayName,
-
         error,
         setError,
-
-        gameState: liveScene.gameState,
-        onPlay: liveScene.onPlay,
-        onPause: liveScene.onPause,
-        onResume: liveScene.onResume,
-        onStop: liveScene.onStop,
-
-        dirty,
-        canUndo: history.canUndo,
-        canRedo: history.canRedo,
-        onUndo: history.undo,
-        onRedo: history.redo,
-        onSave,
-
-        presentationRevision,
+        sceneId: args.resource.id,
+        resourceDisplayName: args.resource.displayName,
+        onSetResourceDisplayName: (v: string) => { },
+        onSaveResourceDisplayName: async (v: string) => { },
         sceneRevision,
+        presentationRevision: sceneRevision,
 
-        selectedId,
-        setSelectedId,
-        selectedEntity,
-
-        hierarchyRoots,
-        allEntitiesForHierarchy: allEntities,
-
-        activeCameraEntityId: sceneRef.current?.activeCameraEntityId ?? null,
-        onSetActiveCameraEntityId: actions.onSetActiveCameraEntityId,
-
-        onCreateEmpty: actions.onCreateEmpty,
-        onDeleteSelected: actions.onDeleteSelected,
-        onReparent: actions.onReparent,
-        onReparentEntity: actions.onReparentEntity,
-
-        onAddComponent: actions.onAddComponent,
-        onRemoveComponent: actions.onRemoveComponent,
-        onUpdateSelectedComponentData: actions.onUpdateSelectedComponentData,
-
-        onSetSelectedName: actions.onSetSelectedName,
-        onSetSelectedGizmoIcon: actions.onSetSelectedGizmoIcon,
-        onSetSelectedLocalPositionAxis: actions.onSetSelectedLocalPositionAxis,
-
-
-        factory: factoryRef.current ?? ({ listCreatableComponents: () => [] } as any),
-        creatableComponents: [],
-        referenceOptions: allEntities.map((e) => ({ id: e.id, label: e.displayName || e.id })),
-
-        viewports: layout.viewports,
+        layout,
         registerViewport: layout.registerViewport,
         unregisterViewport: layout.unregisterViewport,
 
-        engine: engineRef.current ?? undefined,
-        input: inputRef.current ?? undefined,
-        commitFromCurrentScene: liveScene.commitFromCurrentScene,
+        allEntities,
+        hierarchyRoots: hierarchyRoots as any[],
+        gameState: useEditorStore(s => s.gameState),
+        selectedId: useEditorStore(s => s.selectedId),
+        selectedEntity: useEditorStore(s => s.selectedId) ? (useEditorStore.getState().scene?.getEntitiesById().get(useEditorStore(s => s.selectedId)!) as any) : undefined,
+        activeCameraEntityId: null,
+        onSetActiveCameraEntityId: () => { },
+
+        sceneRef: { current: useEditorStore.getState().scene },
+        engineRef: rendererRef,
+        engine: rendererRef.current,
+        factory: null as any,
+        inputRef,
+        input: inputRef.current,
+
+        onSetSelectedName: useEditorStore.getState().onSetSelectedName,
+        onSetSelectedGizmoIcon: useEditorStore.getState().onSetSelectedGizmoIcon,
+        onSetSelectedLocalPositionAxis: (axis: 'x' | 'y' | 'z', n: number) => { },
+
+        actions: {
+            onCreateEmpty: useEditorStore.getState().onCreateEmpty,
+            onDeleteSelected: useEditorStore.getState().onDeleteSelected,
+            onDuplicateSelected: useEditorStore.getState().onDuplicateSelected,
+            onReparentEntity: useEditorStore.getState().onReparentEntity,
+            onReparent: (id: string | null) => useEditorStore.getState().onReparentEntity(useEditorStore.getState().selectedId!, id),
+            onSetSelectedName: useEditorStore.getState().onSetSelectedName,
+            onSetSelectedGizmoIcon: useEditorStore.getState().onSetSelectedGizmoIcon,
+            onSetActiveCameraEntityId: () => { },
+            mutateSelected: () => { },
+        },
+        onCreateEmpty: useEditorStore.getState().onCreateEmpty,
+        onDeleteSelected: useEditorStore.getState().onDeleteSelected,
+        onDuplicateSelected: useEditorStore.getState().onDuplicateSelected,
+        onAddComponent: (type: string) => { },
+        onRemoveComponent: (type: string) => { },
+        onUpdateSelectedComponentData: (type: string, data: Record<string, unknown> & { live?: boolean }) => { },
+        onReparentEntity: useEditorStore.getState().onReparentEntity,
+
+        onPlay: () => useEditorStore.getState().setGameState('playing'),
+        onPause: () => useEditorStore.getState().setGameState('paused'),
+        onResume: () => useEditorStore.getState().setGameState('playing'),
+        onStop: () => {
+            useEditorStore.getState().setGameState('stopped');
+            useEditorStore.getState().undo();
+        },
+
+        commitFromCurrentScene: useEditorStore.getState().commitFromCurrentScene,
+
+        canUndo: useEditorStore(s => s.historyCursor > 0),
+        canRedo: useEditorStore(s => s.historyCursor < s.historyStackCount - 1),
+        undo: useEditorStore.getState().undo,
+        redo: useEditorStore.getState().redo,
+        onUndo: useEditorStore.getState().undo,
+        onRedo: useEditorStore.getState().redo,
+        dirty: false,
+        onSave: async () => { },
+
+        setSelectedId: useEditorStore.getState().setSelectedId,
     };
 }

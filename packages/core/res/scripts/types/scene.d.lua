@@ -47,6 +47,39 @@ function scene.onEvent(self, eventName, listener) end
 ---@return LuaEntity? root The primary root entity of the new instance.
 function scene.instantiatePrefab(key, overrides) end
 
+-- ─── Internal / System methods ──────────────────────────────────────
+-- These are used by the core engine metatables and system scripts.
+
+---@private
+function scene.getComponentProperty(entityId, type, key) end
+
+---@private
+function scene.setComponentProperty(entityId, type, key, value) end
+
+---@private
+function scene.getScriptSlotProperty(entityId, scriptId, key) end
+
+---@private
+function scene.setScriptSlotProperty(entityId, scriptId, key, value) end
+
+---@private
+function scene.getScriptSlotNames(entityId) end
+
+---@private
+function scene.addComponent(entityId, type, params) end
+
+---@private
+function scene.removeComponent(entityId, type) end
+
+---@private
+function scene.applyResource(entityId, key, kind, overrides) end
+
+---@private
+function scene.__exists(id) end
+
+---@private
+function scene.__getEntity(id) end
+
 -- ─── Reserved Events ────────────────────────────────────────────────
 -- The following events are fired automatically by the engine:
 --

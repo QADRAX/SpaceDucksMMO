@@ -5,6 +5,7 @@ import type {
     FullMeshComponent,
     ComponentType,
 } from "@duckengine/ecs";
+import { CoreLogger } from "@duckengine/core";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
 import { syncTransformToObject3D } from "../sync/TransformSync";
@@ -130,7 +131,7 @@ export class FullMeshFeature implements RenderFeature {
                 placeholder.visible = true;
             }
         } catch (e) {
-            console.warn("[FullMeshFeature] GLB load failed", e);
+            CoreLogger.warn("FullMeshFeature", "GLB load failed", e);
         }
     }
 

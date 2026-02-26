@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import type { EngineResourceResolver } from "../../resources/EngineResourceResolver";
 import { normalizeGlbUvs, createLoaderForResolved, getGltfLoader } from "./glTFHelpers";
+import { CoreLogger } from "@duckengine/core";
 
 export class CustomGeometryLoader {
     private readonly cacheByUrl = new Map<string, Promise<THREE.BufferGeometry>>();
@@ -32,7 +33,7 @@ export class CustomGeometryLoader {
             const geometry = await promise;
             return geometry.clone();
         } catch (e) {
-            console.warn(`[CustomGeometryLoader] Failed to load geometry for key ${resourceKey}`, e);
+            CoreLogger.warn("CustomGeometryLoader", `Failed to load geometry for key ${resourceKey}`, e);
             this.cacheByUrl.delete(url);
             return null;
         }

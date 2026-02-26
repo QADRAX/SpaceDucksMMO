@@ -11,6 +11,7 @@ import type {
     CustomGeometryComponent,
     ComponentType,
 } from "@duckengine/ecs";
+import { CoreLogger } from "@duckengine/core";
 import {
     GeometryFactory,
     AnyGeometryComponent,
@@ -186,7 +187,7 @@ export class GeometryFeature implements RenderFeature {
                 mesh.userData.customGeometryKeyApplied = transformKey;
             }
         } catch (e) {
-            console.warn("[GeometryFeature] Custom geometry load failed", e);
+            CoreLogger.warn("GeometryFeature", "Custom geometry load failed", e);
         }
     }
 

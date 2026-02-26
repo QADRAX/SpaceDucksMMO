@@ -1,4 +1,5 @@
 import { Entity, Component, ComponentType, IComponentObserver } from '@duckengine/ecs';
+import { CoreLogger } from '../../domain/logging/CoreLogger';
 import SceneChangeEvent from '../../domain/scene/SceneChangeEvent';
 import { SceneValidator } from './SceneValidator';
 
@@ -101,7 +102,7 @@ export class SceneObserverManager {
             try {
                 cleanup();
             } catch (err) {
-                console.warn(`[SceneObserverManager] Cleanup failed for ${entityId}`, err);
+                CoreLogger.warn("SceneObserverManager", `Cleanup failed for ${entityId}`, err);
             }
             this.entitySubscriptions.delete(entityId);
         }
@@ -160,7 +161,7 @@ export class SceneObserverManager {
             this.emitChange({ kind: 'error', message: msg } as any);
 
             if (!restore.ok) {
-                console.error(`[SceneObserverManager] Hierarchy broken and recovery failed for ${entity.id}`, restore.error);
+                CoreLogger.error("SceneObserverManager", `Hierarchy broken and recovery failed for ${entity.id}`, restore.error);
             }
         }
     }

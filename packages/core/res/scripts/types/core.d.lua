@@ -119,3 +119,39 @@ local LuaPrefab = {}
 ---@param overrides? { position?: Vec3|number[], rotation?: Vec3|number[], scale?: Vec3|number[] } Optional overrides.
 ---@return LuaEntity? root The primary root entity of the new instance. Returns nil if failed.
 function LuaPrefab:instantiate(overrides) end
+
+-- ───────────────────────────────────────────────────────────────────────
+-- Logging
+-- ───────────────────────────────────────────────────────────────────────
+
+---Access to the DuckEngine logging system.
+---Messages are routed to the central CoreLogger.
+---@class LogAPI
+local LogAPI = {}
+
+---Logs an informational message.
+---@param system string The subsystem name (e.g. "Script", "Physics").
+---@param message string The message text.
+---@param data? any Optional additional data to log.
+function LogAPI:info(system, message, data) end
+
+---Logs a warning message.
+---@param system string
+---@param message string
+---@param data? any
+function LogAPI:warn(system, message, data) end
+
+---Logs an error message.
+---@param system string
+---@param message string
+---@param data? any
+function LogAPI:error(system, message, data) end
+
+---Logs a debug message.
+---@param system string
+---@param message string
+---@param data? any
+function LogAPI:debug(system, message, data) end
+
+---@type LogAPI Global logging instance.
+log = {}

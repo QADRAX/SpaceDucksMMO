@@ -1,6 +1,7 @@
 import type { Entity, ScriptComponent, ScriptSlot, IEcsComponentFactory } from "@duckengine/ecs";
 import type { CollisionEventsHub } from "../physics/CollisionEventsHub";
 import type SceneChangeEvent from "../scene/SceneChangeEvent";
+import { CoreLogger } from "../logging/CoreLogger";
 import { SceneEventBus } from "./SceneEventBus";
 import { LuaSandbox, type LuaScriptInstance } from "./LuaSandbox";
 import { LuaSelfFactory, type LuaSelfInstance } from "./LuaSelfFactory";
@@ -30,7 +31,7 @@ export class ScriptSystem {
     private collisionUnsubMap = new Map<string, () => void>();
 
     // Lua Sandbox
-    private sandbox = new LuaSandbox();
+    private sandbox = new LuaSandbox(this.eventBus);
     private luaEngine: LuaEngine | null = null;
 
     // Per-slot compiled scripts and state context
@@ -228,7 +229,7 @@ export class ScriptSystem {
                 // Now wire collisions based on if the script defined the hooks
                 this.subscribeCollisionsIfNeeded(entity, scriptComponent, slot);
             } catch (err) {
-                console.error(`[ScriptSystem] Failed to compile script for slot ${slot.slotId}:`, err);
+                CoreLogger.error("ScriptSystem", `Failed to compile script for slot ${slot.slotId}:`, err);
             }
         }
     }
@@ -469,7 +470,7 @@ export class ScriptSystem {
 
     public setup(allEntities: Map<string, Entity>, scene: { subscribeChanges: (listener: (ev: SceneChangeEvent) => void) => () => void }): void {
         this.setupAsync(allEntities, scene).catch(err => {
-            console.error("[ScriptSystem] failed to initialize wasmoon async", err);
+            CoreLogger.error("ScriptSystem", "failed to initialize wasmoon async", err);
         });
     }
 

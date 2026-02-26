@@ -1,6 +1,7 @@
 // @ts-ignore
 import * as THREE from "three/webgpu";
 import type { Entity, AnyCustomShaderComponent, ComponentType } from "@duckengine/ecs";
+import { CoreLogger } from "@duckengine/core";
 import { ShaderMaterialFactory } from "../factories/ShaderMaterialFactory";
 import type { RenderFeature } from "./RenderFeature";
 import type { RenderContext } from "./RenderContext";
@@ -90,7 +91,7 @@ export class ShaderFeature implements RenderFeature {
             const taskName = `shaderResolution:${entity.id}:${shaderComp.shaderId}`;
             context.loadingTracker?.startTask(taskName);
             ShaderMaterialFactory.resolveAndApplyShader(newMat, shaderComp, context.engineResourceResolver)
-                .catch((err) => console.warn(`[ShaderFeature] Failed to resolve shader for ${entity.id}:`, err))
+                .catch((err) => CoreLogger.warn("ShaderFeature", `Failed to resolve shader for ${entity.id}:`, err))
                 .finally(() => {
                     context.loadingTracker?.endTask(taskName);
                 });
