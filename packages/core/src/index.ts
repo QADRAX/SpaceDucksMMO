@@ -10,6 +10,7 @@ export type {
 export type { default as IRenderSyncSystem } from './domain/ports/IRenderSyncSystem';
 export type { ITextureResolver } from './domain/ports/ITextureResolver';
 export type { default as ISettingsService } from './domain/ports/ISettingsService';
+export type { IGizmoRenderer } from './domain/ports/IGizmoRenderer';
 
 export type { default as IPhysicsSystem } from './domain/physics/IPhysicsSystem';
 export type * from './domain/physics/PhysicsTypes';

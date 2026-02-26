@@ -2,9 +2,9 @@ import type { Entity, IEcsComponentFactory } from "@duckengine/ecs";
 import type { SceneEventBus } from "../SceneEventBus";
 import type { AssetResolver } from "./AssetResolver";
 import type { IPrefabRegistry } from "../../ports/IPrefabRegistry";
+import type { IGizmoRenderer } from "../../ports/IGizmoRenderer";
 
 export interface BridgeContext {
-    mode: 'game' | 'editor';
     getEntity: (id: string) => Entity | undefined;
     getAllEntities: () => Entity[];
     getEventBus: () => SceneEventBus;
@@ -21,6 +21,9 @@ export interface BridgeContext {
 
     // Prefab support (Phase 13)
     prefabRegistry?: IPrefabRegistry;
+
+    // Gizmo rendering (Phase 18)
+    gizmoRenderer?: IGizmoRenderer;
 }
 
 

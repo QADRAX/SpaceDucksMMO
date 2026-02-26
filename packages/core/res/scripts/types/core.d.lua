@@ -22,6 +22,7 @@
 ---@field onPropertyChanged? fun(self: LuaEntity, key: string, value: any) Called when a property changes from the inspector or cross-script write.
 ---@field onDisable? fun(self: LuaEntity) Called when the slot is disabled.
 ---@field onDestroy? fun(self: LuaEntity) Called when the entity or slot is destroyed.
+---@field onDrawGizmos? fun(self: LuaEntity, dt: number) Called every frame in the Gizmo phase. Use the `gizmos` global here.
 
 ---@class SchemaDefinition
 ---@field name? string Human-readable display name for the script.

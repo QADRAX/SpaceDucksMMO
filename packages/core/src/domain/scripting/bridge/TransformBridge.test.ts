@@ -17,7 +17,6 @@ describe("TransformBridge", () => {
         };
 
         mockCtx = {
-            mode: 'game',
             getEntity: jest.fn(),
             getAllEntities: jest.fn(),
             getEventBus: jest.fn(),

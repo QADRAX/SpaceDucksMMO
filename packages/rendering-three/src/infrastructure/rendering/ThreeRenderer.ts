@@ -5,6 +5,7 @@ import { pass } from 'three/tsl';
 import type { IRenderSyncSystem, TextureCatalogService, ITextureResolver } from "@duckengine/core";
 import type { IFpsController } from "../ui/dev/FpsController";
 import { DEBUG_LAYERS } from "../graphics/debug/DebugLayers";
+import { GIZMO_LAYER } from "../graphics/debug/GizmoOverlaySystem";
 import {
   ThreeRendererBase,
   type WebGPURenderer,
@@ -256,7 +257,7 @@ export class ThreeRenderer extends ThreeRendererBase {
   }
 
   private buildDebugLayerMask(): number {
-    let mask = 1 << 0;
+    let mask = (1 << 0) | (1 << GIZMO_LAYER);
     const flags = (this.activeIScene as any)?.debugFlags;
     if (flags) {
       mask |= flags.transform ? 1 << DEBUG_LAYERS.transforms : 0;

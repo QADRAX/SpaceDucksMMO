@@ -16,31 +16,6 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
                 }
             });
         },
-        findEntityByName: (name: string) => {
-            if (ctx.mode !== 'editor') {
-                throw new Error("[Security] scene.findEntityByName is only available in Editor mode. Use schema-managed references instead.");
-            }
-            const match = ctx.getAllEntities().find(e => {
-                const nameComp = e.getComponent<any>("name");
-                return nameComp?.value === name || e.displayName === name;
-            });
-            return match ? (engine.global as any).get('__WrapEntity')(match.id) : null;
-        },
-        getEntity: (idOrSelf: any) => {
-            if (ctx.mode !== 'editor') {
-                throw new Error("[Security] scene.getEntity is only available in Editor mode. Use schema-managed references instead.");
-            }
-            const id = typeof idOrSelf === 'string' ? idOrSelf : (idOrSelf?.id);
-            if (!id) return null;
-            return (engine.global as any).get('__WrapEntity')(id);
-        },
-        exists: (idOrObject: any) => {
-            if (ctx.mode !== 'editor') {
-                throw new Error("[Security] scene.exists is only available in Editor mode. Use entity:isValid() on managed references instead.");
-            }
-            const id = typeof idOrObject === 'string' ? idOrObject : idOrObject?.id;
-            return !!ctx.getEntity(id);
-        },
         addComponent: (entityId: string, type: string, params?: any) => {
             const ent = ctx.getEntity(entityId);
             if (!ent) return null;
@@ -142,4 +117,26 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
         }
     };
     engine.global.set("scene", sceneApi);
+}
+
+export function registerEditorBridge(engine: LuaEngine, ctx: BridgeContext) {
+    const editorApi = {
+        findEntityByName: (name: string) => {
+            const match = ctx.getAllEntities().find(e => {
+                const nameComp = e.getComponent<any>("name");
+                return nameComp?.value === name || e.displayName === name;
+            });
+            return match ? (engine.global as any).get('__WrapEntity')(match.id) : null;
+        },
+        getEntity: (idOrSelf: any) => {
+            const id = typeof idOrSelf === 'string' ? idOrSelf : (idOrSelf?.id);
+            if (!id) return null;
+            return (engine.global as any).get('__WrapEntity')(id);
+        },
+        exists: (idOrObject: any) => {
+            const id = typeof idOrObject === 'string' ? idOrObject : idOrObject?.id;
+            return !!ctx.getEntity(id);
+        }
+    };
+    engine.global.set("editor", editorApi);
 }

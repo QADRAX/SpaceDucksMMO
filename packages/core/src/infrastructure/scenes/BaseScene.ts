@@ -211,13 +211,15 @@ export abstract class BaseScene implements IScene {
     this.initializeTextureResolver();
     this.initializeRenderSync(renderScene);
 
+    const gizmoRenderer = this.engine?.createGizmoRenderer?.();
+
     // Add all pre-existing entities to systems
     for (const ent of this.entities.values()) {
       this.renderSyncSystem?.addEntity(ent);
       this.physicsSystem?.addEntity(ent);
     }
 
-    this.scriptSystem = new ScriptSystem(this.componentFactory, 'game', this.assetResolver, this.collisionEvents);
+    this.scriptSystem = new ScriptSystem(this.componentFactory, false, this.assetResolver, this.collisionEvents, undefined, gizmoRenderer);
     this.scriptSystem.setup(this.entities, this);
   }
 
@@ -319,6 +321,7 @@ export abstract class BaseScene implements IScene {
     this.scriptSystem?.update(dt);
     this.scriptSystem?.eventBus.flush();
     this.scriptSystem?.lateUpdate(dt);
+    this.scriptSystem?.drawGizmos(dt);
     this.renderSyncSystem?.update(dt);
   }
 

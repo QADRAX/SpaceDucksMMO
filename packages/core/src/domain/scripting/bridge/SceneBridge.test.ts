@@ -21,7 +21,6 @@ describe("SceneBridge", () => {
         eventBus = new SceneEventBus();
 
         mockCtx = {
-            mode: 'game',
             getEntity: jest.fn(),
             getAllEntities: jest.fn(),
             getEventBus: jest.fn().mockReturnValue(eventBus),
@@ -29,16 +28,49 @@ describe("SceneBridge", () => {
         };
     });
 
+    afterEach(() => {
+        jest.clearAllMocks();
+    });
+
     it("registers scene api", () => {
         registerSceneBridge(mockEngine, mockCtx);
         expect(mockEngine.global.set).toHaveBeenCalledWith("scene", expect.any(Object));
+        expect(sceneApi).toBeDefined();
+        expect(sceneApi.fireEvent).toBeDefined();
+        expect(sceneApi.findEntityByName).toBeUndefined(); // Verify it was removed
+    });
+
+    it("registers editor api and finds entity by name", () => {
+        let editorApi: any;
+        const mockEngineEditor = {
+            global: {
+                get: jest.fn((key) => {
+                    if (key === '__WrapEntity') return (id: string) => id;
+                    return null;
+                }),
+                set: jest.fn((key, value) => {
+                    if (key === "editor") editorApi = value;
+                })
+            }
+        };
+
+        const { registerEditorBridge } = require("./SceneBridge");
+        registerEditorBridge(mockEngineEditor, mockCtx);
+
+        expect(mockEngineEditor.global.set).toHaveBeenCalledWith("editor", expect.any(Object));
+        expect(editorApi).toBeDefined();
+
+        const e = new Entity("e1");
+        e.displayName = "Player";
+        mockCtx.getAllEntities.mockReturnValue([e]);
+
+        expect(editorApi.findEntityByName("Player")).toBe("e1");
+        expect(editorApi.findEntityByName("Enemy")).toBeNull();
     });
 
     it("fires events", () => {
         registerSceneBridge(mockEngine, mockCtx);
         sceneApi.fireEvent("TestEvent", { foo: "bar" });
-        // Event bus queue should have 1 item
-        // But since SceneEventBus doesn't expose queue, we can just spy on fire
         const spy = jest.spyOn(eventBus, "fire");
         sceneApi.fireEvent("TestEvent2", { a: 1 });
         expect(spy).toHaveBeenCalledWith("TestEvent2", { a: 1 });
@@ -55,15 +87,5 @@ describe("SceneBridge", () => {
         eventBus.flush();
 
         expect(listener).toHaveBeenCalledWith({ data: 123 });
-    });
-
-    it("finds entity by name", () => {
-        registerSceneBridge(mockEngine, mockCtx);
-        const e = new Entity("e1");
-        e.displayName = "Player";
-        mockCtx.getAllEntities.mockReturnValue([e]);
-
-        expect(sceneApi.findEntityByName("Player")).toBe("e1");
-        expect(sceneApi.findEntityByName("Enemy")).toBeNull();
     });
 });

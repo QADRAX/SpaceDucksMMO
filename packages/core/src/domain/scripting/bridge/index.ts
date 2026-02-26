@@ -5,3 +5,4 @@ export * from "./PhysicsBridge";
 export * from "./SceneBridge";
 export * from "./TimeBridge";
 export * from "./MathBridge";
+export * from "./GizmoBridge";

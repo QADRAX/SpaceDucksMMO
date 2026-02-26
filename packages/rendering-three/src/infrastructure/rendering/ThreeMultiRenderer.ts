@@ -10,6 +10,7 @@ import type {
 } from '@duckengine/core';
 import type { IFpsController } from '../ui/dev/FpsController';
 import { DEBUG_LAYERS } from '../graphics/debug/DebugLayers';
+import { GIZMO_LAYER } from '../graphics/debug/GizmoOverlaySystem';
 import {
   ThreeRendererBase,
   type WebGPURenderer,
@@ -397,7 +398,7 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
 
   private applyCameraLayersForView(view: ViewRuntime, cam: THREE.Camera): () => void {
     const prevMask = cam.layers.mask;
-    let nextMask = 1 << 0;
+    let nextMask = (1 << 0) | (1 << GIZMO_LAYER);
     const d = view.debug as any;
     if (d.transform || d.transforms) nextMask |= 1 << DEBUG_LAYERS.transforms;
     if (d.mesh) nextMask |= 1 << DEBUG_LAYERS.mesh;

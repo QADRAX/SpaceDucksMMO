@@ -12,6 +12,7 @@ export interface LuaScriptInstance {
     onCollisionExit?: LuaHookFunction;
     onDisable?: LuaHookFunction;
     onDestroy?: LuaHookFunction;
+    onDrawGizmos?: LuaHookFunction;
     onPropertyChanged?: (key: string, value: any) => void;
 }
 

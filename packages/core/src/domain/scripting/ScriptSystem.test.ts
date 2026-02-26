@@ -22,7 +22,7 @@ describe("ScriptSystem", () => {
 
         allEntities = new Map<string, Entity>();
         const mockComponentFactory = { listCreatableComponents: jest.fn().mockReturnValue([]), create: jest.fn() } as any;
-        system = new ScriptSystem(mockComponentFactory, 'game', undefined, collisionEvents);
+        system = new ScriptSystem(mockComponentFactory, false, undefined, collisionEvents);
     });
 
     afterEach(() => {
@@ -85,6 +85,15 @@ describe("ScriptSystem", () => {
         const e = new Entity("e1");
         e.addComponent(new ScriptComponent() as any);
         allEntities.set(e.id, e);
+
+        jest.spyOn((system as any).sandbox, "createEngine").mockResolvedValue({
+            global: {
+                get: jest.fn(),
+                set: jest.fn()
+            },
+            doString: jest.fn(),
+            doStringSync: jest.fn()
+        });
 
         await system.setupAsync(allEntities, mockScene);
 

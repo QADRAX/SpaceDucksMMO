@@ -92,6 +92,11 @@ export interface IRenderingEngine {
   createPhysicsSystem?(): IPhysicsSystem | undefined;
 
   /**
+   * Optional: backends can provide an imperative gizmo renderer instance.
+   */
+  createGizmoRenderer?(): import('./IGizmoRenderer').IGizmoRenderer | undefined;
+
+  /**
    * Optional: return the loading tracker used by this engine.
    */
   getLoadingTracker?(): any; // LoadingTracker (using any for portability)

@@ -13,6 +13,8 @@ import { RenderSyncSystem } from '../graphics/sync/RenderSyncSystem';
 import type { EngineResourceResolver } from '../resources/EngineResourceResolver';
 import type { ILoadingOverlay, ILoadingOverlayFactory } from './ILoadingOverlay';
 import { DefaultHtmlLoadingOverlayFactory } from '../ui/DefaultHtmlLoadingOverlay';
+import type { IGizmoRenderer } from '@duckengine/core';
+import { GizmoOverlaySystem } from '../graphics/debug/GizmoOverlaySystem';
 
 // ---------------------------------------------------------------------------
 // Local type aliases — three/webgpu exports these but TS types may lag behind.
@@ -150,6 +152,16 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
             this.engineResourceResolver,
             this.loadingTracker,
         );
+    }
+
+    protected gizmoRenderer?: GizmoOverlaySystem;
+
+    createGizmoRenderer(): IGizmoRenderer | undefined {
+        if (!this.scene) return undefined;
+        if (!this.gizmoRenderer) {
+            this.gizmoRenderer = new GizmoOverlaySystem(this.scene);
+        }
+        return this.gizmoRenderer;
     }
 
     getLoadingTracker(): LoadingTracker {
@@ -298,6 +310,10 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
         }
         if (this.scene) this.scene.clear();
         this.teardownViewComposers();
+        if (this.gizmoRenderer) {
+            this.gizmoRenderer.dispose();
+            this.gizmoRenderer = undefined;
+        }
     }
 
     getActiveScene(): IScene | null {

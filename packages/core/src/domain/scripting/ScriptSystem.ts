@@ -10,12 +10,15 @@ import {
     registerMathBridge,
     registerPhysicsBridge,
     registerSceneBridge,
+    registerEditorBridge,
     registerTimeBridge,
-    registerTransformBridge
+    registerTransformBridge,
+    registerGizmoBridge
 } from "./bridge";
 import { BuiltInScripts } from "./BuiltInScripts";
 import type { AssetResolver } from "./bridge/AssetResolver";
 import type { IPrefabRegistry } from "../ports/IPrefabRegistry";
+import type { IGizmoRenderer } from "../ports/IGizmoRenderer";
 
 export class ScriptSystem {
     public readonly eventBus = new SceneEventBus();
@@ -44,10 +47,11 @@ export class ScriptSystem {
 
     constructor(
         private componentFactory: IEcsComponentFactory,
-        private mode: 'game' | 'editor' = 'game',
+        private isEditorContext: boolean = false,
         private assetResolver?: AssetResolver,
         private collisionEvents?: CollisionEventsHub,
-        private prefabRegistry?: IPrefabRegistry
+        private prefabRegistry?: IPrefabRegistry,
+        private gizmoRenderer?: IGizmoRenderer
     ) { }
 
     public registerEntity(entity: Entity): void {
@@ -335,6 +339,28 @@ export class ScriptSystem {
         }
     }
 
+    public drawGizmos(dt: number): void {
+        if (!this.luaEngine) return;
+        this.gizmoRenderer?.clear();
+        this.timeBridgeSync?.setDelta(dt);
+
+        for (const entity of this.entities.values()) {
+            const sc = entity.getComponent<ScriptComponent>("script");
+            if (!sc || !sc.enabled) continue;
+            for (const slot of sc.getSlots()) {
+                if (!slot.enabled) continue;
+                const instance = this.scriptInstances.get(slot.slotId);
+                const ctx = this.scriptContexts.get(slot.slotId);
+                if (instance?.onDrawGizmos && ctx) {
+                    if (this.shouldSkipGuarded(slot.slotId)) continue;
+                    if (!this.sandbox.pcall(this.luaEngine, instance.onDrawGizmos, ctx, dt)) {
+                        slot.enabled = false;
+                    }
+                }
+            }
+        }
+    }
+
     private sceneUnsub?: () => void;
 
     public async setupAsync(allEntities: Map<string, Entity>, scene: { subscribeChanges: (listener: (ev: SceneChangeEvent) => void) => () => void }): Promise<void> {
@@ -346,12 +372,12 @@ export class ScriptSystem {
         const getEventBus = () => this.eventBus;
 
         const bridgeCtx = {
-            mode: this.mode,
             getEntity,
             getAllEntities,
             getEventBus,
             componentFactory: this.componentFactory,
             assetResolver: this.assetResolver,
+            gizmoRenderer: this.gizmoRenderer,
 
             // Cross-script property access (Phase 12)
             getScriptSlots: (entityId: string) => {
@@ -395,9 +421,13 @@ export class ScriptSystem {
 
         registerTransformBridge(this.luaEngine, bridgeCtx);
         registerSceneBridge(this.luaEngine, bridgeCtx);
+        if (this.isEditorContext) {
+            registerEditorBridge(this.luaEngine, bridgeCtx);
+        }
         registerMathBridge(this.luaEngine);
         registerInputBridge(this.luaEngine);
         registerPhysicsBridge(this.luaEngine);
+        registerGizmoBridge(this.luaEngine, bridgeCtx);
         this.timeBridgeSync = registerTimeBridge(this.luaEngine);
 
         // 1. Initial registering of entities
