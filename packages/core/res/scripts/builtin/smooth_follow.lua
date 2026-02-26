@@ -19,9 +19,7 @@ end
 ---@field elapsed        number
 ---@field lastGoal       Vec3?
 
----@class SmoothFollow : DuckEntity<SmoothFollowProps, SmoothFollowState>
-
----@type ScriptModule<SmoothFollow>
+---@type ScriptBlueprint<SmoothFollowProps, SmoothFollowState>
 return {
     schema = {
         name = "Smooth Follow (Eased)",
@@ -34,12 +32,16 @@ return {
         }
     },
 
+    ---@param self ScriptInstance<SmoothFollowProps, SmoothFollowState>
     init = function(self)
         self.state.startPos = nil -- captured when target moves
         self.state.elapsed  = 0
         self.state.lastGoal = nil
     end,
 
+
+    ---@param self ScriptInstance<SmoothFollowProps, SmoothFollowState>
+    ---@param dt number
     update = function(self, dt)
         local props    = self.properties
         local target   = props.targetEntityId
@@ -81,6 +83,7 @@ return {
 
         -- Interpolate from start position to goal using the eased `t`
         local sp           = self.state.startPos
+        if not sp then return end
         self:setPosition(math.vec3(
             math.ext.lerp(sp.x, goal.x, t),
             math.ext.lerp(sp.y, goal.y, t),

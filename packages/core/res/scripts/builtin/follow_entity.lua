@@ -8,9 +8,7 @@
 ---@class FollowEntityState
 ---@field history        table[]
 
----@class FollowEntity : DuckEntity<FollowEntityProps, FollowEntityState>
-
----@type ScriptModule<FollowEntity>
+---@type ScriptBlueprint<FollowEntityProps, FollowEntityState>
 return {
     schema = {
         name = "Follow Entity (Kinematic)",
@@ -23,11 +21,14 @@ return {
         }
     },
 
+    ---@param self ScriptInstance<FollowEntityProps, FollowEntityState>
     init = function(self)
         -- History ring buffer of { t = timestamp, x, y, z }
         self.state.history = {}
     end,
 
+    ---@param self ScriptInstance<FollowEntityProps, FollowEntityState>
+    ---@param dt number
     update = function(self, dt)
         local props  = self.properties
         local target = props.targetEntityId

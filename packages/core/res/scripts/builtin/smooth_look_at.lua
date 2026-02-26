@@ -27,7 +27,10 @@ local function lerpAngle(a, b, t)
     return a + diff * t
 end
 
----@type ScriptModule
+---@class SmoothLookAtState
+---@field lastAngle number?
+
+---@type ScriptBlueprint<SmoothLookAtProps, SmoothLookAtState>
 return {
     schema = {
         name = "Smooth Look At",
@@ -41,9 +44,12 @@ return {
         }
     },
 
+    ---@param self ScriptInstance<SmoothLookAtProps, SmoothLookAtState>
+    ---@param dt number
     update = function(self, dt)
         -- targetEntityId is guaranteed valid by schema.requires
-        local target = self.targetEntityId
+        local props  = self.properties or {}
+        local target = props.targetEntityId
 
         local props  = self.properties or {}
         local speed  = props.speed or 3

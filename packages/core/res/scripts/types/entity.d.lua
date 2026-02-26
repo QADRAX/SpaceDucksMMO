@@ -10,16 +10,17 @@
 -- `schema.properties`, allowing the engine to manage lifetimes and dependencies.
 -- ═══════════════════════════════════════════════════════════════════════
 
+---Proxy giving access to ECS components.
+---@class LuaDynamicComponents
+---@field [string] LuaComponentProxy
+
 ---An ECS entity exposed to Lua via the `__EntityMT` metatable.
 ---Scripts receive `self` as a DuckEntity in all lifecycle hooks.
 ---Any entity referenced via schema properties is also a DuckEntity.
----@class DuckEntity<P, S>
+---@class DuckEntity
 ---@field id string The unique UUID of this entity in the scene.
----@field state S Persistent per-slot state table. Survives across frames. Use it to store script variables.
----@field properties P Read-only access to the script slot's inspector properties.
 ---@field scripts LuaScriptsProxy Cross-script property access. Read/write other scripts' properties via `entity.scripts.scriptName.property`.
----@field [string] LuaComponentProxy Dynamic component access via dot notation (e.g., `entity.pointLight`, `entity.standardMaterial`).
-
+---@field components LuaDynamicComponents Dynamic component access via dot notation (e.g., `entity.components.pointLight`).
 local DuckEntity = {}
 
 -- ─── Lifecycle ──────────────────────────────────────────────────────

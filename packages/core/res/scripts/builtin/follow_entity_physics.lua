@@ -8,9 +8,7 @@
 ---@class FollowEntityPhysicsState
 ---@field flyModeEnabled boolean
 
----@class FollowEntityPhysics : DuckEntity<FollowEntityPhysicsProps, FollowEntityPhysicsState>
-
----@type ScriptModule<FollowEntityPhysics>
+---@type ScriptBlueprint<FollowEntityPhysicsProps, FollowEntityPhysicsState>
 return {
     schema = {
         name = "Follow Entity (Physics)",
@@ -23,6 +21,8 @@ return {
         }
     },
 
+    ---@param self ScriptInstance<FollowEntityPhysicsProps, FollowEntityPhysicsState>
+    ---@param dt number
     update = function(self, dt)
         -- targetEntityId is guaranteed valid by schema.required flag
         local props    = self.properties

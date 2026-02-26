@@ -150,18 +150,22 @@ export class ScriptSystem {
         const wrapEntity = (this.luaEngine.global as any).get("__WrapEntity");
         const wrapPrefab = (this.luaEngine.global as any).get("__WrapPrefab");
 
+        if (!(ctx as any).properties) {
+            (ctx as any).properties = {};
+        }
+
         for (const [key, propDef] of Object.entries(schema.properties)) {
             const type = (propDef as any).type;
             const val = slot.properties[key];
 
             if (type === 'entity' && wrapEntity) {
-                (ctx as any)[key] = (val && typeof val === 'string') ? wrapEntity(val) : null;
+                (ctx as any).properties[key] = (val && typeof val === 'string') ? wrapEntity(val) : null;
             } else if (type === 'prefab' && wrapPrefab) {
-                (ctx as any)[key] = (val && typeof val === 'string' && this.prefabRegistry?.has(val)) ? wrapPrefab(val) : null;
+                (ctx as any).properties[key] = (val && typeof val === 'string' && this.prefabRegistry?.has(val)) ? wrapPrefab(val) : null;
             } else {
-                // Hydrate simple types (number, string, boolean, vec3, enum) directly onto ctx
-                // This allows the self.propertyName pattern with IDE type warnings.
-                (ctx as any)[key] = val !== undefined ? val : null;
+                // Hydrate simple types (number, string, boolean, vec3, enum) directly onto properties
+                // This allows the `self.properties.key` pattern with perfect IDE type warnings.
+                (ctx as any).properties[key] = val !== undefined ? val : null;
             }
         }
 

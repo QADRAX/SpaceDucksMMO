@@ -21,9 +21,7 @@ end
 ---@field active         boolean
 ---@field lastGoal       Vec3?
 
----@class MoveToPoint : DuckEntity<MoveToPointProps, MoveToPointState>
-
----@type ScriptModule<MoveToPoint>
+---@type ScriptBlueprint<MoveToPointProps, MoveToPointState>
 return {
     schema = {
         name = "Move to Point (Eased)",
@@ -36,21 +34,25 @@ return {
         }
     },
 
+    ---@param self ScriptInstance<MoveToPointProps, MoveToPointState>
     init = function(self)
         self.state.startPos = self:getPosition()
         self.state.elapsed  = 0
-        self.state.started  = false
+        self.state.active   = false
     end,
 
     ---Restart the animation when the target point changes.
+    ---@param self ScriptInstance<MoveToPointProps, MoveToPointState>
     onPropertyChanged = function(self, key, value)
         if key == "targetPoint" then
             self.state.startPos = self:getPosition()
             self.state.elapsed  = 0
-            self.state.started  = false
+            self.state.active   = false
         end
     end,
 
+    ---@param self ScriptInstance<MoveToPointProps, MoveToPointState>
+    ---@param dt number
     update = function(self, dt)
         local props  = self.properties
         local target = props.targetPoint
@@ -74,11 +76,15 @@ return {
 
         -- Interpolate from starting position to target
         local sp     = self.state.startPos
-        local tp     = math.vec3(target[1], target[2], target[3])
+        if not sp then return end
+
+        local lg = math.vec3(target[1], target[2], target[3])
+        self.state.lastGoal = lg
+
         self:setPosition(math.vec3(
-            math.ext.lerp(sp.x, tp.x, t),
-            math.ext.lerp(sp.y, tp.y, t),
-            math.ext.lerp(sp.z, tp.z, t)
+            math.ext.lerp(sp.x, lg.x, t),
+            math.ext.lerp(sp.y, lg.y, t),
+            math.ext.lerp(sp.z, lg.z, t)
         ))
     end
 }

@@ -42,22 +42,28 @@
 
 
 
+---@class ScriptInstance<P, S> : DuckEntity
+---@field properties P Read-only access to the script slot's inspector properties.
+---@field state S Persistent per-slot state table. Survives across frames. Use it to store script variables.
+
 ---The table returned by every script file. Contains optional schema,
 ---lifecycle hooks, and the script's behavior logic.
----@generic T : DuckEntity<any, any>
----@class ScriptModule
+---@generic P, S
+---@class ScriptBlueprint<P, S>
 ---@field schema? SchemaDefinition Declarative metadata and property definitions.
----@field init? fun(self: T) Called once when the scene starts playing.
----@field onEnable? fun(self: T) Called when the slot is enabled.
----@field earlyUpdate? fun(self: T, dt: number) Called every frame, before physics. `dt` is in milliseconds.
----@field update? fun(self: T, dt: number) Called every frame, after physics. `dt` is in milliseconds.
----@field lateUpdate? fun(self: T, dt: number) Called every frame, after event flush. `dt` is in milliseconds.
----@field onCollisionEnter? fun(self: T, other: string) Called when a collision begins. `other` is the colliding entity ID.
----@field onCollisionExit? fun(self: T, other: string) Called when a collision ends.
----@field onPropertyChanged? fun(self: T, key: string, value: any) Called when a property changes from the inspector or cross-script write.
----@field onDisable? fun(self: T) Called when the slot is disabled.
----@field onDestroy? fun(self: T) Called when the entity or slot is destroyed.
----@field onDrawGizmos? fun(self: T, dt: number) Called every frame in the Gizmo phase. Use the `gizmos` global here.
+---@field init? fun(self: ScriptInstance<P, S>) Called once when the scene starts playing.
+---@field onEnable? fun(self: ScriptInstance<P, S>) Called when the slot is enabled.
+---@field earlyUpdate? fun(self: ScriptInstance<P, S>, dt: number) Called every frame, before physics. `dt` is in milliseconds.
+---@field update? fun(self: ScriptInstance<P, S>, dt: number) Called every frame, after physics. `dt` is in milliseconds.
+---@field lateUpdate? fun(self: ScriptInstance<P, S>, dt: number) Called every frame, after event flush. `dt` is in milliseconds.
+---@field onCollisionEnter? fun(self: ScriptInstance<P, S>, other: string) Called when a collision begins. `other` is the colliding entity ID.
+---@field onCollisionExit? fun(self: ScriptInstance<P, S>, other: string) Called when a collision ends.
+---@field onPropertyChanged? fun(self: ScriptInstance<P, S>, key: string, value: any) Called when a property changes from the inspector or cross-script write.
+---@field onDisable? fun(self: ScriptInstance<P, S>) Called when the slot is disabled.
+---@field onDestroy? fun(self: ScriptInstance<P, S>) Called when the entity or slot is destroyed.
+---@field onDrawGizmos? fun(self: ScriptInstance<P, S>, dt: number) Called every frame in the Gizmo phase. Use the `gizmos` global here.
+
+---@alias ScriptModule<P, S> ScriptBlueprint<P, S>
 
 ---@class SchemaDefinition
 ---@field name? string Human-readable display name for the script.
@@ -141,6 +147,30 @@
 ---| "xz" # Horizontal orbit (default, top-down circle).
 ---| "xy" # Vertical orbit in the XY plane.
 ---| "yz" # Vertical orbit in the YZ plane.
+
+-- ───────────────────────────────────────────────────────────────────────
+-- Resource IDs (Web Core Parity)
+-- ───────────────────────────────────────────────────────────────────────
+
+---@alias ResourceId string
+
+-- Component Materials
+---@alias BasicMaterialId ResourceId
+---@alias LambertMaterialId ResourceId
+---@alias PhongMaterialId ResourceId
+---@alias StandardMaterialId ResourceId
+
+-- Shader Materials
+---@alias BasicShaderMaterialId ResourceId
+---@alias StandardShaderMaterialId ResourceId
+---@alias PhysicalShaderMaterialId ResourceId
+
+-- Meshes and Worlds
+---@alias CustomMeshId ResourceId
+---@alias FullMeshId ResourceId
+---@alias SkyboxId ResourceId
+---@alias PrefabId ResourceId
+---@alias SceneId ResourceId
 
 -- ───────────────────────────────────────────────────────────────────────
 -- Prefab

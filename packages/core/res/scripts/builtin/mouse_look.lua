@@ -8,9 +8,7 @@
 ---@field yaw          number
 ---@field pitch        number
 
----@class MouseLook : DuckEntity<MouseLookProps, MouseLookState>
-
----@type ScriptModule<MouseLook>
+---@type ScriptBlueprint<MouseLookProps, MouseLookState>
 return {
     schema = {
         name = "Mouse Look",
@@ -22,6 +20,8 @@ return {
         }
     },
 
+    ---@param self ScriptInstance<MouseLookProps, MouseLookState>
+    ---@param dt number
     update = function(self, dt)
         -- Request pointer lock so the cursor is hidden and deltas are infinite
         input.requestPointerLock()

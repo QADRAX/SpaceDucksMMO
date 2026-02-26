@@ -7,9 +7,7 @@
 ---@class FirstPersonMoveState
 ---@field flyModeEnabled boolean
 
----@class FirstPersonMove : DuckEntity<FirstPersonMoveProps, FirstPersonMoveState>
-
----@type ScriptModule<FirstPersonMove>
+---@type ScriptBlueprint<FirstPersonMoveProps, FirstPersonMoveState>
 return {
     schema = {
         name = "First Person Move (Kinematic)",
@@ -21,32 +19,30 @@ return {
         }
     },
 
+    ---@param self ScriptInstance<FirstPersonMoveProps, FirstPersonMoveState>
+    ---@param dt number
     update = function(self, dt)
         -- 1. Read input
-        local w     = input.isKeyPressed("w")
-        local s     = input.isKeyPressed("s")
-        local a     = input.isKeyPressed("a")
-        local d     = input.isKeyPressed("d")
-        local up    = input.isKeyPressed("space")
-        local down  = input.isKeyPressed("control")
-        local shift = input.isKeyPressed("shift")
+        local w       = input.isKeyPressed("w")
+        local s       = input.isKeyPressed("s")
+        local a       = input.isKeyPressed("a")
+        local d       = input.isKeyPressed("d")
+        local up      = input.isKeyPressed("space")
+        local down    = input.isKeyPressed("leftcontrol") or input.isKeyPressed("c")
+        local shift   = input.isKeyPressed("leftshift")
 
-        -- 2. Build local-space movement vector
-        local mv    = math.vec3.zero()
-        if w then mv.z = mv.z + 1 end
-        if s then mv.z = mv.z - 1 end
-        if a then mv.x = mv.x - 1 end
-        if d then mv.x = mv.x + 1 end
+        local flyMode = self.properties.flyMode
 
-        local props            = self.properties
-        local moveSpeed        = props.moveSpeed
-        local sprintMultiplier = props.sprintMultiplier
-        local flyMode          = props.flyMode
-
+        -- 2. Build local movement vector
+        local mv      = math.vec3.zero()
+        if w then mv.z = -1 end
+        if s then mv.z = 1 end
+        if a then mv.x = -1 end
+        if d then mv.x = 1 end
 
         if flyMode then
-            if up then mv.y = mv.y + 1 end
-            if down then mv.y = mv.y - 1 end
+            if up then mv.y = 1 end
+            if down then mv.y = -1 end
         end
 
         -- 3. Normalize to prevent faster diagonal movement
@@ -79,7 +75,7 @@ return {
 
         -- 5. Apply movement
         local secs  = dt / 1000
-        local speed = moveSpeed * (shift and sprintMultiplier or 1)
+        local speed = self.properties.moveSpeed * (shift and self.properties.sprintMultiplier or 1)
         local cur   = self:getPosition()
 
         -- Look at how clean this is compared to manually adding x, y, z!

@@ -6,9 +6,7 @@
 ---@class OrbitCameraState
 ---@field angle               number
 
----@class OrbitCamera : DuckEntity<OrbitCameraProps, OrbitCameraState>
-
----@type ScriptModule<OrbitCamera>
+---@type ScriptBlueprint<OrbitCameraProps, OrbitCameraState>
 return {
     schema = {
         name = "Orbit Camera",
@@ -23,6 +21,8 @@ return {
         }
     },
 
+    ---@param self ScriptInstance<OrbitCameraProps, OrbitCameraState>
+    ---@param dt number
     update = function(self, dt)
         local props               = self.properties
         local target              = props.targetEntityId

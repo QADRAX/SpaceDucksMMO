@@ -3,9 +3,7 @@
 -- Continuously rotates the entity to face a fixed world-space coordinate.
 -- =======================================================================
 
----@class LookAtPoint : DuckEntity<LookAtPointProps, any>
-
----@type ScriptModule<LookAtPoint>
+---@type ScriptBlueprint<LookAtPointProps, any>
 return {
     schema = {
         name = "Look at Point",
@@ -15,6 +13,8 @@ return {
         }
     },
 
+    ---@param self ScriptInstance<LookAtPointProps, any>
+    ---@param dt number
     update = function(self, dt)
         local props = self.properties
         local targetPoint = props.targetPoint
@@ -24,4 +24,3 @@ return {
         self:lookAt(math.vec3(targetPoint[1], targetPoint[2], targetPoint[3]))
     end
 }
-

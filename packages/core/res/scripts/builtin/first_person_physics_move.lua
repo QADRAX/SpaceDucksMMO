@@ -18,9 +18,7 @@ end
 ---@class FirstPersonPhysicsMoveState
 ---@field flyModeEnabled boolean
 
----@class FirstPersonPhysicsMove : DuckEntity<FirstPersonPhysicsMoveProps, FirstPersonPhysicsMoveState>
-
----@type ScriptModule<FirstPersonPhysicsMove>
+---@type ScriptBlueprint<FirstPersonPhysicsMoveProps, FirstPersonPhysicsMoveState>
 return {
     schema = {
         name = "First Person Physics Move",
@@ -34,72 +32,83 @@ return {
         }
     },
 
+    ---@param self ScriptInstance<FirstPersonPhysicsMoveProps, FirstPersonPhysicsMoveState>
+    ---@param dt number
     update = function(self, dt)
         -- 1. Read input
-        local w     = input.isKeyPressed("w")
-        local s     = input.isKeyPressed("s")
-        local a     = input.isKeyPressed("a")
-        local d     = input.isKeyPressed("d")
-        local up    = input.isKeyPressed("space")
-        local down  = input.isKeyPressed("control")
-        local shift = input.isKeyPressed("shift")
+        local w                 = input.isKeyPressed("w")
+        local s                 = input.isKeyPressed("s")
+        local a                 = input.isKeyPressed("a")
+        local d                 = input.isKeyPressed("d")
+        local up                = input.isKeyPressed("space")
+        local down              = input.isKeyPressed("leftcontrol") or input.isKeyPressed("c")
+        local shift             = input.isKeyPressed("leftshift")
 
-        local mv    = math.vec3.zero()
-        if w then mv.z = mv.z + 1 end
-        if s then mv.z = mv.z - 1 end
-        if a then mv.x = mv.x - 1 end
-        if d then mv.x = mv.x + 1 end
+        local flyMode           = self.properties.flyMode
+        local moveSpeed         = self.properties.moveSpeed
+        local sprintMultiplier  = self.properties.sprintMultiplier
+        local maxAcceleration   = self.properties.maxAcceleration
+        local brakeDeceleration = self.properties.brakeDeceleration
 
-        local props             = self.properties
-        local moveSpeed         = props.moveSpeed
-        local sprintMultiplier  = props.sprintMultiplier
-        local maxAcceleration   = math.max(0, props.maxAcceleration)
-        local brakeDeceleration = math.max(0, props.brakeDeceleration)
-        local flyMode           = props.flyMode
-
+        -- 2. Build local-space movement vector
+        local mv                = math.vec3.zero()
+        if w then mv.z = -1 end
+        if s then mv.z = 1 end
+        if a then mv.x = -1 end
+        if d then mv.x = 1 end
 
         if flyMode then
-            if up then mv.y = mv.y + 1 end
-            if down then mv.y = mv.y - 1 end
+            if up then mv.y = 1 end
+            if down then mv.y = -1 end
         end
 
-        local secs = math.max(0, dt) / 1000
-        if secs <= 0 then return end
-
-        local speed   = moveSpeed * (shift and sprintMultiplier or 1)
+        -- 3. Prepare vectors
         local forward = self:getForward()
         local right   = self:getRight()
 
-        -- Flatten forward for grounded movement
         if not flyMode then
             forward.y = 0
             if forward.x == 0 and forward.z == 0 then forward.z = 1 end
             forward = forward:normalize()
+
+            right.y = 0
+            right = right:normalize()
         end
 
-        -- 2. Transform local input to world-space direction
-        local moveWorld = (forward * mv.z) + (right * mv.x)
-        if flyMode then moveWorld.y = moveWorld.y + mv.y end
+        local worldMove = (forward * mv.z) + (right * mv.x)
+        if flyMode then
+            worldMove.y = worldMove.y + mv.y
+        end
 
-        local mlen   = moveWorld:length()
-        local curVel = self:getLinearVelocity()
+        if worldMove:length() > 0 then
+            worldMove = worldMove:normalize()
+        end
 
-        -- 3. Accelerate towards desired velocity
-        if mlen > 1e-6 then
-            moveWorld = moveWorld:normalize()
+        -- 4. Calculate desired vs current velocity
+        local speed     = moveSpeed * (shift and sprintMultiplier or 1)
+        local targetVel = worldMove * speed
+        local curVel    = self:getLinearVelocity()
 
-            local desiredVel = moveWorld * speed
-            if not flyMode then desiredVel.y = curVel.y end
+        if not flyMode then
+            targetVel.y = curVel.y -- Preserve gravity
+        end
 
-            local velErr = desiredVel - curVel
+        -- 5. Accelerate / Brake using impulses
+        local secs = dt / 1000
+
+        if worldMove:length() > 0 or (flyMode and mv.y ~= 0) then
+            -- Accelerating
+            local velErr = targetVel - curVel
             if not flyMode then velErr.y = 0 end
 
             local deltaV = clampMagnitude(velErr, maxAcceleration * secs)
-            self:applyImpulse(deltaV)
+            if deltaV.x == deltaV.x and deltaV.y == deltaV.y and deltaV.z == deltaV.z then
+                self:applyImpulse(deltaV)
+            end
             return
         end
 
-        -- 4. Brake: no input, slow down
+        -- 6. Brake: no input, slow down
         local brakeTarget = curVel * -1
         if not flyMode then brakeTarget.y = 0 end
         local brakeDeltaV = clampMagnitude(brakeTarget, brakeDeceleration * secs)

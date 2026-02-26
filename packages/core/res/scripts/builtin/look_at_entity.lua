@@ -4,9 +4,7 @@
 -- Only affects rotation — does NOT move the entity.
 -- =======================================================================
 
----@class LookAtEntity : DuckEntity<LookAtEntityProps, any>
-
----@type ScriptModule<LookAtEntity>
+---@type ScriptBlueprint<LookAtEntityProps, any>
 return {
     schema = {
         name = "Look at Entity",
@@ -18,6 +16,8 @@ return {
         }
     },
 
+    ---@param self ScriptInstance<LookAtEntityProps, any>
+    ---@param dt number
     update = function(self, dt)
         -- targetEntityId is guaranteed valid by schema.requires
         local props  = self.properties
