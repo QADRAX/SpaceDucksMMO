@@ -36,3 +36,19 @@ export type { GameSettings } from './domain/settings/GameSettings';
 export { default as TextureResolverService } from './application/TextureResolverService';
 export { default as LoadingTracker } from './domain/runtime/LoadingTracker';
 export { default as WebCoreTextureCatalogService } from './infrastructure/assets/WebCoreTextureCatalogService';
+
+// ── Editor Plugin contracts ─────────────────────────────────────────────────
+export type {
+	EditorPluginConfigValue,
+	EditorPluginConfigField,
+	EditorPluginCategory,
+	EditorPluginSource,
+	EditorPluginMeta,
+	EditorPluginContext,
+	IEditorPlugin,
+	IEditorPluginRegistry,
+	IEditorPluginLoader,
+} from './domain/editor/IEditorPlugin';
+
+export { EditorScripts } from './domain/scripting/generated/ScriptAssets';
+export { LuaSandbox } from './domain/scripting/LuaSandbox';

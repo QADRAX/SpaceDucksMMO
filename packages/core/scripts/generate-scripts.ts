@@ -3,6 +3,7 @@ import * as path from 'path';
 
 const builtinDir = path.join(__dirname, '../res/scripts/builtin');
 const systemDir = path.join(__dirname, '../res/scripts/system');
+const editorDir = path.join(__dirname, '../res/scripts/editor');
 const targetDir = path.join(__dirname, '../src/domain/scripting/generated');
 const targetFile = path.join(targetDir, 'ScriptAssets.ts');
 
@@ -31,7 +32,17 @@ for (const file of systemFiles) {
     const escaped = raw.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
     output += `    "${file}": \`${escaped}\`,\n`;
 }
+output += `};\n\n`;
+
+// 3. Generate EditorScripts
+const editorFiles = fs.existsSync(editorDir) ? fs.readdirSync(editorDir).filter(f => f.endsWith('.lua')) : [];
+output += `export const EditorScripts: Record<string, string> = {\n`;
+for (const file of editorFiles) {
+    const raw = fs.readFileSync(path.join(editorDir, file), 'utf-8');
+    const escaped = raw.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+    output += `    "editor://${file}": \`${escaped}\`,\n`;
+}
 output += `};\n`;
 
 fs.writeFileSync(targetFile, output);
-console.log(`Generated ScriptAssets.ts with ${builtinFiles.length} built-in and ${systemFiles.length} system scripts.`);
+console.log(`Generated ScriptAssets.ts with ${builtinFiles.length} built-in, ${systemFiles.length} system, and ${editorFiles.length} editor scripts.`);
