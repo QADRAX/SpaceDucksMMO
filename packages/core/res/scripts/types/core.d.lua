@@ -111,3 +111,18 @@
 ---| "xz" # Horizontal orbit (default, top-down circle).
 ---| "xy" # Vertical orbit in the XY plane.
 ---| "yz" # Vertical orbit in the YZ plane.
+
+-- ───────────────────────────────────────────────────────────────────────
+-- Prefab
+-- ───────────────────────────────────────────────────────────────────────
+
+---A template for an entity or entity tree.
+---Hydrated from the schema "prefab" property.
+---@class LuaPrefab
+---@field key string The resource key of this prefab.
+local LuaPrefab = {}
+
+---Instantiates this prefab in the scene.
+---@param overrides? { position?: Vec3|number[], rotation?: Vec3|number[], scale?: Vec3|number[] } Optional overrides.
+---@return LuaEntity? root The primary root entity of the new instance. Returns nil if failed.
+function LuaPrefab:instantiate(overrides) end

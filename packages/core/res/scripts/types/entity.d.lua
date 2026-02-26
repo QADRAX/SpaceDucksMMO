@@ -12,6 +12,7 @@
 ---@field id string The unique UUID of this entity in the scene.
 ---@field state table Persistent per-slot state table. Survives across frames. Use it to store script variables.
 ---@field properties table Read-only access to the script slot's inspector properties. Values come from the editor or defaults.
+---@field scripts LuaScriptsProxy Cross-script property access. Read/write other scripts' properties via `entity.scripts.scriptName.property`.
 ---@field [string] LuaComponentProxy Dynamic component access via dot notation (e.g., `entity.pointLight`, `entity.standardMaterial`).
 local LuaEntity = {}
 
@@ -133,6 +134,44 @@ function LuaEntity:applyGeometry(key, overrides) end
 ---@param key string The resource key.
 ---@param overrides? table Optional property overrides.
 function LuaEntity:applyResource(key, overrides) end
+
+-- ─── Cross-Script Property Access ───────────────────────────────────
+
+---Proxy returned when accessing `entity.scripts.scriptName`.
+---Reads and writes are forwarded to the target script slot's properties.
+---Writes are detected by `checkPropertyChanges()` and trigger `onPropertyChanged`.
+---
+---Example:
+---```lua
+---local other = scene.findEntityByName("Player")
+---local speed = other.scripts.follow_entity.speed  -- read
+---other.scripts.follow_entity.speed = 20           -- write (triggers onPropertyChanged)
+---```
+---@class LuaScriptSlotProxy
+---@field [string] any Read/write access to the script slot's properties.
+
+---Proxy returned by `entity.scripts`.
+---Access a specific script slot by its script ID (filename without extension).
+---
+---Example:
+---```lua
+---local scripts = entity.scripts
+---local followProps = scripts.follow_entity  -- returns LuaScriptSlotProxy
+---```
+---@class LuaScriptsProxy
+---@field first_person_move FirstPersonMoveProps
+---@field first_person_physics_move FirstPersonPhysicsMoveProps
+---@field follow_entity FollowEntityProps
+---@field follow_entity_physics FollowEntityPhysicsProps
+---@field look_at_entity LookAtEntityProps
+---@field look_at_point LookAtPointProps
+---@field mouse_look MouseLookProps
+---@field move_to_point MoveToPointProps
+---@field orbit_camera OrbitCameraProps
+---@field smooth_follow SmoothFollowProps
+---@field smooth_look_at SmoothLookAtProps
+---@field [string] LuaScriptSlotProxy Fallback for custom user scripts.
+local LuaScriptsProxy = {}
 
 -- ─── Component Proxy ────────────────────────────────────────────────
 

@@ -93,6 +93,35 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
             const finalData = { ...res.data, ...overrides };
             const comp = ctx.componentFactory.create(res.kind as ComponentType, finalData);
             ent.addComponent(comp);
+        },
+
+        // ── Cross-script property access (Phase 12) ────────────
+        getScriptSlotNames: (entityId: string): string[] => {
+            if (!ctx.getScriptSlots) return [];
+            return ctx.getScriptSlots(entityId).map(s => s.scriptId);
+        },
+        getScriptSlotProperty: (entityId: string, scriptId: string, key: string): unknown => {
+            if (!ctx.getSlotProperty) return null;
+            return ctx.getSlotProperty(entityId, scriptId, key);
+        },
+        setScriptSlotProperty: (entityId: string, scriptId: string, key: string, value: unknown): void => {
+            if (!ctx.setSlotProperty) return;
+            ctx.setSlotProperty(entityId, scriptId, key, value);
+        },
+
+        // ── Prefab support (Phase 13) ──────────────────────────
+        instantiatePrefab: (key: string, overrides?: any): any => {
+            if (!ctx.prefabRegistry) {
+                console.warn("[SceneBridge] No PrefabRegistry provided to instantiatePrefab");
+                return null;
+            }
+
+            const entities = ctx.prefabRegistry.instantiate(key, overrides);
+            if (entities.length === 0) return null;
+
+            // Return the first root entity wrapped for Lua
+            const wrap = (engine.global as any).get("__WrapEntity");
+            return wrap ? wrap(entities[0].id) : null;
         }
     };
     engine.global.set("scene", sceneApi);

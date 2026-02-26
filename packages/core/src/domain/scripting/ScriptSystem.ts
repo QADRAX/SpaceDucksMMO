@@ -15,6 +15,7 @@ import {
 } from "./bridge";
 import { BuiltInScripts } from "./BuiltInScripts";
 import type { AssetResolver } from "./bridge/AssetResolver";
+import type { IPrefabRegistry } from "../ports/IPrefabRegistry";
 
 export class ScriptSystem {
     public readonly eventBus = new SceneEventBus();
@@ -44,7 +45,8 @@ export class ScriptSystem {
     constructor(
         private componentFactory: IEcsComponentFactory,
         private assetResolver?: AssetResolver,
-        private collisionEvents?: CollisionEventsHub
+        private collisionEvents?: CollisionEventsHub,
+        private prefabRegistry?: IPrefabRegistry
     ) { }
 
     public registerEntity(entity: Entity): void {
@@ -156,16 +158,22 @@ export class ScriptSystem {
         const schema = (instance as any).schema;
         if (!schema || !schema.properties) return;
 
-        const wrap = (this.luaEngine.global as any).get("__WrapEntity");
-        if (!wrap) return;
+        const wrapEntity = (this.luaEngine.global as any).get("__WrapEntity");
+        const wrapPrefab = (this.luaEngine.global as any).get("__WrapPrefab");
 
         for (const [key, propDef] of Object.entries(schema.properties)) {
-            if ((propDef as any).type === 'entity') {
-                const val = slot.properties[key];
+            const type = (propDef as any).type;
+            const val = slot.properties[key];
+
+            if (type === 'entity' && wrapEntity) {
                 if (val && typeof val === 'string') {
-                    // Inject directly onto the Lua 'self' object (ctx)
-                    const entityObj = wrap(val);
-                    (ctx as any)[key] = entityObj;
+                    (ctx as any)[key] = wrapEntity(val);
+                } else {
+                    (ctx as any)[key] = null;
+                }
+            } else if (type === 'prefab' && wrapPrefab) {
+                if (val && typeof val === 'string' && this.prefabRegistry?.has(val)) {
+                    (ctx as any)[key] = wrapPrefab(val);
                 } else {
                     (ctx as any)[key] = null;
                 }
@@ -242,10 +250,14 @@ export class ScriptSystem {
                     // Find which specific keys changed
                     for (const key of Object.keys(slot.properties)) {
                         if (slot.properties[key] !== lastProps[key]) {
-                            // Update living ref if it's an entity type
+                            // Update living ref if it's an entity or prefab type
                             const propDef = schema?.properties?.[key];
+                            const val = slot.properties[key];
                             if (propDef?.type === 'entity' && wrap) {
-                                (ctx as any)[key] = slot.properties[key] ? wrap(slot.properties[key]) : null;
+                                (ctx as any)[key] = val ? wrap(val) : null;
+                            } else if (propDef?.type === 'prefab') {
+                                const wrapPrefab = (this.luaEngine.global as any).get("__WrapPrefab");
+                                (ctx as any)[key] = (val && wrapPrefab) ? wrapPrefab(val) : null;
                             }
 
                             if (instance.onPropertyChanged) {
@@ -335,7 +347,46 @@ export class ScriptSystem {
             getAllEntities,
             getEventBus,
             componentFactory: this.componentFactory,
-            assetResolver: this.assetResolver
+            assetResolver: this.assetResolver,
+
+            // Cross-script property access (Phase 12)
+            getScriptSlots: (entityId: string) => {
+                const ent = allEntities.get(entityId);
+                if (!ent) return [];
+                const sc = ent.getComponent<ScriptComponent>("script");
+                if (!sc) return [];
+                return sc.getSlots().map(s => ({ scriptId: s.scriptId, slotId: s.slotId }));
+            },
+            getSlotProperty: (entityId: string, scriptId: string, key: string): unknown => {
+                const ent = allEntities.get(entityId);
+                if (!ent) return null;
+                const sc = ent.getComponent<ScriptComponent>("script");
+                if (!sc) return null;
+                const slot = sc.getSlots().find(s => s.scriptId === scriptId);
+                if (!slot) return null;
+
+                // Try to get hydrated value from context if available
+                const ctx = this.scriptContexts.get(slot.slotId);
+                if (ctx && (ctx as any)[key] !== undefined) {
+                    return (ctx as any)[key];
+                }
+
+                return slot.properties[key] ?? null;
+            },
+            setSlotProperty: (entityId: string, scriptId: string, key: string, value: unknown) => {
+                const ent = allEntities.get(entityId);
+                if (!ent) return;
+                const sc = ent.getComponent<ScriptComponent>("script");
+                if (!sc) return;
+                const slot = sc.getSlots().find(s => s.scriptId === scriptId);
+                if (!slot) return;
+                slot.properties[key] = value;
+                // The next checkPropertyChanges() cycle will detect the change,
+                // re-hydrate entity refs, and fire onPropertyChanged on the target slot.
+            },
+
+            // Prefab support (Phase 13)
+            prefabRegistry: this.prefabRegistry
         };
 
         registerTransformBridge(this.luaEngine, bridgeCtx);

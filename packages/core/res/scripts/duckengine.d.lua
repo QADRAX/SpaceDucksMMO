@@ -12,6 +12,7 @@
 --   types/physics.d.lua — PhysicsAPI (raycast, RaycastHit)
 --   types/time.d.lua    — TimeAPI (dt, now)
 --   types/math.d.lua    — MathExt (lerp, clamp, EasingName enum, 16 easing curves)
+--   types/builtin_scripts.d.lua — Strong typing for built-in script properties
 --
 -- The Lua Language Server picks up all .d.lua files in the workspace
 -- automatically. No manual imports needed.

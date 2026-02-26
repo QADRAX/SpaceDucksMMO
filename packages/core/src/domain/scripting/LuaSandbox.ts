@@ -59,8 +59,56 @@ export class LuaSandbox {
                 return c
             end
 
+            -- Cross-script property proxy: entity.scripts.scriptName.propKey
+            __ScriptSlotMT = {
+                __index = function(t, k)
+                    return scene.getScriptSlotProperty(t.entityId, t.scriptId, k)
+                end,
+                __newindex = function(t, k, v)
+                    scene.setScriptSlotProperty(t.entityId, t.scriptId, k, v)
+                end
+            }
+
+            function __WrapScriptSlot(entityId, scriptId)
+                local s = { entityId = entityId, scriptId = scriptId }
+                setmetatable(s, __ScriptSlotMT)
+                return s
+            end
+
+            __ScriptsProxyMT = {
+                __index = function(t, scriptId)
+                    return __WrapScriptSlot(t.entityId, scriptId)
+                end
+            }
+
+            function __WrapScriptsProxy(entityId)
+                local p = { entityId = entityId }
+                setmetatable(p, __ScriptsProxyMT)
+                return p
+            end
+
+            -- Prefabs: prefab:instantiate(overrides)
+            __PrefabMT = {
+                __index = {
+                    instantiate = function(t, overrides)
+                        return scene.instantiatePrefab(t.key, overrides)
+                    end
+                }
+            }
+
+            function __WrapPrefab(key)
+                local p = { key = key }
+                setmetatable(p, __PrefabMT)
+                return p
+            end
+
             __EntityMT = {
                 __index = function(t, k)
+                    -- 0. Cross-script access: entity.scripts
+                    if k == "scripts" then
+                        return __WrapScriptsProxy(t.id)
+                    end
+
                     -- 1. Helper methods
                     if k == "isValid" then
                         return function(self) return scene.exists(self.id) end
@@ -77,8 +125,6 @@ export class LuaSandbox {
                         end
                     end
                     if k == "applyGeometry" then
-                        -- We use "boxGeometry" or similar as a generic kin, but asset resolver defines the specific kind.
-                        -- For now let's just use it as a generic resource but we can expand filter logic.
                         return function(self, key, overrides) 
                             return scene.applyResource(self.id, key, nil, overrides) 
                         end
@@ -99,9 +145,6 @@ export class LuaSandbox {
                     end
 
                     -- 3. Dynamic Component Access (UCA)
-                    -- If we reach here, we check if the entity has the component
-                    -- Note: This is slightly expensive to do in every frame if done carelessly in Lua,
-                    -- but for scripting it's the "solid" way.
                     return __WrapComponent(t.id, k)
                 end
             }
