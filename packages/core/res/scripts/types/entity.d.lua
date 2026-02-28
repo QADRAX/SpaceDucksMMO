@@ -10,9 +10,33 @@
 -- `schema.properties`, allowing the engine to manage lifetimes and dependencies.
 -- ═══════════════════════════════════════════════════════════════════════
 
----Proxy giving access to ECS components.
----@class LuaDynamicComponents
----@field [string] LuaComponentProxy
+---@class TransformComponent
+---@field position Vec3 Local position `{x, y, z}`.
+---@field rotation Vec3 Local euler rotation `{x, y, z}` (in radians).
+---@field scale Vec3 Local scale `{x, y, z}`.
+
+---@class RigidBodyComponent
+---@field linearVelocity Vec3
+---@field angularVelocity Vec3
+---@field mass number
+---@field isKinematic boolean
+---@field useGravity boolean
+
+---@class MeshComponent
+---@field color string? Hex color string for flat colored meshes.
+
+---@class PointLightComponent
+---@field color string Hex color string.
+---@field intensity number
+---@field distance number
+---@field decay number
+
+---@class NameComponent
+---@field value string The Display Name of the entity.
+
+---@class ScriptSlotComponentProxy
+---@field scriptId string
+---@field properties table
 
 ---An ECS entity exposed to Lua via the `__EntityMT` metatable.
 ---Scripts receive `self` as a DuckEntity in all lifecycle hooks.
@@ -20,7 +44,12 @@
 ---@class DuckEntity
 ---@field id string The unique UUID of this entity in the scene.
 ---@field scripts LuaScriptsProxy Cross-script property access. Read/write other scripts' properties via `entity.scripts.scriptName.property`.
----@field components LuaDynamicComponents Dynamic component access via dot notation (e.g., `entity.components.pointLight`).
+---
+---@field transform TransformComponent Base Transform properties. Built-in, every entity has one.
+---@field rigidBody RigidBodyComponent Dynamic physics component data.
+---@field mesh MeshComponent Geometry rendering parameters.
+---@field pointLight PointLightComponent Omnidirectional lighting parameters.
+---@field name NameComponent Editor/Scene display name.
 local DuckEntity = {}
 
 -- ─── Lifecycle ──────────────────────────────────────────────────────
@@ -109,6 +138,17 @@ function DuckEntity:addComponent(type, params) end
 ---@param type ComponentType The component type to remove.
 ---@return boolean success `true` if the component existed and was removed.
 function DuckEntity:removeComponent(type) end
+
+---Checks if this entity has the given component type attached to it.
+---@param type ComponentType
+---@return boolean
+function DuckEntity:hasComponent(type) end
+
+---Gets a proxy to access/modify a component if it exists on this entity.
+---Returns `nil` if the component is not currently attached.
+---@param type ComponentType
+---@return any component Proxy to the component, or `nil` if missing.
+function DuckEntity:getComponent(type) end
 
 -- ─── Resources ──────────────────────────────────────────────────────
 

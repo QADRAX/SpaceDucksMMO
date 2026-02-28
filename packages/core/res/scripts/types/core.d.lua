@@ -76,6 +76,7 @@
 ---@field required? boolean If true, the engine ensures this is non-nil for hooks (managed by ScriptSystem).
 ---@field default? any Default value when the property is unset.
 ---@field options? string[] Only for "enum" type. List of valid string options.
+---@field componentType? ComponentType Only for "component" type. The ECS component type this property references.
 ---@field description? string Tooltip text shown in the editor inspector.
 
 
@@ -85,16 +86,17 @@
 
 ---The allowed types for script schema properties.
 ---@alias PropertyType
----| "number"   # A numeric value (rendered as slider/input in inspector).
----| "string"   # A text value.
----| "boolean"  # A true/false toggle.
----| "vec3"     # A 3-component vector { x, y, z } (rendered as 3 inputs).
----| "entity"   # An entity reference (rendered as entity picker). Auto-hydrated to DuckEntity.
----| "material" # A material resource reference (rendered as material picker).
----| "mesh"     # A mesh resource reference (rendered as mesh picker).
----| "skybox"   # A skybox resource reference (rendered as skybox picker).
----| "prefab"   # A prefab resource reference. Hydrated to LuaPrefab with :instantiate().
----| "enum"     # A dropdown list of string options (defined in `options`).
+---| "number"    # A numeric value (rendered as slider/input in inspector).
+---| "string"    # A text value.
+---| "boolean"   # A true/false toggle.
+---| "vec3"      # A 3-component vector { x, y, z } (rendered as 3 inputs).
+---| "entity"    # An entity reference (rendered as entity picker). Auto-hydrated to DuckEntity.
+---| "component" # Target entity's Component reference. Auto-hydrated to proxy. Needs `componentType`.
+---| "material"  # A material resource reference (rendered as material picker).
+---| "mesh"      # A mesh resource reference (rendered as mesh picker).
+---| "skybox"    # A skybox resource reference (rendered as skybox picker).
+---| "prefab"    # A prefab resource reference. Hydrated to LuaPrefab with :instantiate().
+---| "enum"      # A dropdown list of string options (defined in `options`).
 
 -- ───────────────────────────────────────────────────────────────────────
 -- Component Type Enum
@@ -102,6 +104,8 @@
 
 ---All valid ECS component types. Used with `entity:addComponent(type)` and `entity:removeComponent(type)`.
 ---@alias ComponentType
+---| "transform"               # Base 3D transform.
+---| "audioSource"             # Audio playback component.
 ---| "name"                    # Display name component.
 ---| "boxGeometry"             # Box primitive geometry.
 ---| "sphereGeometry"          # Sphere primitive geometry.

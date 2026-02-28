@@ -57,6 +57,9 @@ function scene.getComponentProperty(entityId, type, key) end
 function scene.setComponentProperty(entityId, type, key, value) end
 
 ---@private
+function scene.hasComponent(entityId, type) end
+
+---@private
 function scene.getScriptSlotProperty(entityId, scriptId, key) end
 
 ---@private

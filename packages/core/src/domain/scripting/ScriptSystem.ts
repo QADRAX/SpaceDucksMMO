@@ -149,6 +149,7 @@ export class ScriptSystem {
 
         const wrapEntity = (this.luaEngine.global as any).get("__WrapEntity");
         const wrapPrefab = (this.luaEngine.global as any).get("__WrapPrefab");
+        const wrapComponent = (this.luaEngine.global as any).get("__WrapComponent");
 
         if (!(ctx as any).properties) {
             (ctx as any).properties = {};
@@ -160,6 +161,9 @@ export class ScriptSystem {
 
             if (type === 'entity' && wrapEntity) {
                 (ctx as any).properties[key] = (val && typeof val === 'string') ? wrapEntity(val) : null;
+            } else if (type === 'component' && wrapComponent) {
+                const compType = (propDef as any).componentType;
+                (ctx as any).properties[key] = (val && typeof val === 'string' && compType) ? wrapComponent(val, compType) : null;
             } else if (type === 'prefab' && wrapPrefab) {
                 (ctx as any).properties[key] = (val && typeof val === 'string' && this.prefabRegistry?.has(val)) ? wrapPrefab(val) : null;
             } else {

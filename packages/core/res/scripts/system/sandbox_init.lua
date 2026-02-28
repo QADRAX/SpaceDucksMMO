@@ -105,6 +105,17 @@ __EntityMT = {
         if k == "removeComponent" then
             return function(self, type) return scene.removeComponent(self.id, type) end
         end
+        if k == "hasComponent" then
+            return function(self, type) return scene.hasComponent(self.id, type) end
+        end
+        if k == "getComponent" then
+            return function(self, type)
+                if scene.hasComponent(self.id, type) then
+                    return __WrapComponent(self.id, type)
+                end
+                return nil
+            end
+        end
         if k == "applyMaterial" then
             return function(self, key, overrides)
                 return scene.applyResource(self.id, key, "standardMaterial", overrides)

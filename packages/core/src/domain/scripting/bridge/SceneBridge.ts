@@ -32,6 +32,11 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
             ent.removeComponent(type as ComponentType);
             return true;
         },
+        hasComponent: (entityId: string, type: string) => {
+            const ent = ctx.getEntity(entityId);
+            if (!ent) return false;
+            return ent.hasComponent(type as ComponentType);
+        },
         getComponentProperty: (entityId: string, type: string, key: string) => {
             const ent = ctx.getEntity(entityId);
             if (!ent) return null;
