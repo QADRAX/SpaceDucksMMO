@@ -232,3 +232,48 @@ function LogAPI:debug(system, message, data) end
 
 ---@type LogAPI Global logging instance.
 log = {}
+
+-- ───────────────────────────────────────────────────────────────────────
+-- Script Registry (Built-ins)
+-- ───────────────────────────────────────────────────────────────────────
+
+---A registry of all built-in scripts and helpers for custom script paths.
+---Use this to avoid hardcoding strings.
+---@class ScriptAPI
+---@field FirstPersonMove        string "builtin://first_person_move.lua"
+---@field FirstPersonPhysicsMove string "builtin://first_person_physics_move.lua"
+---@field FollowEntity           string "builtin://follow_entity.lua"
+---@field FollowEntityPhysics    string "builtin://follow_entity_physics.lua"
+---@field LookAtEntity           string "builtin://look_at_entity.lua"
+---@field LookAtPoint            string "builtin://look_at_point.lua"
+---@field MouseLook              string "builtin://mouse_look.lua"
+---@field MoveToPoint            string "builtin://move_to_point.lua"
+---@field OrbitCamera            string "builtin://orbit_camera.lua"
+---@field SmoothFollow           string "builtin://smooth_follow.lua"
+---@field SmoothLookAt           string "builtin://smooth_look_at.lua"
+local ScriptAPI = {}
+
+---Returns the full path for a custom editor script.
+---@param name string The filename without extension (e.g. "my_tool").
+---@return string path "editor://my_tool.lua"
+function ScriptAPI.editor(name) end
+
+---Returns the full path for a custom project script.
+---@param name string The filename without extension (e.g. "player_controller").
+---@return string path "project://player_controller.lua"
+function ScriptAPI.project(name) end
+
+---@type ScriptAPI Global script reference table.
+Script = {
+    FirstPersonMove        = "builtin://first_person_move.lua",
+    FirstPersonPhysicsMove = "builtin://first_person_physics_move.lua",
+    FollowEntity           = "builtin://follow_entity.lua",
+    FollowEntityPhysics    = "builtin://follow_entity_physics.lua",
+    LookAtEntity           = "builtin://look_at_entity.lua",
+    LookAtPoint            = "builtin://look_at_point.lua",
+    MouseLook              = "builtin://mouse_look.lua",
+    MoveToPoint            = "builtin://move_to_point.lua",
+    OrbitCamera            = "builtin://orbit_camera.lua",
+    SmoothFollow           = "builtin://smooth_follow.lua",
+    SmoothLookAt           = "builtin://smooth_look_at.lua",
+}

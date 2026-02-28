@@ -9,6 +9,25 @@ debug = nil
 loadfile = nil
 dofile = nil
 
+-- Script Reference Constants and Helpers
+Script = {
+    -- Built-in Scripts (Core)
+    FirstPersonMove        = "builtin://first_person_move.lua",
+    FirstPersonPhysicsMove = "builtin://first_person_physics_move.lua",
+    FollowEntity           = "builtin://follow_entity.lua",
+    FollowEntityPhysics    = "builtin://follow_entity_physics.lua",
+    LookAtEntity           = "builtin://look_at_entity.lua",
+    LookAtPoint            = "builtin://look_at_point.lua",
+    MouseLook              = "builtin://mouse_look.lua",
+    MoveToPoint            = "builtin://move_to_point.lua",
+    OrbitCamera            = "builtin://orbit_camera.lua",
+    SmoothFollow           = "builtin://smooth_follow.lua",
+    SmoothLookAt           = "builtin://smooth_look_at.lua",
+
+    -- Helpers for custom script paths
+    editor                 = function(name) return "editor://" .. name .. ".lua" end,
+    project                = function(name) return "project://" .. name .. ".lua" end
+}
 
 
 __SelfMT = {

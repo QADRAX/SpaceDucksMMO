@@ -30,14 +30,23 @@ return {
 
         cam:addComponent("cameraView")
 
-        cam:addComponent("firstPersonMove", {
-            moveSpeed = self.properties.moveSpeed,
-            flyMode = true
-        })
-
-        cam:addComponent("mouseLook", {
-            sensitivityX = self.properties.lookSensitivity,
-            sensitivityY = self.properties.lookSensitivity
+        cam:addComponent("script", {
+            scripts = {
+                {
+                    scriptId = Script.FirstPersonMove,
+                    properties = {
+                        moveSpeed = self.properties.moveSpeed,
+                        flyMode = true
+                    }
+                },
+                {
+                    scriptId = Script.MouseLook,
+                    properties = {
+                        sensitivityX = self.properties.lookSensitivity,
+                        sensitivityY = self.properties.lookSensitivity
+                    }
+                }
+            }
         })
 
         vp.cameraEntityId = cam.id
@@ -52,12 +61,12 @@ return {
         if not cam or not cam:isValid() then return end
 
         if props.moveSpeed ~= prevProps.moveSpeed then
-            local move = cam:getComponent("firstPersonMove")
+            local move = cam.scripts[Script.FirstPersonMove]
             if move then move.moveSpeed = props.moveSpeed end
         end
 
         if props.lookSensitivity ~= prevProps.lookSensitivity then
-            local look = cam:getComponent("mouseLook")
+            local look = cam.scripts[Script.MouseLook]
             if look then
                 look.sensitivityX = props.lookSensitivity
                 look.sensitivityY = props.lookSensitivity
