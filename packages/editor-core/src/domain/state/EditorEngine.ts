@@ -1,5 +1,6 @@
 import { Entity, IScene, SceneChangeEvent } from '@duckengine/core';
 import { IEditorPluginRegistry } from '../plugin/IEditorPlugin';
+import { EditorViewport, ViewportType } from '../viewport/EditorViewport';
 
 export type GameState = 'stopped' | 'playing' | 'paused';
 
@@ -14,6 +15,10 @@ export class EditorEngine {
     private _scene: IScene;
     private _registry: IEditorPluginRegistry;
 
+    // Viewport Management
+    private _viewports = new Map<string, EditorViewport>();
+    private _activeViewportId: string | null = null;
+
     // History could be managed here, but skipping full complex undo/redo logic for this iteration 
     // to focus on the core extraction. It can be expanded in the state management layer.
 
@@ -21,6 +26,55 @@ export class EditorEngine {
         this._scene = options.scene;
         this._registry = options.registry;
     }
+
+    // --- Viewports API ---
+
+    public createViewport(id: string, type: ViewportType): EditorViewport {
+        if (this._viewports.has(id)) {
+            throw new Error(`Viewport with id ${id} already exists`);
+        }
+
+        const viewport = new EditorViewport({ id, type, editorEngine: this });
+        this._viewports.set(id, viewport);
+
+        if (!this._activeViewportId) {
+            this._activeViewportId = id;
+        }
+
+        return viewport;
+    }
+
+    public getViewport(id: string): EditorViewport | undefined {
+        return this._viewports.get(id);
+    }
+
+    public get activeViewport(): EditorViewport | undefined {
+        if (!this._activeViewportId) return undefined;
+        return this._viewports.get(this._activeViewportId);
+    }
+
+    public setActiveViewport(id: string | null) {
+        if (id && !this._viewports.has(id)) return;
+        this._activeViewportId = id;
+    }
+
+    public destroyViewport(id: string) {
+        const viewport = this._viewports.get(id);
+        if (viewport) {
+            viewport.dispose();
+            this._viewports.delete(id);
+        }
+        if (this._activeViewportId === id) {
+            // fallback to first available or null
+            this._activeViewportId = this._viewports.size > 0 ? (this._viewports.keys().next().value || null) : null;
+        }
+    }
+
+    public getAllViewports(): ReadonlyArray<EditorViewport> {
+        return Array.from(this._viewports.values());
+    }
+
+    // --- State API ---
 
     get gameState(): GameState {
         return this._gameState;

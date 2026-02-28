@@ -19,17 +19,33 @@ export function registerEditorApiBridge(engine: LuaEngine, ctx: EditorBridgeCont
         exists: (id: string) => {
             const entities = ctx.editorEngine.scene.getEntities?.();
             return entities ? entities.some(e => e.id === id) : false;
+        },
+        getEntityProperty: (id: string, key: string) => {
+            const ent = ctx.editorEngine.scene.getEntity(id);
+            if (!ent) return null;
+            if (key === 'displayName') return ent.displayName;
+            if (key === 'id') return ent.id;
+            return null;
+        },
+        setEntityProperty: (id: string, key: string, value: any) => {
+            const ent = ctx.editorEngine.scene.getEntity(id);
+            if (!ent) return;
+            if (key === 'displayName') ent.displayName = value;
+        },
+        // --- Viewports API ---
+        viewports: {
+            getActiveId: () => {
+                return ctx.editorEngine.activeViewport?.id || null;
+            },
+            spawnEditorEntity: (baseName: string) => {
+                const viewport = ctx.editorEngine.activeViewport;
+                if (!viewport) return null;
+                const entity = viewport.spawnEditorEntity(baseName);
+                return entity.id;
+            }
         }
     };
 
     // Merge into the global 'editor' table created by editor_init.lua
     engine.global.set('__jsEditorApi', editorApi);
-
-    engine.doStringSync(`
-        editor = editor or {}
-        -- the JS bridge provides the actual query implementations
-        editor.findEntityByName = __jsEditorApi.findEntityByName
-        editor.getEntity = __jsEditorApi.getEntity
-        editor.exists = __jsEditorApi.exists
-    `);
 }

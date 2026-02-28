@@ -46,6 +46,9 @@ export class EditorScriptSystem {
             editorEngine: this.editorEngine
         };
 
+        // Register TypeScript Bridges (sets __jsEditorApi)
+        registerEditorApiBridge(this.engine!, ctx);
+
         // Load pre-compiled editor initialization (editor UI helpers, bridges, etc.)
         const editorInit = EditorSystemScripts['editor_init.lua'];
         if (!editorInit) {
@@ -53,9 +56,6 @@ export class EditorScriptSystem {
         }
 
         this.engine!.doStringSync(editorInit);
-
-        // Register TypeScript Bridges
-        registerEditorApiBridge(this.engine!, ctx);
     }
 
     public loadPluginFromSource(source: string): EditorScriptPlugin {
@@ -154,6 +154,11 @@ export class EditorScriptSystem {
         this.registry.register(plugin);
 
         return plugin;
+    }
+
+    public executeString(source: string): any {
+        if (!this.engine) throw new Error("EditorScriptSystem not initialized");
+        return this.engine.doStringSync(source);
     }
 
     public dispose() {

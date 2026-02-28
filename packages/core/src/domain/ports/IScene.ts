@@ -48,6 +48,9 @@ export interface IScene {
   /** Remove an ECS Entity by ID */
   removeEntity(id: string): void;
 
+  /** Get an entity by its ID, returns undefined if not found. */
+  getEntity(id: string): Entity | undefined;
+
   /**
   * Mark the camera entity with the given ID as the active camera for this scene.
   * Implementations should notify the engine (via engine.onActiveCameraChanged()) so

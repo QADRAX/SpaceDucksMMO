@@ -33,5 +33,16 @@ for (const file of systemFiles) {
 }
 output += `};\n\n`;
 
+// 3. Generate EditorTypes (.d.lua files for IDE/Documentation)
+const typesDir = path.join(__dirname, '../res/scripts/types');
+const typeFiles = fs.existsSync(typesDir) ? fs.readdirSync(typesDir).filter(f => f.endsWith('.d.lua')) : [];
+output += `export const EditorTypes: Record<string, string> = {\n`;
+for (const file of typeFiles) {
+    const raw = fs.readFileSync(path.join(typesDir, file), 'utf-8');
+    const escaped = raw.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$');
+    output += `    "${file}": \`${escaped}\`,\n`;
+}
+output += `};\n\n`;
+
 fs.writeFileSync(targetFile, output);
-console.log(`Generated EditorScriptAssets.ts with ${builtinFiles.length} builtin and ${systemFiles.length} system scripts.`);
+console.log(`Generated EditorScriptAssets.ts with ${builtinFiles.length} builtin, ${systemFiles.length} system scripts, and ${typeFiles.length} type definitions.`);

@@ -43,7 +43,7 @@ local plugin = {
                     editor.ui.button("T", {
                         title = "Translate (T)",
                         onClick = function()
-                            ctx.setConfig("mode", "translate") -- wait, ctx doesn't have setConfig yet? If not, this is a stub.
+                            ctx.setConfig("mode", "translate")
                         end
                     }),
                     editor.ui.button("R", {
