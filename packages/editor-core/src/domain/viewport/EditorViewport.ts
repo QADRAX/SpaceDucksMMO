@@ -2,17 +2,13 @@ import { Entity } from '@duckengine/core';
 import { EditorEngine } from '../state/EditorEngine';
 import { IViewportPlugin, IViewportScript, ViewportPluginContext, ViewportUIContribution } from '../plugin/IViewportPlugin';
 
-export type ViewportType = 'game' | 'scene' | 'custom';
-
 export interface EditorViewportOptions {
     id: string;
-    type: ViewportType;
     editorEngine: EditorEngine;
 }
 
 export class EditorViewport {
     public readonly id: string;
-    public readonly type: ViewportType;
 
     // The designated camera for this viewport, if any
     private _cameraEntityId: string | null = null;
@@ -30,7 +26,6 @@ export class EditorViewport {
 
     constructor(options: EditorViewportOptions) {
         this.id = options.id;
-        this.type = options.type;
         this._editorEngine = options.editorEngine;
     }
 
@@ -107,28 +102,33 @@ export class EditorViewport {
         this._cameraEntityId = null;
     }
 
-    // --- Script & Plugin Management ---
-
-    public setScript(script: IViewportScript) {
-        this._script = script;
-        const ctx = this._createContext();
-        script.onEnable?.(ctx);
-    }
-
-    public registerPlugin(plugin: IViewportPlugin) {
-        if (this._plugins.has(plugin.id)) return;
-
-        const ctx = this._createContext();
-        const cleanup = plugin.onEnable?.(ctx) || undefined;
-        this._plugins.set(plugin.id, { plugin, cleanup });
-    }
-
-    public unregisterPlugin(id: string) {
-        const entry = this._plugins.get(id);
-        if (entry) {
-            entry.cleanup?.();
-            this._plugins.delete(id);
+    // --- Orchestration ---
+    /**
+     * Applies a complete configuration to this viewport.
+     * This is the ONLY way to change the viewport's script and active plugins.
+     * It handles unloading the previous state and loading the new one.
+     */
+    public async applyConfiguration(config: any) { // configuration type will be imported
+        // 1. Dispose previous script
+        if (this._script?.onDestroy) {
+            this._script.onDestroy(this._createContext());
         }
+        this._script = null;
+
+        // 2. Dispose previous plugins
+        for (const { cleanup } of this._plugins.values()) {
+            cleanup?.();
+        }
+        this._plugins.clear();
+
+        // 3. Reset managed state (except persistent editor entities if intended)
+        this._managedEntities.clear();
+        this._scriptProps = { ...config.properties };
+
+        // 4. Load New Script and Plugins via Engine/Loader (conceptual implementation)
+        // Note: Actual loading requires the Loader service, which usually lives in the Engine
+        // For now, we'll keep the placeholders or implement the registration logic
+        console.log(`Applying viewport configuration: ${config.scriptId}`);
     }
 
     public update(dt: number) {
@@ -150,7 +150,9 @@ export class EditorViewport {
         const contributions: ViewportUIContribution[] = [];
         for (const { plugin } of this._plugins.values()) {
             const ui = plugin.getUI?.(ctx);
-            if (ui) contributions.push(...ui);
+            if (ui) {
+                contributions.push(ui);
+            }
         }
         return contributions;
     }

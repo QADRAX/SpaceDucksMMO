@@ -28,30 +28,19 @@ export class FreeCamViewportPlugin implements IViewportPlugin {
         }
     }
 
-    public getUI(ctx: ViewportPluginContext): ViewportUIContribution[] {
-        return [
-            {
-                slot: 'toolbar',
-                descriptor: {
-                    type: 'button',
-                    props: {
-                        text: 'Reset Cam',
-                        onClick: () => {
-                            console.log('Resetting camera transform...');
-                        }
-                    }
-                }
-            },
-            {
-                slot: 'overlay',
-                descriptor: {
-                    type: 'label',
-                    props: {
-                        text: `Cam: ${this._camId?.substr(0, 8)}...`
+    public getUI(ctx: ViewportPluginContext): ViewportUIContribution | null {
+        return {
+            slot: 'viewport:toolbar:right',
+            descriptor: {
+                type: 'button',
+                props: {
+                    text: 'Reset Cam',
+                    onClick: () => {
+                        console.log('Resetting camera transform...');
                     }
                 }
             }
-        ];
+        };
     }
 
     public onPointerDown(event: PointerEvent) {

@@ -1,6 +1,7 @@
 import { Entity, IScene, SceneChangeEvent, DefaultEcsComponentFactory, IEcsComponentFactory } from '@duckengine/core';
 import { IEditorPluginRegistry } from '../plugin/IEditorPlugin';
-import { EditorViewport, ViewportType } from '../viewport/EditorViewport';
+import { EditorViewport } from '../viewport/EditorViewport';
+import { ViewportConfiguration } from '../viewport/ViewportConfiguration';
 
 export type GameState = 'stopped' | 'playing' | 'paused';
 
@@ -19,10 +20,8 @@ export class EditorEngine {
 
     // Viewport Management
     private _viewports = new Map<string, EditorViewport>();
+    private _viewportProfiles = new Map<string, ViewportConfiguration>();
     private _activeViewportId: string | null = null;
-
-    // History could be managed here, but skipping full complex undo/redo logic for this iteration 
-    // to focus on the core extraction. It can be expanded in the state management layer.
 
     constructor(options: EditorEngineOptions) {
         this._scene = options.scene;
@@ -36,19 +35,35 @@ export class EditorEngine {
 
     // --- Viewports API ---
 
-    public createViewport(id: string, type: ViewportType): EditorViewport {
+    public createViewport(id: string, profileId?: string): EditorViewport {
         if (this._viewports.has(id)) {
             throw new Error(`Viewport with id ${id} already exists`);
         }
 
-        const viewport = new EditorViewport({ id, type, editorEngine: this });
+        const viewport = new EditorViewport({ id, editorEngine: this });
         this._viewports.set(id, viewport);
+
+        if (profileId) {
+            this.applyProfileToViewport(id, profileId);
+        }
 
         if (!this._activeViewportId) {
             this._activeViewportId = id;
         }
 
         return viewport;
+    }
+
+    public registerViewportProfile(id: string, config: ViewportConfiguration) {
+        this._viewportProfiles.set(id, config);
+    }
+
+    public applyProfileToViewport(viewportId: string, profileId: string) {
+        const viewport = this.getViewport(viewportId);
+        const config = this._viewportProfiles.get(profileId);
+        if (viewport && config) {
+            viewport.applyConfiguration(config);
+        }
     }
 
     public getViewport(id: string): EditorViewport | undefined {

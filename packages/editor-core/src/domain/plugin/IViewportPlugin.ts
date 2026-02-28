@@ -7,18 +7,38 @@ export interface ViewportPluginContext {
     editorEngine: EditorEngine;
 }
 
-export type ViewportUISlot = 'toolbar' | 'overlay';
+/**
+ * Common Slot IDs for Viewport UI.
+ * These are interpreted by the UI Renderer (e.g. React layer).
+ */
+export type ViewportUISlot =
+    | 'viewport:overlay:top-left'
+    | 'viewport:overlay:top-right'
+    | 'viewport:overlay:bottom-left'
+    | 'viewport:overlay:bottom-right'
+    | 'viewport:toolbar:left'
+    | 'viewport:toolbar:right'
+    | 'viewport:context-menu';
 
 export interface ViewportUIContribution {
-    slot: ViewportUISlot;
-    descriptor: UIElementDescriptor | UIElementDescriptor[];
+    slot: ViewportUISlot | string;
+    descriptor: UIElementDescriptor;
 }
 
 export interface IViewportPlugin {
     readonly id: string;
 
     /**
-     * Called when the plugin is attached to the viewport.
+     * Metadata for the plugin, including its intended default slot.
+     */
+    readonly meta?: {
+        displayName: string;
+        description?: string;
+        defaultSlot?: ViewportUISlot | string;
+    };
+
+    /**
+     * Called when the plugin is attached to the viewport by the orchestrator.
      */
     onEnable?: (ctx: ViewportPluginContext) => void | (() => void);
 
@@ -28,27 +48,22 @@ export interface IViewportPlugin {
     onTick?: (dt: number, ctx: ViewportPluginContext) => void;
 
     /**
-     * Returns UI elements to be rendered on top or in the toolbar of this viewport.
+     * Returns the UI contribution for this plugin. 
+     * In the new modular design, a plugin should ideally return ONE contribution for ONE slot.
      */
-    getUI?: (ctx: ViewportPluginContext) => ViewportUIContribution[] | null;
+    getUI?: (ctx: ViewportPluginContext) => ViewportUIContribution | null;
 
     /**
      * Input Handling.
-     * Return true if the event was consumed and should not propagate to other plugins or the engine.
      */
     onPointerDown?: (event: PointerEvent, ctx: ViewportPluginContext) => boolean | void;
     onPointerMove?: (event: PointerEvent, ctx: ViewportPluginContext) => void;
     onPointerUp?: (event: PointerEvent, ctx: ViewportPluginContext) => void;
-
-    /**
-     * Called when a script property is changed.
-     */
-    onPropertyChanged?: (props: any, prevProps: any, ctx: ViewportPluginContext) => void;
 }
 
 /**
  * A Viewport Script is responsible for the subscene logic, camera movements, etc.
- * Unlike plugins, there is only ONE active script per viewport.
+ * Orchestrated externally.
  */
 export interface IViewportScript {
     onEnable?: (ctx: ViewportPluginContext) => void;

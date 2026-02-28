@@ -30,6 +30,8 @@ return {
 
         cam:addComponent("cameraView")
 
+        -- Although we are decoupling composition, these components define
+        -- the internal behavior of a "Free Camera" viewport script.
         cam:addComponent("script", {
             scripts = {
                 {

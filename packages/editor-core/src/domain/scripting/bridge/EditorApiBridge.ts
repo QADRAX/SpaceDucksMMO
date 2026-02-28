@@ -70,75 +70,16 @@ export function registerEditorApiBridge(engine: LuaEngine, ctx: EditorBridgeCont
             get: (id: string) => {
                 const vp = ctx.editorEngine.getViewport(id);
                 if (!vp) return null;
-                return { id: vp.id, type: vp.type };
+                return { id: vp.id };
             },
             getAll: () => {
-                return ctx.editorEngine.getAllViewports().map(vp => ({ id: vp.id, type: vp.type }));
+                return ctx.editorEngine.getAllViewports().map(vp => ({ id: vp.id }));
             },
             spawnEditorEntity: (viewportId: string, baseName: string) => {
                 const viewport = ctx.editorEngine.getViewport(viewportId);
                 if (!viewport) return null;
                 const entity = viewport.spawnEditorEntity(baseName);
                 return entity.id;
-            },
-            setScript: (viewportId: string, schema: any) => {
-                const viewport = ctx.editorEngine.getViewport(viewportId);
-                if (!viewport) return;
-
-                viewport.setScript({
-                    onEnable: (vctx) => {
-                        const invoke = engine.global.get('__InvokeViewportScript');
-                        if (typeof invoke === 'function') invoke(viewportId, 'onEnable', vctx);
-                    },
-                    onTick: (dt, vctx) => {
-                        const invoke = engine.global.get('__InvokeViewportScript');
-                        if (typeof invoke === 'function') invoke(viewportId, 'update', vctx, dt);
-                    },
-                    onDestroy: (vctx) => {
-                        const invoke = engine.global.get('__InvokeViewportScript');
-                        if (typeof invoke === 'function') invoke(viewportId, 'onDestroy', vctx);
-                    },
-                    onPropertyChanged: (props, prevProps, vctx) => {
-                        const invoke = engine.global.get('__InvokeViewportScript');
-                        if (typeof invoke === 'function') invoke(viewportId, 'onPropertyChanged', vctx, props, prevProps);
-                    }
-                });
-            },
-            registerPlugin: (viewportId: string, pluginId: string, schema: any) => {
-                const viewport = ctx.editorEngine.getViewport(viewportId);
-                if (!viewport) return;
-
-                viewport.registerPlugin({
-                    id: pluginId,
-                    onEnable: (vctx) => {
-                        const invoke = engine.global.get('__InvokeViewportPlugin');
-                        return typeof invoke === 'function' ? invoke(viewportId, pluginId, 'onEnable', vctx) : null;
-                    },
-                    onTick: (dt, vctx) => {
-                        const invoke = engine.global.get('__InvokeViewportPlugin');
-                        if (typeof invoke === 'function') invoke(viewportId, pluginId, 'update', vctx, dt);
-                    },
-                    getUI: (vctx) => {
-                        const invoke = engine.global.get('__InvokeViewportPlugin');
-                        return typeof invoke === 'function' ? invoke(viewportId, pluginId, 'getUI', vctx) : null;
-                    },
-                    onPointerDown: (ev, vctx) => {
-                        const invoke = engine.global.get('__InvokeViewportPlugin');
-                        return typeof invoke === 'function' ? invoke(viewportId, pluginId, 'onPointerDown', vctx, ev) : null;
-                    },
-                    onPointerMove: (ev, vctx) => {
-                        const invoke = engine.global.get('__InvokeViewportPlugin');
-                        if (typeof invoke === 'function') invoke(viewportId, pluginId, 'onPointerMove', vctx, ev);
-                    },
-                    onPointerUp: (ev, vctx) => {
-                        const invoke = engine.global.get('__InvokeViewportPlugin');
-                        if (typeof invoke === 'function') invoke(viewportId, pluginId, 'onPointerUp', vctx, ev);
-                    },
-                    onPropertyChanged: (props, prevProps, vctx) => {
-                        const invoke = engine.global.get('__InvokeViewportPlugin');
-                        if (typeof invoke === 'function') invoke(viewportId, pluginId, 'onPropertyChanged', vctx, props, prevProps);
-                    }
-                });
             },
             setConfig: (viewportId: string, pluginId: string, key: string, value: any) => {
                 ctx.editorEngine.setConfig(pluginId, key, value);

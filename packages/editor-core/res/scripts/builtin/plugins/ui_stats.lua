@@ -32,45 +32,33 @@ return {
         end
 
         return {
-            {
-                slot = "overlay",
-                descriptor = {
-                    type = "container",
-                    props = {
-                        id = "viewport-stats-" .. vp.id,
-                        style = {
-                            position = "absolute",
-                            bottom = "20px",
-                            left = "20px",
-                            padding = "12px",
-                            backgroundColor = "rgba(15, 15, 20, 0.8)",
-                            backdropFilter = "blur(4px)",
-                            borderRadius = "8px",
-                            border = "1px solid rgba(255, 255, 255, 0.1)",
-                            color = "#e0e0e0",
-                            fontFamily = "'Inter', sans-serif",
-                            fontSize = "11px",
-                            pointerEvents = "none",
-                            display = "flex",
-                            flexDirection = "column",
-                            gap = "4px",
-                            boxShadow = "0 4px 12px rgba(0, 0, 0, 0.3)"
+            slot = "viewport:overlay:bottom-left",
+            descriptor = {
+                type = "container",
+                props = {
+                    id = "viewport-stats-" .. vp.id,
+                    -- Note: Minimal styling here, ideally handled by UI Renderer/Theme
+                    style = {
+                        padding = "12px",
+                        backgroundColor = "rgba(15, 15, 20, 0.8)",
+                        backdropFilter = "blur(4px)",
+                        borderRadius = "8px",
+                        border = "1px solid rgba(255, 255, 255, 0.1)",
+                        color = "#e0e0e0",
+                    }
+                },
+                children = {
+                    {
+                        type = "text",
+                        props = {
+                            value = "VIEWPORT: " .. string.upper(vp.id),
+                            style = { fontWeight = "bold", color = "#60a5fa" }
                         }
                     },
-                    children = {
-                        {
-                            type = "text",
-                            props = {
-                                value = "VIEWPORT: " .. string.upper(vp.id),
-                                style = { fontWeight = "bold", color = "#60a5fa", letterSpacing = "0.05em" }
-                            }
-                        },
-                        {
-                            type = "text",
-                            props = {
-                                value = "CAMERA: " .. camPosText,
-                                style = { opacity = 0.8 }
-                            }
+                    {
+                        type = "text",
+                        props = {
+                            value = "CAMERA: " .. camPosText,
                         }
                     }
                 }
