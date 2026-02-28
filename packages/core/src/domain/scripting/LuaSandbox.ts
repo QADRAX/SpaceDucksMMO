@@ -34,7 +34,7 @@ export class LuaSandbox {
         }
         const engine = await this.factory!.createEngine();
 
-        engine.global.setMemoryMax(1024 * 1024 * 10);
+        // engine.global.setMemoryMax(1024 * 1024 * 10); // Requires traceAllocations in factory init, which is broken in types
         engine.global.setTimeout(Date.now() + 1000);
 
         // Map print to CoreLogger and optionally EventBus
