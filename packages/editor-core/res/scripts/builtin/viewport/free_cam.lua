@@ -9,7 +9,7 @@
 ---@field moveSpeed? number Movement speed (units per second).
 ---@field lookSensitivity? number Mouse look sensitivity.
 
----@type ViewportModule<FreeCamProps, {}>
+---@type ViewportControllerModule<FreeCamProps, {}>
 return {
     schema = {
         name = "Free Camera",
@@ -20,9 +20,9 @@ return {
         }
     },
 
-    ---@param self ViewportScriptInstance<FreeCamProps, {}>
-    init = function(self, ctx)
-        log:info("Viewport", "Initializing Free Camera for " .. self.viewport.id)
+    ---@param self ViewportControllerInstance<FreeCamProps, {}>
+    onEnable = function(self, ctx)
+        log:info("Viewport", "Enabling Free Camera for " .. self.viewport.id)
 
         local vp = self.viewport
         -- Spawn and register as "camera"
@@ -30,8 +30,7 @@ return {
 
         cam:addComponent("cameraView")
 
-        -- Although we are decoupling composition, these components define
-        -- the internal behavior of a "Free Camera" viewport script.
+        -- Logic for Free Camera movement and mouse looking.
         cam:addComponent("script", {
             scripts = {
                 {
@@ -55,7 +54,7 @@ return {
     end,
 
     ---Reactive Property Updates
-    ---@param self ViewportScriptInstance<FreeCamProps, {}>
+    ---@param self ViewportControllerInstance<FreeCamProps, {}>
     ---@param props FreeCamProps
     ---@param prevProps FreeCamProps
     onPropertyChanged = function(self, props, prevProps, ctx)

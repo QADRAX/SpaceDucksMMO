@@ -1,33 +1,33 @@
 import { EditorScriptSystem } from '../domain/scripting/EditorScriptSystem';
-import { IEditorPluginRegistry, IEditorPlugin, EditorPluginConfigValue } from '../domain/plugin/IEditorPlugin';
+import { IEditorExtensionRegistry, IEditorExtension, EditorExtensionConfigValue } from '../domain/extension/IEditorExtension';
 
 // Mock registry for test
-class MockRegistry implements IEditorPluginRegistry {
-    plugins: IEditorPlugin[] = [];
-    register(plugin: Omit<IEditorPlugin, "config">): void {
-        this.plugins.push(plugin as IEditorPlugin);
+class MockRegistry implements IEditorExtensionRegistry {
+    extensions: IEditorExtension[] = [];
+    register(extension: Omit<IEditorExtension, "config">): void {
+        this.extensions.push(extension as IEditorExtension);
     }
-    unregister(pluginId: string): void { }
-    setEnabled(pluginId: string, enabled: boolean): void { }
-    setConfig(pluginId: string, key: string, value: EditorPluginConfigValue): void { }
+    unregister(id: string): void { }
+    setEnabled(id: string, enabled: boolean): void { }
+    setConfig(id: string, key: string, value: EditorExtensionConfigValue): void { }
 }
 
 async function run() {
     console.log('Initializing EditorScriptSystem...');
     const registry = new MockRegistry();
-    const mockEditorEngine: any = {
+    const mockEditorSession: any = {
         scene: {
             getEntities: () => []
         }
     };
-    const scriptSystem = new EditorScriptSystem(registry, mockEditorEngine);
+    const scriptSystem = new EditorScriptSystem(registry, mockEditorSession);
     await scriptSystem.initialize();
 
-    const luaPluginCode = `
+    const luaExtensionCode = `
     return {
         meta = {
-            id = "test-plugin",
-            displayName = "Test Plugin",
+            id = "test-extension",
+            displayName = "Test Extension",
             category = "panels"
         },
         slotFills = {
@@ -45,12 +45,12 @@ async function run() {
     }
     `;
 
-    console.log('Loading plugin from source...');
-    const plugin = scriptSystem.loadPluginFromSource(luaPluginCode);
+    console.log('Loading extension from source...');
+    const extension = scriptSystem.loadExtensionFromSource(luaExtensionCode);
 
-    console.log('Plugin loaded:', plugin.meta.displayName);
-    if (plugin.slotFills && plugin.slotFills.length > 0) {
-        const fill = plugin.slotFills[0];
+    console.log('Extension loaded:', extension.meta.displayName);
+    if (extension.slotFills && extension.slotFills.length > 0) {
+        const fill = extension.slotFills[0];
         console.log('Testing Slot Fill UI Descriptor Generation for slot:', fill.slot);
 
         // Mock context

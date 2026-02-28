@@ -1,43 +1,53 @@
 import { LuaEngine } from 'wasmoon';
 import { LuaSandbox } from '@duckengine/core';
-import { IEditorPlugin, IEditorPluginRegistry, EditorPluginContext, UIElementDescriptor } from '../plugin/IEditorPlugin';
+import { IEditorExtension, IEditorExtensionRegistry, EditorExtensionContext, UIElementDescriptor } from '../extension/IEditorExtension';
 import { EditorSystemScripts } from './generated/EditorScriptAssets';
 import { EditorBridgeContext } from './bridge/EditorBridgeContext';
 import { registerEditorApiBridge } from './bridge/EditorApiBridge';
-import { EditorEngine } from '../state/EditorEngine';
+import { EditorSession } from '../session/EditorSession';
 
 
+/**
+ * Represents a UI slot fill from an editor extension.
+ */
 export type EditorSlotFill = {
     slot: string;
     tabLabel?: string;
     priority?: number;
-    // Returns the descriptor rather than React node
-    ui: (ctx: EditorPluginContext) => UIElementDescriptor | UIElementDescriptor[] | null;
+    /** Returns the descriptor rather than React node */
+    ui: (ctx: EditorExtensionContext) => UIElementDescriptor | UIElementDescriptor[] | null;
 };
 
-// Internal mapped plugin, holds React-agnostic slots
-export type EditorScriptPlugin = IEditorPlugin & {
+/**
+ * Internal mapped extension, holds React-agnostic slots.
+ */
+export type EditorScriptExtension = IEditorExtension & {
     slotFills?: ReadonlyArray<EditorSlotFill>;
 };
 
-// ─── Editor Script System ──────────────────────────────────────────────────
+/**
+ * The EditorScriptSystem manages the Lua sandbox and loads extensions from scripts.
+ */
 export class EditorScriptSystem {
     private sandbox: LuaSandbox;
     private engine: LuaEngine | null = null;
-    private loadedPlugins = new Map<string, EditorScriptPlugin>();
+    private loadedExtensions = new Map<string, EditorScriptExtension>();
 
     constructor(
-        private registry: IEditorPluginRegistry,
-        private editorEngine: EditorEngine
+        private registry: IEditorExtensionRegistry,
+        private editorSession: EditorSession
     ) {
         this.sandbox = new LuaSandbox();
     }
 
+    /**
+     * Initializes the Lua engine and sets up the JS bridge.
+     */
     public async initialize() {
         this.engine = await this.sandbox.createEngine();
 
         const ctx: EditorBridgeContext = {
-            editorEngine: this.editorEngine
+            editorSession: this.editorSession
         };
 
         // Register TypeScript Bridges (sets __jsEditorApi)
@@ -56,19 +66,22 @@ export class EditorScriptSystem {
         this.engine!.doStringSync(editorInit);
     }
 
-    public loadPluginFromSource(source: string): EditorScriptPlugin {
+    /**
+     * Loads a global extension from a Lua source string.
+     */
+    public loadExtensionFromSource(source: string): EditorScriptExtension {
         if (!this.engine) throw new Error("EditorScriptSystem not initialized");
 
         const rawModule = this.engine.doStringSync(source);
         if (typeof rawModule !== 'object' || !rawModule.meta) {
-            throw new Error("Plugin script must return an EditorPluginModule table with meta");
+            throw new Error("Extension script must return an EditorExtensionModule table with meta");
         }
 
-        const pluginId = rawModule.meta.id;
+        const extensionId = rawModule.meta.id;
 
-        const plugin: EditorScriptPlugin = {
+        const extension: EditorScriptExtension = {
             meta: {
-                id: pluginId,
+                id: extensionId,
                 displayName: rawModule.meta.displayName,
                 description: rawModule.meta.description,
                 icon: rawModule.meta.icon,
@@ -91,36 +104,36 @@ export class EditorScriptSystem {
                     slot: fill.slot,
                     priority: fill.priority,
                     tabLabel: fill.tabLabel,
-                    ui: (ctx: EditorPluginContext) => {
+                    ui: (ctx: EditorExtensionContext) => {
                         try {
                             // Call Lua 'ui' function with context
                             return fill.ui(ctx);
                         } catch (err) {
-                            console.error(`Error generating UI descriptor for slot fill in ${pluginId}`, err);
+                            console.error(`Error generating UI descriptor for slot fill in ${extensionId}`, err);
                             return null;
                         }
                     }
                 });
             }
-            plugin.slotFills = agnosticsFills;
+            extension.slotFills = agnosticsFills;
         }
 
         // Extract lifecycle hooks (keep references to Lua functions)
         const onEnable = rawModule.onEnable;
         if (typeof onEnable === 'function') {
-            plugin.onEnable = (ctx) => {
+            extension.onEnable = (ctx) => {
                 try {
                     const cleanup = onEnable(ctx);
                     if (typeof cleanup === 'function') return cleanup;
                 } catch (err) {
-                    console.error(`Error enabling plugin ${pluginId}`, err);
+                    console.error(`Error enabling extension ${extensionId}`, err);
                 }
             };
         }
 
         const onTick = rawModule.onTick;
         if (typeof onTick === 'function') {
-            plugin.onTick = (dt, ctx) => {
+            extension.onTick = (dt, ctx) => {
                 try {
                     onTick(dt, ctx);
                 } catch (err) { }
@@ -129,41 +142,47 @@ export class EditorScriptSystem {
 
         const onSelChanged = rawModule.onSelectionChanged;
         if (typeof onSelChanged === 'function') {
-            plugin.onSelectionChanged = (ids, ctx) => {
+            extension.onSelectionChanged = (ids, ctx) => {
                 try { onSelChanged(ids, ctx); } catch (e) { }
             };
         }
 
         const onStateChanged = rawModule.onGameStateChanged;
         if (typeof onStateChanged === 'function') {
-            plugin.onGameStateChanged = (state, ctx) => {
+            extension.onGameStateChanged = (state, ctx) => {
                 try { onStateChanged(state, ctx); } catch (e) { }
             };
         }
 
         const onCfgChanged = rawModule.onConfigChanged;
         if (typeof onCfgChanged === 'function') {
-            plugin.onConfigChanged = (key, val, ctx) => {
+            extension.onConfigChanged = (key, val, ctx) => {
                 try { onCfgChanged(key, val, ctx); } catch (e) { }
             };
         }
 
-        this.loadedPlugins.set(pluginId, plugin);
-        this.registry.register(plugin);
+        this.loadedExtensions.set(extensionId, extension);
+        this.registry.register(extension);
 
-        return plugin;
+        return extension;
     }
 
+    /**
+     * Executes a raw Lua string within the sandbox.
+     */
     public executeString(source: string): any {
         if (!this.engine) throw new Error("EditorScriptSystem not initialized");
         return this.engine.doStringSync(source);
     }
 
+    /**
+     * Destroys the Lua engine.
+     */
     public dispose() {
         if (this.engine) {
             this.engine.global.close();
             this.engine = null;
         }
-        this.loadedPlugins.clear();
+        this.loadedExtensions.clear();
     }
 }

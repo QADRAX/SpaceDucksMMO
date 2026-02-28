@@ -1,13 +1,13 @@
-import { EditorEngine } from '../domain/state/EditorEngine';
+import { EditorSession } from '../domain/session/EditorSession';
 import { EditorScriptSystem } from '../domain/scripting/EditorScriptSystem';
-import { IEditorPluginRegistry } from '../domain/plugin/IEditorPlugin';
+import { IEditorExtensionRegistry } from '../domain/extension/IEditorExtension';
 import { Entity, IScene, CoreLogger } from '@duckengine/core';
 
 // Mock Registry
-class MockRegistry implements IEditorPluginRegistry {
-    plugins: any[] = [];
-    register(p: any) { this.plugins.push(p); }
-    unregister(id: string) { this.plugins = this.plugins.filter(p => p.meta.id !== id); }
+class MockRegistry implements IEditorExtensionRegistry {
+    extensions: any[] = [];
+    register(p: any) { this.extensions.push(p); }
+    unregister(id: string) { this.extensions = this.extensions.filter(p => p.meta.id !== id); }
     setEnabled(id: string, enabled: boolean) { }
     setConfig(id: string, config: any) { }
 }
@@ -37,14 +37,14 @@ async function runTest() {
 
     const scene = new MockScene();
     const registry = new MockRegistry();
-    const engine = new EditorEngine({ scene, registry });
-    const scriptSystem = new EditorScriptSystem(registry, engine);
+    const session = new EditorSession({ scene, registry });
+    const scriptSystem = new EditorScriptSystem(registry, session);
 
     await scriptSystem.initialize();
 
     console.log('1. Creating Viewport...');
-    const viewport = engine.createViewport('v1', 'scene');
-    engine.setActiveViewport('v1');
+    const viewport = session.createViewport('v1');
+    session.setActiveViewport('v1');
 
     console.log('2. Running Lua script to spawn Editor Entity...');
     const luaCode = `
@@ -74,21 +74,21 @@ async function runTest() {
     // 4. Test Viewport Orchestration (Conceptual)
     console.log('4. Testing Viewport Orchestration (Data-driven)...');
 
-    engine.registerViewportProfile('default-scene', {
-        scriptId: 'builtin/viewport/free_cam.lua',
-        plugins: ['builtin/plugins/ui_stats.lua'],
+    session.registerBlueprint('default-scene', {
+        controllerId: 'builtin/viewport/free_cam.lua',
+        features: ['builtin/features/ui_stats.lua'],
         properties: { moveSpeed: 10 }
     });
 
-    viewport.applyConfiguration(engine['_viewportProfiles'].get('default-scene'));
+    session.applyBlueprintToViewport('v1', 'default-scene');
 
-    console.log('- Verified applyConfiguration call (Conceptual).');
+    console.log('- Verified applyBlueprint call (Conceptual).');
 
     console.log('6. Disposing Viewport...');
-    engine.destroyViewport('v1');
+    session.destroyViewport('v1');
 
     if (scene.entities.has(resultId)) throw new Error('Entity was not cleaned up from scene');
-    if (engine.getAllViewports().length !== 0) throw new Error('Viewport was not removed from engine');
+    if (session.getAllViewports().length !== 0) throw new Error('Viewport was not removed from session');
 
     console.log('SUCCESS: Viewport architecture refactored to decoupled orchestration!');
 }

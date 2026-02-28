@@ -1,83 +1,77 @@
 ---@meta
 -- ═══════════════════════════════════════════════════════════════════════
--- DuckEngine Lua API — Editor Viewports
--- Type definitions for Viewport Scripts and UI Plugins.
+-- DuckEngine Lua API — Viewports
+-- Type definitions for Viewport Controllers and Features.
 -- ═══════════════════════════════════════════════════════════════════════
 
+---@class EditorSession
 ---@class ViewportContext
----@field viewport EditorViewport The viewport instance this script is running in.
----@field engine EditorAPI Global editor plane API.
----@field setConfig fun(key: string, value: any) Update a plugin configuration value.
+---@field viewport Viewport The viewport instance this script is running in.
+---@field session EditorSession Global editor session API.
 
 -- ───────────────────────────────────────────────────────────────────────
--- Viewport Script (Logic & Subscene)
+-- Viewport Controller (The "Pilot")
 -- ───────────────────────────────────────────────────────────────────────
 
----@class ViewportScriptInstance<P, S>
----@field properties P Read-only access to the script's inspector properties.
+---@class ViewportControllerInstance<P, S>
+---@field properties P Read-only access to the controller's inspector properties.
 ---@field state S Persistent state table.
----@field viewport EditorViewport The viewport this instance belongs to.
----@field entities table<string, DuckEntity> Managed subscene entities registered by this script.
+---@field viewport Viewport The viewport this instance belongs to.
+---@field entities table<string, DuckEntity> Managed subscene entities registered by this controller.
 
 ---@generic P, S
----@class ViewportScriptBlueprint<P, S>
+---@class ViewportControllerBlueprint<P, S>
 ---@field schema? SchemaDefinition Metadata and property definitions.
----@field init? fun(self: ViewportScriptInstance<P, S>, ctx: ViewportContext) Called once when the viewport is created.
----@field onEnable? fun(self: ViewportScriptInstance<P, S>, ctx: ViewportContext) Called when the viewport becomes active.
----@field update? fun(self: ViewportScriptInstance<P, S>, dt: number, ctx: ViewportContext) Called every frame.
----@field onPropertyChanged? fun(self: ViewportScriptInstance<P, S>, props: P, prevProps: P, ctx: ViewportContext) Called when properties change.
----@field onDisable? fun(self: ViewportScriptInstance<P, S>, ctx: ViewportContext) Called when the viewport is deactivated.
----@field onDestroy? fun(self: ViewportScriptInstance<P, S>, ctx: ViewportContext) Called when the viewport is destroyed.
+---@field init? fun(self: ViewportControllerInstance<P, S>, ctx: ViewportContext) Called once when the viewport is initialized.
+---@field onEnable? fun(self: ViewportControllerInstance<P, S>, ctx: ViewportContext) Called when the controller becomes active.
+---@field update? fun(self: ViewportControllerInstance<P, S>, dt: number, ctx: ViewportContext) Called every frame.
+---@field onPropertyChanged? fun(self: ViewportControllerInstance<P, S>, props: P, prevProps: P, ctx: ViewportContext) Called when properties change.
+---@field onDestroy? fun(self: ViewportControllerInstance<P, S>, ctx: ViewportContext) Called when the viewport is destroyed.
 
----@alias ViewportModule<P, S> ViewportScriptBlueprint<P, S>
+---@alias ViewportControllerModule<P, S> ViewportControllerBlueprint<P, S>
 
 -- ───────────────────────────────────────────────────────────────────────
--- Viewport UI Plugin (UI & Shared Logic)
+-- Viewport Feature (The "Gadgets")
 -- ───────────────────────────────────────────────────────────────────────
 
----@class ViewportPluginInstance<P, S>
----@field properties P Read-only access to the plugin's properties.
+---@class ViewportFeatureInstance<P, S>
+---@field properties P Read-only access to the feature's properties.
 ---@field state S Persistent state table.
----@field viewport EditorViewport The viewport this plugin is registered to.
----@field entities table<string, DuckEntity> Managed subscene entities.
+---@field viewport Viewport The viewport this feature is attached to.
 
 ---@generic P, S
----@class ViewportPluginBlueprint<P, S>
+---@class ViewportFeatureBlueprint<P, S>
 ---@field schema? SchemaDefinition Metadata and property definitions.
----@field onEnable? fun(self: ViewportPluginInstance<P, S>, ctx: ViewportContext): (fun()|nil)
----@field update? fun(self: ViewportPluginInstance<P, S>, dt: number, ctx: ViewportContext)
----@field onPropertyChanged? fun(self: ViewportPluginInstance<P, S>, props: P, prevProps: P, ctx: ViewportContext)
----@field getUI? fun(self: ViewportPluginInstance<P, S>, ctx: ViewportContext): ViewportUIContribution[]|nil
----@field onPointerDown? fun(self: ViewportPluginInstance<P, S>, ev: any, ctx: ViewportContext): boolean|nil
----@field onPointerMove? fun(self: ViewportPluginInstance<P, S>, ev: any, ctx: ViewportContext)
----@field onPointerUp? fun(self: ViewportPluginInstance<P, S>, ev: any, ctx: ViewportContext)
+---@field onEnable? fun(self: ViewportFeatureInstance<P, S>, ctx: ViewportContext): (fun()|nil)
+---@field update? fun(self: ViewportFeatureInstance<P, S>, dt: number, ctx: ViewportContext)
+---@field onPropertyChanged? fun(self: ViewportFeatureInstance<P, S>, props: P, prevProps: P, ctx: ViewportContext)
+---@field getUI? fun(self: ViewportFeatureInstance<P, S>, ctx: ViewportContext): ViewportUIContribution|nil
+---@field onPointerDown? fun(self: ViewportFeatureInstance<P, S>, ev: any, ctx: ViewportContext): boolean|nil
+---@field onPointerMove? fun(self: ViewportFeatureInstance<P, S>, ev: any, ctx: ViewportContext)
+---@field onPointerUp? fun(self: ViewportFeatureInstance<P, S>, ev: any, ctx: ViewportContext)
 
----@alias ViewportPluginModule<P, S> ViewportPluginBlueprint<P, S>
+---@alias ViewportFeatureModule<P, S> ViewportFeatureBlueprint<P, S>
 
 -- ───────────────────────────────────────────────────────────────────────
 -- Viewport Base Types
 -- ───────────────────────────────────────────────────────────────────────
 
 ---@class ViewportUIContribution
----@field slot "toolbar"|"overlay"
----@field descriptor UIElementDescriptor|UIElementDescriptor[]
+---@field slot string E.g. "viewport:overlay:top-left", "viewport:toolbar:right"
+---@field descriptor UIElementDescriptor
 
----@class EditorViewport
+---@class Viewport
 ---@field id string
----@field type "game"|"scene"|"custom"
 ---@field cameraEntityId string|nil The active camera entity for this viewport.
-local EditorViewport = {}
+local Viewport = {}
 
 ---Spawns an editor-only entity in this viewport's scene.
 ---@param baseName string
 ---@param registryKey? string Optional key to register the entity into `self.entities[key]`.
 ---@return DuckEntity
-function EditorViewport:spawnEntity(baseName, registryKey) end
+function Viewport:spawnEntity(baseName, registryKey) end
 
----Registers a UI plugin for this viewport.
----@param plugin any
-function EditorViewport:registerPlugin(plugin) end
-
----Sets the main logic script for this viewport.
----@param blueprint any
-function EditorViewport:setScript(blueprint) end
+---Updates an internal property of the controller.
+---@param key string
+---@param value any
+function Viewport:setProperty(key, value) end

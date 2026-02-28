@@ -1,5 +1,5 @@
-import { EditorEngine } from '../../state/EditorEngine';
+import { EditorSession } from '../../session/EditorSession';
 
 export interface EditorBridgeContext {
-    editorEngine: EditorEngine;
+    editorSession: EditorSession;
 }

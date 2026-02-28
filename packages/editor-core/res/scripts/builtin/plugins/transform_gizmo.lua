@@ -1,4 +1,4 @@
----@type EditorPluginModule
+---@type EditorExtensionModule
 local plugin = {
     meta = {
         id = "builtin:transform-gizmo",
