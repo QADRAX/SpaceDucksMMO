@@ -10,6 +10,10 @@
 ---The global editor API table.
 editor = {}
 
+---@table __jsEditorApi
+---Low-level JS Bridge. Internal use ONLY.
+__jsEditorApi = {}
+
 -- ─── Scene Queries (Restricted in Game Mode) ────────────────────────
 
 ---Finds the first entity in the scene matching the given name.

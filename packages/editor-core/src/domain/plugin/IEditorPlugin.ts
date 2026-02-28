@@ -72,6 +72,12 @@ export type EditorPluginConfigField =
         defaultValue: string;
     };
 
+export type UIElementDescriptor = {
+    type: 'button' | 'toggle' | 'label' | 'row' | 'column';
+    props?: Record<string, any>;
+    children?: UIElementDescriptor[];
+};
+
 // ─── Plugin Metadata ────────────────────────────────────────────────────────
 
 export type EditorPluginCategory =

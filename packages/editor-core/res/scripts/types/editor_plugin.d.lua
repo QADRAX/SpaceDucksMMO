@@ -46,6 +46,7 @@
 ---@field setSelectedEntity fun(id: string)
 ---@field reparentEntity fun(childId: string, newParentId: string)
 ---@field setError fun(msg: string)
+---@field setConfig fun(key: string, value: any)
 ---@field onKeyDown fun(shortcut: string, handler: fun()): fun()
 
 ---@class EditorPluginModule

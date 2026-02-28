@@ -1,17 +1,11 @@
 import { LuaEngine } from 'wasmoon';
 import { LuaSandbox } from '@duckengine/core';
-import { IEditorPlugin, IEditorPluginRegistry, EditorPluginContext } from '../plugin/IEditorPlugin';
+import { IEditorPlugin, IEditorPluginRegistry, EditorPluginContext, UIElementDescriptor } from '../plugin/IEditorPlugin';
 import { EditorSystemScripts } from './generated/EditorScriptAssets';
 import { EditorBridgeContext } from './bridge/EditorBridgeContext';
 import { registerEditorApiBridge } from './bridge/EditorApiBridge';
 import { EditorEngine } from '../state/EditorEngine';
 
-// ─── UI Element Descriptor ─────────────────────────────────────────────────
-export type UIElementDescriptor = {
-    type: 'button' | 'toggle' | 'label' | 'row' | 'column';
-    props?: Record<string, any>;
-    children?: UIElementDescriptor[];
-};
 
 export type EditorSlotFill = {
     slot: string;
@@ -48,6 +42,10 @@ export class EditorScriptSystem {
 
         // Register TypeScript Bridges (sets __jsEditorApi)
         registerEditorApiBridge(this.engine!, ctx);
+
+        // Map core InputBridge (sets 'input' global)
+        const { registerInputBridge } = require('@duckengine/core');
+        registerInputBridge(this.engine!);
 
         // Load pre-compiled editor initialization (editor UI helpers, bridges, etc.)
         const editorInit = EditorSystemScripts['editor_init.lua'];

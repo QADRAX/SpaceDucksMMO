@@ -1,4 +1,4 @@
-import { Entity, IScene, SceneChangeEvent } from '@duckengine/core';
+import { Entity, IScene, SceneChangeEvent, DefaultEcsComponentFactory, IEcsComponentFactory } from '@duckengine/core';
 import { IEditorPluginRegistry } from '../plugin/IEditorPlugin';
 import { EditorViewport, ViewportType } from '../viewport/EditorViewport';
 
@@ -7,6 +7,7 @@ export type GameState = 'stopped' | 'playing' | 'paused';
 export interface EditorEngineOptions {
     scene: IScene;
     registry: IEditorPluginRegistry;
+    componentFactory?: IEcsComponentFactory;
 }
 
 export class EditorEngine {
@@ -14,6 +15,7 @@ export class EditorEngine {
     private _selectedEntityId: string | null = null;
     private _scene: IScene;
     private _registry: IEditorPluginRegistry;
+    private _componentFactory: IEcsComponentFactory;
 
     // Viewport Management
     private _viewports = new Map<string, EditorViewport>();
@@ -25,6 +27,11 @@ export class EditorEngine {
     constructor(options: EditorEngineOptions) {
         this._scene = options.scene;
         this._registry = options.registry;
+        this._componentFactory = options.componentFactory || new DefaultEcsComponentFactory();
+    }
+
+    get componentFactory(): IEcsComponentFactory {
+        return this._componentFactory;
     }
 
     // --- Viewports API ---
@@ -150,6 +157,10 @@ export class EditorEngine {
         }
     }
 
+    public setConfig(pluginId: string, key: string, value: any) {
+        this._registry.setConfig(pluginId, key, value);
+    }
+
     // --- Lifecycle ---
 
     public tick(dt: number, ctx: any) {
@@ -157,6 +168,11 @@ export class EditorEngine {
             if (plugin.enabled && plugin.onTick) {
                 plugin.onTick(dt, ctx);
             }
+        }
+
+        // Update viewports (and their internal plugins)
+        for (const viewport of this._viewports.values()) {
+            viewport.update(dt);
         }
     }
 }

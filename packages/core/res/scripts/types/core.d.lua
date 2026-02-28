@@ -141,6 +141,12 @@
 ---| "postProcess"             # Post-processing pipeline settings.
 ---| "script"                  # Lua script component (slot container).
 ---| "metadata"                # Arbitrary metadata key-value store.
+---| "firstPersonMove"        # Kinematic first-person movement.
+---| "firstPersonPhysicsMove" # Physics-based first-person movement.
+---| "mouseLook"              # Mouse-based camera rotation.
+---| "lookAtEntity"           # Automatically look at another entity.
+---| "lookAtPoint"            # Automatically look at a world point.
+---| "orbit"                  # Orbit around a target entity.
 
 -- ───────────────────────────────────────────────────────────────────────
 -- Orbit Plane Enum

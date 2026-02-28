@@ -128,6 +128,12 @@ function DuckEntity:applyForce(force) end
 
 ---Adds a new ECS component to this entity.
 ---If the entity already has a component of this type, this is a no-op.
+---@overload fun(self: DuckEntity, type: "mouseLook", params?: MouseLookProps): boolean
+---@overload fun(self: DuckEntity, type: "firstPersonMove", params?: FirstPersonMoveProps): boolean
+---@overload fun(self: DuckEntity, type: "firstPersonPhysicsMove", params?: FirstPersonPhysicsMoveProps): boolean
+---@overload fun(self: DuckEntity, type: "lookAtEntity", params?: LookAtEntityProps): boolean
+---@overload fun(self: DuckEntity, type: "lookAtPoint", params?: LookAtPointProps): boolean
+---@overload fun(self: DuckEntity, type: "orbit", params?: OrbitCameraProps): boolean
 ---@param type ComponentType The component type to add.
 ---@param params? table Initial properties for the component (e.g., `{ intensity = 2, color = "red" }`).
 ---@return boolean success `true` if the component was added successfully.
