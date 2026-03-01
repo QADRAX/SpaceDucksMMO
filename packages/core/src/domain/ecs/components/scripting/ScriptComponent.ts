@@ -1,6 +1,7 @@
 import { Component } from "../../core/Component";
 import type { ComponentMetadata } from "../../core/ComponentMetadata";
 import type { ScriptSlot } from "./ScriptSlot";
+import { createScriptSlot } from "./ScriptSlot";
 
 export class ScriptComponent extends Component {
     readonly type = "script";
@@ -27,10 +28,12 @@ export class ScriptComponent extends Component {
         }
     }
 
-    addSlot(slot: ScriptSlot) {
+    addSlot(scriptId: string): string {
+        const slot = createScriptSlot(scriptId);
         this.scripts.push(slot);
         this.reorderSlots();
         this.notifyChanged();
+        return slot.slotId;
     }
 
     removeSlot(slotId: string) {
@@ -43,7 +46,10 @@ export class ScriptComponent extends Component {
     }
 
     reorderSlots() {
-        this.scripts.sort((a, b) => a.executionOrder - b.executionOrder);
+        this.scripts.sort((a, b) => {
+            const orderDiff = a.executionOrder - b.executionOrder;
+            return orderDiff !== 0 ? orderDiff : a.scriptId.localeCompare(b.scriptId);
+        });
     }
 
     update(dt: number): void {

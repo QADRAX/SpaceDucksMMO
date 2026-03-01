@@ -36,7 +36,6 @@ export { default as WebCoreTextureCatalogService } from './infrastructure/assets
 // Moved to @duckengine/editor-core
 
 export { EditorScripts } from './domain/scripting/generated/ScriptAssets';
-export { LuaSandbox } from './domain/scripting/LuaSandbox';
 
 // ── Logging ───────────────────────────────────────────────────────────────
 export { CoreLogger, type LogMessage, type LogListener, type LogSeverity } from './domain/logging/CoreLogger';

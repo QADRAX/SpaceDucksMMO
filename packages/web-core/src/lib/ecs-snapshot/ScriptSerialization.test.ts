@@ -8,21 +8,17 @@ describe('ScriptComponent Serialization', () => {
         const e1 = new Entity('e1');
         const sc = new ScriptComponent();
 
-        sc.addSlot({
-            slotId: 'slot-uuid-1',
-            scriptId: 'builtin://player_move.lua',
-            enabled: true,
-            executionOrder: 0,
-            properties: { speed: 10, target: 'e2' }
-        });
+        const slotId1 = sc.addSlot('builtin://player_move.lua');
+        const slot1 = sc.getSlots()[0];
+        slot1.enabled = true;
+        slot1.executionOrder = 0;
+        slot1.properties = { speed: 10, target: 'e2' };
 
-        sc.addSlot({
-            slotId: 'slot-uuid-2',
-            scriptId: 'builtin://camera_orbit.lua',
-            enabled: false,
-            executionOrder: 1,
-            properties: { distance: 5 }
-        });
+        const slotId2 = sc.addSlot('builtin://camera_orbit.lua');
+        const slot2 = sc.getSlots()[1];
+        slot2.enabled = false;
+        slot2.executionOrder = 1;
+        slot2.properties = { distance: 5 };
 
         e1.addComponent(sc as any);
 

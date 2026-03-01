@@ -92,7 +92,7 @@ export class ScriptInstanceManager {
             const hooks = [
                 'init', 'onEnable', 'earlyUpdate', 'update', 'lateUpdate',
                 'onCollisionEnter', 'onCollisionExit', 'onDisable', 'onDestroy',
-                'onPropertyChanged'
+                'onDrawGizmos', 'onPropertyChanged'
             ] as const;
 
             for (const hook of hooks) {

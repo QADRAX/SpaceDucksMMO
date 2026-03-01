@@ -97,13 +97,12 @@ export class SceneTestScaffold {
     public spawnScriptedEntity(id: string, scriptId: string, properties: Record<string, any> = {}): Entity {
         const entity = new Entity(id);
         const scriptComp = new ScriptComponent();
-        scriptComp.addSlot({
-            slotId: `slot_${id}`,
-            scriptId: scriptId,
-            enabled: true,
-            properties: properties,
-            executionOrder: 0
-        });
+        const slotId = scriptComp.addSlot(scriptId);
+        // Set properties if provided
+        if (Object.keys(properties).length > 0) {
+            const slot = scriptComp.getSlots()[0];
+            slot.properties = properties;
+        }
         entity.addComponent(scriptComp as any);
         this.scene.addEntity(entity);
 

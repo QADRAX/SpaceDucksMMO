@@ -17,6 +17,7 @@ export function registerTimeBridge(engine: LuaEngine) {
         now: () => Date.now() / 1000
     };
 
+    engine.global.set("Time", timeApi);
     engine.global.set("time", timeApi);
 
     return {

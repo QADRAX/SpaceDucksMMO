@@ -25,27 +25,23 @@ function spawnWaypointEntity(
     const comp = new ScriptComponent();
 
     // Slot 0 — waypoint_path (orchestrator)
-    comp.addSlot({
-        slotId: `slot_${id}_wp`,
-        scriptId: "builtin://waypoint_path.lua",
-        enabled: true,
-        properties: waypointProps,
-        executionOrder: 0
-    });
+    const slotId1 = comp.addSlot("builtin://waypoint_path.lua");
+    const slot1 = comp.getSlots().find(s => s.slotId === slotId1)!;
+    slot1.enabled = true;
+    slot1.properties = waypointProps;
+    slot1.executionOrder = 0;
 
     // Slot 1 — move_to_point (motion driver)
-    comp.addSlot({
-        slotId: `slot_${id}_mtp`,
-        scriptId: "builtin://move_to_point.lua",
-        enabled: true,
-        properties: {
-            targetPoint: [0, 0, 0],
-            duration: 1,
-            easing: "cubicInOut",
-            delay: 0
-        },
-        executionOrder: 1
-    });
+    const slotId2 = comp.addSlot("builtin://move_to_point.lua");
+    const slot2 = comp.getSlots().find(s => s.slotId === slotId2)!;
+    slot2.enabled = true;
+    slot2.properties = {
+        targetPoint: [0, 0, 0],
+        duration: 1,
+        easing: "cubicInOut",
+        delay: 0
+    };
+    slot2.executionOrder = 1;
 
     entity.addComponent(comp as any);
     scaffold.scene.addEntity(entity);

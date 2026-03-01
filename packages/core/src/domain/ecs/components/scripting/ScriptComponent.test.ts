@@ -1,5 +1,4 @@
 import { ScriptComponent } from "./ScriptComponent";
-import { createScriptSlot } from "./ScriptSlot";
 
 describe("ScriptComponent", () => {
     it("initializes with empty slots array if no params provided", () => {
@@ -9,9 +8,9 @@ describe("ScriptComponent", () => {
 
     it("adds slots and orders them by executionOrder", () => {
         const comp = new ScriptComponent();
-        comp.addSlot(createScriptSlot("scriptC", {}, 10));
-        comp.addSlot(createScriptSlot("scriptA", {}, 0));
-        comp.addSlot(createScriptSlot("scriptB", {}, 5));
+        const slotId1 = comp.addSlot("scriptC");
+        const slotId2 = comp.addSlot("scriptA");
+        const slotId3 = comp.addSlot("scriptB");
 
         const slots = comp.getSlots();
         expect(slots.length).toBe(3);
@@ -22,16 +21,14 @@ describe("ScriptComponent", () => {
 
     it("removes a slot by slotId", () => {
         const comp = new ScriptComponent();
-        const slot1 = createScriptSlot("s1", {}, 0);
-        const slot2 = createScriptSlot("s2", {}, 0);
-        comp.addSlot(slot1);
-        comp.addSlot(slot2);
+        const slotId1 = comp.addSlot("s1");
+        const slotId2 = comp.addSlot("s2");
 
         expect(comp.getSlots().length).toBe(2);
-        comp.removeSlot(slot1.slotId);
+        comp.removeSlot(slotId1);
 
         expect(comp.getSlots().length).toBe(1);
-        expect(comp.getSlots()[0].slotId).toBe(slot2.slotId);
+        expect(comp.getSlots()[0].slotId).toBe(slotId2);
     });
 
     it("update is a no-op", () => {

@@ -170,13 +170,11 @@ export function deserializeEcsTreeSnapshotToEntities(
                 }
 
                 // Push new slot using the data from the legacy component as properties
-                sc.addSlot({
-                    slotId: crypto.randomUUID(), // Assume crypto is available or we generate a simple UUID
-                    scriptId: scriptId,
-                    enabled: true,
-                    executionOrder: sc.scripts.length, // Append to end
-                    properties: coerceComponentDataToRecord(compSnap.data)
-                });
+                const slotId = sc.addSlot(scriptId);
+                const slot = sc.getSlots()[sc.getSlots().length - 1];
+                slot.enabled = true;
+                slot.executionOrder = sc.getSlots().length - 1; // Append to end
+                slot.properties = coerceComponentDataToRecord(compSnap.data);
                 continue;
             }
             // ----------------------------------

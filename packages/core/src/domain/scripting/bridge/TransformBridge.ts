@@ -83,6 +83,7 @@ export function registerTransformBridge(engine: LuaEngine, ctx: BridgeContext) {
             return { x: u.x, y: u.y, z: u.z };
         }
     };
+    engine.global.set("Transform", transformApi);
     engine.global.set("transform", transformApi);
 }
 

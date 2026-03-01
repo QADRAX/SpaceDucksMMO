@@ -36,6 +36,7 @@ export function registerPhysicsBridge(engine: LuaEngine) {
             return null;
         }
     };
+    engine.global.set("Physics", physicsApi);
     engine.global.set("physics", physicsApi);
 }
 

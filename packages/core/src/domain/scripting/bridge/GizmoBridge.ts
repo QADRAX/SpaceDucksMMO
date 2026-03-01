@@ -40,6 +40,7 @@ export function registerGizmoBridge(engine: LuaEngine, ctx: BridgeContext) {
             }
         }
     };
-    engine.global.set("gizmos", gizmoApi);
+    engine.global.set("Gizmo", gizmoApi);
+    engine.global.set("gizmo", gizmoApi);
 }
 

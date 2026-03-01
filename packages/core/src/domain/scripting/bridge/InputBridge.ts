@@ -21,5 +21,6 @@ export function registerInputBridge(engine: LuaEngine) {
             getInputServices().mouse.exitPointerLock();
         }
     };
+    engine.global.set("Input", inputApi);
     engine.global.set("input", inputApi);
 }

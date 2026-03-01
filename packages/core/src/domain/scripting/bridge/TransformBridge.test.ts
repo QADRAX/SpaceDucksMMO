@@ -11,7 +11,7 @@ describe("TransformBridge", () => {
         mockEngine = {
             global: {
                 set: jest.fn((key, value) => {
-                    if (key === "transform") transformApi = value;
+                    if (key === "Transform") transformApi = value;
                 })
             }
         };
@@ -26,7 +26,7 @@ describe("TransformBridge", () => {
 
     it("registers transform api to global engine", () => {
         registerTransformBridge(mockEngine, mockCtx);
-        expect(mockEngine.global.set).toHaveBeenCalledWith("transform", expect.any(Object));
+        expect(mockEngine.global.set).toHaveBeenCalledWith("Transform", expect.any(Object));
         expect(transformApi).toBeDefined();
     });
 

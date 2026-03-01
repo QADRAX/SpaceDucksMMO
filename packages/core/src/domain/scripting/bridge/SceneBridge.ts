@@ -133,6 +133,7 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
             return ent ? (engine.global as any).get('__WrapEntity')(ent.id) : null;
         }
     };
+    engine.global.set("Scene", sceneApi);
     engine.global.set("scene", sceneApi);
 }
 
@@ -155,6 +156,7 @@ export function registerEditorBridge(engine: LuaEngine, ctx: BridgeContext) {
             return !!ctx.getEntity(id);
         }
     };
+    engine.global.set("Editor", editorApi);
     engine.global.set("editor", editorApi);
 }
 

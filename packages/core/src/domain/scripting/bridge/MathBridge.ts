@@ -1,9 +1,6 @@
 import type { LuaEngine } from "wasmoon";
 import { SystemScripts } from "../generated/ScriptAssets";
 
-/**
- * Exposes mathematical utilities and easing functions to the Lua environment.
- */
 export function registerMathBridge(engine: LuaEngine) {
     const mathApi = {
         lerp: (a: number, b: number, t: number) => a + (b - a) * t,
@@ -58,6 +55,7 @@ export function registerMathBridge(engine: LuaEngine) {
             circleIn: (t: number) => 1 - Math.sqrt(1 - Math.pow(t, 2)),
             circleOut: (t: number) => Math.sqrt(1 - Math.pow(t - 1, 2)),
 
+
             // Elastic
             elasticIn: (t: number) => {
                 if (t === 0 || t === 1) return t;
@@ -110,6 +108,10 @@ export function registerMathBridge(engine: LuaEngine) {
     };
 
     engine.global.set("math_ext", mathApi);
-    // Shortcut for ease of use in Lua
-    engine.doStringSync(SystemScripts["math_ext.lua"]);
+    engine.global.set("Math", mathApi);
+
+    const mathExtSource = SystemScripts["math_ext.lua"];
+    if (mathExtSource) {
+        engine.doStringSync(mathExtSource);
+    }
 }

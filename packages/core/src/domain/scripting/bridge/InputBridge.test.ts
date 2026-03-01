@@ -9,7 +9,7 @@ describe("InputBridge", () => {
         mockEngine = {
             global: {
                 set: jest.fn((key, value) => {
-                    if (key === "input") inputApi = value;
+                    if (key === "Input") inputApi = value;
                 })
             }
         };
@@ -17,7 +17,7 @@ describe("InputBridge", () => {
 
     it("registers input api", () => {
         registerInputBridge(mockEngine);
-        expect(mockEngine.global.set).toHaveBeenCalledWith("input", expect.any(Object));
+        expect(mockEngine.global.set).toHaveBeenCalledWith("Input", expect.any(Object));
     });
 
     it("queries keyboard state", () => {

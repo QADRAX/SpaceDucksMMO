@@ -13,7 +13,7 @@ describe("SceneBridge", () => {
         mockEngine = {
             global: {
                 set: jest.fn((key, value) => {
-                    if (key === "scene") sceneApi = value;
+                    if (key === "Scene") sceneApi = value;
                 })
             }
         };
@@ -34,7 +34,7 @@ describe("SceneBridge", () => {
 
     it("registers scene api", () => {
         registerSceneBridge(mockEngine, mockCtx);
-        expect(mockEngine.global.set).toHaveBeenCalledWith("scene", expect.any(Object));
+        expect(mockEngine.global.set).toHaveBeenCalledWith("Scene", expect.any(Object));
         expect(sceneApi).toBeDefined();
         expect(sceneApi.fireEvent).toBeDefined();
         expect(sceneApi.findEntityByName).toBeUndefined(); // Verify it was removed
@@ -49,7 +49,7 @@ describe("SceneBridge", () => {
                     return null;
                 }),
                 set: jest.fn((key, value) => {
-                    if (key === "editor") editorApi = value;
+                    if (key === "Editor") editorApi = value;
                 })
             }
         };
@@ -57,7 +57,7 @@ describe("SceneBridge", () => {
         const { registerEditorBridge } = require("./SceneBridge");
         registerEditorBridge(mockEngineEditor, mockCtx);
 
-        expect(mockEngineEditor.global.set).toHaveBeenCalledWith("editor", expect.any(Object));
+        expect(mockEngineEditor.global.set).toHaveBeenCalledWith("Editor", expect.any(Object));
         expect(editorApi).toBeDefined();
 
         const e = new Entity("e1");
