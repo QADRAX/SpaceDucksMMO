@@ -35,6 +35,7 @@ return {
         local delay  = props.delay
         local speed  = props.speed
         local offset = props.offset
+        if not offset then return end
 
 
 

@@ -29,6 +29,7 @@ return {
         local target   = props.targetEntityId
         local strength = props.strength
         local offset   = props.offset
+        if not offset then return end
 
 
         -- 1. Calculate desired world position

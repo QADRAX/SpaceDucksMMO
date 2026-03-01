@@ -48,6 +48,7 @@ return {
         local duration = math.max(0.01, props.duration)
         local ease     = getEasing(props.easing)
         local offset   = props.offset
+        if not offset then return end
 
 
 

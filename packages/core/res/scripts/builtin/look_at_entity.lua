@@ -27,7 +27,8 @@ return {
         local tp = target:getPosition()
         if not tp then return end
 
-        local offset    = props.lookAtOffset
+        local offset = props.lookAtOffset
+        if not offset then return end
         local offsetVec = math.vec3(offset[1], offset[2], offset[3])
 
 
