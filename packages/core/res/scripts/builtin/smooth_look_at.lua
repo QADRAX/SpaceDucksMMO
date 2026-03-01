@@ -47,22 +47,18 @@ return {
     ---@param self ScriptInstance<SmoothLookAtProps, SmoothLookAtState>
     ---@param dt number
     update = function(self, dt)
-        -- targetEntityId is guaranteed valid by schema.requires
-        local props  = self.properties or {}
+        local props  = self.properties
         local target = props.targetEntityId
-
-        local props  = self.properties or {}
         local speed  = props.speed or 3
         local ease   = getEasing(props.easing or "sineOut")
-        local offset = props.offset or { 0, 0, 0 }
+        local offset = props.offset
 
         local tp     = target:getPosition()
         if not tp then return end
         local cur            = self:getPosition()
 
         -- Direction from self to target+offset
-        local offsetVec      = math.vec3(offset[1], offset[2], offset[3])
-        local desired        = tp + offsetVec
+        local desired        = offset and (tp + offset) or tp
         local dir            = desired - cur
 
         -- Calculate desired yaw and pitch from direction

@@ -13,7 +13,8 @@
   },
   "scripts": {
     "build:scripts": "tsx scripts/generate-scripts.ts",
-    "build": "npm run build:scripts && tsc -b tsconfig.json",
+    "build:test-scripts": "tsx scripts/generate-test-scripts.ts",
+    "build": "npm run build:scripts && npm run build:test-scripts && tsc -b tsconfig.json",
     "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
   },
   "dependencies": {

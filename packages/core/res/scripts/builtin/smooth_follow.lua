@@ -55,8 +55,7 @@ return {
         -- Calculate goal position (target + offset)
         local tp = target:getPosition()
         if not tp then return end
-        local offsetVec = math.vec3(offset[1], offset[2], offset[3])
-        local goal      = tp + offsetVec
+        local goal      = tp + offset
 
         -- Detect if goal changed significantly → restart easing
         local last      = self.state.lastGoal

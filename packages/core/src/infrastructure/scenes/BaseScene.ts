@@ -220,9 +220,12 @@ export abstract class BaseScene implements IScene {
       this.physicsSystem?.addEntity(ent);
     }
 
-    this.scriptSystem = new ScriptSystem(this.componentFactory, false, this.assetResolver, this.collisionEvents, undefined, gizmoRenderer);
+    if (!this.scriptSystem) {
+      this.scriptSystem = new ScriptSystem(this.componentFactory, false, this.assetResolver, this.collisionEvents, undefined, gizmoRenderer);
+    }
     this.scriptSystem.setup(this.entities, this);
   }
+
 
   private initializePhysics(): void {
     try {

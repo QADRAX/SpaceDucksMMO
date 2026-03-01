@@ -19,19 +19,16 @@ return {
     ---@param self ScriptInstance<LookAtEntityProps, any>
     ---@param dt number
     update = function(self, dt)
-        -- targetEntityId is guaranteed valid by schema.requires
         local props  = self.properties
         local target = props.targetEntityId
         if not target then return end
+
 
         local tp = target:getPosition()
         if not tp then return end
 
         local offset = props.lookAtOffset
         if not offset then return end
-        local offsetVec = math.vec3(offset[1], offset[2], offset[3])
-
-
-        self:lookAt(tp + offsetVec)
+        self:lookAt(tp + offset)
     end
 }

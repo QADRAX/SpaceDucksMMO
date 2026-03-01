@@ -38,7 +38,7 @@ describe("TransformBridge", () => {
 
         const selfCtx = { id: "ent-1", slotId: "s1", state: {}, getComponent: jest.fn() };
 
-        transformApi.setPosition(selfCtx, 10, 20, 30);
+        transformApi.setPosition(selfCtx, { x: 10, y: 20, z: 30 });
         expect(ent.transform.localPosition).toEqual({ x: 10, y: 20, z: 30 });
 
         const p = transformApi.getPosition(selfCtx);

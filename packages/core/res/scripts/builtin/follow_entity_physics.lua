@@ -5,10 +5,7 @@
 -- instead of teleporting, making it interact with obstacles naturally.
 -- =======================================================================
 
----@class FollowEntityPhysicsState
----@field flyModeEnabled boolean
-
----@type ScriptBlueprint<FollowEntityPhysicsProps, FollowEntityPhysicsState>
+---@type ScriptBlueprint<FollowEntityPhysicsProps, any>
 return {
     schema = {
         name = "Follow Entity (Physics)",
@@ -21,7 +18,7 @@ return {
         }
     },
 
-    ---@param self ScriptInstance<FollowEntityPhysicsProps, FollowEntityPhysicsState>
+    ---@param self ScriptInstance<FollowEntityPhysicsProps, any>
     ---@param dt number
     update = function(self, dt)
         -- targetEntityId is guaranteed valid by schema.required flag
@@ -36,8 +33,7 @@ return {
         local tp = target:getPosition()
         if not tp then return end
 
-        local offsetVec = math.vec3(offset[1], offset[2], offset[3])
-        local desired   = tp + offsetVec
+        local desired   = tp + offset
 
         -- 2. Get direction and distance to desired position
         local cur       = self:getPosition()

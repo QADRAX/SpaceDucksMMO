@@ -30,6 +30,8 @@ export class LuaSelfFactory {
             slotId: slot.slotId,
             state,
             scripts,
+            properties: slot.properties,
+
 
 
             getComponent: (type: string) => {

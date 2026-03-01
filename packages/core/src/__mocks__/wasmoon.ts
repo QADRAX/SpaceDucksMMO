@@ -6,6 +6,7 @@ export class LuaFactory {
                 setTimeout: jest.fn(),
                 address: 12345,
                 set: jest.fn(),
+                get: jest.fn().mockReturnValue(undefined),
             },
             doStringSync: jest.fn().mockImplementation((source: string) => {
                 // If it's the sandbox initialization string, return nothing

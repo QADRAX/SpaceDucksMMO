@@ -27,7 +27,7 @@ export class LuaSandbox {
 
     constructor(private eventBus?: SceneEventBus) { }
 
-    public async createEngine(): Promise<LuaEngine> {
+    public async createEngine(systemOverrides: Record<string, string> = {}): Promise<LuaEngine> {
         if (!this.factory) {
             const { LuaFactory } = await import('wasmoon');
             this.factory = new LuaFactory();
@@ -53,9 +53,9 @@ export class LuaSandbox {
         engine.global.set('log', logApi);
 
         // Load pre-compiled system initialization (Entity/Component metatables, closures, etc.)
-        const sandboxInit = SystemScripts['sandbox_init.lua'];
+        const sandboxInit = systemOverrides['sandbox_init.lua'] || SystemScripts['sandbox_init.lua'];
         if (!sandboxInit) {
-            throw new Error("sandbox_init.lua not found in SystemScripts. Ensure it is pre-compiled.");
+            throw new Error("sandbox_init.lua not found. Ensure it is pre-compiled or provided as override.");
         }
         engine.doStringSync(sandboxInit);
 
@@ -82,8 +82,13 @@ export class LuaSandbox {
             throw new Error("Lua script must return a table containing lifecycle hooks");
         }
 
-        const instance: LuaScriptInstance = {};
+        const instance: LuaScriptInstance & { schema?: any } = {};
+        if (result.schema) {
+            instance.schema = result.schema;
+        }
+
         const hooks = [
+
             'init', 'onEnable', 'earlyUpdate', 'update', 'lateUpdate',
             'onCollisionEnter', 'onCollisionExit', 'onDisable', 'onDestroy',
             'onPropertyChanged'

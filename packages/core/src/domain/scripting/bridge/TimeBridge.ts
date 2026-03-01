@@ -5,8 +5,10 @@ export function registerTimeBridge(engine: LuaEngine) {
 
     const timeApi = {
         getDelta: () => currentDt,
-        getTime: () => Date.now() / 1000
+        getTime: () => Date.now() / 1000,
+        now: () => Date.now() / 1000
     };
+
     engine.global.set("time", timeApi);
 
     return {

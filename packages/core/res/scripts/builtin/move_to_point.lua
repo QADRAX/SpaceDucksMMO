@@ -19,7 +19,6 @@ end
 ---@field startPos       Vec3?
 ---@field elapsed        number
 ---@field active         boolean
----@field lastGoal       Vec3?
 
 ---@type ScriptBlueprint<MoveToPointProps, MoveToPointState>
 return {
@@ -78,13 +77,10 @@ return {
         local sp     = self.state.startPos
         if not sp then return end
 
-        local lg = math.vec3(target[1], target[2], target[3])
-        self.state.lastGoal = lg
-
         self:setPosition(math.vec3(
-            math.ext.lerp(sp.x, lg.x, t),
-            math.ext.lerp(sp.y, lg.y, t),
-            math.ext.lerp(sp.z, lg.z, t)
+            math.ext.lerp(sp.x, target.x, t),
+            math.ext.lerp(sp.y, target.y, t),
+            math.ext.lerp(sp.z, target.z, t)
         ))
     end
 }

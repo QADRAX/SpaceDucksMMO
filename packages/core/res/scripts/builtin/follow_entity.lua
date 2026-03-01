@@ -32,6 +32,7 @@ return {
     update = function(self, dt)
         local props  = self.properties
         local target = props.targetEntityId
+        if not target then return end
         local delay  = props.delay
         local speed  = props.speed
         local offset = props.offset
@@ -57,8 +58,7 @@ return {
         end
 
         -- 4. Smoothly interpolate towards delayed target + offset
-        local offsetVec = math.vec3(offset[1], offset[2], offset[3])
-        local desired   = targetPos + offsetVec
+        local desired   = targetPos + offset
 
         local cur       = self:getPosition()
         local t         = math.min(1, speed * (dt / 1000))

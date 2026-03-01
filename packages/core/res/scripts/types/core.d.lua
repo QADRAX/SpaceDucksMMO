@@ -89,7 +89,7 @@
 ---| "number"    # A numeric value (rendered as slider/input in inspector).
 ---| "string"    # A text value.
 ---| "boolean"   # A true/false toggle.
----| "vec3"      # A 3-component vector { x, y, z } (rendered as 3 inputs).
+---| "vec3"      # A 3-component vector `{x, y, z}` (rendered as 3 inputs). Auto-hydrated to `Vec3` with full operator and method support (`:clone()`, `:length()`, `+`, `-`, etc.).
 ---| "entity"    # An entity reference (rendered as entity picker). Auto-hydrated to DuckEntity.
 ---| "component" # Target entity's Component reference. Auto-hydrated to proxy. Needs `componentType`.
 ---| "material"  # A material resource reference (rendered as material picker).
