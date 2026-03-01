@@ -1,4 +1,5 @@
-import { EditorSession } from '../../session/EditorSession';
+import { EditorSession, TransformData } from '../../session/EditorSession';
+import { EditorExtensionContext } from '../../extension/IEditorExtension';
 import { LuaEngine } from 'wasmoon';
 
 /**
@@ -9,9 +10,7 @@ export const createEditorApiBridge = (ctx: { editorSession: EditorSession }) => 
         // --- Global Session API ---
         gameState: () => ctx.editorSession.gameState,
         selectedEntityId: () => ctx.editorSession.selectedEntityId,
-
-        setGameState: (state: any) => ctx.editorSession.setGameState(state, ctx),
-        setSelectedEntity: (id: any) => ctx.editorSession.setSelectedEntity(id, ctx),
+        setSelectedEntity: (id: string | null) => ctx.editorSession.setSelectedEntity(id, ctx as any),
 
         // --- Entity Queries ---
         getEntity: (id: string) => {
@@ -23,8 +22,13 @@ export const createEditorApiBridge = (ctx: { editorSession: EditorSession }) => 
             return e ? { id: e.id } : null;
         },
 
+        // --- Granular Entity Access ---
+        getTransform: (id: string) => ctx.editorSession.getTransform(id),
+        setTransform: (id: string, transform: Partial<TransformData>) => ctx.editorSession.setTransform(id, transform),
+        getComponentData: (id: string, type: string) => ctx.editorSession.getComponentData(id, type),
+        hasComponent: (id: string, type: string) => ctx.editorSession.hasComponent(id, type),
         getEntityProperty: (id: string, key: string) => ctx.editorSession.getEntityProperty(id, key),
-        setEntityProperty: (id: string, key: string, value: any) => ctx.editorSession.setEntityProperty(id, key, value),
+        setEntityProperty: (id: string, key: string, value: unknown) => ctx.editorSession.setEntityProperty(id, key, value),
 
         // --- Entity Operations ---
         createEntity: (parentId?: string) => ctx.editorSession.createEntity(parentId).id,
@@ -54,7 +58,13 @@ export const createEditorApiBridge = (ctx: { editorSession: EditorSession }) => 
                 const entity = viewport.spawnEditorEntity(baseName);
                 return entity.id;
             },
-            setProperty: (viewportId: string, key: string, value: any) => {
+            getViewportProperty: (viewportId: string, key: string) => {
+                return ctx.editorSession.getViewportProperty(viewportId, key);
+            },
+            setViewportProperty: (viewportId: string, key: string, value: unknown) => {
+                ctx.editorSession.setViewportProperty(viewportId, key, value);
+            },
+            setProperty: (viewportId: string, key: string, value: unknown) => {
                 const viewport = ctx.editorSession.getViewport(viewportId);
                 viewport?.setProperty(key, value);
             },

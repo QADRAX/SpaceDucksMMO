@@ -26,7 +26,7 @@ return {
         if vp.cameraEntityId then
             local cam = ctx.session:getEntity(vp.cameraEntityId)
             if cam then
-                local p = cam:getPosition()
+                local p = cam.transform.position
                 camPosText = string.format("X: %.2f Y: %.2f Z: %.2f", p.x, p.y, p.z)
             end
         end

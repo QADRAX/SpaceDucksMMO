@@ -1,0 +1,11 @@
+---@meta
+-- ═══════════════════════════════════════════════════════════════════════
+-- DuckEngine Lua API — Editor UI
+-- ═══════════════════════════════════════════════════════════════════════
+
+---A declarative description of a UI element for slot-based composition.
+---Used by both Editor Extensions and Viewport Features.
+---@class UIElementDescriptor
+---@field type 'button' | 'toggle' | 'label' | 'row' | 'column' The type of UI component.
+---@field props table<string, any> Properties/attributes for the component (e.g., text, onClick).
+---@field children? UIElementDescriptor[] Optional nested elements for containers.

@@ -1,15 +1,18 @@
 import { EditorSession } from '../domain/session/EditorSession';
 import { EditorScriptSystem } from '../domain/scripting/EditorScriptSystem';
-import { IEditorExtensionRegistry } from '../domain/extension/IEditorExtension';
+import { IEditorExtensionRegistry, IEditorExtension } from '../domain/extension/IEditorExtension';
 import { Entity, IScene, CoreLogger } from '@duckengine/core';
 
 // Mock Registry
 class MockRegistry implements IEditorExtensionRegistry {
-    extensions: any[] = [];
+    extensions: IEditorExtension[] = [];
     register(p: any) { this.extensions.push(p); }
     unregister(id: string) { this.extensions = this.extensions.filter(p => p.meta.id !== id); }
-    setEnabled(id: string, enabled: boolean) { }
-    setConfig(id: string, config: any) { }
+    setEnabled(id: string, enabled: boolean) {
+        const ext = this.extensions.find(e => e.meta.id === id);
+        if (ext) ext.enabled = enabled;
+    }
+    setConfig(id: string, key: string, value: any) { }
 }
 
 // Mock Scene
@@ -26,6 +29,7 @@ class MockScene implements IScene {
     teardown() { }
     setActiveCamera() { }
     getActiveCamera() { return null; }
+    reparentEntity(childId: string, parentId: string | null) { }
 }
 
 async function runTest() {

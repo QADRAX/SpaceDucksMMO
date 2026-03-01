@@ -1,5 +1,5 @@
 import { Entity, IScene, DefaultEcsComponentFactory, IEcsComponentFactory } from '@duckengine/core';
-import { IEditorExtensionRegistry } from '../extension/IEditorExtension';
+import { IEditorExtensionRegistry, EditorExtensionContext } from '../extension/IEditorExtension';
 import { Viewport } from '../viewport/Viewport';
 import { ViewportBlueprint } from '../viewport/ViewportBlueprint';
 
@@ -18,6 +18,15 @@ export interface EditorSessionOptions {
     registry: IEditorExtensionRegistry;
     /** Optional factory for creating ECS components. */
     componentFactory?: IEcsComponentFactory;
+}
+
+/**
+ * Structured transform data for the bridge.
+ */
+export interface TransformData {
+    position: { x: number; y: number; z: number };
+    rotation: { x: number; y: number; z: number };
+    scale: { x: number; y: number; z: number };
 }
 
 /**
@@ -125,6 +134,21 @@ export class EditorSession {
         return Array.from(this._viewports.values());
     }
 
+    public getViewportProperty(id: string, key: string): any {
+        const viewport = this.getViewport(id);
+        if (!viewport) return undefined;
+        // Access public properties or getters
+        return (viewport as any)[key];
+    }
+
+    public setViewportProperty(id: string, key: string, value: unknown) {
+        const viewport = this.getViewport(id);
+        if (!viewport) return;
+        // Basic protection: only allowing specific fields to be set directly via bridge if needed
+        // Or just let it try to call the setter
+        (viewport as any)[key] = value;
+    }
+
     // --- State API ---
 
     get gameState(): GameState {
@@ -157,7 +181,7 @@ export class EditorSession {
     /**
      * Changes the current game state and notifies all extensions.
      */
-    public setGameState(state: GameState, ctx: any) {
+    public setGameState(state: GameState, ctx: EditorExtensionContext) {
         if (this._gameState === state) return;
         this._gameState = state;
 
@@ -171,7 +195,7 @@ export class EditorSession {
     /**
      * Changes selection and notifies all extensions.
      */
-    public setSelectedEntity(id: string | null, ctx: any) {
+    public setSelectedEntity(id: string | null, ctx: EditorExtensionContext) {
         if (this._selectedEntityId === id) return;
         this._selectedEntityId = id;
 
@@ -213,38 +237,64 @@ export class EditorSession {
         return entity;
     }
 
+    public getTransform(id: string): TransformData | null {
+        const entity = this.getEntity(id);
+        if (!entity) return null;
+        const p = entity.transform.localPosition;
+        const r = entity.transform.localRotation;
+        const s = entity.transform.localScale;
+        return {
+            position: { x: p.x, y: p.y, z: p.z },
+            rotation: { x: r.x, y: r.y, z: r.z },
+            scale: { x: s.x, y: s.y, z: s.z }
+        };
+    }
+
+    public setTransform(id: string, transform: Partial<TransformData>) {
+        const entity = this.getEntity(id);
+        if (!entity) return;
+        if (transform.position) {
+            entity.transform.setPosition(transform.position.x, transform.position.y, transform.position.z);
+        }
+        if (transform.rotation) {
+            entity.transform.setRotation(transform.rotation.x, transform.rotation.y, transform.rotation.z);
+        }
+        if (transform.scale) {
+            entity.transform.setScale(transform.scale.x, transform.scale.y, transform.scale.z);
+        }
+    }
+
+    public getComponentData(id: string, type: string): Record<string, unknown> | null {
+        const entity = this.getEntity(id);
+        if (!entity) return null;
+        const comp = entity.getComponent(type as any);
+        if (!comp) return null;
+        // Simple serialization of component data for the bridge
+        const data: Record<string, unknown> = {};
+        for (const [key, value] of Object.entries(comp)) {
+            if (typeof value !== 'function' && key !== 'entityId') {
+                data[key] = value;
+            }
+        }
+        return data;
+    }
+
+    public hasComponent(id: string, type: string): boolean {
+        const entity = this.getEntity(id);
+        return entity ? entity.hasComponent(type as any) : false;
+    }
+
     public getEntityProperty(id: string, key: string): any {
         const entity = this.getEntity(id);
         if (!entity) return undefined;
-
-        if (key === 'position' || key === 'getPosition') {
-            const p = entity.transform.localPosition;
-            return { x: p.x, y: p.y, z: p.z };
-        }
-        if (key === 'rotation' || key === 'getRotation') {
-            const r = entity.transform.localRotation;
-            return { x: r.x, y: r.y, z: r.z };
-        }
-        if (key === 'scale' || key === 'getScale') {
-            const s = entity.transform.localScale;
-            return { x: s.x, y: s.y, z: s.z };
-        }
         if (key === 'displayName') return entity.displayName;
-
         return undefined;
     }
 
-    public setEntityProperty(id: string, key: string, value: any) {
+    public setEntityProperty(id: string, key: string, value: unknown) {
         const entity = this.getEntity(id);
         if (!entity) return;
-
-        if (key === 'position' || key === 'setPosition') {
-            entity.transform.setPosition(value.x, value.y, value.z);
-        } else if (key === 'rotation' || key === 'setRotation') {
-            entity.transform.setRotation(value.x, value.y, value.z);
-        } else if (key === 'scale' || key === 'setScale') {
-            entity.transform.setScale(value.x, value.y, value.z);
-        } else if (key === 'displayName') {
+        if (key === 'displayName') {
             entity.displayName = String(value);
         }
     }
@@ -265,7 +315,7 @@ export class EditorSession {
     /**
      * System-wide per-frame update.
      */
-    public tick(dt: number, ctx: any) {
+    public tick(dt: number, ctx: EditorExtensionContext) {
         for (const extension of this._registry.extensions) {
             if (extension.enabled && extension.onTick) {
                 extension.onTick(dt, ctx);

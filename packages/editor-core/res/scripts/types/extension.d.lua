@@ -1,10 +1,6 @@
 ---@meta
 -- ═══════════════════════════════════════════════════════════════════════
 -- DuckEngine Lua API — Editor Extensions
---
--- Types and interfaces for writing Editor Extensions (global tools) in Lua.
--- Extensions are evaluated at editor load time and must return a table
--- matching the EditorExtensionModule interface.
 -- ═══════════════════════════════════════════════════════════════════════
 
 ---A configurable field in the extension's inspector.
@@ -29,12 +25,6 @@
 ---@field category 'visualization' | 'actions' | 'panels' | 'scripting' Groups related tools.
 ---@field configFields? EditorExtensionConfigField[] Definitions for the tool's inspector settings.
 
----A declarative description of a UI element for slot-based composition.
----@class UIElementDescriptor
----@field type 'button' | 'toggle' | 'label' | 'row' | 'column' The type of UI component.
----@field props table<string, any> Properties/attributes for the component (e.g., text, onClick).
----@field children? UIElementDescriptor[] Optional nested elements for containers.
-
 ---Defines where and how a UI element should be injected into the editor shell.
 ---@class EditorSlotFill
 ---@field slot 'toolbar.debug-actions' | 'hierarchy.header-actions' | 'hierarchy.footer' | 'inspector.after-transform' | 'inspector.after-components' | 'bottom-tab' The specific UI slot to fill.
@@ -45,12 +35,13 @@
 ---The shared context provided to extension callbacks.
 ---@class EditorExtensionContext
 ---@field selectedEntityId? string ID of the currently selected entity, if any.
----@field gameState 'stopped' | 'playing' | 'paused' Current state of the game engine.
----@field createEntity fun(parentId?: string) Spawns a new entity in the active scene.
+---@field selectedEntity? DuckEntity The currently selected entity as a wrapped object.
+---@field gameState 'stopped' | 'playing' | 'paused' Current state of the game engine (READ-ONLY).
+---@field createEntity fun(parentId?: string): DuckEntity Spawns a new entity in the active scene.
 ---@field deleteSelectedEntity fun() Deletes the current selection.
----@field duplicateSelectedEntity fun() Duplicates the current selection.
----@field setSelectedEntity fun(id: string) Updates the global editor selection.
----@field reparentEntity fun(childId: string, newParentId: string) Moves an entity in the hierarchy.
+---@field duplicateSelectedEntity fun(): DuckEntity? Duplicates the current selection.
+---@field setSelectedEntity fun(id: string|DuckEntity|nil) Updates the global editor selection.
+---@field reparentEntity fun(childId: string|DuckEntity, newParentId: string|DuckEntity|nil) Moves an entity in the hierarchy.
 ---@field setError fun(msg: string) Displays an error message in the editor UI.
 ---@field setConfig fun(key: string, value: any) Programmatically updates one of this extension's settings.
 ---@field onKeyDown fun(shortcut: string, handler: fun()): fun() Registers a global shortcut. Returns an unregister function.
@@ -64,14 +55,3 @@
 ---@field onSelectionChanged? fun(ids: string[], ctx: EditorExtensionContext) Called when the user clicks an entity.
 ---@field onGameStateChanged? fun(state: 'stopped' | 'playing' | 'paused', ctx: EditorExtensionContext) Called when play/stop is toggled.
 ---@field onConfigChanged? fun(key: string, value: any, ctx: EditorExtensionContext) Called when a user changes an inspector setting.
-
----Example Extension Module (Internal Reference)
----@type EditorExtensionModule
-local extension = {
-    meta = {
-        id = "example-extension",
-        displayName = "Example Extension",
-        category = "actions"
-    }
-}
-return extension

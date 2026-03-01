@@ -106,8 +106,9 @@ export class EditorScriptSystem {
                     tabLabel: fill.tabLabel,
                     ui: (ctx: EditorExtensionContext) => {
                         try {
+                            const luaCtx = this.engine!.global.get('__WrapExtensionContext')(ctx);
                             // Call Lua 'ui' function with context
-                            return fill.ui(ctx);
+                            return fill.ui(luaCtx);
                         } catch (err) {
                             console.error(`Error generating UI descriptor for slot fill in ${extensionId}`, err);
                             return null;
@@ -123,7 +124,8 @@ export class EditorScriptSystem {
         if (typeof onEnable === 'function') {
             extension.onEnable = (ctx) => {
                 try {
-                    const cleanup = onEnable(ctx);
+                    const luaCtx = this.engine!.global.get('__WrapExtensionContext')(ctx);
+                    const cleanup = onEnable(luaCtx);
                     if (typeof cleanup === 'function') return cleanup;
                 } catch (err) {
                     console.error(`Error enabling extension ${extensionId}`, err);
@@ -135,7 +137,8 @@ export class EditorScriptSystem {
         if (typeof onTick === 'function') {
             extension.onTick = (dt, ctx) => {
                 try {
-                    onTick(dt, ctx);
+                    const luaCtx = this.engine!.global.get('__WrapExtensionContext')(ctx);
+                    onTick(dt, luaCtx);
                 } catch (err) { }
             };
         }
@@ -143,21 +146,30 @@ export class EditorScriptSystem {
         const onSelChanged = rawModule.onSelectionChanged;
         if (typeof onSelChanged === 'function') {
             extension.onSelectionChanged = (ids, ctx) => {
-                try { onSelChanged(ids, ctx); } catch (e) { }
+                try {
+                    const luaCtx = this.engine!.global.get('__WrapExtensionContext')(ctx);
+                    onSelChanged(ids, luaCtx);
+                } catch (e) { }
             };
         }
 
         const onStateChanged = rawModule.onGameStateChanged;
         if (typeof onStateChanged === 'function') {
             extension.onGameStateChanged = (state, ctx) => {
-                try { onStateChanged(state, ctx); } catch (e) { }
+                try {
+                    const luaCtx = this.engine!.global.get('__WrapExtensionContext')(ctx);
+                    onStateChanged(state, luaCtx);
+                } catch (e) { }
             };
         }
 
         const onCfgChanged = rawModule.onConfigChanged;
         if (typeof onCfgChanged === 'function') {
             extension.onConfigChanged = (key, val, ctx) => {
-                try { onCfgChanged(key, val, ctx); } catch (e) { }
+                try {
+                    const luaCtx = this.engine!.global.get('__WrapExtensionContext')(ctx);
+                    onCfgChanged(key, val, luaCtx);
+                } catch (e) { }
             };
         }
 

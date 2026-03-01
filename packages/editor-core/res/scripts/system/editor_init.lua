@@ -33,24 +33,62 @@ editor.ui.column = function(children)
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
+-- Transform Metatable
+-- ═══════════════════════════════════════════════════════════════════════
+__TransformMT = {
+    __index = function(t, k)
+        local data = __jsEditorApi.getTransform(t.__entityId)
+        if not data then return nil end
+        return data[k]
+    end,
+    __newindex = function(t, k, v)
+        local data = {}
+        data[k] = v
+        __jsEditorApi.setTransform(t.__entityId, data)
+    end
+}
+
+---@param entityId string
+---@return TransformComponent
+function __WrapTransform(entityId)
+    local t = { __entityId = entityId }
+    setmetatable(t, __TransformMT)
+    return t
+end
+
+-- ═══════════════════════════════════════════════════════════════════════
 -- Entity Metatable
 -- ═══════════════════════════════════════════════════════════════════════
 __EntityMT = {
     __index = function(t, k)
         if k == "id" then return t.__id end
-        -- Map to JS bridge properties/methods
-        local val = __jsEditorApi.getEntityProperty(t.__id, k)
-        if val ~= nil then return val end
-        return nil
+        if k == "transform" then return t.__transform end
+        if k == "getComponent" then
+            return function(self, type)
+                return __jsEditorApi.getComponentData(self.__id, type)
+            end
+        end
+        if k == "hasComponent" then
+            return function(self, type)
+                return __jsEditorApi.hasComponent(self.__id, type)
+            end
+        end
+        -- Default property mapping
+        return __jsEditorApi.getEntityProperty(t.__id, k)
     end,
     __newindex = function(t, k, v)
         __jsEditorApi.setEntityProperty(t.__id, k, v)
     end
 }
 
+---@param id string
+---@return DuckEntity?
 function __WrapEntity(id)
     if not id or id == "" then return nil end
-    local e = { __id = id }
+    local e = {
+        __id = id,
+        __transform = __WrapTransform(id)
+    }
     setmetatable(e, __EntityMT)
     return e
 end
@@ -59,19 +97,46 @@ end
 -- Session API
 -- ═══════════════════════════════════════════════════════════════════════
 editor.session = {}
-function editor.session:getGameState() return __jsEditorApi.gameState() end
 
-function editor.session:getSelectedEntityId() return __jsEditorApi.selectedEntityId() end
+---@return "stopped"|"playing"|"paused"
+function editor.session:getGameState()
+    return __jsEditorApi.gameState()
+end
+
+---@return string|nil
+function editor.session:getSelectedEntityId()
+    return __jsEditorApi.selectedEntityId()
+end
+
+---@return DuckEntity|nil
+function editor.session:getSelectedEntity()
+    local id = self:getSelectedEntityId()
+    if not id then return nil end
+    return __WrapEntity(id)
+end
+
+---@param entityOrId string|DuckEntity|nil
+function editor.session:setSelectedEntity(entityOrId)
+    local id = type(entityOrId) == "table" and entityOrId.id or entityOrId
+    __jsEditorApi.setSelectedEntity(id)
+end
 
 function editor.session:createEntity(parentId)
     return __WrapEntity(__jsEditorApi.createEntity(parentId))
 end
 
-function editor.session:deleteEntity(id) return __jsEditorApi.deleteEntity(id) end
+function editor.session:deleteEntity(id)
+    local targetId = type(id) == "table" and id.id or id
+    return __jsEditorApi.deleteEntity(targetId)
+end
 
-function editor.session:getEntity(id) return __WrapEntity(__jsEditorApi.getEntity(id)) end
+function editor.session:getEntity(id)
+    return __WrapEntity(__jsEditorApi.getEntity(id))
+end
 
-function editor.session:findEntityByName(name) return __WrapEntity(__jsEditorApi.findEntityByName(name)) end
+function editor.session:findEntityByName(name)
+    return __WrapEntity(__jsEditorApi.findEntityByName(name))
+end
 
 -- ═══════════════════════════════════════════════════════════════════════
 -- Viewport API
@@ -102,6 +167,11 @@ __ViewportMT = {
                 return __WrapEntity(id)
             end
         end
+        -- Default viewport property mapping
+        return __jsEditorApi.viewports.getViewportProperty(t.__id, k)
+    end,
+    __newindex = function(t, k, v)
+        __jsEditorApi.viewports.setViewportProperty(t.__id, k, v)
     end
 }
 
@@ -121,13 +191,18 @@ end
 editor.viewports.getAll = function()
     local ids = __jsEditorApi.viewports.getAll()
     local res = {}
-    for i, v in ipairs(ids) do res[i] = __WrapViewport(v.id) end
+    for i, v in ipairs(ids) do
+        res[i] = __WrapViewport(v.id)
+    end
     return res
 end
 
 -- ═══════════════════════════════════════════════════════════════════════
--- Context & Lifecycle
+-- Context & Lifecycle Helpers
 -- ═══════════════════════════════════════════════════════════════════════
+
+---@param jsCtx any
+---@return ViewportContext
 function __WrapViewportContext(jsCtx)
     return {
         viewport = __WrapViewport(jsCtx.viewport.id),
@@ -135,12 +210,27 @@ function __WrapViewportContext(jsCtx)
     }
 end
 
--- Invoked by JS Viewport.update()
-function __InvokeViewportController(vpId, method, jsCtx, extra, extra2)
-    -- This would be populated by the orchestration layer loading the script
-    -- For now, we assume global or registered modules
-end
+---@param jsCtx any
+---@return EditorExtensionContext
+function __WrapExtensionContext(jsCtx)
+    local ctx = {
+        gameState = jsCtx.gameState,
+        selectedEntityId = jsCtx.selectedEntityId,
+        selectedEntity = __WrapEntity(jsCtx.selectedEntityId),
 
-function __InvokeViewportFeature(vpId, featureId, method, jsCtx, extra, extra2)
-    -- Similar to controller, but for features
+        createEntity = function(parentId) return editor.session:createEntity(parentId) end,
+        deleteSelectedEntity = function()
+            if jsCtx.selectedEntityId then editor.session:deleteEntity(jsCtx.selectedEntityId) end
+        end,
+        duplicateSelectedEntity = function()
+            return __WrapEntity(__jsEditorApi.duplicateSelectedEntity())
+        end,
+        setSelectedEntity = function(id) editor.session:setSelectedEntity(id) end,
+        reparentEntity = function(childId, parentId) editor.session:reparentEntity(childId, parentId) end,
+
+        setError = function(msg) __jsEditorApi.setError(msg) end,
+        setConfig = function(k, v) __jsEditorApi.setConfig(k, v) end,
+        onKeyDown = function(s, h) return __jsEditorApi.onKeyDown(s, h) end
+    }
+    return ctx
 end
