@@ -5,15 +5,6 @@
 -- entity approaches or leaves its target. Great for cinematic cameras.
 -- =======================================================================
 
----Selects an easing function by name, falling back to smoothstep.
----@param name string
----@return fun(t: number): number
-local function getEasing(name)
-    local fn = math.ext.easing[name]
-    if fn then return fn end
-    return math.ext.easing.smoothstep
-end
-
 ---@class SmoothFollowState
 ---@field startPos       Vec3?
 ---@field elapsed        number
@@ -46,7 +37,6 @@ return {
         local props    = self.properties
         local target   = props.targetEntityId
         local duration = math.max(0.01, props.duration)
-        local ease     = getEasing(props.easing)
         local offset   = props.offset
         if not offset then return end
 
@@ -79,7 +69,7 @@ return {
 
         -- Calculate normalized time (0..1) and apply easing curve
         local raw          = math.ext.clamp(self.state.elapsed / duration, 0, 1)
-        local t            = ease(raw)
+        local t            = math.ext.ease(props.easing or "quadOut", raw)
 
         -- Interpolate from start position to goal using the eased `t`
         local sp           = self.state.startPos

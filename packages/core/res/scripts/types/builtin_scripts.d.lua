@@ -81,3 +81,35 @@
 ---@field speed? number Orbit speed (radians per second). Default: 0.5.
 ---@field orbitPlane? OrbitPlane Orbit plane: "xz", "xy", or "yz". Default: "xz".
 ---@field initialAngle? number Starting angle in radians. Default: 0.
+
+-- ───────────────────────────────────────────────────────────────────────
+-- Utility Scripts
+-- ───────────────────────────────────────────────────────────────────────
+
+---@class BillboardProps
+---@field cameraEntity DuckEntity The camera entity to face. Required.
+---@field lockY? boolean If true, only rotates around the Y axis. Default: false.
+
+---@class RotateContinuousProps
+---@field speedX? number Rotation speed around X axis in degrees/sec. Default: 0.
+---@field speedY? number Rotation speed around Y axis in degrees/sec. Default: 45.
+---@field speedZ? number Rotation speed around Z axis in degrees/sec. Default: 0.
+
+---@class BounceProps
+---@field axis? string Bounce axis: "x", "y", or "z". Default: "y".
+---@field amplitude? number Maximum displacement in units. Default: 0.5.
+---@field frequency? number Oscillation frequency in Hz. Default: 1.
+
+---@class WaypointPathProps
+---@field speed? number Movement speed in units/sec. Default: 3.
+---@field loop? boolean If true, loops back to first waypoint. Default: true.
+---@field waypoints? DuckEntity[] Ordered list of waypoint entities.
+
+---@class SpawnOnIntervalProps
+---@field prefab LuaPrefab The prefab to spawn. Required.
+---@field interval? number Seconds between spawns. Default: 2.
+---@field maxCount? number Maximum number of live instances. Default: 10.
+---@field offset? Vec3 Spawn offset from this entity's position. Default: {0, 0, 0}.
+
+---@class DestroyAfterProps
+---@field lifetime? number Seconds until this entity self-destructs. Default: 5.

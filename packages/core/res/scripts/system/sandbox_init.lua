@@ -24,6 +24,14 @@ Script = {
     SmoothFollow           = "builtin://smooth_follow.lua",
     SmoothLookAt           = "builtin://smooth_look_at.lua",
 
+    -- Built-in Scripts (Utility)
+    Billboard              = "builtin://billboard.lua",
+    RotateContinuous       = "builtin://rotate_continuous.lua",
+    Bounce                 = "builtin://bounce.lua",
+    WaypointPath           = "builtin://waypoint_path.lua",
+    SpawnOnInterval        = "builtin://spawn_on_interval.lua",
+    DestroyAfter           = "builtin://destroy_after.lua",
+
     -- Helpers for custom script paths
     editor                 = function(name) return "editor://" .. name .. ".lua" end,
     project                = function(name) return "project://" .. name .. ".lua" end
@@ -86,6 +94,18 @@ local function __WrapValue(val, propDef)
         elseif val.x ~= nil then
             return math.vec3(val.x, val.y, val.z)
         end
+    elseif propDef.type == "entityArray" and val ~= nil then
+        -- Array of entity ID strings → array of wrapped entity proxies.
+        local result = {}
+        local i = 1
+        while val[i] ~= nil do
+            local entry = val[i]
+            if type(entry) == "string" and entry ~= "" then
+                result[#result + 1] = __WrapEntity(entry)
+            end
+            i = i + 1
+        end
+        return result
     end
     return val
 end
@@ -94,7 +114,10 @@ function __WrapSelf(jsCtx, schema)
     local s = { __jsCtx = jsCtx }
     s.id = jsCtx.id
     s.slotId = jsCtx.slotId
-    s.state = jsCtx.state
+    -- Use a pure Lua table for state so that complex values (Vec3, tables
+    -- with metatables) are never serialised across the wasmoon Lua↔JS
+    -- boundary, which would destroy their metatables.
+    s.state = {}
 
     -- Sync-on-Wrap Hydration:
     -- Instead of a proxy, we copy JS properties to a plain Lua table
@@ -211,6 +234,9 @@ __EntityMT = {
         end
         if k == "applyResource" then
             return function(self, key, overrides) return scene.applyResource(self.id, key, nil, overrides) end
+        end
+        if k == "destroy" then
+            return function(self) scene.destroyEntity(self.id) end
         end
 
         -- 2. Transform / Physics / Scene bridge helpers

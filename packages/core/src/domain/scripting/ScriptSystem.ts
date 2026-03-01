@@ -36,7 +36,7 @@ export class ScriptSystem {
 
     // Reference to all entities in the scene
     private allEntities: Map<string, Entity> | null = null;
-    private timeBridgeSync?: { setDelta: (dt: number) => void };
+    private timeBridgeSync?: { setDelta: (dt: number) => void; getScale: () => number };
 
     private _resolveReady!: () => void;
     public readonly ready: Promise<void> = new Promise(resolve => {
@@ -242,7 +242,7 @@ export class ScriptSystem {
     private sceneUnsub?: () => void;
 
 
-    public async setupAsync(allEntities: Map<string, Entity>, scene: { subscribeChanges: (listener: (ev: SceneChangeEvent) => void) => () => void }): Promise<void> {
+    public async setupAsync(allEntities: Map<string, Entity>, scene: { subscribeChanges: (listener: (ev: SceneChangeEvent) => void) => () => void; removeEntity?: (id: string) => void }): Promise<void> {
         CoreLogger.info("ScriptSystem", `Starting setupAsync with ${allEntities.size} entities...`);
 
         await this.runtime.setup(this.systemScriptOverrides);
@@ -284,6 +284,7 @@ export class ScriptSystem {
                 if (!slot) return;
                 slot.properties[key] = value;
             },
+            removeEntity: scene.removeEntity ? (id: string) => scene.removeEntity!(id) : undefined,
         };
 
         // Standard Bridge Registration
@@ -334,7 +335,7 @@ export class ScriptSystem {
         this._resolveReady();
     }
 
-    public setup(allEntities: Map<string, Entity>, scene: { subscribeChanges: (listener: (ev: SceneChangeEvent) => void) => () => void }): void {
+    public setup(allEntities: Map<string, Entity>, scene: { subscribeChanges: (listener: (ev: SceneChangeEvent) => void) => () => void; removeEntity?: (id: string) => void }): void {
         this.setupAsync(allEntities, scene).catch(err => {
             CoreLogger.error("ScriptSystem", "failed to initialize scripting async", err);
             this._resolveReady();

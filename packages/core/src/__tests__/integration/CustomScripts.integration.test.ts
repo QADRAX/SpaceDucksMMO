@@ -15,7 +15,7 @@ describe("Custom Test Scripts Integration", () => {
         await scaffold.wait();
 
         const logs = scaffold.getLogs();
-        expect(logs).toContain("[INFO] [Lua] [Test] init called, state type: userdata");
+        expect(logs).toContain("[INFO] [Lua] [Test] init called, state type: table");
 
         // First update
         scaffold.tick(16);

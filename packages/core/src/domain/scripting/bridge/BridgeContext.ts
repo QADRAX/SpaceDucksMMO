@@ -24,6 +24,9 @@ export interface BridgeContext {
 
     // Gizmo rendering (Phase 18)
     gizmoRenderer?: IGizmoRenderer;
+
+    // Entity removal (Phase 3)
+    removeEntity?: (id: string) => void;
 }
 
 

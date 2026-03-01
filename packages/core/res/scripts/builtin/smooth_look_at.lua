@@ -5,15 +5,6 @@
 -- easing curve. Useful for turrets, cinematic cameras, and NPCs.
 -- =======================================================================
 
----Selects an easing function by name, falling back to smoothstep.
----@param name string
----@return fun(t: number): number
-local function getEasing(name)
-    local fn = math.ext.easing[name]
-    if fn then return fn end
-    return math.ext.easing.smoothstep
-end
-
 ---Interpolates between two Euler rotation values, handling wrap-around.
 ---@param a number
 ---@param b number
@@ -50,7 +41,7 @@ return {
         local props  = self.properties
         local target = props.targetEntityId
         local speed  = props.speed or 3
-        local ease   = getEasing(props.easing or "sineOut")
+
         local offset = props.offset
 
         local tp     = target:getPosition()
@@ -72,7 +63,7 @@ return {
         -- Calculate interpolation factor with easing
         local secs           = dt / 1000
         local raw            = math.ext.clamp(speed * secs, 0, 1)
-        local t              = ease(raw)
+        local t              = math.ext.ease(props.easing or "sineOut", raw)
 
         -- Smoothly interpolate angles
         local newPitch       = lerpAngle(rot.x, desiredPitch, t)

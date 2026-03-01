@@ -59,6 +59,10 @@ local DuckEntity = {}
 ---@return boolean alive `true` if entity is alive, `false` if destroyed.
 function DuckEntity:isValid() end
 
+---Destroys this entity. Removes it from the scene, triggers `onDestroy`
+---on all its script slots, and cleans up subscriptions.
+function DuckEntity:destroy() end
+
 -- ─── Transform: Position ────────────────────────────────────────────
 
 ---Gets this entity's local position in world units.
@@ -211,6 +215,12 @@ function DuckEntity:applyResource(key, overrides) end
 ---@field orbit_camera OrbitCameraProps
 ---@field smooth_follow SmoothFollowProps
 ---@field smooth_look_at SmoothLookAtProps
+---@field billboard BillboardProps
+---@field rotate_continuous RotateContinuousProps
+---@field bounce BounceProps
+---@field waypoint_path WaypointPathProps
+---@field spawn_on_interval SpawnOnIntervalProps
+---@field destroy_after DestroyAfterProps
 ---@field [string] LuaScriptSlotProxy Fallback for custom user scripts.
 local LuaScriptsProxy = {}
 

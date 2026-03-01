@@ -97,6 +97,7 @@
 ---| "skybox"    # A skybox resource reference (rendered as skybox picker).
 ---| "prefab"    # A prefab resource reference. Hydrated to LuaPrefab with :instantiate().
 ---| "enum"      # A dropdown list of string options (defined in `options`).
+---| "entityArray" # An ordered array of entity references. Auto-hydrated to `DuckEntity[]`.
 
 -- ───────────────────────────────────────────────────────────────────────
 -- Component Type Enum
@@ -251,6 +252,12 @@ log = {}
 ---@field OrbitCamera            string "builtin://orbit_camera.lua"
 ---@field SmoothFollow           string "builtin://smooth_follow.lua"
 ---@field SmoothLookAt           string "builtin://smooth_look_at.lua"
+---@field Billboard              string "builtin://billboard.lua"
+---@field RotateContinuous       string "builtin://rotate_continuous.lua"
+---@field Bounce                 string "builtin://bounce.lua"
+---@field WaypointPath           string "builtin://waypoint_path.lua"
+---@field SpawnOnInterval        string "builtin://spawn_on_interval.lua"
+---@field DestroyAfter           string "builtin://destroy_after.lua"
 local ScriptAPI = {}
 
 ---Returns the full path for a custom editor script.
@@ -276,4 +283,10 @@ Script = {
     OrbitCamera            = "builtin://orbit_camera.lua",
     SmoothFollow           = "builtin://smooth_follow.lua",
     SmoothLookAt           = "builtin://smooth_look_at.lua",
+    Billboard              = "builtin://billboard.lua",
+    RotateContinuous       = "builtin://rotate_continuous.lua",
+    Bounce                 = "builtin://bounce.lua",
+    WaypointPath           = "builtin://waypoint_path.lua",
+    SpawnOnInterval        = "builtin://spawn_on_interval.lua",
+    DestroyAfter           = "builtin://destroy_after.lua",
 }

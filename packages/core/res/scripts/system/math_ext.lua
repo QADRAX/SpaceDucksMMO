@@ -91,6 +91,106 @@ function Vec3:clone()
     return math.vec3(self.x, self.y, self.z)
 end
 
+function Vec3:lerp(other, t)
+    return math.vec3(
+        self.x + (other.x - self.x) * t,
+        self.y + (other.y - self.y) * t,
+        self.z + (other.z - self.z) * t
+    )
+end
+
+function Vec3:reflect(normal)
+    local d = 2 * self:dot(normal)
+    return math.vec3(self.x - d * normal.x, self.y - d * normal.y, self.z - d * normal.z)
+end
+
+function Vec3:project(other)
+    local d = other:dot(other)
+    if d < 1e-12 then return math.vec3(0, 0, 0) end
+    local s = self:dot(other) / d
+    return math.vec3(other.x * s, other.y * s, other.z * s)
+end
+
+function Vec3:angleTo(other)
+    local d = self:dot(other)
+    local lenProduct = self:length() * other:length()
+    if lenProduct < 1e-12 then return 0 end
+    local cosAngle = math.ext.clamp(d / lenProduct, -1, 1)
+    return math.acos(cosAngle)
+end
+
+function Vec3:min(other)
+    return math.vec3(math.min(self.x, other.x), math.min(self.y, other.y), math.min(self.z, other.z))
+end
+
+function Vec3:max(other)
+    return math.vec3(math.max(self.x, other.x), math.max(self.y, other.y), math.max(self.z, other.z))
+end
+
+function Vec3:abs()
+    return math.vec3(math.abs(self.x), math.abs(self.y), math.abs(self.z))
+end
+
+function Vec3:floor()
+    return math.vec3(math.floor(self.x), math.floor(self.y), math.floor(self.z))
+end
+
+function Vec3:ceil()
+    return math.vec3(math.ceil(self.x), math.ceil(self.y), math.ceil(self.z))
+end
+
+function Vec3:set(x, y, z)
+    self.x = x or self.x
+    self.y = y or self.y
+    self.z = z or self.z
+    return self
+end
+
+function Vec3:toArray()
+    return { self.x, self.y, self.z }
+end
+
+-- smoothDamp: spring-damper smooth interpolation (returns value, newVelocity)
+if math.ext then
+    function math.ext.smoothDamp(current, target, velocity, smoothTime, dt, maxSpeed)
+        smoothTime = math.max(0.0001, smoothTime)
+        maxSpeed = maxSpeed or math.huge
+        local omega = 2.0 / smoothTime
+        local x = omega * dt
+        local exp = 1.0 / (1.0 + x + 0.48 * x * x + 0.235 * x * x * x)
+        local change = current - target
+        local maxChange = maxSpeed * smoothTime
+        change = math.ext.clamp(change, -maxChange, maxChange)
+        local temp = (velocity + omega * change) * dt
+        local newVelocity = (velocity - omega * temp) * exp
+        local result = (current - change) + (change + temp) * exp
+        -- Prevent overshoot
+        if (target - current > 0) == (result > target) then
+            result = target
+            newVelocity = (result - target) / dt
+        end
+        return result, newVelocity
+    end
+end
+
+--- Calls an easing function by name.
+--- Avoids storing a JS function reference in a local variable, which can
+--- lose its callable status across the wasmoon Lua↔JS boundary.
+--- Falls back to an inline smoothstep if the easing table or name is missing.
+---@param name string  Easing function name (e.g. "quadOut", "sineOut").
+---@param t    number  Normalised time value [0, 1].
+---@return number
+function math.ext.ease(name, t)
+    local easings = math.ext.easing
+    if easings then
+        local fn = easings[name]
+        if fn then return fn(t) end
+        if easings.smoothstep then return easings.smoothstep(t) end
+    end
+    -- Inline smoothstep fallback
+    return t * t * (3 - 2 * t)
+end
+
 -- Constructor function
 math.vec3 = setmetatable({
     zero    = function() return math.vec3(0, 0, 0) end,

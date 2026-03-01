@@ -47,6 +47,13 @@ function scene.onEvent(self, eventName, listener) end
 ---@return DuckEntity? root The primary root entity of the new instance.
 function scene.instantiatePrefab(key, overrides) end
 
+-- ─── Entity Removal ─────────────────────────────────────────────────
+
+---Destroys an entity by its ID. The entity is removed from the scene graph,
+---triggering `onDestroy` on all its script slots and cleaning up subscriptions.
+---@param entityId string The entity UUID to destroy.
+function scene.destroyEntity(entityId) end
+
 -- ─── Internal / System methods ──────────────────────────────────────
 -- These are used by the core engine metatables and system scripts.
 

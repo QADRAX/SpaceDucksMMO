@@ -8,6 +8,27 @@ export function registerMathBridge(engine: LuaEngine) {
     const mathApi = {
         lerp: (a: number, b: number, t: number) => a + (b - a) * t,
         clamp: (v: number, min: number, max: number) => Math.max(min, Math.min(max, v)),
+        inverseLerp: (a: number, b: number, v: number) => {
+            if (a === b) return 0;
+            return Math.max(0, Math.min(1, (v - a) / (b - a)));
+        },
+        remap: (v: number, inMin: number, inMax: number, outMin: number, outMax: number) => {
+            const t = inMin === inMax ? 0 : Math.max(0, Math.min(1, (v - inMin) / (inMax - inMin)));
+            return outMin + (outMax - outMin) * t;
+        },
+        randomRange: (min: number, max: number) => min + Math.random() * (max - min),
+        sign: (v: number) => v > 0 ? 1 : v < 0 ? -1 : 0,
+        moveTowards: (current: number, target: number, maxDelta: number) => {
+            if (Math.abs(target - current) <= maxDelta) return target;
+            return current + Math.sign(target - current) * maxDelta;
+        },
+        pingPong: (t: number, length: number) => {
+            const mod = t % (length * 2);
+            return length - Math.abs(mod - length);
+        },
+        wrapRepeat: (t: number, length: number) => {
+            return t - Math.floor(t / length) * length;
+        },
 
         easing: {
             // Basic
@@ -36,6 +57,40 @@ export function registerMathBridge(engine: LuaEngine) {
             // Circle
             circleIn: (t: number) => 1 - Math.sqrt(1 - Math.pow(t, 2)),
             circleOut: (t: number) => Math.sqrt(1 - Math.pow(t - 1, 2)),
+
+            // Elastic
+            elasticIn: (t: number) => {
+                if (t === 0 || t === 1) return t;
+                return -Math.pow(2, 10 * t - 10) * Math.sin((t * 10 - 10.75) * ((2 * Math.PI) / 3));
+            },
+            elasticOut: (t: number) => {
+                if (t === 0 || t === 1) return t;
+                return Math.pow(2, -10 * t) * Math.sin((t * 10 - 0.75) * ((2 * Math.PI) / 3)) + 1;
+            },
+            elasticInOut: (t: number) => {
+                if (t === 0 || t === 1) return t;
+                const c = (2 * Math.PI) / 4.5;
+                return t < 0.5
+                    ? -(Math.pow(2, 20 * t - 10) * Math.sin((20 * t - 11.125) * c)) / 2
+                    : (Math.pow(2, -20 * t + 10) * Math.sin((20 * t - 11.125) * c)) / 2 + 1;
+            },
+
+            // Back (overshoot)
+            backIn: (t: number) => {
+                const c = 1.70158;
+                return (c + 1) * t * t * t - c * t * t;
+            },
+            backOut: (t: number) => {
+                const c = 1.70158;
+                const t1 = t - 1;
+                return 1 + (c + 1) * t1 * t1 * t1 + c * t1 * t1;
+            },
+            backInOut: (t: number) => {
+                const c = 1.70158 * 1.525;
+                return t < 0.5
+                    ? (Math.pow(2 * t, 2) * ((c + 1) * 2 * t - c)) / 2
+                    : (Math.pow(2 * t - 2, 2) * ((c + 1) * (t * 2 - 2) + c) + 2) / 2;
+            },
 
             // Bounce
             bounceOut: (t: number) => {

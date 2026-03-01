@@ -116,6 +116,15 @@ export function registerSceneBridge(engine: LuaEngine, ctx: BridgeContext) {
             return wrap ? wrap(entities[0].id) : null;
         },
 
+        // ── Entity removal (Phase 3) ────────────────────────────
+        destroyEntity: (entityId: string) => {
+            if (!ctx.removeEntity) {
+                CoreLogger.warn("SceneBridge", "removeEntity not wired");
+                return;
+            }
+            ctx.removeEntity(entityId);
+        },
+
         // ── Internal methods (Phase 17) ──────────────────────────
         // These are used by metatables and not documented in scene.d.lua
         __exists: (id: string) => !!ctx.getEntity(id),
