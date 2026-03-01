@@ -51,7 +51,7 @@ export class SceneTestScaffold {
             this.scene.collisionEvents,
             undefined,
             undefined,
-            undefined, // We'll let ScriptSystem use the global SystemScripts (which includes sandbox_init)
+            undefined, // We'll let ScriptSystem use the global SystemScripts (sandbox modules)
             scriptOverrides
         );
 

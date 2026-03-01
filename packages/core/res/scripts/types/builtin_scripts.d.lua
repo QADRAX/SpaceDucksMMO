@@ -104,6 +104,8 @@
 ---@field speed? number Movement speed in units/sec. Default: 3.
 ---@field loop? boolean If true, loops back to first waypoint. Default: true.
 ---@field waypoints? DuckEntity[] Ordered list of waypoint entities.
+---@field easing? string Easing curve forwarded to Move-to-Point. Default: "cubicInOut".
+---@field arrivalThreshold? number Distance at which the waypoint is considered reached. Default: 0.15.
 
 ---@class SpawnOnIntervalProps
 ---@field prefab LuaPrefab The prefab to spawn. Required.

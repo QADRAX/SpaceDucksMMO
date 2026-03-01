@@ -5,7 +5,10 @@ export interface LuaSelfInstance {
     slotId: string; // The ID of the specific script slot
     state: Record<string, any>; // Persistent state table for the script
     getComponent: (type: string) => any; // Bridge to access component data
-    scripts: Record<string, Record<string, any>>; // Cross-script property access proxy
+    // NOTE: `scripts` is NOT on this interface. Cross-script access
+    // (self.scripts[scriptId].prop) is handled entirely by Lua metatables
+    // (__SelfMT → __EntityMT → __ScriptsProxyMT → __ScriptSlotMT).
+    // Putting an empty JS stub here would shadow the metatable lookup.
     [key: string]: any; // Dynamic component access (UCA) / Hydrated properties
 }
 
@@ -20,16 +23,10 @@ export class LuaSelfFactory {
         // In the future this state might be serialized/deserialized if hot-reloading is supported.
         const state: Record<string, any> = {};
 
-        // In Lua, these are handled by metatables defined in sandbox_init.lua.
-        // We provide these stubs here for better TypeScript typing of the 'ctx' object
-        // and to ensure they exist on the object passed to Wasmoon.
-        const scripts: Record<string, Record<string, any>> = {};
-
         return {
             id: entity.id,
             slotId: slot.slotId,
             state,
-            scripts,
             properties: slot.properties,
 
 

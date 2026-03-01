@@ -51,12 +51,26 @@ export class ScriptRuntime {
         };
         this.engine.global.set('log', logApi);
 
-        // Load sandbox_init
-        const sandboxInit = systemOverrides['sandbox_init.lua'] || SystemScripts['sandbox_init.lua'];
-        if (!sandboxInit) {
-            throw new Error("sandbox_init.lua not found.");
+        // Load sandbox modules in dependency order (4 files, loaded sequentially).
+        // Each module defines globals that subsequent modules depend on.
+        //   1. sandbox_security  — clears dangerous globals, defines Script constants
+        //   2. sandbox_metatables — all proxy metatables (__EntityMT, __SelfMT, etc.)
+        //   3. sandbox_hydration  — __WrapValue, __WrapSelf (property hydration)
+        //   4. sandbox_runtime    — __Contexts, __SlotHooks, __CallHook, etc.
+        const sandboxModules = [
+            'sandbox_security.lua',
+            'sandbox_metatables.lua',
+            'sandbox_hydration.lua',
+            'sandbox_runtime.lua',
+        ] as const;
+
+        for (const moduleName of sandboxModules) {
+            const source = systemOverrides[moduleName] || SystemScripts[moduleName];
+            if (!source) {
+                throw new Error(`${moduleName} not found in SystemScripts.`);
+            }
+            this.engine.doStringSync(source);
         }
-        this.engine.doStringSync(sandboxInit);
     }
 
     /**

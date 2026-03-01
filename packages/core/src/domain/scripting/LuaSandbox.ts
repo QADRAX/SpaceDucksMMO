@@ -52,12 +52,21 @@ export class LuaSandbox {
         };
         engine.global.set('log', logApi);
 
-        // Load pre-compiled system initialization (Entity/Component metatables, closures, etc.)
-        const sandboxInit = systemOverrides['sandbox_init.lua'] || SystemScripts['sandbox_init.lua'];
-        if (!sandboxInit) {
-            throw new Error("sandbox_init.lua not found. Ensure it is pre-compiled or provided as override.");
+        // Load sandbox modules in dependency order (4 files).
+        const sandboxModules = [
+            'sandbox_security.lua',
+            'sandbox_metatables.lua',
+            'sandbox_hydration.lua',
+            'sandbox_runtime.lua',
+        ] as const;
+
+        for (const moduleName of sandboxModules) {
+            const source = systemOverrides[moduleName] || SystemScripts[moduleName];
+            if (!source) {
+                throw new Error(`${moduleName} not found. Ensure it is pre-compiled or provided as override.`);
+            }
+            engine.doStringSync(source);
         }
-        engine.doStringSync(sandboxInit);
 
         return engine;
     }

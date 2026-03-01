@@ -1,82 +1,117 @@
 -- =======================================================================
 -- waypoint_path.lua
--- Moves the entity through a list of waypoint entities.
--- Each waypoint is a scene entity whose transform.position is read at
--- runtime, so waypoints can be moved while the path is being followed.
+-- Orchestrates movement through a list of waypoint entities by driving
+-- a sibling move_to_point script.  Each waypoint is a scene entity
+-- whose transform.position is read at runtime, so waypoints can be
+-- moved while the path is being followed.
+--
+-- REQUIRES: a "Move to Point (Eased)" script slot on the same entity.
+-- waypoint_path sets targetPoint / duration / easing / delay on it.
 -- =======================================================================
 
 ---@class WaypointPathState
----@field index    number   Current waypoint index (1-based).
----@field t        number   Interpolation progress [0, 1] between current and next.
+---@field index       number   Index of the waypoint we are currently moving TOWARDS (1-based).
+---@field moving      boolean  True after we have pushed a target to move_to_point.
+---@field segTime     number   Expected duration (seconds) for the current segment.
+---@field elapsed     number   Seconds elapsed since we pushed the current target.
 
 ---@type ScriptBlueprint<WaypointPathProps, WaypointPathState>
 return {
     schema = {
         name = "Waypoint Path",
-        description = "Follows a sequence of waypoint entities.",
+        description = "Follows a sequence of waypoint entities by driving a sibling Move-to-Point script.",
         properties = {
-            speed     = { type = "number",      default = 3,    description = "Movement speed in units/sec." },
-            loop      = { type = "boolean",     default = true, description = "Loop back to start when the end is reached." },
-            waypoints = { type = "entityArray", default = {},   description = "Ordered list of waypoint entities." }
+            speed            = { type = "number",      default = 3,           description = "Movement speed in units/sec." },
+            loop             = { type = "boolean",     default = true,        description = "Loop back to start when the end is reached." },
+            waypoints        = { type = "entityArray", default = {},          description = "Ordered list of waypoint entities." },
+            easing           = { type = "string",      default = "cubicInOut", description = "Easing curve forwarded to Move-to-Point." },
+            arrivalThreshold = { type = "number",      default = 0.15,        description = "Distance at which the waypoint is considered reached." }
         }
     },
 
     ---@param self ScriptInstance<WaypointPathProps, WaypointPathState>
     init = function(self)
-        self.state.index = 1
-        self.state.t     = 0
+        self.state.index   = 1
+        self.state.moving  = false
+        self.state.segTime = 0
+        self.state.elapsed = 0
     end,
 
     ---@param self ScriptInstance<WaypointPathProps, WaypointPathState>
     ---@param dt number
     update = function(self, dt)
-        local state = self.state
         local wps   = self.properties.waypoints
         if not wps then return end
 
         local count = #wps
-        if count < 2 then return end
+        if count < 1 then return end
 
-        local idx     = state.index
-        local nextIdx = idx % count + 1
+        -- Access sibling move_to_point script via cross-script proxy
+        local mtp = self.scripts[Script.MoveToPoint]
+        if not mtp then return end
 
-        local wpFrom = wps[idx]
-        local wpTo   = wps[nextIdx]
-        if not wpFrom or not wpTo then return end
-        if not wpFrom:isValid() or not wpTo:isValid() then return end
+        local secs = dt / 1000
 
-        local from = wpFrom:getPosition()
-        local to   = wpTo:getPosition()
+        -- ── Skip waypoints we are already on top of ─────────────────
+        -- This handles the common case where the entity starts at
+        -- the first waypoint and needs to immediately target the next.
+        while not self.state.moving do
+            local idx = self.state.index
+            local wp  = wps[idx]
+            if not wp or not wp:isValid() then return end
 
-        local segLen = from:distanceTo(to)
-        if segLen < 1e-6 then
-            state.index = nextIdx
-            state.t     = 0
-            return
-        end
+            local target = wp:getPosition()
+            local dist   = self:getPosition():distanceTo(target)
 
-        local step = (self.properties.speed * dt) / segLen
-        state.t    = state.t + step
+            if dist < (self.properties.arrivalThreshold or 0.15) then
+                -- Already at this waypoint — advance
+                local nextIdx = idx + 1
+                if nextIdx > count then
+                    if self.properties.loop then
+                        nextIdx = 1
+                    else
+                        return -- path complete
+                    end
+                end
+                self.state.index = nextIdx
+            else
+                -- Push target to move_to_point
+                local duration = dist / math.max(0.01, self.properties.speed)
 
-        if state.t >= 1 then
-            state.t     = 0
-            state.index = nextIdx
-            -- Stop at the end when not looping
-            if not self.properties.loop and nextIdx == count then
-                self:setPosition(to)
-                return
+                mtp.targetPoint = target:toArray()
+                mtp.duration    = duration
+                mtp.easing      = self.properties.easing or "cubicInOut"
+                mtp.delay       = 0
+
+                self.state.moving  = true
+                self.state.segTime = duration
+                self.state.elapsed = 0
+                return  -- Wait for move_to_point to pick up the new target
             end
-            -- Advance to next segment
-            idx     = state.index
-            nextIdx = idx % count + 1
-            wpFrom  = wps[idx]
-            wpTo    = wps[nextIdx]
-            if not wpFrom or not wpTo then return end
-            from = wpFrom:getPosition()
-            to   = wpTo:getPosition()
         end
 
-        local pos = from:lerp(to, state.t)
-        self:setPosition(pos)
+        -- ── Check arrival ────────────────────────────────────────────
+        self.state.elapsed = self.state.elapsed + secs
+
+        local idx    = self.state.index
+        local wp     = wps[idx]
+        if not wp or not wp:isValid() then return end
+
+        local target = wp:getPosition()
+        local dist   = self:getPosition():distanceTo(target)
+
+        if dist < (self.properties.arrivalThreshold or 0.15) then
+            -- Advance to next waypoint
+            local nextIdx = idx + 1
+            if nextIdx > count then
+                if self.properties.loop then
+                    nextIdx = 1
+                else
+                    return -- path complete
+                end
+            end
+            self.state.index  = nextIdx
+            self.state.moving = false
+        end
     end
 }
