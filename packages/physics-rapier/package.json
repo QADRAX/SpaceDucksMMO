@@ -12,8 +12,11 @@
     }
   },
   "scripts": {
-    "build": "tsc -b tsconfig.json",
-    "test": "jest"
+    "build:test-scripts": "ts-node scripts/generate-test-scripts.ts",
+    "build": "npm run build:test-scripts && tsc -b tsconfig.json",
+    "test": "jest",
+    "test:integration": "jest --testPathPatterns=integration",
+    "test:unit": "jest --testPathIgnorePatterns=integration"
   },
   "dependencies": {
     "@duckengine/core": "^0.1.0",
