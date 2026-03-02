@@ -56,6 +56,48 @@ From this package:
 - `npm run test:unit` - run only unit tests
 - `npm run test:integration` - run only integration tests
 
+## Performance Testing
+
+Comprehensive stress testing framework to measure physics performance at **144 FPS** target.
+
+### Quick Start
+
+```bash
+# Run all stress tests
+npm run test:stress
+
+# Analyze latest results
+npm run perf:analyze:latest
+
+# Compare two test runs
+npm run perf:compare report1.json report2.json
+```
+
+### Stress Test Scenarios
+
+Tests measure frame time under various collision loads:
+
+- **Baseline**: 1,000 static entities (overhead only)
+- **1D Linear**: 10-100 spheres pushing in a line
+- **3D Chaos**: 10-500 spheres falling and colliding (realistic)
+- **Collider Types**: Sphere vs Box vs Cylinder comparison
+- **Stacked Grid**: Pyramid of boxes testing constraint solver
+- **Mixed Load**: Realistic blend of static and dynamic bodies
+
+### Understanding Results
+
+Target frame budget @ 144 FPS: **6.94ms**
+
+- ✓ **≥99% stable**: Safe for production
+- ⚠ **95-99% stable**: Marginal, occasional drops
+- ✗ **<95% stable**: Unplayable, too many drops
+
+Results are saved to `perf-results/stress/` as JSON and CSV.
+
+See [PERF_QUICKSTART.md](./PERF_QUICKSTART.md) for detailed guide.
+See [PERFORMANCE_TESTING_GUIDE.md](./PERFORMANCE_TESTING_GUIDE.md) for advanced usage.
+See [STRESS_TESTING_THEORY.md](./STRESS_TESTING_THEORY.md) for theoretical background.
+
 ## Integration Test Framework
 
 ### Scaffold Architecture

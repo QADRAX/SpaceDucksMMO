@@ -2,7 +2,8 @@ import { BaseScene, Entity, type IRenderingEngine, ScriptComponent, DefaultEcsCo
 import type { ISettingsService, PhysicsTimestepConfig } from "@duckengine/core";
 import RapierPhysicsSystem from "../../RapierPhysicsSystem";
 import { initRapier } from "../../rapier/RapierInit";
-import { ScriptSystem } from "@duckengine/core/src/domain/scripting/ScriptSystem";
+// @ts-ignore - ScriptSystem is internal to core
+import { ScriptSystem } from "@duckengine/core/domain/scripting/ScriptSystem";
 
 class RapierIntegrationTestScene extends BaseScene {
   readonly id = "RapierIntegrationTestScene";

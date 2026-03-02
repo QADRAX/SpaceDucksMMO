@@ -16,7 +16,12 @@
     "build": "npm run build:test-scripts && tsc -b tsconfig.json",
     "test": "jest",
     "test:integration": "jest --testPathPatterns=integration",
-    "test:unit": "jest --testPathIgnorePatterns=integration"
+    "test:unit": "jest --testPathIgnorePatterns=integration",
+    "test:performance": "jest --testPathPatterns=performance --detectOpenHandles --forceExit",
+    "test:stress": "jest --testNamePattern='Stress Tests' --detectOpenHandles --forceExit",
+    "perf:analyze": "node scripts/analyze-perf.js",
+    "perf:analyze:latest": "node scripts/analyze-perf.js --latest",
+    "perf:compare": "node scripts/analyze-perf.js --compare"
   },
   "dependencies": {
     "@duckengine/core": "^0.1.0",
