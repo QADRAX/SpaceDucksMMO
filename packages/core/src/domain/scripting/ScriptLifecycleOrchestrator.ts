@@ -67,9 +67,8 @@ export class ScriptLifecycleOrchestrator {
      * Executes the update phase.
      * 
      * @remarks
-     * This phase:
-     * 1. Syncs properties (detects changes and triggers onPropertyChanged)
-     * 2. Calls update hook with delta time
+     * This phase calls update hook with delta time.
+     * Property sync happens once per frame in earlyUpdate.
      * 
      * @param entities - All entities to process
      * @param dt - Delta time in milliseconds
@@ -83,9 +82,6 @@ export class ScriptLifecycleOrchestrator {
 
             for (const slot of sc.getSlots()) {
                 if (!slot.enabled) continue;
-
-                // Sync properties BEFORE executing the hook
-                this.instanceManager.syncProperties(slot);
 
                 const instance = this.instanceManager.getInstance(slot.slotId);
                 if (instance?.update) {
@@ -101,9 +97,8 @@ export class ScriptLifecycleOrchestrator {
      * Executes the lateUpdate phase.
      * 
      * @remarks
-     * This phase:
-     * 1. Syncs properties (detects changes and triggers onPropertyChanged)
-     * 2. Calls lateUpdate hook with delta time
+     * This phase calls lateUpdate hook with delta time.
+     * Property sync happens once per frame in earlyUpdate.
      * 
      * @param entities - All entities to process
      * @param dt - Delta time in milliseconds
@@ -117,9 +112,6 @@ export class ScriptLifecycleOrchestrator {
 
             for (const slot of sc.getSlots()) {
                 if (!slot.enabled) continue;
-
-                // Sync properties BEFORE executing the hook
-                this.instanceManager.syncProperties(slot);
 
                 const instance = this.instanceManager.getInstance(slot.slotId);
                 if (instance?.lateUpdate) {

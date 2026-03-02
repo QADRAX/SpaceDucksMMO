@@ -6,3 +6,7 @@ npm-debug.log
 yarn-error.log
 tsconfig.tsbuildinfo
 packages/core/src/domain/scripting/generated/
+
+# Performance test reports (keep only latest)
+packages/core/perf-results/benchmark-report-20*.json
+packages/core/perf-results/benchmark-report-20*.md

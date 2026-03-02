@@ -19,5 +19,13 @@ module.exports = {
     '^@client/(.*)$': '<rootDir>/src/$1'
   },
   testMatch: ['**/*.(test|spec).(ts|tsx)'],
-  setupFiles: ['<rootDir>/jest.setup.js']
+  setupFiles: ['<rootDir>/jest.setup.js'],
+  // Performance tests need longer timeouts
+  testTimeout: 30000,
+  // Allow individual tests to override timeout
+  globals: {
+    'ts-jest': {
+      isolatedModules: true
+    }
+  }
 };

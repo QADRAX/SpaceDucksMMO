@@ -15,7 +15,10 @@
     "build:scripts": "tsx scripts/generate-scripts.ts",
     "build:test-scripts": "tsx scripts/generate-test-scripts.ts",
     "build": "npm run build:scripts && npm run build:test-scripts && tsc -b tsconfig.json",
-    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
+    "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js",
+    "test:perf": "node scripts/run-perf-tests.js",
+    "test:unit": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js --testPathIgnorePatterns=\"\\.perf\\.test\\.ts$\"",
+    "benchmark": "npm run test:perf -- --verbose"
   },
   "dependencies": {
     "@duckengine/web-core-api-client": "^0.1.0",

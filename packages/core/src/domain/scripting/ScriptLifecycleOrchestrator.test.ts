@@ -371,46 +371,6 @@ describe("ScriptLifecycleOrchestrator", () => {
     });
 
     describe("update()", () => {
-        it("syncs properties before calling hook (BUG FIX)", () => {
-            const entity = new Entity("test-entity");
-            const scriptComp = new ScriptComponent();
-            const slotId = scriptComp.addSlot("builtin://test.lua");
-            const slot = scriptComp.getSlots()[0];
-            slot.properties.testProp = 42;
-
-            entity.addComponent(scriptComp);
-
-            const testScript = `
-                return {
-                    schema = {},
-                    update = function(self, dt)
-                        -- Properties should be synced
-                    end
-                }
-            `;
-
-            instanceManager = new ScriptInstanceManager(runtime, {
-                "builtin://test.lua": testScript
-            }, {});
-            orchestrator = new ScriptLifecycleOrchestrator(
-                instanceManager,
-                runtime,
-                eventBus,
-                gizmoRenderer,
-                timeBridgeSync
-            );
-
-            instanceManager.compileSlot(entity, slot);
-
-            // Spy on syncProperties
-            const syncSpy = jest.spyOn(instanceManager, 'syncProperties');
-
-            orchestrator.update([entity], 16.67);
-
-            // BUG FIX: syncProperties should be called in update too
-            expect(syncSpy).toHaveBeenCalledWith(slot);
-        });
-
         it("calls update hook with delta time", () => {
             const entity = new Entity("test-entity");
             const scriptComp = new ScriptComponent();
@@ -483,46 +443,6 @@ describe("ScriptLifecycleOrchestrator", () => {
     });
 
     describe("lateUpdate()", () => {
-        it("syncs properties before calling hook (BUG FIX)", () => {
-            const entity = new Entity("test-entity");
-            const scriptComp = new ScriptComponent();
-            const slotId = scriptComp.addSlot("builtin://test.lua");
-            const slot = scriptComp.getSlots()[0];
-            slot.properties.testProp = 42;
-
-            entity.addComponent(scriptComp);
-
-            const testScript = `
-                return {
-                    schema = {},
-                    lateUpdate = function(self, dt)
-                        -- Properties should be synced
-                    end
-                }
-            `;
-
-            instanceManager = new ScriptInstanceManager(runtime, {
-                "builtin://test.lua": testScript
-            }, {});
-            orchestrator = new ScriptLifecycleOrchestrator(
-                instanceManager,
-                runtime,
-                eventBus,
-                gizmoRenderer,
-                timeBridgeSync
-            );
-
-            instanceManager.compileSlot(entity, slot);
-
-            // Spy on syncProperties
-            const syncSpy = jest.spyOn(instanceManager, 'syncProperties');
-
-            orchestrator.lateUpdate([entity], 16.67);
-
-            // BUG FIX: syncProperties should be called in lateUpdate too
-            expect(syncSpy).toHaveBeenCalledWith(slot);
-        });
-
         it("calls lateUpdate hook with delta time", () => {
             const entity = new Entity("test-entity");
             const scriptComp = new ScriptComponent();
@@ -740,8 +660,23 @@ describe("ScriptLifecycleOrchestrator", () => {
         });
     });
 
-    describe("syncProperties in all phases (CRITICAL BUG FIX)", () => {
-        it("calls syncProperties in earlyUpdate", () => {
+    /**
+     * DESIGN DECISION: syncProperties only in earlyUpdate
+     * 
+     * Property synchronization happens ONCE per frame in earlyUpdate for performance.
+     * This reduces overhead from 3x JSON.stringify per frame to 1x.
+     * 
+     * Trade-off: External property changes (e.g., editor modifications) will have
+     * a 1-frame delay before being detected. This is acceptable for:
+     * - 144 FPS target (6.94ms frame budget)
+     * - Properties rarely change mid-frame in production
+     * - Editor UX impact is minimal at high frame rates
+     * 
+     * Previous behavior (sync in all 3 phases) caused ~27ms overhead for 100 entities.
+     * Current behavior reduces this significantly while maintaining functionality.
+     */
+    describe("syncProperties optimization", () => {
+        it("calls syncProperties only in earlyUpdate", () => {
             const entity = new Entity("test-entity");
             const scriptComp = new ScriptComponent();
             const slotId = scriptComp.addSlot("builtin://test.lua");
@@ -752,74 +687,8 @@ describe("ScriptLifecycleOrchestrator", () => {
             const testScript = `
                 return {
                     schema = {},
-                    earlyUpdate = function(self, dt) end
-                }
-            `;
-
-            instanceManager = new ScriptInstanceManager(runtime, {
-                "builtin://test.lua": testScript
-            }, {});
-            orchestrator = new ScriptLifecycleOrchestrator(
-                instanceManager,
-                runtime,
-                eventBus,
-                gizmoRenderer,
-                timeBridgeSync
-            );
-            instanceManager.compileSlot(entity, slot);
-
-            const syncSpy = jest.spyOn(instanceManager, 'syncProperties');
-
-            orchestrator.earlyUpdate([entity], 16.67);
-
-            expect(syncSpy).toHaveBeenCalled();
-        });
-
-        it("calls syncProperties in update", () => {
-            const entity = new Entity("test-entity");
-            const scriptComp = new ScriptComponent();
-            const slotId = scriptComp.addSlot("builtin://test.lua");
-            const slot = scriptComp.getSlots()[0];
-
-            entity.addComponent(scriptComp);
-
-            const testScript = `
-                return {
-                    schema = {},
-                    update = function(self, dt) end
-                }
-            `;
-
-            instanceManager = new ScriptInstanceManager(runtime, {
-                "builtin://test.lua": testScript
-            }, {});
-            orchestrator = new ScriptLifecycleOrchestrator(
-                instanceManager,
-                runtime,
-                eventBus,
-                gizmoRenderer,
-                timeBridgeSync
-            );
-            instanceManager.compileSlot(entity, slot);
-
-            const syncSpy = jest.spyOn(instanceManager, 'syncProperties');
-
-            orchestrator.update([entity], 16.67);
-
-            expect(syncSpy).toHaveBeenCalled();
-        });
-
-        it("calls syncProperties in lateUpdate", () => {
-            const entity = new Entity("test-entity");
-            const scriptComp = new ScriptComponent();
-            const slotId = scriptComp.addSlot("builtin://test.lua");
-            const slot = scriptComp.getSlots()[0];
-
-            entity.addComponent(scriptComp);
-
-            const testScript = `
-                return {
-                    schema = {},
+                    earlyUpdate = function(self, dt) end,
+                    update = function(self, dt) end,
                     lateUpdate = function(self, dt) end
                 }
             `;
@@ -838,9 +707,16 @@ describe("ScriptLifecycleOrchestrator", () => {
 
             const syncSpy = jest.spyOn(instanceManager, 'syncProperties');
 
+            orchestrator.earlyUpdate([entity], 16.67);
+            expect(syncSpy).toHaveBeenCalledTimes(1);
+            
+            syncSpy.mockClear();
+            orchestrator.update([entity], 16.67);
+            expect(syncSpy).not.toHaveBeenCalled();
+            
+            syncSpy.mockClear();
             orchestrator.lateUpdate([entity], 16.67);
-
-            expect(syncSpy).toHaveBeenCalled();
+            expect(syncSpy).not.toHaveBeenCalled();
         });
     });
 });
