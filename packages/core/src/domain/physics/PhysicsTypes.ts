@@ -32,3 +32,15 @@ export type PhysicsCollisionEvent = {
   colliderA?: string;
   colliderB?: string;
 };
+
+/** Real-time performance statistics from the physics simulation. */
+export interface PhysicsPerformanceStats {
+  /** Total number of rigid bodies in the simulation. */
+  totalBodies: number;
+  /** Number of active (awake) rigid bodies currently being simulated. */
+  activeBodies: number;
+  /** Total number of colliders in the simulation. */
+  totalColliders: number;
+  /** Current constraint solver iterations per frame. */
+  solverIterations: number;
+}

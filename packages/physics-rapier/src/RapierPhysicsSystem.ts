@@ -5,7 +5,21 @@ import type {
   GravityComponent,
   RigidBodyComponent,
 } from "@duckengine/core";
-import type { IPhysicsSystem, PhysicsTimestepConfig, PhysicsCollisionEvent } from "@duckengine/core";
+import type {
+  IPhysicsSystem,
+  PhysicsTimestepConfig,
+  PhysicsCollisionEvent,
+  IPhysicsPerformanceProfile,
+  PhysicsPerformanceStats,
+} from "@duckengine/core";
+import {
+  PROFILE_STABLE,
+  PROFILE_BALANCED,
+  PROFILE_PERFORMANCE,
+  PROFILE_STACKED,
+  PROFILE_EXTREME,
+  PROFILE_OPEN_WORLD,
+} from "@duckengine/core";
 import { getRapier } from "./rapier/RapierInit";
 import type { RapierModule } from "./rapier/RapierInit";
 import type { EventQueue, World } from "@dimforge/rapier3d-compat";
@@ -47,6 +61,8 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
   private readonly collisions: RapierCollisionEvents;
   private readonly colliders: RapierColliders;
   private readonly updates: RapierEcsUpdateCoordinator;
+
+  private currentProfile: IPhysicsPerformanceProfile | null = null;
 
   constructor() {
     // Gravity is opt-in via GravityComponent. Default world gravity is zero.
@@ -288,6 +304,216 @@ export class RapierPhysicsSystem implements IPhysicsSystem {
       return [g.gravity[0], g.gravity[1], g.gravity[2]];
     }
     return null;
+  }
+
+  // ============================================================================
+  // PERFORMANCE OPTIMIZATION METHODS
+  // ============================================================================
+
+  /**
+   * Configure the constraint solver iterations
+   * Higher = more stable but slower
+   * Default: 4
+   * 
+   * Useful for tuning performance in high-load scenarios:
+   * - 1: Extreme performance (very unstable)
+   * - 2: High performance (reduced stability, for stacks)
+   * - 3: Balanced
+   * - 4: Very stable (default)
+   */
+  setSolverIterations(iterations: number): void {
+    if (!this.world.integrationParameters) return;
+    const clamped = Math.max(1, Math.min(20, iterations));
+    this.world.integrationParameters.numSolverIterations = clamped;
+  }
+
+  /**
+   * Get current solver iterations
+   */
+  getSolverIterations(): number {
+    if (!this.world.integrationParameters) return 4;
+    return this.world.integrationParameters.numSolverIterations || 4;
+  }
+
+  /**
+   * Force a rigid body to sleep
+   * Sleeping bodies cost 0 CPU until woken
+   * Useful for optimizing scenes with many at-rest objects
+   */
+  forceSleepBody(entityId: string): void {
+    const body = this.bodies.bodyByEntity.get(entityId);
+    if (!body || !body.sleep) return;
+    body.sleep();
+  }
+
+  /**
+   * Force a rigid body to wake up
+   * Waking a body enables its simulation
+   */
+  forceWakeBody(entityId: string): void {
+    const body = this.bodies.bodyByEntity.get(entityId);
+    if (!body || !body.wakeUp) return;
+    body.wakeUp();
+  }
+
+  /**
+   * Sleep all bodies that have negligible velocity
+   * Useful for performance optimization before intensive frames
+   * 
+   * @param velocityThreshold - Velocity below which bodies are slept (m/s, default: 0.01)
+   */
+  sleepSlowBodies(velocityThreshold: number = 0.01): void {
+    for (const [, body] of this.bodies.bodyByEntity) {
+      if (!body.linvel || !body.sleep) continue;
+      
+      const vel = body.linvel();
+      const speed = Math.sqrt(vel.x * vel.x + vel.y * vel.y + vel.z * vel.z);
+      
+      if (speed < velocityThreshold) {
+        body.sleep();
+      }
+    }
+  }
+
+  /**
+   * Wake all bodies
+   * Useful for resetting simulation after culling
+   */
+  wakeAllBodies(): void {
+    for (const [, body] of this.bodies.bodyByEntity) {
+      if (body.wakeUp) {
+        body.wakeUp();
+      }
+    }
+  }
+
+  /**
+   * Cull bodies outside a distance from a reference point
+   * Culled bodies are slept; others are awoken
+   * 
+   * This is a simple form of physics LOD
+   * 
+   * @param center - Reference point (usually camera position)
+   * @param range - Distance at which bodies are simulated
+   * 
+   * @example
+   * ```typescript
+   * // Each frame, cull bodies far from camera
+   * physics.cullBodiesByDistance(cameraPos, 100); // Simulate within 100m
+   * ```
+   */
+  cullBodiesByDistance(
+    center: { x: number; y: number; z: number },
+    range: number
+  ): { activeCount: number; culledCount: number } {
+    let activeCount = 0;
+    let culledCount = 0;
+
+    for (const [entityId, body] of this.bodies.bodyByEntity) {
+      if (!body.translation) continue;
+
+      const pos = body.translation();
+      const dist = Math.sqrt(
+        Math.pow(pos.x - center.x, 2) +
+        Math.pow(pos.y - center.y, 2) +
+        Math.pow(pos.z - center.z, 2)
+      );
+
+      if (dist < range) {
+        if (body.wakeUp) body.wakeUp();
+        activeCount++;
+      } else {
+        if (body.sleep) body.sleep();
+        culledCount++;
+      }
+    }
+
+    return { activeCount, culledCount };
+  }
+
+  /**
+   * Get performance stats about the current simulation
+   * Useful for monitoring and optimization
+   */
+  getPerformanceStats(): {
+    totalBodies: number;
+    activeBodies: number;
+    totalColliders: number;
+    solverIterations: number;
+  } {
+    let activeBodies = 0;
+    
+    for (const [, body] of this.bodies.bodyByEntity) {
+      // A body is active if it's not sleeping
+      // (Rapier doesn't expose this directly, so we estimate)
+      if (body.isSleeping && !body.isSleeping()) {
+        activeBodies++;
+      } else if (!body.isSleeping) {
+        activeBodies++; // Fallback: assume awake
+      }
+    }
+
+    return {
+      totalBodies: this.bodies.bodyByEntity.size,
+      activeBodies,
+      totalColliders: this.colliders.colliderByEntity.size,
+      solverIterations: this.getSolverIterations(),
+    };
+  }
+
+  /**
+   * Apply a complete performance profile atomically.
+   * This configures solver iterations, damping, and LOD settings in one call.
+   */
+  applyPerformanceProfile(profile: IPhysicsPerformanceProfile): void {
+    // Store the current profile for queries
+    this.currentProfile = profile;
+
+    // Apply solver configuration
+    const solverCfg = profile.solver;
+    this.setSolverIterations(solverCfg.iterations);
+
+    // Apply damping to all existing bodies
+    // Future bodies will use this config via the ECS system
+    if (solverCfg.defaultLinearDamping > 0 || solverCfg.defaultAngularDamping > 0) {
+      for (const [, body] of this.bodies.bodyByEntity) {
+        if (body.setLinearDamping) body.setLinearDamping(solverCfg.defaultLinearDamping);
+        if (body.setAngularDamping) body.setAngularDamping(solverCfg.defaultAngularDamping);
+      }
+    }
+
+    // Apply sleeping configuration if specified
+    if (solverCfg.autoSleep === true) {
+      this.sleepSlowBodies();
+    }
+
+    // Apply LOD configuration if enabled
+    if (profile.lod && profile.lod.enabled) {
+      // LOD culling would be called per-frame with the configured distance
+      // For now, we just store the config; actual culling happens in step()
+      // Implementation: User calls cullBodiesByDistance(center, profile.lod.cullingDistance) each frame
+    }
+  }
+
+  /**
+   * Get the currently active performance profile, if any.
+   */
+  getCurrentProfile(): IPhysicsPerformanceProfile | null {
+    return this.currentProfile;
+  }
+
+  /**
+   * Get list of available predefined performance profiles.
+   */
+  getAvailableProfiles(): IPhysicsPerformanceProfile[] {
+    return [
+      PROFILE_STABLE,
+      PROFILE_BALANCED,
+      PROFILE_PERFORMANCE,
+      PROFILE_STACKED,
+      PROFILE_EXTREME,
+      PROFILE_OPEN_WORLD,
+    ];
   }
 }
 

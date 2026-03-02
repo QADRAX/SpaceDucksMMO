@@ -1,22 +1,83 @@
 import CollisionEventsHub from "./CollisionEventsHub";
-import type { IPhysicsSystem, PhysicsCollisionEvent } from "./index";
+import type {
+  IPhysicsSystem,
+  PhysicsCollisionEvent,
+  PhysicsPerformanceStats,
+  IPhysicsPerformanceProfile,
+} from "./index";
+
+/**
+ * Helper to create a minimal mock IPhysicsSystem for testing
+ */
+function createMockPhysicsSystem(
+  onSubscribe?: (listener: (ev: PhysicsCollisionEvent) => void) => void
+): IPhysicsSystem {
+  let sink: ((ev: PhysicsCollisionEvent) => void) | undefined;
+  let currentProfile: IPhysicsPerformanceProfile | null = null;
+
+  const defaultProfile: IPhysicsPerformanceProfile = {
+    id: "test.default",
+    name: "Test Default",
+    solver: {
+      iterations: 4,
+      defaultLinearDamping: 0.0,
+      defaultAngularDamping: 0.0,
+      autoSleep: true,
+      sleepVelocityThreshold: 0.01,
+      sleepTimeThreshold: 0.5,
+    },
+    lod: {
+      enabled: false,
+      fullPrecisionDistance: 50,
+      reducedPrecisionDistance: 100,
+      cullingDistance: 200,
+      reducedTimestepMultiplier: 0.5,
+    },
+  };
+
+  return {
+    addEntity: () => {},
+    removeEntity: () => {},
+    update: () => {},
+    dispose: () => {},
+    applyImpulse: () => {},
+    applyForce: () => {},
+    getLinearVelocity: () => null,
+    setSolverIterations: () => {},
+    getSolverIterations: () => 4,
+    sleepSlowBodies: () => {},
+    forceSleepBody: () => {},
+    forceWakeBody: () => {},
+    wakeAllBodies: () => {},
+    cullBodiesByDistance: () => {},
+    getPerformanceStats: () => ({
+      totalBodies: 0,
+      activeBodies: 0,
+      totalColliders: 0,
+      solverIterations: 4,
+    } as PhysicsPerformanceStats),
+    applyPerformanceProfile: (profile) => {
+      currentProfile = profile;
+    },
+    getCurrentProfile: () => currentProfile ?? defaultProfile,
+    getAvailableProfiles: () => [defaultProfile],
+    subscribeCollisions: (listener) => {
+      sink = listener;
+      onSubscribe?.(listener);
+      return () => {
+        sink = undefined;
+      };
+    },
+  };
+}
 
 describe("CollisionEventsHub", () => {
   it("dispatches entity-scoped callbacks to both sides with normalized self/other", () => {
     let sink: ((ev: PhysicsCollisionEvent) => void) | undefined;
 
-    const physics: IPhysicsSystem = {
-      addEntity: () => {},
-      removeEntity: () => {},
-      update: () => {},
-      dispose: () => {},
-      subscribeCollisions: (listener) => {
-        sink = listener;
-        return () => {
-          sink = undefined;
-        };
-      }
-    };
+    const physics: IPhysicsSystem = createMockPhysicsSystem((listener) => {
+      sink = listener;
+    });
 
     const hub = new CollisionEventsHub();
     hub.attach(physics);
@@ -47,18 +108,9 @@ describe("CollisionEventsHub", () => {
   it("supports kind-specific entity subscriptions", () => {
     let sink: ((ev: PhysicsCollisionEvent) => void) | undefined;
 
-    const physics: IPhysicsSystem = {
-      addEntity: () => {},
-      removeEntity: () => {},
-      update: () => {},
-      dispose: () => {},
-      subscribeCollisions: (listener) => {
-        sink = listener;
-        return () => {
-          sink = undefined;
-        };
-      }
-    };
+    const physics: IPhysicsSystem = createMockPhysicsSystem((listener) => {
+      sink = listener;
+    });
 
     const hub = new CollisionEventsHub();
     hub.attach(physics);
@@ -85,18 +137,9 @@ describe("CollisionEventsHub", () => {
   it("dispatches collider-scoped callbacks and includes body-owner ids", () => {
     let sink: ((ev: PhysicsCollisionEvent) => void) | undefined;
 
-    const physics: IPhysicsSystem = {
-      addEntity: () => {},
-      removeEntity: () => {},
-      update: () => {},
-      dispose: () => {},
-      subscribeCollisions: (listener) => {
-        sink = listener;
-        return () => {
-          sink = undefined;
-        };
-      }
-    };
+    const physics: IPhysicsSystem = createMockPhysicsSystem((listener) => {
+      sink = listener;
+    });
 
     const hub = new CollisionEventsHub();
     hub.attach(physics);

@@ -9,6 +9,8 @@ export type { IGizmoRenderer } from './domain/ports/IGizmoRenderer';
 
 export type { default as IPhysicsSystem } from './domain/physics/IPhysicsSystem';
 export type * from './domain/physics/PhysicsTypes';
+export type * from './domain/physics/PhysicsPerformanceProfile';
+export * from './domain/physics/PhysicsProfiles';
 export { default as CollisionEventsHub } from './domain/physics/CollisionEventsHub';
 
 export { default as BaseScene } from './infrastructure/scenes/BaseScene';

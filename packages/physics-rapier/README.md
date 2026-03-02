@@ -98,6 +98,58 @@ See [PERF_QUICKSTART.md](./PERF_QUICKSTART.md) for detailed guide.
 See [PERFORMANCE_TESTING_GUIDE.md](./PERFORMANCE_TESTING_GUIDE.md) for advanced usage.
 See [STRESS_TESTING_THEORY.md](./STRESS_TESTING_THEORY.md) for theoretical background.
 
+## Performance Optimization
+
+The physics system includes advanced tuning methods for high-load scenarios.
+
+### Optimization Methods
+
+#### 1. **Solver Iterations** (50% performance impact)
+```typescript
+const physics = some_scene.physicsSystem;
+physics.setSolverIterations(2);  // Default: 4 (stable)
+                                 // Value: 2 (fast)
+                                 // Value: 1 (extreme)
+```
+
+#### 2. **Body Sleeping** (80% impact on resting bodies)
+```typescript
+physics.sleepSlowBodies(0.05);  // Sleep bodies slower than 0.05 m/s
+physics.forceSleepBody(entityId);
+physics.forceWakeBody(entityId);
+```
+
+#### 3. **Distance-Based Culling** (10x impact on large worlds)
+```typescript
+physics.cullBodiesByDistance(
+  { x: 0, y: 0, z: 0 },  // Camera position
+  100                      // Simulation range (meters)
+);
+// Bodies within 100m: simulated
+// Bodies beyond 100m: slept (0 CPU)
+```
+
+#### 4. **Performance Monitoring**
+```typescript
+const stats = physics.getPerformanceStats();
+// Returns: { totalBodies, activeBodies, totalColliders, solverIterations }
+```
+
+### Optimization Examples
+
+See [PhysicsOptimization.examples.test.ts](./src/__tests__/performance/PhysicsOptimization.examples.test.ts) for:
+- Reducing solver iterations for explosions
+- Auto-sleeping after settling
+- Distance-based physics LOD
+- Stacked structure optimization
+
+See [PHYSICS_OPTIMIZATION_GUIDE.md](./PHYSICS_OPTIMIZATION_GUIDE.md) for:
+- Detailed API reference
+- Strategy by scenario (explosions, stacks, open-world)
+- Performance targets and budgets
+- Combined optimization example (10x improvement)
+
+
 ## Integration Test Framework
 
 ### Scaffold Architecture

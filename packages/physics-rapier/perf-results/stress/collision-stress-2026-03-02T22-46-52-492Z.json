@@ -1,0 +1,466 @@
+{
+  "target_fps": 144,
+  "frame_budget_ms": 6.944444444444445,
+  "generated_at": "2026-03-02T22:46:52.492Z",
+  "results": [
+    {
+      "scenarioName": "Static(1k)",
+      "entityCount": 1000,
+      "colliderCount": 0,
+      "totalFrames": 60,
+      "metrics": {
+        "avg_ms": 1.0152716666666417,
+        "min_ms": 0.08389999999963038,
+        "max_ms": 51.165899999999965,
+        "p50_ms": 0.13380000000006476,
+        "p95_ms": 0.3577999999997701,
+        "p99_ms": 51.165899999999965,
+        "stdDev_ms": 6.529913016038616
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 59,
+        "frames_exceeding_budget": 1,
+        "stability_percent": 98.33333333333333,
+        "estimated_fps": 984.9580489951207
+      },
+      "timestamp": "2026-03-02T22:46:45.218Z"
+    },
+    {
+      "scenarioName": "Linear-10spheres",
+      "entityCount": 10,
+      "colliderCount": 10,
+      "totalFrames": 120,
+      "metrics": {
+        "avg_ms": 0.560123333333335,
+        "min_ms": 0.2337999999999738,
+        "max_ms": 10.350100000000111,
+        "p50_ms": 0.3040000000000873,
+        "p95_ms": 0.9473000000002685,
+        "p99_ms": 8.407200000000103,
+        "stdDev_ms": 1.2565897210130117
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 118,
+        "frames_exceeding_budget": 2,
+        "stability_percent": 98.33333333333333,
+        "estimated_fps": 1785.3210899980309
+      },
+      "timestamp": "2026-03-02T22:46:45.324Z"
+    },
+    {
+      "scenarioName": "Linear-50spheres",
+      "entityCount": 50,
+      "colliderCount": 50,
+      "totalFrames": 120,
+      "metrics": {
+        "avg_ms": 0.8119299999999877,
+        "min_ms": 0.4476999999997133,
+        "max_ms": 5.586399999999685,
+        "p50_ms": 0.6347999999998137,
+        "p95_ms": 2.2204999999999018,
+        "p99_ms": 4.053199999999833,
+        "stdDev_ms": 0.6746586125095375
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 120,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 1231.6332688778775
+      },
+      "timestamp": "2026-03-02T22:46:45.453Z"
+    },
+    {
+      "scenarioName": "Linear-100spheres",
+      "entityCount": 100,
+      "colliderCount": 100,
+      "totalFrames": 120,
+      "metrics": {
+        "avg_ms": 0.9609683333333351,
+        "min_ms": 0.6631000000006679,
+        "max_ms": 2.7668000000003303,
+        "p50_ms": 0.8608000000003813,
+        "p95_ms": 1.5820000000003347,
+        "p99_ms": 2.565500000000611,
+        "stdDev_ms": 0.33864679091535493
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 120,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 1040.6170165163246
+      },
+      "timestamp": "2026-03-02T22:46:45.577Z"
+    },
+    {
+      "scenarioName": "Falling-10spheres",
+      "entityCount": 10,
+      "colliderCount": 10,
+      "totalFrames": 180,
+      "metrics": {
+        "avg_ms": 0.19856166666662728,
+        "min_ms": 0.09439999999995052,
+        "max_ms": 5.4427999999998065,
+        "p50_ms": 0.11889999999948486,
+        "p95_ms": 0.31929999999920256,
+        "p99_ms": 2.4858000000003813,
+        "stdDev_ms": 0.45728535672487847
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 180,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 5036.218806920763
+      },
+      "timestamp": "2026-03-02T22:46:45.618Z"
+    },
+    {
+      "scenarioName": "Falling-50spheres",
+      "entityCount": 50,
+      "colliderCount": 50,
+      "totalFrames": 180,
+      "metrics": {
+        "avg_ms": 0.5409044444444538,
+        "min_ms": 0.3400000000001455,
+        "max_ms": 3.9343999999991865,
+        "p50_ms": 0.4677000000001499,
+        "p95_ms": 0.838699999999335,
+        "p99_ms": 3.3575000000000728,
+        "stdDev_ms": 0.3793162154635104
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 180,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 1848.7553767968554
+      },
+      "timestamp": "2026-03-02T22:46:45.724Z"
+    },
+    {
+      "scenarioName": "Falling-100spheres",
+      "entityCount": 100,
+      "colliderCount": 100,
+      "totalFrames": 180,
+      "metrics": {
+        "avg_ms": 0.8965433333333295,
+        "min_ms": 0.466099999999642,
+        "max_ms": 2.561999999999898,
+        "p50_ms": 0.8099999999994907,
+        "p95_ms": 1.2538999999997031,
+        "p99_ms": 2.4606000000003405,
+        "stdDev_ms": 0.2628909406536922
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 180,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 1115.395054338334
+      },
+      "timestamp": "2026-03-02T22:46:45.893Z"
+    },
+    {
+      "scenarioName": "Falling-250spheres",
+      "entityCount": 250,
+      "colliderCount": 250,
+      "totalFrames": 180,
+      "metrics": {
+        "avg_ms": 2.2525061111110567,
+        "min_ms": 1.2119000000002416,
+        "max_ms": 3.9556000000002314,
+        "p50_ms": 2.137200000000121,
+        "p95_ms": 3.4025000000001455,
+        "p99_ms": 3.9079000000001543,
+        "stdDev_ms": 0.5991612156603165
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 180,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 443.9499609200822
+      },
+      "timestamp": "2026-03-02T22:46:46.315Z"
+    },
+    {
+      "scenarioName": "Falling-500spheres",
+      "entityCount": 500,
+      "colliderCount": 500,
+      "totalFrames": 180,
+      "metrics": {
+        "avg_ms": 4.251811111111132,
+        "min_ms": 2.3945000000003347,
+        "max_ms": 7.825600000000122,
+        "p50_ms": 3.8857000000007247,
+        "p95_ms": 6.419299999999566,
+        "p99_ms": 7.423699999999371,
+        "stdDev_ms": 1.2955702284188708
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 175,
+        "frames_exceeding_budget": 5,
+        "stability_percent": 97.22222222222221,
+        "estimated_fps": 235.19389123066395
+      },
+      "timestamp": "2026-03-02T22:46:47.116Z"
+    },
+    {
+      "scenarioName": "Spheres-100",
+      "entityCount": 100,
+      "colliderCount": 100,
+      "totalFrames": 120,
+      "metrics": {
+        "avg_ms": 0.7983766666667331,
+        "min_ms": 0.4886999999998807,
+        "max_ms": 2.051499999999578,
+        "p50_ms": 0.7145000000000437,
+        "p95_ms": 1.0947999999998501,
+        "p99_ms": 1.3382000000001426,
+        "stdDev_ms": 0.19431503104206543
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 120,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 1252.541615695077
+      },
+      "timestamp": "2026-03-02T22:46:47.221Z"
+    },
+    {
+      "scenarioName": "Boxes-100",
+      "entityCount": 100,
+      "colliderCount": 100,
+      "totalFrames": 120,
+      "metrics": {
+        "avg_ms": 0.8867250000000089,
+        "min_ms": 0.48030000000017026,
+        "max_ms": 2.1847999999999956,
+        "p50_ms": 0.7178999999996449,
+        "p95_ms": 1.596400000000358,
+        "p99_ms": 1.7390999999997803,
+        "stdDev_ms": 0.33702631851982134
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 120,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 1127.7453550988075
+      },
+      "timestamp": "2026-03-02T22:46:47.333Z"
+    },
+    {
+      "scenarioName": "Spheres-50",
+      "entityCount": 50,
+      "colliderCount": 50,
+      "totalFrames": 120,
+      "metrics": {
+        "avg_ms": 0.32868416666675937,
+        "min_ms": 0.2327000000004773,
+        "max_ms": 1.1962000000003172,
+        "p50_ms": 0.33539999999993597,
+        "p95_ms": 0.43219999999928405,
+        "p99_ms": 0.6562000000003536,
+        "stdDev_ms": 0.10883592160971743
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 120,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 3042.434353139568
+      },
+      "timestamp": "2026-03-02T22:46:47.376Z"
+    },
+    {
+      "scenarioName": "Boxes-50",
+      "entityCount": 50,
+      "colliderCount": 50,
+      "totalFrames": 120,
+      "metrics": {
+        "avg_ms": 0.41510500000000927,
+        "min_ms": 0.22890000000006694,
+        "max_ms": 0.8739000000005035,
+        "p50_ms": 0.35530000000017026,
+        "p95_ms": 0.7429000000001906,
+        "p99_ms": 0.8568999999997686,
+        "stdDev_ms": 0.16151166668388497
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 120,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 2409.0290408450337
+      },
+      "timestamp": "2026-03-02T22:46:47.427Z"
+    },
+    {
+      "scenarioName": "Stacked-10x10",
+      "entityCount": 385,
+      "colliderCount": 385,
+      "totalFrames": 180,
+      "metrics": {
+        "avg_ms": 6.046971111111139,
+        "min_ms": 2.604899999999361,
+        "max_ms": 8.949499999999716,
+        "p50_ms": 6.256099999999606,
+        "p95_ms": 7.1327000000001135,
+        "p99_ms": 7.496600000000399,
+        "stdDev_ms": 0.8934008234138272
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 166,
+        "frames_exceeding_budget": 14,
+        "stability_percent": 92.22222222222223,
+        "estimated_fps": 165.37204852236323
+      },
+      "timestamp": "2026-03-02T22:46:48.534Z"
+    },
+    {
+      "scenarioName": "Stacked-15x15",
+      "entityCount": 1240,
+      "colliderCount": 1240,
+      "totalFrames": 180,
+      "metrics": {
+        "avg_ms": 20.448654444444518,
+        "min_ms": 9.803399999999783,
+        "max_ms": 26.130199999999604,
+        "p50_ms": 21.484199999999873,
+        "p95_ms": 23.624800000000505,
+        "p99_ms": 24.442799999999806,
+        "stdDev_ms": 3.1996921885693026
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 0,
+        "frames_exceeding_budget": 180,
+        "stability_percent": 0,
+        "estimated_fps": 48.902973186662635
+      },
+      "timestamp": "2026-03-02T22:46:52.256Z"
+    },
+    {
+      "scenarioName": "Mixed-70dyn+30static",
+      "entityCount": 100,
+      "colliderCount": 100,
+      "totalFrames": 120,
+      "metrics": {
+        "avg_ms": 0.48689166666675493,
+        "min_ms": 0.35130000000026484,
+        "max_ms": 1.5007999999997992,
+        "p50_ms": 0.5112000000008265,
+        "p95_ms": 0.6175999999995838,
+        "p99_ms": 0.7242000000005646,
+        "stdDev_ms": 0.12381804027362138
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 120,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 2053.8449689352224
+      },
+      "timestamp": "2026-03-02T22:46:52.321Z"
+    },
+    {
+      "scenarioName": "Mixed-200dyn+100static",
+      "entityCount": 300,
+      "colliderCount": 300,
+      "totalFrames": 120,
+      "metrics": {
+        "avg_ms": 1.232069166666679,
+        "min_ms": 1.0258999999987282,
+        "max_ms": 2.9989000000005035,
+        "p50_ms": 1.10779999999977,
+        "p95_ms": 1.569999999999709,
+        "p99_ms": 2.582699999999022,
+        "stdDev_ms": 0.28433780754459237
+      },
+      "collisions": {
+        "total_events": 0,
+        "avg_per_frame": 0,
+        "max_per_frame": 0
+      },
+      "stability": {
+        "frames_within_budget": 120,
+        "frames_exceeding_budget": 0,
+        "stability_percent": 100,
+        "estimated_fps": 811.6427446240424
+      },
+      "timestamp": "2026-03-02T22:46:52.476Z"
+    }
+  ]
+}
