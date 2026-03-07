@@ -13,7 +13,6 @@ export const toggleSceneDebug = defineSceneUseCase<ToggleSceneDebugParams, void>
   name: 'toggleSceneDebug',
   execute(scene, { kind, enabled }) {
     scene.debugFlags.set(kind, enabled);
-    scene.ports.renderSync?.setSceneDebugEnabled(kind, enabled);
 
     if (kind === 'mesh') {
       emitSceneChange(scene, { kind: 'scene-mesh-debug-changed', enabled });

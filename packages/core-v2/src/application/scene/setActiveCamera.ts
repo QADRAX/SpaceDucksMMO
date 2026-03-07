@@ -24,7 +24,6 @@ export const setActiveCamera = defineSceneUseCase<SetActiveCameraParams, Result<
     }
 
     scene.activeCameraId = entityId;
-    scene.ports.renderSync?.setActiveCameraEntityId(entityId);
     emitSceneChange(scene, { kind: 'active-camera-changed', entityId });
     return ok(undefined);
   },

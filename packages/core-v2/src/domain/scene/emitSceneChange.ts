@@ -5,7 +5,7 @@ import type { SceneChangeEventWithError } from '../types/sceneEvents';
 export function emitSceneChange(scene: SceneState, event: SceneChangeEventWithError): void {
   for (const listener of scene.changeListeners) {
     try {
-      listener(event);
+      listener(scene, event);
     } catch {
       /* observer must not break engine */
     }

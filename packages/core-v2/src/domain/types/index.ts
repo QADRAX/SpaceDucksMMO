@@ -22,6 +22,8 @@ export {
   type SceneDebugChangedEvent,
   type SceneMeshDebugChangedEvent,
   type SceneColliderDebugChangedEvent,
+  type SceneSetupEvent,
+  type SceneTeardownEvent,
   type SceneErrorEvent,
   type SceneChangeEvent,
   type SceneChangeEventWithError,
@@ -57,5 +59,6 @@ export {
   type GameSettings,
   DEFAULT_GAME_SETTINGS,
 } from './settings';
-export { type SceneState, type ScenePorts } from './sceneState';
+export { type SceneState } from './sceneState';
+export { type SceneSystemAdapter, type SceneChangeListener } from './sceneSystemAdapter';
 export { type EngineState } from './engineState';

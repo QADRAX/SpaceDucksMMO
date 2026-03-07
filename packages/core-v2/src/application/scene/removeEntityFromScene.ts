@@ -53,9 +53,6 @@ function removeEntityRecursive(scene: SceneState, entity: EntityState): void {
     scene.entityCleanups.delete(entity.id);
   }
 
-  scene.ports.renderSync?.removeEntity(entity.id);
-  scene.ports.physics?.removeEntity(entity.id);
-
   scene.entities.delete(entity.id);
 
   emitSceneChange(scene, { kind: 'entity-removed', entityId: entity.id });

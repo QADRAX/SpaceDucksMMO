@@ -1,36 +1,30 @@
-import type { ScenePorts } from '../../domain/types/sceneState';
+import type { SceneSystemAdapter, SceneChangeListener } from '../../domain/types/sceneSystemAdapter';
 import { defineSceneUseCase } from './sceneUseCase';
+import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Parameters for the setupScene use case. */
 export interface SetupSceneParams {
-  readonly ports?: Partial<ScenePorts>;
+  readonly adapters?: ReadonlyArray<SceneSystemAdapter>;
 }
 
 /**
- * Initialises scene system ports.
- * Call this when renderer/physics backends are ready.
- * Registers all existing entities with the newly injected ports.
+ * Registers scene system adapters and signals that the scene is ready.
+ *
+ * Each adapter is stored in `scene.adapters` (update-pipeline order)
+ * and wrapped in a `SceneChangeListener` for reactive events.
+ * `teardownScene` detaches listeners and calls `dispose()`.
  */
 export const setupScene = defineSceneUseCase<SetupSceneParams, void>({
   name: 'setupScene',
-  execute(scene, { ports }) {
-    if (ports) {
-      scene.ports = { ...scene.ports, ...ports };
+  execute(scene, { adapters }) {
+    if (adapters) {
+      for (const adapter of adapters) {
+        scene.adapters.push(adapter);
+        const listener: SceneChangeListener = (s, ev) => adapter.handleSceneEvent(s, ev);
+        scene.changeListeners.add(listener);
+      }
     }
 
-    scene.ports.physics?.init();
-
-    for (const entity of scene.entities.values()) {
-      scene.ports.renderSync?.addEntity(entity);
-      scene.ports.physics?.addEntity(entity);
-    }
-
-    for (const [kind, enabled] of scene.debugFlags) {
-      scene.ports.renderSync?.setSceneDebugEnabled(kind, enabled);
-    }
-
-    if (scene.activeCameraId) {
-      scene.ports.renderSync?.setActiveCameraEntityId(scene.activeCameraId);
-    }
+    emitSceneChange(scene, { kind: 'scene-setup' });
   },
 });

@@ -57,6 +57,16 @@ export type SceneColliderDebugChangedEvent = {
   readonly enabled: boolean;
 };
 
+/** Event emitted when scene adapters have been registered and the scene is ready. */
+export type SceneSetupEvent = {
+  readonly kind: 'scene-setup';
+};
+
+/** Event emitted when a scene is about to be torn down. */
+export type SceneTeardownEvent = {
+  readonly kind: 'scene-teardown';
+};
+
 /** Event emitted when a scene operation fails. */
 export type SceneErrorEvent = {
   readonly kind: 'error';
@@ -73,7 +83,9 @@ export type SceneChangeEvent =
   | ComponentChangedEvent
   | SceneDebugChangedEvent
   | SceneMeshDebugChangedEvent
-  | SceneColliderDebugChangedEvent;
+  | SceneColliderDebugChangedEvent
+  | SceneSetupEvent
+  | SceneTeardownEvent;
 
 /** Scene change event extended with error variant. */
 export type SceneChangeEventWithError = SceneChangeEvent | SceneErrorEvent;

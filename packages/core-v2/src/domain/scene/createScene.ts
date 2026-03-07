@@ -1,7 +1,7 @@
-import type { SceneState, ScenePorts } from '../types/sceneState';
+import type { SceneState } from '../types/sceneState';
 
-/** Creates an empty scene state with optional port injection. */
-export function createScene(id: string, ports?: Partial<ScenePorts>): SceneState {
+/** Creates an empty scene state. */
+export function createScene(id: string): SceneState {
   return {
     id,
     entities: new Map(),
@@ -10,6 +10,6 @@ export function createScene(id: string, ports?: Partial<ScenePorts>): SceneState
     debugFlags: new Map(),
     changeListeners: new Set(),
     entityCleanups: new Map(),
-    ports: { ...ports },
+    adapters: [],
   };
 }

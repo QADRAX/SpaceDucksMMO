@@ -8,19 +8,15 @@ export interface UpdateSceneParams {
 /**
  * Advances the scene by one frame.
  *
- * Current order:
- *   1. Physics step
- *   2. Gizmo clear
- *   3. Render sync
- *
- * Future: scripting earlyUpdate → entity update → physics → scripting lateUpdate
- *         → gizmo draw → render sync.
+ * Iterates registered adapters in pipeline order and calls
+ * `adapter.update(scene, dt)` synchronously. This guarantees
+ * deterministic execution: physics steps before render, etc.
  */
 export const updateScene = defineSceneUseCase<UpdateSceneParams, void>({
   name: 'updateScene',
   execute(scene, { dt }) {
-    scene.ports.physics?.step(dt);
-    scene.ports.gizmo?.clear();
-    scene.ports.renderSync?.update(dt);
+    for (const adapter of scene.adapters) {
+      adapter.update?.(scene, dt);
+    }
   },
 });

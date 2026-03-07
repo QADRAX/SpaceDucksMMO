@@ -50,9 +50,6 @@ function addEntityRecursive(scene: SceneState, entity: EntityState): void {
   const cleanup = attachEntityObservers(scene, entity);
   scene.entityCleanups.set(entity.id, cleanup);
 
-  scene.ports.renderSync?.addEntity(entity);
-  scene.ports.physics?.addEntity(entity);
-
   emitSceneChange(scene, { kind: 'entity-added', entityId: entity.id });
 
   for (const child of entity.children) {

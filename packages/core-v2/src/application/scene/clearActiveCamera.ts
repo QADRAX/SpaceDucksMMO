@@ -7,7 +7,6 @@ export const clearActiveCamera = defineSceneUseCase({
   execute(scene) {
     if (scene.activeCameraId === null) return;
     scene.activeCameraId = null;
-    scene.ports.renderSync?.setActiveCameraEntityId(null);
     emitSceneChange(scene, { kind: 'active-camera-changed', entityId: null });
   },
 });
