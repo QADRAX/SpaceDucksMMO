@@ -72,7 +72,7 @@ export class SceneTestScaffold {
             createGizmoRenderer: () => ({ clear: () => { } }),
             onActiveCameraChanged: () => { }
         };
-        this.scene.setup(mockEngine, {});
+        this.scene.setup(mockEngine);
     }
 
     /**

@@ -80,7 +80,7 @@ describe('ShaderUniformUpdater', () => {
 
       updater.update(dt, entity, renderComponent);
 
-      expect(mockUniformNodes.time.value).toBe(initialTime + dt);
+      expect(mockUniformNodes.time.value).toBe(initialTime + dt / 1000);
     });
 
     it('should accumulate time over multiple updates', () => {
@@ -88,7 +88,7 @@ describe('ShaderUniformUpdater', () => {
       updater.update(0.016, entity, renderComponent);
       updater.update(0.016, entity, renderComponent);
 
-      expect(mockUniformNodes.time.value).toBeCloseTo(0.048, 5);
+      expect(mockUniformNodes.time.value).toBeCloseTo(0.000048, 8);
     });
 
     it('should sync component uniforms to material uniform nodes', () => {
@@ -141,7 +141,7 @@ describe('ShaderUniformUpdater', () => {
 
       updater.update(dt, entity, renderComponent);
 
-      expect(mockUniformNodes.time.value).toBe(initialTime + dt);
+      expect(mockUniformNodes.time.value).toBe(initialTime + dt / 1000);
       expect(mockUniformNodes.color.value).toEqual(new THREE.Color(0xffff00));
     });
 

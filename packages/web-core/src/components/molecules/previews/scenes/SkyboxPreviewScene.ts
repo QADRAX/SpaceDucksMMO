@@ -4,7 +4,7 @@ import {
     Entity,
     type ISettingsService,
 } from '@duckengine/rendering-three';
-import { SkyboxComponent } from '@duckengine/core';
+import { SkyboxComponent, type IRenderingEngine } from '@duckengine/core';
 import type { BasePreviewSettings } from '../utils/previewUtils';
 
 export type SkyboxPreviewSettings = BasePreviewSettings & {
@@ -38,8 +38,8 @@ export class SkyboxPreviewScene extends BaseScene {
         this.previewSettings = previewSettings;
     }
 
-    setup(engine: any, renderScene: any): void {
-        super.setup(engine, renderScene);
+    setup(engine: IRenderingEngine): void {
+        super.setup(engine);
 
         this.camera = new Entity('camera', [0, 0, 1]);
         this.camera.addComponent(

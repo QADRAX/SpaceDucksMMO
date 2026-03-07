@@ -5,6 +5,7 @@ import type {
     IScene,
     IResourceLoader,
     IRenderSyncSystem,
+    IRendererRuntimeSceneAdapter,
 } from '@duckengine/core';
 import { LoadingTracker, CoreLogger } from '@duckengine/core';
 import type { IFpsController } from '../ui/dev/FpsController';
@@ -47,15 +48,6 @@ export type RenderPass = {
     [key: string]: unknown;
 };
 
-// ---------------------------------------------------------------------------
-// Narrowed IScene extension for the renderSyncSystem internal property.
-// This is NOT part of the public IScene contract (intentionally), but we need
-// it here to avoid casting to `any`.
-// ---------------------------------------------------------------------------
-interface ISceneWithSyncSystem extends IScene {
-    renderSyncSystem?: { setIsInitialLoading(loading: boolean): void };
-}
-
 /** Options accepted by the ThreeRendererBase constructor. */
 export interface ThreeRendererBaseOptions {
     /**
@@ -80,7 +72,7 @@ export interface ThreeRendererBaseOptions {
 export abstract class ThreeRendererBase implements IRenderingEngine {
     // ─── Shared scene state ──────────────────────────────────────────────────
     protected scene!: THREE.Scene;
-    protected activeIScene: ISceneWithSyncSystem | null = null;
+    protected activeIScene: IScene | null = null;
 
     // ─── Loop & resize ───────────────────────────────────────────────────────
     protected rafId: number | null = null;
@@ -121,13 +113,10 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
     }
 
     createRenderSyncSystem?(
-        // `renderScene` is typed as `any` in IScene.setup() — kept here intentionally
-        // because THREE.Scene is an infrastructure detail hidden from the core port.
-        renderScene: unknown,
         resourceLoader?: IResourceLoader,
     ): IRenderSyncSystem | undefined {
         return new RenderSyncSystem(
-            renderScene,
+            this.scene,
             resourceLoader ?? this.engineResourceResolver,
             this.loadingTracker,
         );
@@ -145,6 +134,10 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
 
     getLoadingTracker(): LoadingTracker {
         return this.loadingTracker;
+    }
+
+    getRenderSceneHandle(): THREE.Scene | undefined {
+        return this.scene;
     }
 
     isLoading(): boolean {
@@ -259,16 +252,16 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
 
     setScene(scene: IScene): void {
         this.teardownPreviousScene();
-        this.activeIScene = scene as ISceneWithSyncSystem;
+        this.activeIScene = scene;
         this.loadingTracker.reset();
 
         // Set loading flag BEFORE setup() so features/textures register their
         // async tasks into the tracker immediately (avoids a race condition).
         this.initialLoading = true;
         this.loadingTracker.startTask('sceneDiscovery');
-        this.activeIScene.renderSyncSystem?.setIsInitialLoading(true);
+        this.syncSceneInitialLoadingState();
 
-        scene.setup(this, this.scene);
+        scene.setup(this);
         this.onActiveCameraChanged();
         this.afterSceneSetup();
 
@@ -279,10 +272,21 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
         this.startInitialLoading();
     }
 
+    protected syncSceneInitialLoadingState(): void {
+        if (this.activeIScene && this.isRendererRuntimeSceneAdapter(this.activeIScene)) {
+            this.activeIScene.setInitialLoadingState(this.initialLoading);
+        }
+    }
+
+    private isRendererRuntimeSceneAdapter(scene: IScene): scene is IScene & IRendererRuntimeSceneAdapter {
+        const candidate = scene as unknown as IRendererRuntimeSceneAdapter;
+        return typeof candidate.setInitialLoadingState === 'function';
+    }
+
     private teardownPreviousScene(): void {
         if (this.activeIScene?.teardown) {
             try {
-                this.activeIScene.teardown(this, this.scene);
+                this.activeIScene.teardown(this);
             } catch (e) {
                 CoreLogger.warn(this.logPrefix, 'Error during previous scene teardown', e);
             }
@@ -355,6 +359,7 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
             // Only reset if this session is still the active one.
             if (sessionId === this.currentLoadingSessionId) {
                 this.initialLoading = false;
+                this.syncSceneInitialLoadingState();
                 this.disposeOverlays();
             }
         }

@@ -10,6 +10,17 @@ import type { EngineResourceResolver, EngineResolvedResource } from '../../resou
 const SHADER_CACHE = new Map<string, Promise<string>>();
 
 export class ShaderMaterialFactory {
+  private static withNodeName<T>(node: T, name: string): T {
+    const anyNode = node as any;
+    if (anyNode && typeof anyNode.setName === 'function') {
+      return anyNode.setName(name);
+    }
+    if (anyNode && typeof anyNode === 'object') {
+      anyNode.name = name;
+    }
+    return node;
+  }
+
   static build(comp: AnyCustomShaderComponent, textureCache: TextureCache): THREE.MeshBasicNodeMaterial | THREE.MeshStandardNodeMaterial | THREE.MeshPhysicalNodeMaterial {
     const customUniformNodes: Record<string, any> = {};
 
@@ -20,26 +31,34 @@ export class ShaderMaterialFactory {
       const shaderKey = (u && typeof u === 'object' && 'key' in u && u.key) ? u.key : id;
 
       if (type === 'texture' && typeof val === 'string') {
-        const texNode = texture(null).setName(shaderKey);
+        const texNode = ShaderMaterialFactory.withNodeName(texture(null), shaderKey);
         customUniformNodes[id] = texNode;
         textureCache.load(val).then((tex) => {
           texNode.value = tex;
         }).catch((err) => CoreLogger.error("ShaderMaterialFactory", "Texture load failed", err));
       } else if (type === 'vec2') {
-        const v = Array.isArray(val) ? val : [0, 0];
-        customUniformNodes[id] = uniform(new THREE.Vector2(v[0], v[1])).setName(shaderKey);
+        const v = Array.isArray(val)
+          ? val
+          : (val && typeof val === 'object' && 'x' in (val as any) && 'y' in (val as any))
+            ? [(val as any).x, (val as any).y]
+            : [0, 0];
+        customUniformNodes[id] = ShaderMaterialFactory.withNodeName(uniform(new THREE.Vector2(v[0], v[1])), shaderKey);
       } else if (type === 'vec3') {
-        const v = Array.isArray(val) ? val : [0, 0, 0];
-        customUniformNodes[id] = uniform(new THREE.Vector3(v[0], v[1], v[2])).setName(shaderKey);
+        const v = Array.isArray(val)
+          ? val
+          : (val && typeof val === 'object' && 'x' in (val as any) && 'y' in (val as any) && 'z' in (val as any))
+            ? [(val as any).x, (val as any).y, (val as any).z]
+            : [0, 0, 0];
+        customUniformNodes[id] = ShaderMaterialFactory.withNodeName(uniform(new THREE.Vector3(v[0], v[1], v[2])), shaderKey);
       } else if (type === 'color') {
-        customUniformNodes[id] = uniform(new THREE.Color(val ?? '#ffffff')).setName(shaderKey);
+        customUniformNodes[id] = ShaderMaterialFactory.withNodeName(uniform(new THREE.Color(val ?? '#ffffff')), shaderKey);
       } else {
-        customUniformNodes[id] = uniform(val ?? 0).setName(shaderKey);
+        customUniformNodes[id] = ShaderMaterialFactory.withNodeName(uniform(val ?? 0), shaderKey);
       }
       CoreLogger.debug("ShaderMaterialFactory", `Built uniform node: id=${id}, key=${shaderKey}, type=${type}, val=${val}`);
     }
 
-    if (!customUniformNodes['time']) customUniformNodes['time'] = uniform(0).setName('time');
+    if (!customUniformNodes['time']) customUniformNodes['time'] = ShaderMaterialFactory.withNodeName(uniform(0), 'time');
 
     const blending =
       comp.blending === 'additive'

@@ -8,6 +8,7 @@ import {
     Entity,
     FirstPersonMoveComponent,
     MouseLookComponent,
+    type IRenderingEngine,
 } from '@duckengine/core';
 import type { EcsLiveScene } from './EcsLiveScene';
 
@@ -82,7 +83,7 @@ export class EditorThreeScene extends BaseScene {
         return this.editorCamera;
     }
 
-    setup(engine: any, renderScene: any): void {
+    setup(engine: IRenderingEngine): void {
         // Prepare the internal editor camera before calling super.setup
         // so it gets added to the render sync system immediately.
         this.editorCamera = new Entity('editorCamera', [0, 1.5, 4]);
@@ -117,7 +118,7 @@ export class EditorThreeScene extends BaseScene {
             this.entities.set(ent.id, ent);
         }
 
-        super.setup(engine, renderScene);
+        super.setup(engine);
 
         // Set the active camera
         if (this.liveScene.activeCameraEntityId) {

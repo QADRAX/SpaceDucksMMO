@@ -7,7 +7,7 @@ export type SceneChangeEvent =
   | { kind: 'active-camera-changed'; entityId: string | null }
   | { kind: 'transform-changed'; entityId: string }
   | { kind: 'component-changed'; entityId: string; componentType: string }
-  | { kind: 'scene-debug-changed'; enabled: boolean }
+  | { kind: 'scene-debug-changed'; kindName: string; enabled: boolean }
   | { kind: 'scene-mesh-debug-changed'; enabled: boolean }
   | { kind: 'scene-collider-debug-changed'; enabled: boolean };
 

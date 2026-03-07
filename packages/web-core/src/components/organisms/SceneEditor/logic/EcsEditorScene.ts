@@ -9,6 +9,7 @@ import {
     Entity,
     FirstPersonMoveComponent,
     MouseLookComponent,
+    type IRenderingEngine,
 } from '@duckengine/core';
 
 const defaultSettings: GameSettings = {
@@ -103,8 +104,8 @@ export class EcsEditorScene extends BaseScene {
         return this.editorCamera;
     }
 
-    setup(engine: any, renderScene: any): void {
-        super.setup(engine, renderScene);
+    setup(engine: IRenderingEngine): void {
+        super.setup(engine);
 
         // Editor camera (not persisted)
         this.editorCamera = new Entity('editorCamera', [0, 1.5, 4]);

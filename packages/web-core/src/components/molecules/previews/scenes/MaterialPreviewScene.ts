@@ -19,6 +19,7 @@ import {
     type ISettingsService,
     type ComponentType,
 } from '@duckengine/rendering-three';
+import type { IRenderingEngine } from '@duckengine/core';
 import type { MaterialResourceKind } from '@/lib/types';
 import { clampNumber } from '../utils/previewUtils';
 
@@ -128,8 +129,8 @@ export class MaterialPreviewScene extends BaseScene {
         this.currentMaterialData = initialComponentData;
     }
 
-    setup(engine: any, renderScene: any): void {
-        super.setup(engine, renderScene);
+    setup(engine: IRenderingEngine): void {
+        super.setup(engine);
 
         // Camera
         this.camera = new Entity('camera', [0, 0, 3.25]);

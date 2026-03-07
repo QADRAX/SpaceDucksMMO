@@ -49,12 +49,12 @@ export interface IRenderingEngine {
   setResolutionPolicy(policy: 'auto' | 'scale', scale?: number): void;
   setResolutionScale(scale: number): void;
   setAntialias(enabled: boolean): Promise<void>;
-  setShadows(enabled: boolean, type?: any): void;
+  setShadows(enabled: boolean, type?: unknown): void;
 
   /** Post-processing control (composer is optional) */
-  enablePostProcessing(viewId?: string): any;
+  enablePostProcessing(viewId?: string): unknown;
   disablePostProcessing(viewId?: string): void;
-  getComposer(viewId?: string): any | undefined;
+  getComposer(viewId?: string): unknown | undefined;
 
   /** Optional runtime resource loader (web-core, local files, etc.). */
   setResourceLoader?(loader: IResourceLoader): void;
@@ -81,7 +81,6 @@ export interface IRenderingEngine {
    * Core does not implement this; backends (three, etc.) do.
    */
   createRenderSyncSystem?(
-    renderScene: any,
     resourceLoader?: IResourceLoader,
   ): IRenderSyncSystem | undefined;
 
@@ -99,7 +98,12 @@ export interface IRenderingEngine {
   /**
    * Optional: return the loading tracker used by this engine.
    */
-  getLoadingTracker?(): any; // LoadingTracker (using any for portability)
+  getLoadingTracker?(): unknown;
+
+  /**
+   * Optional: return renderer-native scene handle for infrastructure-only features.
+   */
+  getRenderSceneHandle?(): unknown;
 
   /**
    * Check if the engine is currently in an initial loading/frozen state.

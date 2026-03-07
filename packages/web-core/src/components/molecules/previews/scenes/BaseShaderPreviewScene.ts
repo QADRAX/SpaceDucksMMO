@@ -14,7 +14,7 @@ import {
     type ISettingsService,
     type ComponentType,
 } from '@duckengine/rendering-three';
-import type { AnyCustomShaderComponent } from '@duckengine/core';
+import type { AnyCustomShaderComponent, IRenderingEngine } from '@duckengine/core';
 import type { MaterialPreviewSettings } from './MaterialPreviewScene';
 
 export function createGeometryComponent(settings: MaterialPreviewSettings) {
@@ -69,8 +69,8 @@ export abstract class BaseShaderPreviewScene extends BaseScene {
     abstract readonly shaderComponentType: string;
     protected abstract createShaderComponent(): AnyCustomShaderComponent;
 
-    setup(engine: any, renderScene: any): void {
-        super.setup(engine, renderScene);
+    setup(engine: IRenderingEngine): void {
+        super.setup(engine);
 
         // Camera
         this.camera = new Entity('camera', [0, 0, 3.25]);

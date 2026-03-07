@@ -24,9 +24,8 @@ export interface IScene {
   /**
    * Initialize scene: add objects, configure camera, set lighting.
    * @param engine - The rendering engine
-   * @param renderScene - The internal rendering scene (e.g. THREE.Scene) where visual objects are added
    */
-  setup(engine: IRenderingEngine, renderScene: any): void;
+  setup(engine: IRenderingEngine): void;
 
   /**
    * Per-frame update logic (animations, interactions, etc.)
@@ -38,9 +37,8 @@ export interface IScene {
    * Cleanup: remove objects, dispose resources, reset state.
    * Called before transitioning to another scene.
    * @param engine - The rendering engine
-   * @param renderScene - The internal rendering scene (e.g. THREE.Scene) to remove visual objects from
    */
-  teardown(engine: IRenderingEngine, renderScene: any): void;
+  teardown(engine: IRenderingEngine): void;
 
   /** Add an ECS Entity to this scene */
   addEntity(entity: Entity): void;

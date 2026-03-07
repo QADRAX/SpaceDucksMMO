@@ -7,6 +7,7 @@ import {
     AmbientLightComponent,
     DirectionalLightComponent,
 } from '@duckengine/rendering-three';
+import type { IRenderingEngine } from '@duckengine/core';
 import type { BasePreviewSettings } from '../utils/previewUtils';
 
 export type LocalGlbPreviewSettings = BasePreviewSettings & {
@@ -73,9 +74,10 @@ export class LocalGlbScene extends BaseScene {
 
     private threeScene: THREE.Scene | null = null;
 
-    setup(engine: any, renderScene: any): void {
-        super.setup(engine, renderScene);
-        this.threeScene = renderScene;
+    setup(engine: IRenderingEngine): void {
+        super.setup(engine);
+        const handle = (engine as { getRenderSceneHandle?: () => unknown }).getRenderSceneHandle?.();
+        this.threeScene = handle instanceof THREE.Scene ? handle : null;
 
         const camera = new Entity('camera', [0, 0, 3.25]);
         camera.addComponent(new CameraViewComponent({ fov: 55, near: 0.1, far: 5000, aspect: 1 }));

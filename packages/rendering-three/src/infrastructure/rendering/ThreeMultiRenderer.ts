@@ -246,8 +246,8 @@ export class ThreeMultiRenderer extends ThreeRendererBase {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   renderFrame(): void {
-    // Sync loading state to scene systems
-    this.activeIScene?.renderSyncSystem?.setIsInitialLoading(this.initialLoading);
+    // Sync loading state via scene runtime adapter (if present)
+    this.syncSceneInitialLoadingState();
 
     if (this.initialLoading) {
       try {

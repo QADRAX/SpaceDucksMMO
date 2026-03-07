@@ -3,6 +3,7 @@
 export * from './domain/ports/IScene';
 export * from './domain/ports/IRenderingEngine';
 export * from './domain/ports/IRenderSyncSystem';
+export * from './domain/ports/IRendererRuntimeSceneAdapter';
 export type { IResourceLoader } from './domain/ports/IResourceLoader';
 export type { default as ISettingsService } from './domain/ports/ISettingsService';
 export type { IGizmoRenderer } from './domain/ports/IGizmoRenderer';

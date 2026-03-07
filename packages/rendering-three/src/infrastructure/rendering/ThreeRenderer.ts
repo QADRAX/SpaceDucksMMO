@@ -80,8 +80,8 @@ export class ThreeRenderer extends ThreeRendererBase {
       return;
     }
 
-    // Sync loading state to scene systems
-    this.activeIScene?.renderSyncSystem?.setIsInitialLoading(this.initialLoading);
+    // Sync loading state via scene runtime adapter (if present)
+    this.syncSceneInitialLoadingState();
 
     if (this.initialLoading) {
       // Still tick the scene with Δt=0 so RenderSyncSystem can process async results.

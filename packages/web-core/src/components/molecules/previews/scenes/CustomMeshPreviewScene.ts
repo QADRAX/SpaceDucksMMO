@@ -10,7 +10,7 @@ import {
     StandardMaterialComponent,
     type ISettingsService,
 } from '@duckengine/rendering-three';
-import { CustomGeometryComponent, FullMeshComponent, TextureTilingComponent } from '@duckengine/core';
+import { CustomGeometryComponent, FullMeshComponent, TextureTilingComponent, type IRenderingEngine } from '@duckengine/core';
 import type { BasePreviewSettings } from '../utils/previewUtils';
 import type { MaterialResourceKind } from '@/lib/types';
 
@@ -69,8 +69,8 @@ export class CustomMeshPreviewScene extends BaseScene {
         this.id = this.disableMaterialOverrides ? 'admin-fullmesh-preview' : 'admin-custom-mesh-preview';
     }
 
-    setup(engine: any, renderScene: any): void {
-        super.setup(engine, renderScene);
+    setup(engine: IRenderingEngine): void {
+        super.setup(engine);
 
         this.camera = new Entity('camera', [0, 0, 3.25]);
         this.camera.addComponent(new CameraViewComponent({ fov: 55, near: 0.1, far: 2000, aspect: 1 }));

@@ -1,5 +1,6 @@
 import type { IScene } from '../../domain/ports/IScene';
 import type { IRenderingEngine } from '../../domain/ports/IRenderingEngine';
+import type { IRendererRuntimeSceneAdapter } from '../../domain/ports/IRendererRuntimeSceneAdapter';
 import { setCurrentEcsWorld, setPhysicsServices, Result, ok, err, DefaultEcsComponentFactory } from '../../domain/ecs';
 import type { Entity, ComponentType, IEcsComponentFactory, Vec3Like, EcsPhysicsRay } from '../../domain/ecs';
 import type SceneChangeEvent from '../../domain/scene/SceneChangeEvent';
@@ -14,19 +15,20 @@ import { SceneObserverManager } from './SceneObserverManager';
 import { CoreLogger } from '../../domain/logging/CoreLogger';
 
 type VoidResult = Result<void>;
+type LoadingAwareRenderSyncSystem = IRenderSyncSystem & {
+  setIsInitialLoading?: (loading: boolean) => void;
+};
 
 /**
  * Base implementation of IScene. 
  * Manages ECS entities, physics initialization, and render synchronization.
  */
-export abstract class BaseScene implements IScene {
+export abstract class BaseScene implements IScene, IRendererRuntimeSceneAdapter {
   abstract readonly id: string;
 
   protected entities = new Map<string, Entity>();
   protected activeCameraId: string | null = null;
   protected engine?: IRenderingEngine;
-  /** Injected by engine during setup. Concrete types (e.g. THREE.Scene) are handled in infrastructure. */
-  protected renderScene?: any;
 
   // ECS Systems
   protected renderSyncSystem?: IRenderSyncSystem;
@@ -162,7 +164,12 @@ export abstract class BaseScene implements IScene {
     if (this.debugFlags[kind] === enabled) return;
     this.debugFlags[kind] = enabled;
     this.renderSyncSystem?.setSceneDebugEnabled(kind, enabled);
-    this.emitChange({ kind: 'scene-debug-changed', kindName: kind, enabled } as any);
+    this.emitChange({ kind: 'scene-debug-changed', kindName: kind, enabled });
+  }
+
+  setInitialLoadingState(loading: boolean): void {
+    const loadingAwareSync = this.renderSyncSystem as LoadingAwareRenderSyncSystem | undefined;
+    loadingAwareSync?.setIsInitialLoading?.(loading);
   }
 
 
@@ -200,13 +207,12 @@ export abstract class BaseScene implements IScene {
 
   // ─── Lifecycle (Setup/Teardown) ──────────────────────────────────────────
 
-  setup(engine: IRenderingEngine, renderScene: any): void {
+  setup(engine: IRenderingEngine): void {
     this.engine = engine;
-    this.renderScene = renderScene;
     setCurrentEcsWorld(this);
 
     this.initializePhysics();
-    this.initializeRenderSync(renderScene);
+    this.initializeRenderSync();
 
     const gizmoRenderer = this.engine?.createGizmoRenderer?.();
 
@@ -242,9 +248,8 @@ export abstract class BaseScene implements IScene {
     }
   }
 
-  private initializeRenderSync(renderScene: any): void {
+  private initializeRenderSync(): void {
     this.renderSyncSystem = this.engine?.createRenderSyncSystem?.(
-      renderScene,
       this.engine.getResourceLoader?.()
     );
 
@@ -255,7 +260,7 @@ export abstract class BaseScene implements IScene {
     }
   }
 
-  teardown(engine: IRenderingEngine, renderScene: any): void {
+  teardown(engine: IRenderingEngine): void {
     this.scriptSystem?.teardown();
     this.scriptSystem = undefined;
 
@@ -265,7 +270,6 @@ export abstract class BaseScene implements IScene {
 
     this.renderSyncSystem = undefined;
     this.engine?.onActiveCameraChanged();
-    this.renderScene = undefined;
   }
 
   private cleanupPhysics(): void {

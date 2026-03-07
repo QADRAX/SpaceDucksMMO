@@ -101,10 +101,10 @@ describe('BaseScene debug events', () => {
     };
 
     const scene = new TestScene({} as any);
-    scene.setup(engine, {});
+    scene.setup(engine);
     expect(subscribed).toBe(1);
 
-    scene.teardown(engine, {});
+    scene.teardown(engine);
     expect(unsubscribed).toBe(1);
   });
 
@@ -124,7 +124,7 @@ describe('BaseScene debug events', () => {
     };
 
     const scene = new TestScene({} as any);
-    scene.setup(engine, {});
+    scene.setup(engine);
 
     const e1 = new Entity('e1');
     scene.addEntity(e1);
@@ -136,7 +136,7 @@ describe('BaseScene debug events', () => {
     scene.removeEntity('e1');
     expect(calls).toContain('remove:e1');
 
-    scene.teardown(engine, {});
+    scene.teardown(engine);
     expect(calls).toContain('dispose');
   });
 
@@ -153,15 +153,14 @@ describe('BaseScene debug events', () => {
     let receivedLoader: any;
     const engine: any = {
       getResourceLoader: () => resourceLoader,
-      createRenderSyncSystem: jest.fn((_renderScene: any, loader: any) => {
+      createRenderSyncSystem: jest.fn((loader: any) => {
         receivedLoader = loader;
         return undefined;
       }),
     };
 
     const scene = new TestScene(settingsService);
-    const renderScene = {};
-    scene.setup(engine, renderScene);
+    scene.setup(engine);
 
     expect(engine.createRenderSyncSystem).toHaveBeenCalledTimes(1);
     expect(receivedLoader).toBe(resourceLoader);
@@ -279,7 +278,7 @@ describe('BaseScene debug events', () => {
 
     // clear events then teardown
     events.length = 0;
-    scene.teardown(undefined as any, undefined as any);
+    scene.teardown(undefined as any);
 
     // toggle component after teardown should NOT emit
     c.enabled = true;

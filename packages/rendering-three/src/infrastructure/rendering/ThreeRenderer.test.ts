@@ -35,6 +35,7 @@ jest.mock('three/tsl', () => ({
 }));
 
 import * as THREE from 'three';
+import { CoreLogger } from '@duckengine/core';
 import { ThreeRenderer } from './ThreeRenderer';
 import { NoopFpsController, type IFpsController } from '../ui/dev/FpsController';
 
@@ -149,13 +150,14 @@ describe('ThreeRenderer', () => {
   });
 
   it('should warn if no active camera is set', () => {
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
+    const warnSpy = jest.spyOn(CoreLogger, 'warn').mockImplementation(() => { });
 
     setupMockRenderer(renderer, container);
     renderer.renderFrame();
 
     expect(warnSpy).toHaveBeenCalledWith(
-      '[ThreeRenderer] No active camera for current scene — skipping render frame.'
+      'ThreeRenderer',
+      'No active camera for current scene — skipping render frame.'
     );
 
     warnSpy.mockRestore();

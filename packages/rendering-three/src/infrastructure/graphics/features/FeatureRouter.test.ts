@@ -1,4 +1,5 @@
 import { FeatureRouter } from './FeatureRouter';
+import { CoreLogger } from '@duckengine/core';
 import type { RenderFeature } from './RenderFeature';
 import type { RenderContext } from './RenderContext';
 import type { Entity } from '@duckengine/core';
@@ -41,7 +42,7 @@ describe('FeatureRouter', () => {
             getComponent: jest.fn(),
         } as unknown as jest.Mocked<Entity>;
 
-        jest.spyOn(console, 'error').mockImplementation(() => { });
+        jest.spyOn(CoreLogger, 'error').mockImplementation(() => { });
     });
 
     afterEach(() => {
@@ -62,7 +63,7 @@ describe('FeatureRouter', () => {
             mockFeature1.onAttach.mockImplementation(() => { throw new Error('Attach Error'); });
 
             expect(() => router.onEntityAdded(mockEntity)).not.toThrow();
-            expect(console.error).toHaveBeenCalled();
+            expect(CoreLogger.error).toHaveBeenCalled();
         });
     });
 
