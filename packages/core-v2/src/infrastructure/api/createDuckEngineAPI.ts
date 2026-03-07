@@ -36,7 +36,7 @@ import {
   setEntityDebugEnabled,
   listEntityChildren,
   setEnabled,
-  updateComponentFields,
+  setComponentField,
   getComponentSnapshot,
 } from '../../application';
 
@@ -114,7 +114,7 @@ export function createDuckEngineAPI(engine: EngineState) {
     .add('listChildren', listEntityChildren)
     // ── component ──────────────────────────────────────────────
     .add('setEnabled', setEnabled)
-    .add('update', updateComponentFields)
+    .add('setField', setComponentField)
     .add('snapshot', getComponentSnapshot)
     // ── viewport ───────────────────────────────────────────────
     .add('setEnabled', setViewportEnabled)

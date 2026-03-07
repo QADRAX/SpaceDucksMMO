@@ -1,42 +1,40 @@
 import type { ComponentBase } from '../core';
 
 /** Shared light parameters. */
-export interface LightBaseComponent extends ComponentBase {
-  color: string;
-  intensity: number;
+export interface LightBaseComponent<
+    TType extends 'ambientLight' | 'directionalLight' | 'pointLight' | 'spotLight' = 'ambientLight' | 'directionalLight' | 'pointLight' | 'spotLight',
+    TSelf = unknown,
+> extends ComponentBase<TType, TSelf> {
+    color: string;
+    intensity: number;
 }
 
 /** Ambient light component. */
-export interface AmbientLightComponent extends LightBaseComponent {
-  type: 'ambientLight';
-}
+export interface AmbientLightComponent extends LightBaseComponent<'ambientLight', AmbientLightComponent> { }
 
 /** Directional light component. */
-export interface DirectionalLightComponent extends LightBaseComponent {
-  type: 'directionalLight';
-  castShadow: boolean;
+export interface DirectionalLightComponent extends LightBaseComponent<'directionalLight', DirectionalLightComponent> {
+    castShadow: boolean;
 }
 
 /** Point light component. */
-export interface PointLightComponent extends LightBaseComponent {
-  type: 'pointLight';
-  distance: number;
-  decay: number;
-  castShadow: boolean;
+export interface PointLightComponent extends LightBaseComponent<'pointLight', PointLightComponent> {
+    distance: number;
+    decay: number;
+    castShadow: boolean;
 }
 
 /** Spot light component. */
-export interface SpotLightComponent extends LightBaseComponent {
-  type: 'spotLight';
-  distance: number;
-  angle: number;
-  penumbra: number;
-  castShadow: boolean;
+export interface SpotLightComponent extends LightBaseComponent<'spotLight', SpotLightComponent> {
+    distance: number;
+    angle: number;
+    penumbra: number;
+    castShadow: boolean;
 }
 
 /** Union of all light components. */
 export type LightComponent =
-  | AmbientLightComponent
-  | DirectionalLightComponent
-  | PointLightComponent
-  | SpotLightComponent;
+    | AmbientLightComponent
+    | DirectionalLightComponent
+    | PointLightComponent
+    | SpotLightComponent;

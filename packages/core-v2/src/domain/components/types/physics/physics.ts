@@ -1,11 +1,10 @@
-import type { ComponentBase } from '../core';
+import type { ComponentBase, ComponentType } from '../core';
 
 /** Supported rigid body types. */
 export type RigidBodyType = 'static' | 'dynamic' | 'kinematic';
 
 /** Rigid body dynamics configuration. */
-export interface RigidBodyComponent extends ComponentBase {
-  type: 'rigidBody';
+export interface RigidBodyComponent extends ComponentBase<'rigidBody', RigidBodyComponent> {
   bodyType: RigidBodyType;
   mass: number;
   linearDamping: number;
@@ -15,49 +14,46 @@ export interface RigidBodyComponent extends ComponentBase {
 }
 
 /** Per-entity gravity override. */
-export interface GravityComponent extends ComponentBase {
-  type: 'gravity';
+export interface GravityComponent extends ComponentBase<'gravity', GravityComponent> {
   x: number;
   y: number;
   z: number;
 }
 
 /** Shared collider configuration. */
-export interface ColliderBaseComponent extends ComponentBase {
+export interface ColliderBaseComponent<
+  TType extends ComponentType = ComponentType,
+  TSelf = unknown,
+> extends ComponentBase<TType, TSelf> {
   friction: number;
   restitution: number;
   isSensor: boolean;
 }
 
 /** Box collider shape. */
-export interface BoxColliderComponent extends ColliderBaseComponent {
-  type: 'boxCollider';
+export interface BoxColliderComponent extends ColliderBaseComponent<'boxCollider', BoxColliderComponent> {
   halfExtents: { x: number; y: number; z: number };
 }
 
 /** Sphere collider shape. */
-export interface SphereColliderComponent extends ColliderBaseComponent {
-  type: 'sphereCollider';
+export interface SphereColliderComponent extends ColliderBaseComponent<'sphereCollider', SphereColliderComponent> {
   radius: number;
 }
 
 /** Capsule collider shape. */
-export interface CapsuleColliderComponent extends ColliderBaseComponent {
-  type: 'capsuleCollider';
+export interface CapsuleColliderComponent extends ColliderBaseComponent<'capsuleCollider', CapsuleColliderComponent> {
   radius: number;
   halfHeight: number;
 }
 
 /** Cylinder collider shape. */
-export interface CylinderColliderComponent extends ColliderBaseComponent {
-  type: 'cylinderCollider';
+export interface CylinderColliderComponent extends ColliderBaseComponent<'cylinderCollider', CylinderColliderComponent> {
   radius: number;
   halfHeight: number;
 }
 
 /** Cone collider shape. */
-export interface ConeColliderComponent extends ColliderBaseComponent {
-  type: 'coneCollider';
+export interface ConeColliderComponent extends ColliderBaseComponent<'coneCollider', ConeColliderComponent> {
   radius: number;
   halfHeight: number;
 }
@@ -71,8 +67,7 @@ export interface TerrainHeightfield {
 }
 
 /** Terrain collider shape. */
-export interface TerrainColliderComponent extends ColliderBaseComponent {
-  type: 'terrainCollider';
+export interface TerrainColliderComponent extends ColliderBaseComponent<'terrainCollider', TerrainColliderComponent> {
   heightfield: TerrainHeightfield;
 }
 

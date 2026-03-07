@@ -1,3 +1,3 @@
 export { setEnabled, type SetEnabledParams } from './setComponentEnabled';
-export * from './updateComponentFields';
-export * from './getComponentSnapshot';
+export { setComponentField, type SetComponentFieldParams } from './setComponentField';
+export { getComponentSnapshot } from './getComponentSnapshot';

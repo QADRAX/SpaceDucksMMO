@@ -4,19 +4,32 @@ import { bindUseCase } from './bind';
 
 /**
  * Defines a component use case, automatically tagging it with `domain: 'component'`.
+ *
+ * @template TComponent - The concrete component type the use case operates on.
+ *                        Defaults to `ComponentBase` for generic use cases.
+ * @template TParams    - Parameters accepted by the use case.
+ * @template TOutput    - Return type of the use case.
  */
-export function defineComponentUseCase<TParams = void, TOutput = void>(
-    definition: Omit<ComponentUseCase<TParams, TOutput>, 'domain' | 'guards'> & {
-        readonly guards?: ComponentUseCase<TParams, TOutput>['guards'];
+export function defineComponentUseCase<
+    TComponent extends ComponentBase = ComponentBase,
+    TParams = void,
+    TOutput = void,
+>(
+    definition: Omit<ComponentUseCase<TComponent, TParams, TOutput>, 'domain' | 'guards'> & {
+        readonly guards?: ComponentUseCase<TComponent, TParams, TOutput>['guards'];
     },
-): ComponentUseCase<TParams, TOutput> {
+): ComponentUseCase<TComponent, TParams, TOutput> {
     return { ...definition, guards: definition.guards ?? [], domain: 'component' };
 }
 
-/** Binds a ComponentUseCase to a concrete ComponentBase. */
-export function bindComponentUseCase<TParams, TOutput>(
-    component: ComponentBase,
-    useCase: ComponentUseCase<TParams, TOutput>,
+/** Binds a ComponentUseCase to a concrete component instance. */
+export function bindComponentUseCase<
+    TComponent extends ComponentBase,
+    TParams,
+    TOutput,
+>(
+    component: TComponent,
+    useCase: ComponentUseCase<TComponent, TParams, TOutput>,
 ): BoundUseCase<TParams, TOutput> {
     return bindUseCase(component, useCase);
 }

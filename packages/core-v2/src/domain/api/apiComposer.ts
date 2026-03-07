@@ -1,5 +1,7 @@
 import type { EngineState } from '../engine';
-import type { ComponentType } from '../components';
+import type { ComponentType, ComponentBase } from '../components';
+import type { CreatableComponentType, ComponentByType } from '../components/types/factory';
+import type { ComponentFieldPaths, ComponentFieldValue } from '../components/fieldPaths';
 import type { Result } from '../utils';
 import { ok, err } from '../utils';
 import type { UseCase, EngineUseCase } from '../useCases';
@@ -19,7 +21,7 @@ type SupportedUseCase =
   | SceneUseCase<any, any>
   | ViewportUseCase<any, any>
   | EntityUseCase<any, any>
-  | ComponentUseCase<any, any>;
+  | ComponentUseCase<any, any, any>;
 
 /** Wraps `O` in `Result` unless it already is one. */
 type WrapResult<O> = O extends Result<any> ? O : Result<O>;
@@ -31,6 +33,21 @@ type BoundMethod<T extends SupportedUseCase> =
   ? () => WrapResult<O>
   : (params: P) => WrapResult<O>
   : never;
+
+/**
+ * Given the accumulated component methods `TMethods` and a resolved
+ * concrete component type `TComp`, narrows `setField`'s params so
+ * that `fieldKey` autocompletes to the component's editable field paths.
+ * All other methods are passed through unchanged.
+ */
+type NarrowComponentScope<TMethods, TComp extends ComponentBase<any, any>> = {
+  [K in keyof TMethods]: K extends 'setField'
+  ? <P extends ComponentFieldPaths<TComp>>(params: {
+    readonly fieldKey: P;
+    readonly value: ComponentFieldValue<TComp, P>;
+  }) => TMethods[K] extends (...args: any) => infer R ? R : never
+  : TMethods[K];
+};
 
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -62,7 +79,7 @@ export interface APIComposer<
     ? APIComposer<TEngine, TScene & { readonly [P in K]: BoundMethod<T> }, TEntity, TComponent, TViewport>
     : T extends EntityUseCase<any, any>
     ? APIComposer<TEngine, TScene, TEntity & { readonly [P in K]: BoundMethod<T> }, TComponent, TViewport>
-    : T extends ComponentUseCase<any, any>
+    : T extends ComponentUseCase<any, any, any>
     ? APIComposer<TEngine, TScene, TEntity, TComponent & { readonly [P in K]: BoundMethod<T> }, TViewport>
     : T extends ViewportUseCase<any, any>
     ? APIComposer<TEngine, TScene, TEntity, TComponent, TViewport & { readonly [P in K]: BoundMethod<T> }>
@@ -73,7 +90,8 @@ export interface APIComposer<
     TEngine & {
       readonly scene: (id: string) => Readonly<TScene & {
         readonly entity: (id: string) => Readonly<TEntity & {
-          readonly component: (type: ComponentType) => Readonly<TComponent>;
+          readonly component: <T extends CreatableComponentType>(type: T) =>
+            Readonly<NarrowComponentScope<TComponent, ComponentByType[T]>>;
         }>;
       }>;
       readonly viewport: (id: string) => Readonly<TViewport>;

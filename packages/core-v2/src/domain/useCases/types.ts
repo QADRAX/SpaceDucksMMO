@@ -120,15 +120,22 @@ export type EntityGuard<TParams> = UseCaseGuard<SceneState, EntityState, TParams
 /**
  * A use case that operates on a ComponentBase within an entity.
  * Tagged with `domain: 'component'` for runtime and compile-time discrimination.
+ *
+ * @template TComponent - The concrete component type (defaults to ComponentBase).
+ *                        Specialised use cases can narrow to e.g. `RigidBodyComponent`.
+ * @template TParams    - Parameters accepted by the use case.
+ * @template TOutput    - Return type of the use case.
+ *
  * Guards receive EntityState as root for cross-component validations.
  */
-export interface ComponentUseCase<TParams = void, TOutput = void> extends UseCase<
-    ComponentBase,
-    TParams,
-    TOutput
-> {
+export interface ComponentUseCase<
+    TComponent extends ComponentBase = ComponentBase,
+    TParams = void,
+    TOutput = void,
+> extends UseCase<TComponent, TParams, TOutput> {
     readonly domain: 'component';
 }
 
 /** Concrete guard type for component use cases (root = EntityState). */
-export type ComponentGuard<TParams> = UseCaseGuard<EntityState, ComponentBase, TParams>;
+export type ComponentGuard<TComponent extends ComponentBase, TParams> =
+    UseCaseGuard<EntityState, TComponent, TParams>;
