@@ -8,7 +8,10 @@ import type { EntityState } from './entity';
  * Checks whether `comp` can be added to `entity`, based on its metadata.
  * Rules: unique, requires, requiresInHierarchy, conflicts, custom validate.
  */
-export function validateAddComponent(entity: EntityState, comp: ComponentBase): Result<void> {
+export function validateAddComponent<T extends ComponentBase>(
+  entity: EntityState,
+  comp: T,
+): Result<void> {
   const meta = comp.metadata;
 
   if (meta.unique && entity.components.has(comp.type)) {
@@ -37,7 +40,7 @@ export function validateAddComponent(entity: EntityState, comp: ComponentBase): 
 
   if (meta.conflicts) {
     for (const c of meta.conflicts) {
-      if (entity.components.has(c as ComponentType)) {
+      if (satisfiesRequirement(entity, c)) {
         return err('validation', `Conflicts with existing component "${c}".`);
       }
     }
@@ -61,7 +64,7 @@ export function validateRemoveComponent(entity: EntityState, type: ComponentType
   return ok(undefined);
 }
 
-const GEOMETRY_TYPES: ReadonlySet<string> = new Set([
+export const GEOMETRY_TYPES: ReadonlySet<string> = new Set([
   'boxGeometry',
   'sphereGeometry',
   'planeGeometry',

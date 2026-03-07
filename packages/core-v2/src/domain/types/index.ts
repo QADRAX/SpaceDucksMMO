@@ -1,6 +1,7 @@
 export { type Vec3Like, type EulerLike, type QuatLike, vec3, euler, quat } from './math';
 export { type ComponentType } from './componentType';
 export {
+  type ComponentDependency,
   type InspectorFieldType,
   type InspectorFieldConfig,
   type InspectorMetadata,
@@ -8,6 +9,8 @@ export {
 } from './componentMetadata';
 export { type ComponentSpec } from './componentSpec';
 export { type DebugKind } from './debug';
+export { type RgbColor, type HexColor, type Color } from './color';
+export { type UseCase, type UseCaseState, type UseCaseParams, type UseCaseOutput } from './useCase';
 export { type EngineErrorCode, type EngineError, type Result, ok, err } from './result';
 export {
   type EntityAddedEvent,
@@ -54,3 +57,5 @@ export {
   type GameSettings,
   DEFAULT_GAME_SETTINGS,
 } from './settings';
+export { type SceneState, type ScenePorts } from './sceneState';
+export { type EngineState } from './engineState';
