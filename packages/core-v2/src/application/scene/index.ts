@@ -1,5 +1,4 @@
 export { type SceneUseCase, defineSceneUseCase, bindSceneUseCase } from './sceneUseCase';
-export { createScene } from './createScene';
 export { addEntityToScene, type AddEntityParams } from './addEntityToScene';
 export {
   removeEntityFromScene,
@@ -19,9 +18,3 @@ export {
   subscribeToSceneChanges,
   type SubscribeToSceneChangesParams,
 } from './subscribeToSceneChanges';
-export {
-  findEntityWithComponent,
-  validateHierarchyInSubtree,
-  validateUniqueInSceneSubtree,
-  wouldCreateCycle,
-} from './sceneValidation';

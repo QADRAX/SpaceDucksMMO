@@ -1,6 +1,6 @@
 import type { DebugKind } from '../../domain/types/debug';
 import { defineSceneUseCase } from './sceneUseCase';
-import { emitSceneChange } from './emitSceneChange';
+import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Parameters for the toggleSceneDebug use case. */
 export interface ToggleSceneDebugParams {

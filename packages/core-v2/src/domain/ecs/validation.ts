@@ -1,4 +1,5 @@
 import type { ComponentType } from '../types/componentType';
+import type { ComponentDependency } from '../types/componentMetadata';
 import type { Result } from '../types/result';
 import { ok, err } from '../types/result';
 import type { ComponentBase } from './component';
@@ -79,7 +80,7 @@ export const GEOMETRY_TYPES: ReadonlySet<string> = new Set([
  * Checks if a requirement is satisfied on `entity`.
  * Handles the "geometry" wildcard: any geometry component satisfies `requires: ["geometry"]`.
  */
-function satisfiesRequirement(entity: EntityState, req: string): boolean {
+export function satisfiesRequirement(entity: EntityState, req: ComponentDependency): boolean {
   if (entity.components.has(req as ComponentType)) return true;
   if (req === 'geometry') {
     for (const [t] of entity.components) {
@@ -92,11 +93,52 @@ function satisfiesRequirement(entity: EntityState, req: string): boolean {
 /**
  * Walks up the parent chain looking for a component of the required type.
  */
-function satisfiesHierarchyRequirement(entity: EntityState, req: string): boolean {
+export function satisfiesHierarchyRequirement(
+  entity: EntityState,
+  req: ComponentDependency,
+): boolean {
   let current: EntityState | undefined = entity;
   while (current) {
     if (satisfiesRequirement(current, req)) return true;
     current = current.parent;
   }
   return false;
+}
+
+/**
+ * Returns true if attaching `child` under `candidateParent` would create a cycle.
+ */
+export function wouldCreateCycle(child: EntityState, candidateParent: EntityState): boolean {
+  let current: EntityState | undefined = candidateParent;
+  while (current) {
+    if (current.id === child.id) return true;
+    current = current.parent;
+  }
+  return false;
+}
+
+/**
+ * Validates hierarchy requirements for all components in a subtree.
+ * Returns an array of human-readable error messages (empty = valid).
+ */
+export function validateHierarchyInSubtree(root: EntityState): string[] {
+  const errors: string[] = [];
+
+  const visit = (entity: EntityState) => {
+    for (const comp of entity.components.values()) {
+      const reqs = comp.metadata.requiresInHierarchy;
+      if (!reqs || reqs.length === 0) continue;
+      for (const req of reqs) {
+        if (!satisfiesHierarchyRequirement(entity, req)) {
+          errors.push(
+            `Component '${comp.type}' on '${entity.id}' requires '${req}' on this entity or an ancestor.`,
+          );
+        }
+      }
+    }
+    for (const child of entity.children) visit(child);
+  };
+
+  visit(root);
+  return errors;
 }

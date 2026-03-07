@@ -35,7 +35,15 @@ export {
   createEntityObservers,
 } from './observers';
 
-export { validateAddComponent, validateRemoveComponent, GEOMETRY_TYPES } from './validation';
+export {
+  validateAddComponent,
+  validateRemoveComponent,
+  satisfiesRequirement,
+  satisfiesHierarchyRequirement,
+  wouldCreateCycle,
+  validateHierarchyInSubtree,
+  GEOMETRY_TYPES,
+} from './validation';
 
 export {
   type EntityState,

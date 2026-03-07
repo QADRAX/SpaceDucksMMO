@@ -1,5 +1,5 @@
 import { defineSceneUseCase } from './sceneUseCase';
-import { emitSceneChange } from './emitSceneChange';
+import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Clears the active camera, leaving the scene without a camera. */
 export const clearActiveCamera = defineSceneUseCase({

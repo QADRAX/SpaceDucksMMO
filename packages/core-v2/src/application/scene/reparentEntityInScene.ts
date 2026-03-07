@@ -1,9 +1,9 @@
 import type { Result } from '../../domain/types/result';
 import { ok, err } from '../../domain/types/result';
 import { addChild, removeChildById } from '../../domain/ecs/entity';
+import { wouldCreateCycle, validateHierarchyInSubtree } from '../../domain/ecs/validation';
 import { defineSceneUseCase } from './sceneUseCase';
-import { wouldCreateCycle, validateHierarchyInSubtree } from './sceneValidation';
-import { emitSceneChange } from './emitSceneChange';
+import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Parameters for the reparentEntityInScene use case. */
 export interface ReparentEntityParams {

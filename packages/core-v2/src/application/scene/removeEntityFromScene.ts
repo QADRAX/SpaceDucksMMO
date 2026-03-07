@@ -3,7 +3,7 @@ import type { EntityState } from '../../domain/ecs/entity';
 import type { Result } from '../../domain/types/result';
 import { ok, err } from '../../domain/types/result';
 import { defineSceneUseCase } from './sceneUseCase';
-import { emitSceneChange } from './emitSceneChange';
+import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Parameters for the removeEntityFromScene use case. */
 export interface RemoveEntityParams {

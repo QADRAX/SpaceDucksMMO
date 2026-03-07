@@ -3,9 +3,10 @@ import type { EntityState } from '../../domain/ecs/entity';
 import type { Result } from '../../domain/types/result';
 import { ok, err } from '../../domain/types/result';
 import { defineSceneUseCase } from './sceneUseCase';
-import { attachEntityObservers } from './sceneObservers';
-import { validateUniqueInSceneSubtree, validateHierarchyInSubtree } from './sceneValidation';
-import { emitSceneChange } from './emitSceneChange';
+import { attachEntityObservers } from '../../domain/scene/sceneObservers';
+import { validateUniqueInSceneSubtree } from '../../domain/scene/sceneValidation';
+import { validateHierarchyInSubtree } from '../../domain/ecs/validation';
+import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Parameters for the addEntityToScene use case (scene is provided separately). */
 export interface AddEntityParams {

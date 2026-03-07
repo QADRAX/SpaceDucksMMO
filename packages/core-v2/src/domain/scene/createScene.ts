@@ -1,4 +1,4 @@
-import type { SceneState, ScenePorts } from '../../domain/types/sceneState';
+import type { SceneState, ScenePorts } from '../types/sceneState';
 
 /** Creates an empty scene state with optional port injection. */
 export function createScene(id: string, ports?: Partial<ScenePorts>): SceneState {

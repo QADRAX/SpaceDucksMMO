@@ -2,7 +2,7 @@ import type { Result } from '../../domain/types/result';
 import { ok, err } from '../../domain/types/result';
 import { hasComponent } from '../../domain/ecs/entity';
 import { defineSceneUseCase } from './sceneUseCase';
-import { emitSceneChange } from './emitSceneChange';
+import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Parameters for the setActiveCamera use case. */
 export interface SetActiveCameraParams {
