@@ -263,7 +263,8 @@ export abstract class BaseScene implements IScene {
     this.renderSyncSystem = this.engine?.createRenderSyncSystem?.(
       renderScene,
       this.engine.getTextureCatalog?.(),
-      this.textureResolver
+      this.textureResolver,
+      this.engine.getResourceLoader?.()
     );
 
     if (this.renderSyncSystem) {

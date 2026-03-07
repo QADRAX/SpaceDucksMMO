@@ -5,8 +5,8 @@ import * as React from 'react';
 import {
   NoopFpsController,
   ThreeRenderer,
-  createWebCoreEngineResourceResolver,
 } from '@duckengine/rendering-three';
+import { createWebCoreResourceLoader } from '@duckengine/core';
 
 import { getInputServices, setInputServices } from '@duckengine/rendering-three/ecs';
 
@@ -150,7 +150,7 @@ export function useThreeRendererLoop(args: {
         }
 
         const baseUrl = window.location.origin;
-        renderer.setEngineResourceResolver(createWebCoreEngineResourceResolver({ baseUrl }));
+        renderer.setResourceLoader(createWebCoreResourceLoader({ baseUrl }));
 
         args.rendererRef.current = renderer;
 

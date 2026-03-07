@@ -3,6 +3,7 @@
 export * from './domain/ports/IScene';
 export * from './domain/ports/IRenderingEngine';
 export * from './domain/ports/IRenderSyncSystem';
+export type { IResourceLoader } from './domain/ports/IResourceLoader';
 export type { ITextureResolver } from './domain/ports/ITextureResolver';
 export type { default as ISettingsService } from './domain/ports/ISettingsService';
 export type { IGizmoRenderer } from './domain/ports/IGizmoRenderer';
@@ -27,12 +28,22 @@ export type {
 	TextureCatalog,
 	TextureVariant,
 } from './domain/assets/TextureCatalog';
+export type {
+	ResolvedResource,
+	ResolvedFile,
+	ResourceVersionSelector,
+} from './domain/assets/ResourceTypes';
 export type * from './domain/assets/TextureTypes';
 export type { GameSettings } from './domain/settings/GameSettings';
 
 export { default as TextureResolverService } from './application/TextureResolverService';
 export { default as LoadingTracker } from './domain/runtime/LoadingTracker';
 export { default as WebCoreTextureCatalogService } from './infrastructure/assets/WebCoreTextureCatalogService';
+export {
+	WebCoreResourceLoader,
+	createWebCoreResourceLoader,
+} from './infrastructure/assets/WebCoreResourceLoader';
+export type { WebCoreResourceLoaderOptions } from './infrastructure/assets/WebCoreResourceLoader';
 
 // ── Editor Plugin contracts ─────────────────────────────────────────────────
 // Moved to @duckengine/editor-core

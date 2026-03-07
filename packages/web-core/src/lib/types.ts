@@ -214,10 +214,6 @@ export type CreateMaterialResourceInput = z.infer<typeof CreateMaterialResourceS
 export const CreateMaterialVersionSchema = z
   .object({
     version: z.number().int().positive().optional(),
-    // Deprecated (ignored). Kept for backwards compatibility with older clients/manifests.
-    status: z.string().optional(),
-    // Deprecated (ignored). Kept for backwards compatibility with older clients/manifests.
-    isDefault: z.boolean().optional(),
     componentType: MaterialComponentTypeSchema,
     componentData: z.unknown().optional(),
   })
@@ -258,14 +254,8 @@ export type PatchResourceVersionInput = z.infer<typeof PatchResourceVersionSchem
 export const CreateResourceVersionSchema = z
   .object({
     version: z.number().int().positive().optional(),
-    // Deprecated (ignored). Kept for backwards compatibility with older clients/manifests.
-    status: z.string().optional(),
-    // Deprecated (ignored). Kept for backwards compatibility with older clients/manifests.
-    isDefault: z.boolean().optional(),
     // Resource-kind-specific payload. For materials, this is the Three component data.
     componentData: z.unknown().optional(),
-    // Optional legacy field: if provided, must match the resource kind.
-    componentType: z.string().optional(),
     // Optional ZIP helper: explicit mapping from zip filenames to binding slots.
     // When provided, zip uploads do not require files to be named after slots.
     files: z

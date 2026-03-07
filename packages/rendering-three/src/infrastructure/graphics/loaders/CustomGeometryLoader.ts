@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { EngineResourceResolver } from "../../resources/EngineResourceResolver";
+import type { IResourceLoader } from "@duckengine/core";
 import { normalizeGlbUvs, createLoaderForResolved, getGltfLoader } from "./glTFHelpers";
 import { CoreLogger } from "@duckengine/core";
 
@@ -8,7 +8,7 @@ export class CustomGeometryLoader {
 
     constructor() { }
 
-    async load(resourceKey: string, resolver?: EngineResourceResolver): Promise<THREE.BufferGeometry | null> {
+    async load(resourceKey: string, resolver?: IResourceLoader): Promise<THREE.BufferGeometry | null> {
         if (!resolver) return null;
 
         let resolved: any;

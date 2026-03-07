@@ -1,9 +1,0 @@
-export { SettingsIcon } from "./SettingsIcon";
-export { TrashIcon } from "./TrashIcon";
-export { PlusIcon } from "./PlusIcon";
-export { ServerIcon } from "./ServerIcon";
-export { CameraIcon } from "./CameraIcon";
-export { LightIcon } from "./LightIcon";
-export { GeometryIcon } from "./GeometryIcon";
-export { EntityIcon } from "./EntityIcon";
-export { SceneIcon } from "./SceneIcon";

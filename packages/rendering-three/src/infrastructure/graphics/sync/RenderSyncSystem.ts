@@ -6,12 +6,12 @@ import type {
   ComponentListener,
   IComponentObserver,
   ComponentType,
+  IResourceLoader,
 } from "@duckengine/core";
 import type { IRenderSyncSystem, ITextureResolver, TextureCatalogService, LoadingTracker } from "@duckengine/core";
 import { RenderObjectRegistry } from "./RenderObjectRegistry";
 import { ShaderUniformUpdater } from "./ShaderUniformUpdater";
 import { TextureCache } from "../factories/TextureCache";
-import type { EngineResourceResolver } from "../../resources/EngineResourceResolver";
 
 import { FeatureRouter } from "../features/FeatureRouter";
 import { RenderContext } from "../features/RenderContext";
@@ -49,7 +49,7 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
     scene: THREE.Scene,
     textureCatalog?: TextureCatalogService,
     textureResolver?: ITextureResolver,
-    engineResourceResolver?: EngineResourceResolver,
+    engineResourceResolver?: IResourceLoader,
     loadingTracker?: LoadingTracker
   ) {
     this.scene = scene;

@@ -4,13 +4,13 @@ import type {
     IRenderingEngine,
     IScene,
     ITextureResolver,
+    IResourceLoader,
     TextureCatalogService,
     IRenderSyncSystem,
 } from '@duckengine/core';
 import { LoadingTracker, CoreLogger } from '@duckengine/core';
 import type { IFpsController } from '../ui/dev/FpsController';
 import { RenderSyncSystem } from '../graphics/sync/RenderSyncSystem';
-import type { EngineResourceResolver } from '../resources/EngineResourceResolver';
 import type { ILoadingOverlay, ILoadingOverlayFactory } from './ILoadingOverlay';
 import { DefaultHtmlLoadingOverlayFactory } from '../ui/DefaultHtmlLoadingOverlay';
 import type { IGizmoRenderer } from '@duckengine/core';
@@ -103,7 +103,7 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
     protected fpsController: IFpsController;
     protected textureResolver?: ITextureResolver;
     protected textureCatalog?: TextureCatalogService;
-    protected engineResourceResolver?: EngineResourceResolver;
+    protected engineResourceResolver?: IResourceLoader;
 
     // ─── Overlay factory ─────────────────────────────────────────────────────
     private readonly overlayFactory: ILoadingOverlayFactory;
@@ -131,10 +131,10 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
         return this.textureCatalog;
     }
 
-    setEngineResourceResolver(resolver: EngineResourceResolver): void {
-        this.engineResourceResolver = resolver;
+    setResourceLoader(loader: IResourceLoader): void {
+        this.engineResourceResolver = loader;
     }
-    getEngineResourceResolver(): EngineResourceResolver | undefined {
+    getResourceLoader(): IResourceLoader | undefined {
         return this.engineResourceResolver;
     }
 
@@ -144,12 +144,13 @@ export abstract class ThreeRendererBase implements IRenderingEngine {
         renderScene: unknown,
         catalog?: TextureCatalogService,
         resolver?: ITextureResolver,
+        resourceLoader?: IResourceLoader,
     ): IRenderSyncSystem {
         return new RenderSyncSystem(
             renderScene,
             catalog,
             resolver,
-            this.engineResourceResolver,
+            resourceLoader ?? this.engineResourceResolver,
             this.loadingTracker,
         );
     }

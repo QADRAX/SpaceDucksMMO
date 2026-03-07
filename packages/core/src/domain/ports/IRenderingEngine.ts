@@ -2,6 +2,7 @@ import type { IScene } from './IScene';
 import type { TextureCatalogService } from '../assets/TextureCatalog';
 import { IRenderSyncSystem } from './IRenderSyncSystem';
 import { ITextureResolver } from './ITextureResolver';
+import type { IResourceLoader } from './IResourceLoader';
 import type { IPhysicsSystem } from '../physics/IPhysicsSystem';
 
 /**
@@ -59,6 +60,10 @@ export interface IRenderingEngine {
 
   getTextureCatalog(): TextureCatalogService | undefined;
 
+  /** Optional runtime resource loader (web-core, local files, etc.). */
+  setResourceLoader?(loader: IResourceLoader): void;
+  getResourceLoader?(): IResourceLoader | undefined;
+
   // --- Multi-view (optional) --------------------------------------------
   //
   // Some renderer backends can render the same scene into multiple views
@@ -83,6 +88,7 @@ export interface IRenderingEngine {
     renderScene: any,
     catalog?: TextureCatalogService,
     textureResolver?: ITextureResolver,
+    resourceLoader?: IResourceLoader,
   ): IRenderSyncSystem | undefined;
 
   /**

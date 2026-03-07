@@ -5,9 +5,8 @@ import {
     BaseScene,
     NoopFpsController,
     ThreeRenderer,
-    createWebCoreEngineResourceResolver,
-    type EngineResourceResolver,
 } from '@duckengine/rendering-three';
+import { createWebCoreResourceLoader, type IResourceLoader } from '@duckengine/core';
 import { getInputServices } from '@duckengine/rendering-three/ecs';
 import { cn } from '@/lib/utils';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -16,7 +15,7 @@ type Props = {
     /** The scene to render. Must inherit from BaseScene. */
     scene: BaseScene | null;
     /** Optional custom resource resolver. If not provided, uses default WebCore resolver. */
-    resourceResolver?: EngineResourceResolver;
+    resourceLoader?: IResourceLoader;
     /** Class name for the container. */
     className?: string;
     /** Optional callback invoked on every frame. */
@@ -31,7 +30,7 @@ type Props = {
 
 export function ThreePreview({
     scene,
-    resourceResolver,
+    resourceLoader,
     className,
     onRender,
     rendererRef: externalRendererRef,
@@ -73,11 +72,11 @@ export function ThreePreview({
                 }
 
                 // Initial resolver and scene
-                if (resourceResolver) {
-                    renderer.setEngineResourceResolver(resourceResolver);
+                if (resourceLoader) {
+                    renderer.setResourceLoader(resourceLoader);
                 } else {
                     const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-                    renderer.setEngineResourceResolver(createWebCoreEngineResourceResolver({ baseUrl }));
+                    renderer.setResourceLoader(createWebCoreResourceLoader({ baseUrl }));
                 }
 
                 if (scene) {
@@ -163,12 +162,12 @@ export function ThreePreview({
         };
     }, []); // Run once on mount
 
-    // Handle resourceResolver updates
+    // Handle resourceLoader updates
     React.useEffect(() => {
-        if (internalRendererRef.current && resourceResolver) {
-            internalRendererRef.current.setEngineResourceResolver(resourceResolver);
+        if (internalRendererRef.current && resourceLoader) {
+            internalRendererRef.current.setResourceLoader(resourceLoader);
         }
-    }, [resourceResolver]);
+    }, [resourceLoader]);
 
     // Handle scene updates
     React.useEffect(() => {

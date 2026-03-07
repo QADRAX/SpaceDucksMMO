@@ -2,9 +2,7 @@
 
 import * as React from 'react';
 
-import {
-    createWebCoreEngineResourceResolver,
-} from '@duckengine/rendering-three';
+import { createWebCoreResourceLoader } from '@duckengine/core';
 
 import { cn } from '@/lib/utils';
 import { ThreePreview } from '@/components/molecules/ThreePreview';
@@ -125,7 +123,7 @@ export function MaterialPreview({ resourceKey, kind, componentData, className }:
     const resourceResolver = React.useMemo(() => {
         if (typeof window === 'undefined') return undefined;
         const baseUrl = window.location.origin;
-        return createWebCoreEngineResourceResolver({ baseUrl });
+        return createWebCoreResourceLoader({ baseUrl });
     }, []);
 
     const scene = React.useMemo(() => {
@@ -169,7 +167,7 @@ export function MaterialPreview({ resourceKey, kind, componentData, className }:
     return (
         <div className={cn('h-full w-full min-h-0', className)}>
             <div className="relative h-full w-full min-h-0">
-                <ThreePreview scene={scene} resourceResolver={resourceResolver}>
+                <ThreePreview scene={scene} resourceLoader={resourceResolver}>
                     <PreviewSettingsContainer>
                         <PreviewSettingGroup title="Camera">
                             <PreviewSettingVector3

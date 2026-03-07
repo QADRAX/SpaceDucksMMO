@@ -3,10 +3,10 @@
 import * as React from 'react';
 
 import {
-    createWebCoreEngineResourceResolver,
-    type EngineResourceResolver,
-    type EngineResolvedResource
-} from '@duckengine/rendering-three';
+    createWebCoreResourceLoader,
+    type IResourceLoader,
+    type ResolvedResource,
+} from '@duckengine/core';
 
 import { cn } from '@/lib/utils';
 import { ThreePreview } from '@/components/molecules/ThreePreview';
@@ -141,7 +141,7 @@ export function PhysicalShaderPreview({ resourceKey, shaderSource, uniforms, com
 
     const baseResolver = React.useMemo(() => {
         if (typeof window === 'undefined') return undefined;
-        return createWebCoreEngineResourceResolver({ baseUrl: window.location.origin });
+        return createWebCoreResourceLoader({ baseUrl: window.location.origin });
     }, []);
 
     const isWgsl = React.useMemo(() => {
@@ -149,7 +149,7 @@ export function PhysicalShaderPreview({ resourceKey, shaderSource, uniforms, com
         return /\bfn\s+\w+\s*\(/.test(shaderSource) || shaderSource.includes('->');
     }, [shaderSource]);
 
-    const resourceResolver: EngineResourceResolver = React.useMemo(() => {
+    const resourceResolver: IResourceLoader = React.useMemo(() => {
         return {
             async resolve(key: string, version) {
                 if ((shaderSource !== undefined && key === resourceKey) || key.startsWith('dev-')) {
@@ -163,7 +163,7 @@ export function PhysicalShaderPreview({ resourceKey, shaderSource, uniforms, com
                         files: {
                             shader: { url: shaderUrlRef.current, fileName: `shader${ext}` }
                         }
-                    } as EngineResolvedResource;
+                    } as ResolvedResource;
                 }
                 if (baseResolver) return baseResolver.resolve(key, version);
                 throw new Error('No base resolver');
@@ -219,7 +219,7 @@ export function PhysicalShaderPreview({ resourceKey, shaderSource, uniforms, com
     return (
         <div className={cn('h-full w-full min-h-0', className)}>
             <div className="relative h-full w-full min-h-0">
-                <ThreePreview scene={scene} resourceResolver={resourceResolver}>
+                <ThreePreview scene={scene} resourceLoader={resourceResolver}>
                     <PreviewSettingsContainer>
                         <PreviewSettingGroup title="Camera">
                             <PreviewSettingVector3

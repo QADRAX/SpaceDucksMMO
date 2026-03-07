@@ -3,11 +3,11 @@
 import * as React from 'react';
 
 import {
-    type EngineResourceResolver,
-    type EngineResolvedResource,
-    type EngineResourceVersionSelector,
-    createWebCoreEngineResourceResolver,
-} from '@duckengine/rendering-three';
+    createWebCoreResourceLoader,
+    type IResourceLoader,
+    type ResolvedResource,
+    type ResourceVersionSelector,
+} from '@duckengine/core';
 
 import { cn } from '@/lib/utils';
 import { ThreePreview } from '@/components/molecules/ThreePreview';
@@ -61,15 +61,15 @@ function safeParseSettings(raw: unknown): SkyboxPreviewSettings | null {
 function createDraftSkyboxResolver(args: {
     getCurrentKey: () => string;
     getCurrentFiles: () => SkyboxDraftFiles;
-}): EngineResourceResolver {
+}): IResourceLoader {
     return {
-        async resolve(key: string): Promise<EngineResolvedResource> {
+        async resolve(key: string): Promise<ResolvedResource> {
             const currentKey = args.getCurrentKey();
             if (key !== currentKey) {
                 throw new Error(`Unknown draft skybox key: ${key}`);
             }
             const files = args.getCurrentFiles();
-            const resolvedFiles: EngineResolvedResource['files'] = {};
+            const resolvedFiles: ResolvedResource['files'] = {};
             (Object.keys(files) as FaceSlot[]).forEach((slot) => {
                 const url = files[slot];
                 if (!url) return;
@@ -93,12 +93,12 @@ function createDraftSkyboxResolver(args: {
 }
 
 function createSkyboxMappedResolver(args: {
-    baseResolver: EngineResourceResolver;
+    baseResolver: IResourceLoader;
     getRealKey: () => string;
-    getVersion: () => EngineResourceVersionSelector;
-}): EngineResourceResolver {
+    getVersion: () => ResourceVersionSelector;
+}): IResourceLoader {
     return {
-        async resolve(_key: string, _version?: EngineResourceVersionSelector): Promise<EngineResolvedResource> {
+        async resolve(_key: string, _version?: ResourceVersionSelector): Promise<ResolvedResource> {
             const key = args.getRealKey();
             const version = args.getVersion();
             return await args.baseResolver.resolve(key, version);
@@ -148,7 +148,7 @@ export function Skybox3DPreview({
     const resourceKeyRef = React.useRef(effectiveKey);
     React.useEffect(() => { resourceKeyRef.current = effectiveKey; }, [effectiveKey]);
 
-    const versionRef = React.useRef<EngineResourceVersionSelector>('active');
+    const versionRef = React.useRef<ResourceVersionSelector>('active');
     React.useEffect(() => { versionRef.current = 'active'; }, [activeVersion]);
 
     const internalResourceKey = React.useMemo(() => {
@@ -188,7 +188,7 @@ export function Skybox3DPreview({
             });
         } else {
             const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000';
-            const baseResolver = createWebCoreEngineResourceResolver({ baseUrl });
+            const baseResolver = createWebCoreResourceLoader({ baseUrl });
             return createSkyboxMappedResolver({
                 baseResolver,
                 getRealKey: () => resourceKeyRef.current,
@@ -202,7 +202,7 @@ export function Skybox3DPreview({
             <div className="relative h-full w-full min-h-0">
                 <ThreePreview
                     scene={scene}
-                    resourceResolver={resolver}
+                    resourceLoader={resolver}
                 >
                     <PreviewSettingsContainer>
                         <PreviewSettingGroup title="Camera">

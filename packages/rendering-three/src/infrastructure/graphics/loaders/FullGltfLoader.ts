@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import type { EngineResourceResolver } from "../../resources/EngineResourceResolver";
+import type { IResourceLoader } from "@duckengine/core";
 import { normalizeGlbUvs, createLoaderForResolved } from "./glTFHelpers";
 
 export interface FullGltfResult {
@@ -10,7 +10,7 @@ export interface FullGltfResult {
 export class FullGltfLoader {
     constructor() { }
 
-    async load(resourceKey: string, resolver?: EngineResourceResolver): Promise<FullGltfResult | null> {
+    async load(resourceKey: string, resolver?: IResourceLoader): Promise<FullGltfResult | null> {
         if (!resolver) return null;
 
         let resolved: any;

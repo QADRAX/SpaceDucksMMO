@@ -32,4 +32,4 @@ export type {
 	EngineResourceVersionSelector,
 } from './infrastructure/resources/EngineResourceResolver';
 
-export { createWebCoreEngineResourceResolver } from './infrastructure/resources/EngineResourceResolver';
+export { createWebCoreResourceLoader } from './infrastructure/resources/EngineResourceResolver';

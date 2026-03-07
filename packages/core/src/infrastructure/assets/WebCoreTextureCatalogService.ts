@@ -11,18 +11,6 @@ type WebCoreTextureCatalogOptions = {
   /** Base URL for Duck Engine Web Core API, e.g. "http://localhost:3000" */
   baseUrl: string;
 
-  /**
-   * Deprecated/unused.
-   * Kept for backwards compatibility with the old manifest-based API.
-   */
-  category?: string;
-
-  /**
-   * Deprecated/unused.
-   * Kept for backwards compatibility with the old manifest-based API.
-   */
-  tag?: string;
-
   /** Cache catalog for this many ms. Default: 30s. */
   ttlMs?: number;
 };
@@ -41,6 +29,7 @@ export class WebCoreTextureCatalogService implements TextureCatalogService {
   constructor(options: WebCoreTextureCatalogOptions) {
     this.baseUrl = normalizeBaseUrl(options.baseUrl);
     this.ttlMs = options.ttlMs ?? 30_000;
+    // Note: deprecated 'category' and 'tag' parameters removed (were unused)
   }
 
   private async fetchCatalog(): Promise<TextureCatalog> {
