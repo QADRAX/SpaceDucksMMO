@@ -1,4 +1,4 @@
-import { defineViewportUseCase } from './viewportUseCase';
+import { defineViewportUseCase } from '../../domain/useCases';
 
 /** Parameters for setViewportCanvas. */
 export interface SetViewportCanvasParams {

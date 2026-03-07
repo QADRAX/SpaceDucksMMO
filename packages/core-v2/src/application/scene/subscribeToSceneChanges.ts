@@ -1,6 +1,6 @@
-import type { SceneChangeEventWithError } from '../../domain/types/sceneEvents';
-import type { SceneChangeListener } from '../../domain/types/sceneSystemAdapter';
-import { defineSceneUseCase } from './sceneUseCase';
+import type {  SceneChangeEventWithError  } from '../../domain/types/../scene';
+import type {  SceneChangeListener  } from '../../domain/types/../scene';
+import { defineSceneUseCase } from '../../domain/useCases';
 
 /** Parameters for the subscribeToSceneChanges use case. */
 export interface SubscribeToSceneChangesParams {

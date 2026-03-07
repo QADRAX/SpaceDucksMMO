@@ -1,3 +1,4 @@
+export * from './types';
 export * from './domains/rendering';
 export * from './domains/physics';
 export * from './domains/gameplay';

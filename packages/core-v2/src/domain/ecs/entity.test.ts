@@ -17,10 +17,10 @@ import {
   getChild,
   getChildren,
 } from './entity';
-import type { ComponentBase } from './component';
+import type {  ComponentBase  } from './types';
 import { componentBase } from './component';
-import type { ComponentMetadata } from '../types/componentMetadata';
-import type { ComponentType } from '../types/componentType';
+import type {  ComponentMetadata  } from '../types/../components';
+import type {  ComponentType  } from '../types/../components';
 
 function mockMetadata(
   type: ComponentType,

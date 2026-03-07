@@ -1,4 +1,4 @@
-import { defineSceneUseCase } from './sceneUseCase';
+import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /**

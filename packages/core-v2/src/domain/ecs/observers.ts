@@ -1,43 +1,14 @@
-import type { ComponentType } from '../types/componentType';
-import type { DebugKind } from '../types/debug';
-import type { ComponentBase } from './component';
-
-/** Fired when a component is added to or removed from an entity. */
-export interface ComponentEvent {
-  readonly entityId: string;
-  readonly component: ComponentBase;
-  readonly action: 'added' | 'removed';
-}
-
-/** Listener for structural component changes (add/remove). */
-export type ComponentListener = (event: ComponentEvent) => void;
-
-/** Listener for component field-level changes. */
-export type ComponentChangeListener = (entityId: string, type: ComponentType) => void;
-
-/** Listener for presentation changes (display name, gizmo icon). */
-export type PresentationListener = (entityId: string) => void;
-
-/** Listener for debug flag changes. */
-export type DebugListener = (entityId: string, kind: DebugKind, enabled: boolean) => void;
-
-/** Centralised observer hub for a single entity. */
-export interface EntityObservers {
-  fireComponentAdded(entityId: string, comp: ComponentBase): void;
-  fireComponentRemoved(entityId: string, comp: ComponentBase): void;
-  fireComponentChanged(entityId: string, type: ComponentType): void;
-  firePresentationChanged(entityId: string): void;
-  fireDebugChanged(entityId: string, kind: DebugKind, enabled: boolean): void;
-
-  addComponentListener(fn: ComponentListener): void;
-  removeComponentListener(fn: ComponentListener): void;
-  addChangeListener(fn: ComponentChangeListener): void;
-  removeChangeListener(fn: ComponentChangeListener): void;
-  addPresentationListener(fn: PresentationListener): void;
-  removePresentationListener(fn: PresentationListener): void;
-  addDebugListener(fn: DebugListener): void;
-  removeDebugListener(fn: DebugListener): void;
-}
+import type { ComponentType } from '../types/../components';
+import type { DebugKind } from './types';
+import type {
+  ComponentBase,
+  ComponentEvent,
+  ComponentListener,
+  ComponentChangeListener,
+  PresentationListener,
+  DebugListener,
+  EntityObservers,
+} from './types';
 
 /** Creates a new observer hub with empty listener lists. */
 export function createEntityObservers(): EntityObservers {

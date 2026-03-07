@@ -1,16 +1,6 @@
-import type { ComponentType } from '../types/componentType';
-import type { ComponentMetadata } from '../types/componentMetadata';
-
-/**
- * Base shape shared by all ECS components.
- * Components are plain data objects — no methods, no observers.
- * All mutation and notification is handled by the entity layer.
- */
-export interface ComponentBase<TType extends ComponentType = ComponentType> {
-  readonly type: TType;
-  readonly metadata: ComponentMetadata;
-  enabled: boolean;
-}
+import type {  ComponentType  } from '../types/../components';
+import type {  ComponentMetadata  } from '../types/../components';
+import type { ComponentBase } from './types';
 
 /**
  * Initialises the common component fields.

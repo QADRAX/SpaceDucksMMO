@@ -1,7 +1,7 @@
-import type { ComponentType } from '../types/componentType';
-import type { DebugKind } from '../types/debug';
-import type { ComponentBase } from './component';
-import type { EntityState } from './entity';
+import type { ComponentType } from '../types/../components';
+import type { DebugKind } from './types';
+import type { ComponentBase } from './types';
+import type { EntityState } from './types';
 import type { TransformView } from './transformView';
 import { createTransformView } from './transformView';
 

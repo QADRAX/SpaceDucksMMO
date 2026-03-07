@@ -1,4 +1,4 @@
-import { defineEngineUseCase } from './engineUseCase';
+import { defineEngineUseCase } from '../../domain/useCases';
 
 /** Parameters for the updateEngine use case. */
 export interface UpdateEngineParams {

@@ -1,5 +1,5 @@
-import type { SceneState } from '../types/sceneState';
-import type { SceneChangeEventWithError } from '../types/sceneEvents';
+import type { SceneState } from './types';
+import type { SceneChangeEventWithError } from './types';
 
 /** Notifies all scene change listeners. Swallows listener errors. */
 export function emitSceneChange(scene: SceneState, event: SceneChangeEventWithError): void {

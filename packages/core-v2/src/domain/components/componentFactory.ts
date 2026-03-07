@@ -1,4 +1,4 @@
-import type { ComponentMetadata } from '../types/componentMetadata';
+import type { ComponentMetadata } from './types';
 import type {
   ComponentByType,
   ComponentCreateParams,

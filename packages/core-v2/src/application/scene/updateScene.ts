@@ -1,4 +1,4 @@
-import { defineSceneUseCase } from './sceneUseCase';
+import { defineSceneUseCase } from '../../domain/useCases';
 
 /** Parameters for the updateScene use case. */
 export interface UpdateSceneParams {

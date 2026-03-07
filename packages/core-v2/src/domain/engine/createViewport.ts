@@ -1,4 +1,4 @@
-import type { ViewportState, ViewportRect } from '../types/viewport';
+import type {  ViewportState, ViewportRect  } from '../types/../viewport';
 
 /** Parameters for creating a viewport. */
 export interface CreateViewportParams {

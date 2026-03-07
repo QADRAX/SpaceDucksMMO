@@ -1,4 +1,4 @@
-import { defineViewportUseCase } from './viewportUseCase';
+import { defineViewportUseCase } from '../../domain/useCases';
 
 /** Enables the viewport so it will be rendered. */
 export const enableViewport = defineViewportUseCase<void, void>({

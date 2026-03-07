@@ -1,4 +1,4 @@
-import type { ComponentSpec } from '../../../types/componentSpec';
+import type {  ComponentSpec  } from '../../../types/../components';
 import type {
   RigidBodyComponent,
   GravityComponent,

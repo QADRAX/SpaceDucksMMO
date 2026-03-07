@@ -1,4 +1,4 @@
-import { defineViewportUseCase } from './viewportUseCase';
+import { defineViewportUseCase } from '../../domain/useCases';
 
 /** Disables the viewport so it will not be rendered. */
 export const disableViewport = defineViewportUseCase<void, void>({

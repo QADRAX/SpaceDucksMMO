@@ -1,9 +1,9 @@
-import type { ViewportRect } from '../../domain/types/viewport';
-import type { Result } from '../../domain/types/result';
-import { ok, err } from '../../domain/types/result';
+import type {  ViewportRect  } from '../../domain/types/../viewport';
+import type {  Result  } from '../../domain/types/../utils';
+import {  ok, err  } from '../../domain/types/../utils';
 import { findScene, isCameraEntity } from '../../domain/engine/engineValidation';
 import { createViewport } from '../../domain/engine/createViewport';
-import { defineEngineUseCase } from './engineUseCase';
+import { defineEngineUseCase } from '../../domain/useCases';
 
 /** Parameters for the addViewport use case. */
 export interface AddViewportParams {

@@ -1,5 +1,5 @@
-import type { EngineState } from '../types/engineState';
-import { DEFAULT_GAME_SETTINGS } from '../types/settings';
+import type { EngineState } from './types';
+import { DEFAULT_GAME_SETTINGS } from './types';
 
 /** Creates an empty engine state. */
 export function createEngine(): EngineState {

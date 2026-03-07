@@ -1,3 +1,4 @@
+export * from './types';
 export { createScene } from './createScene';
 export { emitSceneChange } from './emitSceneChange';
 export { attachEntityObservers } from './sceneObservers';

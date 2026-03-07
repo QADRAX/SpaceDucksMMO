@@ -1,4 +1,4 @@
-import type { ResolvedResource, ResourceVersionSelector } from '../types/assets';
+import type {  ResolvedResource, ResourceVersionSelector  } from '../types/../assets';
 
 /**
  * Contract for runtime resource resolution.

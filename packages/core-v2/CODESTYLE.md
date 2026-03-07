@@ -11,6 +11,7 @@ Rules for all code in this package. No exceptions.
 - Barrel files are allowed **only** as `index.ts` inside their own folder
 - **Zero default exports** — always `export function`, `export interface`, `export type`, `export const`
 - One file = one responsibility. Subfolders by responsibility
+- **Domain Separation**: Types and Interfaces must be strictly separated from Pure Logic. See `ARCHITECTURE.md` for the Domain Layer Feature-Sliced structure (e.g., `types.ts` vs `logic.ts`).
 
 ## Naming
 

@@ -1,8 +1,8 @@
-import type { Result } from '../../domain/types/result';
-import { ok, err } from '../../domain/types/result';
-import { addChild, removeChildById } from '../../domain/ecs/entity';
+import type {  Result  } from '../../domain/types/../utils';
+import {  ok, err  } from '../../domain/types/../utils';
+import { addChild, removeChildById } from '../../domain/ecs';
 import { wouldCreateCycle, validateHierarchyInSubtree } from '../../domain/ecs/validation';
-import { defineSceneUseCase } from './sceneUseCase';
+import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Parameters for the reparentEntityInScene use case. */

@@ -1,5 +1,5 @@
-import type { GameSettings } from '../../domain/types/settings';
-import { defineEngineUseCase } from './engineUseCase';
+import type {  GameSettings  } from '../../domain/types/../engine';
+import { defineEngineUseCase } from '../../domain/useCases';
 
 /** Parameters for the updateSettings use case. */
 export interface UpdateSettingsParams {

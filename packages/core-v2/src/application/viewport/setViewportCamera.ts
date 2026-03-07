@@ -1,5 +1,5 @@
 import { guardCameraInScene } from '../../domain/engine/engineGuards';
-import { defineViewportUseCase } from './viewportUseCase';
+import { defineViewportUseCase } from '../../domain/useCases';
 
 /** Parameters for setViewportCamera. */
 export interface SetViewportCameraParams {

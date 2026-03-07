@@ -1,29 +1,11 @@
-import type { ComponentType } from '../types/componentType';
-import type { DebugKind } from '../types/debug';
-import type { Result } from '../types/result';
-import { ok, err } from '../types/result';
-import type { ComponentBase } from './component';
-import type { EntityObservers } from './observers';
+import type { ComponentType } from '../types/../components';
+import type { DebugKind } from './types';
+import type { Result } from '../types/../utils';
+import { ok, err } from '../types/../utils';
+import type { ComponentBase, EntityState, TransformState, EntityObservers } from './types';
 import { createEntityObservers } from './observers';
-import type { TransformState } from './transform';
 import { createTransform, setTransformParent } from './transform';
 import { validateAddComponent, validateRemoveComponent } from './validation';
-
-/**
- * Mutable entity state used internally by the engine.
- * All mutation functions operate on this type directly.
- */
-export interface EntityState {
-  readonly id: string;
-  readonly transform: TransformState;
-  readonly components: Map<ComponentType, ComponentBase>;
-  readonly observers: EntityObservers;
-  readonly debugFlags: Map<DebugKind, boolean>;
-  readonly children: EntityState[];
-  displayName: string;
-  gizmoIcon: string | undefined;
-  parent: EntityState | undefined;
-}
 
 /** Creates a new entity state with a fresh transform and empty component map. */
 export function createEntity(id: string, displayName?: string): EntityState {

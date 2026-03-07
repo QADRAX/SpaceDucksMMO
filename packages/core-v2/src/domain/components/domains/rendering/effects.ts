@@ -1,5 +1,5 @@
-import type { ComponentBase } from '../../../ecs/component';
-import type { ComponentSpec } from '../../../types/componentSpec';
+import type {  ComponentBase  } from '../../../ecs';
+import type {  ComponentSpec  } from '../../../types/../components';
 
 /** A single lens flare visual element along the flare axis. */
 export interface LensFlareElement {

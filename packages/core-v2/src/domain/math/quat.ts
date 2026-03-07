@@ -1,4 +1,4 @@
-import type { EulerLike, QuatLike, Vec3Like } from '../types';
+import type { EulerLike, QuatLike, Vec3Like } from './types';
 
 /**
  * Creates a quaternion from Euler angles in YXZ order.
@@ -83,4 +83,9 @@ export function quatFromDirection(dir: Vec3Like, up: Vec3Like = { x: 0, y: 1, z:
   const angle = Math.acos(Math.max(-1, Math.min(1, dot)));
   const s = Math.sin(angle / 2);
   return { x: ax * s, y: ay * s, z: az * s, w: Math.cos(angle / 2) };
+}
+
+/** Creates a QuatLike. Defaults to identity quaternion (0,0,0,1). */
+export function quat(x = 0, y = 0, z = 0, w = 1): QuatLike {
+  return { x, y, z, w };
 }

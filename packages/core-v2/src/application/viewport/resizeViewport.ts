@@ -1,5 +1,5 @@
-import type { ViewportRect } from '../../domain/types/viewport';
-import { defineViewportUseCase } from './viewportUseCase';
+import type {  ViewportRect  } from '../../domain/types/../viewport';
+import { defineViewportUseCase } from '../../domain/useCases';
 
 /** Parameters for resizeViewport. */
 export interface ResizeViewportParams {

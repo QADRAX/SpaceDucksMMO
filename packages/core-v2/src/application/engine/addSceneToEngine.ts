@@ -1,7 +1,7 @@
-import type { Result } from '../../domain/types/result';
-import { ok, err } from '../../domain/types/result';
+import type {  Result  } from '../../domain/types/../utils';
+import {  ok, err  } from '../../domain/types/../utils';
 import { createScene } from '../../domain/scene/createScene';
-import { defineEngineUseCase } from './engineUseCase';
+import { defineEngineUseCase } from '../../domain/useCases';
 
 /** Parameters for the addSceneToEngine use case. */
 export interface AddSceneParams {

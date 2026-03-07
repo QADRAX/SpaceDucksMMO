@@ -1,9 +1,9 @@
-import type { ComponentType } from '../types/componentType';
-import type { ComponentDependency } from '../types/componentMetadata';
-import type { Result } from '../types/result';
-import { ok, err } from '../types/result';
-import type { ComponentBase } from './component';
-import type { EntityState } from './entity';
+import type {  ComponentType  } from '../types/../components';
+import type {  ComponentDependency  } from '../types/../components';
+import type {  Result  } from '../types/../utils';
+import {  ok, err  } from '../types/../utils';
+import type {  ComponentBase  } from './types';
+import type {  EntityState  } from './types';
 
 /**
  * Checks whether `comp` can be added to `entity`, based on its metadata.

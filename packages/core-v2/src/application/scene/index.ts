@@ -1,4 +1,4 @@
-export { type SceneUseCase, defineSceneUseCase, bindSceneUseCase } from './sceneUseCase';
+export { type SceneUseCase, defineSceneUseCase, bindSceneUseCase } from '../../domain/useCases';
 export { addEntityToScene, type AddEntityParams } from './addEntityToScene';
 export {
   removeEntityFromScene,

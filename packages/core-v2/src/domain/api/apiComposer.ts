@@ -1,9 +1,9 @@
-import type { EngineState } from '../types/engineState';
-import type { Result } from '../types/result';
-import { ok, err } from '../types/result';
-import type { EngineUseCase } from '../../application/engine/engineUseCase';
-import type { SceneUseCase } from '../../application/scene/sceneUseCase';
-import type { ViewportUseCase } from '../../application/viewport/viewportUseCase';
+import type {  EngineState  } from '../types/../engine';
+import type {  Result  } from '../types/../utils';
+import {  ok, err  } from '../types/../utils';
+import type { EngineUseCase } from '../useCases';
+import type { SceneUseCase } from '../useCases';
+import type { ViewportUseCase } from '../useCases';
 
 /* eslint-disable @typescript-eslint/no-explicit-any --
    `any` in type parameters is required for conditional-type inference

@@ -1,5 +1,5 @@
-import type { SceneSystemAdapter, SceneChangeListener } from '../../domain/types/sceneSystemAdapter';
-import { defineSceneUseCase } from './sceneUseCase';
+import type {  SceneSystemAdapter, SceneChangeListener  } from '../../domain/types/../scene';
+import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Parameters for the setupScene use case. */

@@ -1,4 +1,4 @@
-import type { EngineState } from '../../domain/types/engineState';
+import type {  EngineState  } from '../../domain/types/../engine';
 import { composeAPI } from '../../domain/api/apiComposer';
 
 // ── engine use cases ─────────────────────────────────────────────

@@ -1,5 +1,5 @@
-import type { ComponentBase } from '../../../ecs/component';
-import type { ComponentSpec } from '../../../types/componentSpec';
+import type {  ComponentBase  } from '../../../ecs';
+import type {  ComponentSpec  } from '../../../types/../components';
 
 /** Reference to an attached script with per-instance configuration. */
 export interface ScriptReference {

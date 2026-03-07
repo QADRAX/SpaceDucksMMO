@@ -1,6 +1,6 @@
-import type { Result } from '../../domain/types/result';
-import { ok, err } from '../../domain/types/result';
-import { defineEngineUseCase } from './engineUseCase';
+import type {  Result  } from '../../domain/types/../utils';
+import {  ok, err  } from '../../domain/types/../utils';
+import { defineEngineUseCase } from '../../domain/useCases';
 
 /** Parameters for the removeSceneFromEngine use case. */
 export interface RemoveSceneParams {

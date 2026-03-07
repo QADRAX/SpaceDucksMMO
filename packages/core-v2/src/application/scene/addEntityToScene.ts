@@ -1,8 +1,8 @@
-import type { SceneState } from '../../domain/types/sceneState';
-import type { EntityState } from '../../domain/ecs/entity';
-import type { Result } from '../../domain/types/result';
-import { ok, err } from '../../domain/types/result';
-import { defineSceneUseCase } from './sceneUseCase';
+import type {  SceneState  } from '../../domain/types/../scene';
+import type { EntityState } from '../../domain/ecs';
+import type {  Result  } from '../../domain/types/../utils';
+import {  ok, err  } from '../../domain/types/../utils';
+import { defineSceneUseCase } from '../../domain/useCases';
 import { attachEntityObservers } from '../../domain/scene/sceneObservers';
 import { validateUniqueInSceneSubtree } from '../../domain/scene/sceneValidation';
 import { validateHierarchyInSubtree } from '../../domain/ecs/validation';

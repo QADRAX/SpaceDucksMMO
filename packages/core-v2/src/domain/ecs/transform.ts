@@ -1,4 +1,5 @@
-import type { Vec3Like, EulerLike, QuatLike } from '../types';
+import type { Vec3Like, EulerLike, QuatLike } from '../math';
+import type { TransformState } from './types';
 import {
   applyQuatToVec,
   eulerFromQuatYXZ,
@@ -6,23 +7,6 @@ import {
   quatFromEulerYXZ,
   quatMul,
 } from '../math';
-
-/**
- * Mutable transform state used internally by the engine.
- * All mutation functions operate on this type directly.
- */
-export interface TransformState {
-  localPosition: Vec3Like;
-  localRotation: EulerLike;
-  localScale: Vec3Like;
-  worldPosition: Vec3Like;
-  worldRotation: EulerLike;
-  worldScale: Vec3Like;
-  parent: TransformState | undefined;
-  dirty: boolean;
-  changeCbs: Array<() => void>;
-  parentCb: (() => void) | undefined;
-}
 
 function copyVec(v: Vec3Like): Vec3Like {
   return { x: v.x, y: v.y, z: v.z };

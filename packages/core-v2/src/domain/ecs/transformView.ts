@@ -1,5 +1,5 @@
-import type { Vec3Like } from '../types';
-import type { TransformState } from './transform';
+import type { Vec3Like } from '../math';
+import type { TransformState } from './types';
 import { ensureClean } from './transform';
 import { applyQuatToVec, quatFromEulerYXZ } from '../math';
 

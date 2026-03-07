@@ -1,5 +1,5 @@
-import type { ComponentBase } from '../../../ecs/component';
-import type { ComponentSpec } from '../../../types/componentSpec';
+import type {  ComponentBase  } from '../../../ecs';
+import type {  ComponentSpec  } from '../../../types/../components';
 
 /** Camera projection settings. */
 export interface CameraViewComponent extends ComponentBase {

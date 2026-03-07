@@ -1,5 +1,5 @@
-import type { ComponentBase } from '../../../ecs/component';
-import type { ComponentSpec } from '../../../types/componentSpec';
+import type {  ComponentBase  } from '../../../ecs';
+import type {  ComponentSpec  } from '../../../types/../components';
 
 /** Display name component used for scene/editor identity. */
 export interface NameComponent extends ComponentBase<'name'> {

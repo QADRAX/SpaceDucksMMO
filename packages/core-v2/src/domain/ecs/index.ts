@@ -1,5 +1,5 @@
+export * from './types';
 export {
-  type TransformState,
   createTransform,
   ensureClean,
   setPosition,
@@ -23,15 +23,9 @@ export {
   getRight,
 } from './transformView';
 
-export { type ComponentBase, componentBase, narrowComponent } from './component';
+export { componentBase, narrowComponent } from './component';
 
 export {
-  type ComponentEvent,
-  type ComponentListener,
-  type ComponentChangeListener,
-  type PresentationListener,
-  type DebugListener,
-  type EntityObservers,
   createEntityObservers,
 } from './observers';
 
@@ -46,7 +40,6 @@ export {
 } from './validation';
 
 export {
-  type EntityState,
   createEntity,
   addComponent,
   removeComponent,

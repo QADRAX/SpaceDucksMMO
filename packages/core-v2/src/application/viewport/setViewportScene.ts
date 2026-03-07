@@ -1,5 +1,5 @@
 import { guardSceneExists } from '../../domain/engine/engineGuards';
-import { defineViewportUseCase } from './viewportUseCase';
+import { defineViewportUseCase } from '../../domain/useCases';
 
 /** Parameters for setViewportScene. */
 export interface SetViewportSceneParams {

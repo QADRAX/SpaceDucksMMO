@@ -1,4 +1,4 @@
-import type { Vec3Like, QuatLike } from '../types';
+import type { Vec3Like, QuatLike } from './types';
 
 /**
  * Rotates a vector by a quaternion.
@@ -21,4 +21,9 @@ export function applyQuatToVec(v: Vec3Like, q: QuatLike): Vec3Like {
     y: iy * qw + qz * ix - qx * iz - qy * dot,
     z: iz * qw + qx * iy - qy * ix - qz * dot,
   };
+}
+
+/** Creates a Vec3Like with the given components. Defaults to origin (0,0,0). */
+export function vec3(x = 0, y = 0, z = 0): Vec3Like {
+  return { x, y, z };
 }

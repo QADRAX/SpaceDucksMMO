@@ -1,4 +1,4 @@
-import { defineSceneUseCase } from './sceneUseCase';
+import { defineSceneUseCase } from '../../domain/useCases';
 
 /** Resumes a paused scene. */
 export const resumeScene = defineSceneUseCase({

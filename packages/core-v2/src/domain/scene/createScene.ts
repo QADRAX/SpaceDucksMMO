@@ -1,4 +1,4 @@
-import type { SceneState } from '../types/sceneState';
+import type { SceneState } from './types';
 
 /** Creates an empty scene state. */
 export function createScene(id: string): SceneState {

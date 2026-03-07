@@ -1,4 +1,4 @@
-import type { EulerLike, QuatLike } from '../types';
+import type { EulerLike, QuatLike } from './types';
 import { clamp } from './utils';
 
 /**
@@ -41,4 +41,9 @@ export function eulerFromQuatYXZ(q: QuatLike): EulerLike {
   }
 
   return { x: ex, y: ey, z: ez };
+}
+
+/** Creates an EulerLike with the given angles in radians. Defaults to (0,0,0). */
+export function euler(x = 0, y = 0, z = 0): EulerLike {
+  return { x, y, z };
 }

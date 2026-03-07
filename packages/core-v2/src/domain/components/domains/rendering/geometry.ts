@@ -1,4 +1,4 @@
-import type { ComponentBase } from '../../../ecs/component';
+import type {  ComponentBase  } from '../../../ecs';
 
 /** Shared fields for all geometry components. */
 export interface GeometryComponentBase extends ComponentBase {

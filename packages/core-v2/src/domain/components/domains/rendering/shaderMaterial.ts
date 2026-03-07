@@ -1,5 +1,5 @@
-import type { ComponentBase } from '../../../ecs/component';
-import type { ComponentSpec } from '../../../types/componentSpec';
+import type {  ComponentBase  } from '../../../ecs';
+import type {  ComponentSpec  } from '../../../types/../components';
 
 /** Shader blending mode for custom shader materials. */
 export type ShaderBlendingMode = 'normal' | 'additive' | 'multiply' | 'subtractive';

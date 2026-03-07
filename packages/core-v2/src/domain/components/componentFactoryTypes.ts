@@ -1,4 +1,4 @@
-import type { ComponentType } from '../types/componentType';
+import type { ComponentType } from './types';
 import type {
   AmbientLightComponent,
   DirectionalLightComponent,

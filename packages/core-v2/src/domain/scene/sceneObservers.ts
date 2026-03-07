@@ -1,9 +1,9 @@
-import type { SceneState } from '../types/sceneState';
-import type { ComponentType } from '../types/componentType';
-import type { ComponentListener, ComponentChangeListener } from '../ecs/observers';
-import type { EntityState } from '../ecs/entity';
-import { addComponent, removeComponent } from '../ecs/entity';
-import { onTransformChange, removeTransformChange } from '../ecs/transform';
+import type { SceneState } from './types';
+import type {  ComponentType  } from '../types/../components';
+import type { ComponentListener, ComponentChangeListener } from '../ecs';
+import type { EntityState } from '../ecs';
+import { addComponent, removeComponent } from '../ecs';
+import { onTransformChange, removeTransformChange } from '../ecs';
 import { emitSceneChange } from './emitSceneChange';
 import { findEntityWithComponent } from './sceneValidation';
 import { validateHierarchyInSubtree } from '../ecs/validation';

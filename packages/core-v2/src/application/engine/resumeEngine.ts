@@ -1,4 +1,4 @@
-import { defineEngineUseCase } from './engineUseCase';
+import { defineEngineUseCase } from '../../domain/useCases';
 
 /** Resumes the engine after a pause. */
 export const resumeEngine = defineEngineUseCase({

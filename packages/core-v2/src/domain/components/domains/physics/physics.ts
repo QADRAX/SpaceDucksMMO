@@ -1,4 +1,4 @@
-import type { ComponentBase } from '../../../ecs/component';
+import type {  ComponentBase  } from '../../../ecs';
 
 /** Supported rigid body types. */
 export type RigidBodyType = 'static' | 'dynamic' | 'kinematic';

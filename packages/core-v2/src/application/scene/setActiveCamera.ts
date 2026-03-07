@@ -1,7 +1,7 @@
-import type { Result } from '../../domain/types/result';
-import { ok, err } from '../../domain/types/result';
-import { hasComponent } from '../../domain/ecs/entity';
-import { defineSceneUseCase } from './sceneUseCase';
+import type {  Result  } from '../../domain/types/../utils';
+import {  ok, err  } from '../../domain/types/../utils';
+import { hasComponent } from '../../domain/ecs';
+import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Parameters for the setActiveCamera use case. */
