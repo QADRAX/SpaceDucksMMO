@@ -1,6 +1,5 @@
 import type {
     ComponentBase,
-    ComponentType,
     ComponentFieldPaths,
     ComponentFieldValue,
 } from '../../domain/components';
@@ -17,7 +16,7 @@ import { defineComponentUseCase } from '../../domain/useCases';
  * @template P          - The specific field path (used for typing value).
  */
 export interface SetComponentFieldParams<
-    TComponent extends ComponentBase<any, any> = ComponentBase<ComponentType, any>,
+    TComponent extends ComponentBase<any, any> = ComponentBase<any, any>,
     P extends ComponentFieldPaths<TComponent> = any,
 > {
     /** Inspector field key (supports dot-notation, e.g. `'halfExtents.x'`). */
@@ -38,8 +37,8 @@ export interface SetComponentFieldParams<
  * or `err('validation', ...)` if the value fails constraint checks.
  */
 export const setComponentField = defineComponentUseCase<
-    ComponentBase<ComponentType, any>,
-    SetComponentFieldParams<ComponentBase<ComponentType, any>>,
+    ComponentBase<any, any>,
+    SetComponentFieldParams<ComponentBase<any, any>>,
     Result<void>
 >({
     name: 'setComponentField',

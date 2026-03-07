@@ -129,7 +129,7 @@ export type EntityGuard<TParams> = UseCaseGuard<SceneState, EntityState, TParams
  * Guards receive EntityState as root for cross-component validations.
  */
 export interface ComponentUseCase<
-    TComponent extends ComponentBase = ComponentBase,
+    TComponent extends ComponentBase<any, any> = ComponentBase<any, any>,
     TParams = void,
     TOutput = void,
 > extends UseCase<TComponent, TParams, TOutput> {

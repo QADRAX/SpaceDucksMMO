@@ -1,4 +1,4 @@
-import type { ComponentBase, ComponentType } from '../../domain/components';
+import type { ComponentBase } from '../../domain/components';
 import { defineComponentUseCase } from '../../domain/useCases';
 
 /**
@@ -15,7 +15,7 @@ import { defineComponentUseCase } from '../../domain/useCases';
  * ```
  */
 export const getComponentSnapshot = defineComponentUseCase<
-    ComponentBase<ComponentType, any>,
+    ComponentBase<any, any>,
     void,
     Readonly<ComponentBase>
 >({

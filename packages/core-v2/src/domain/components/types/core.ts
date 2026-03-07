@@ -139,7 +139,7 @@ export type ComponentSpec<TComponent = unknown> = {
  */
 export interface ComponentBase<
     TType extends ComponentType = ComponentType,
-    TSelf = unknown,
+    TSelf = any,
 > {
     readonly type: TType;
     readonly metadata: ComponentMetadata<TSelf>;

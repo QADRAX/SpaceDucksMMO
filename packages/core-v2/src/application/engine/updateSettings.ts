@@ -3,7 +3,11 @@ import { defineEngineUseCase } from '../../domain/useCases';
 
 /** Parameters for the updateSettings use case. */
 export interface UpdateSettingsParams {
-  readonly patch: Partial<GameSettings>;
+  readonly patch: {
+    readonly graphics?: Partial<GameSettings['graphics']>;
+    readonly gameplay?: Partial<GameSettings['gameplay']>;
+    readonly audio?: Partial<GameSettings['audio']>;
+  };
 }
 
 /**
