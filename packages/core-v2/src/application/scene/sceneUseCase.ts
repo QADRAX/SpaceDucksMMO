@@ -23,9 +23,11 @@ export interface SceneUseCase<TParams = void, TOutput = void>
  * ```
  */
 export function defineSceneUseCase<TParams = void, TOutput = void>(
-  definition: Omit<SceneUseCase<TParams, TOutput>, 'domain'>,
+  definition: Omit<SceneUseCase<TParams, TOutput>, 'domain' | 'guards'> & {
+    readonly guards?: SceneUseCase<TParams, TOutput>['guards'];
+  },
 ): SceneUseCase<TParams, TOutput> {
-  return { ...definition, domain: 'scene' };
+  return { ...definition, guards: definition.guards ?? [], domain: 'scene' };
 }
 
 /** Binds a SceneUseCase to a concrete SceneState. */

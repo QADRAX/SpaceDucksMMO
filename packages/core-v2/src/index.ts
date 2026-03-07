@@ -5,4 +5,6 @@ export * from './domain/components';
 export * from './domain/ports';
 export * from './domain/scene';
 export * from './domain/engine';
+export * from './domain/api';
 export * from './application';
+export * from './infrastructure';

@@ -10,7 +10,7 @@ export {
 export { type ComponentSpec } from './componentSpec';
 export { type DebugKind } from './debug';
 export { type RgbColor, type HexColor, type Color } from './color';
-export { type UseCase, type UseCaseState, type UseCaseParams, type UseCaseOutput } from './useCase';
+export { type UseCase, type UseCaseState, type UseCaseParams, type UseCaseOutput, type UseCaseGuard } from './useCase';
 export { type EngineErrorCode, type EngineError, type Result, ok, err } from './result';
 export {
   type EntityAddedEvent,
@@ -61,6 +61,6 @@ export {
 } from './settings';
 export { type SceneState } from './sceneState';
 export { type SceneSystemAdapter, type SceneChangeListener } from './sceneSystemAdapter';
-export { type Viewport, type ViewportRect } from './viewport';
+export { type Viewport, type ViewportRect, type ViewportState } from './viewport';
 export { type EngineSystemAdapter } from './engineSystemAdapter';
 export { type EngineState } from './engineState';

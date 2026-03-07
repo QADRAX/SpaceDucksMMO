@@ -1,12 +1,12 @@
 import type { SceneState } from './sceneState';
-import type { Viewport } from './viewport';
+import type { ViewportState } from './viewport';
 import type { GameSettings } from './settings';
 import type { EngineSystemAdapter } from './engineSystemAdapter';
 
 /** Mutable engine state operated on by application-layer engine use cases. */
 export interface EngineState {
   readonly scenes: Map<string, SceneState>;
-  readonly viewports: Map<string, Viewport>;
+  readonly viewports: Map<string, ViewportState>;
   settings: GameSettings;
   paused: boolean;
   running: boolean;
