@@ -19,6 +19,19 @@ export const removeSceneFromEngine = defineEngineUseCase<RemoveSceneParams, Resu
       return err('not-found', `Scene '${sceneId}' not found.`);
     }
 
+    // Validation: Cannot remove a scene that is still in use by any viewport
+    const viewportsInScene = Array.from(engine.viewports.values()).filter(
+      (vp) => vp.sceneId === sceneId,
+    );
+    if (viewportsInScene.length > 0) {
+      return err(
+        'validation',
+        `Cannot remove scene '${sceneId}' because it is still in use by viewports: ${viewportsInScene
+          .map((vp) => vp.id)
+          .join(', ')}.`,
+      );
+    }
+
     engine.scenes.delete(sceneId);
 
     return ok(undefined);

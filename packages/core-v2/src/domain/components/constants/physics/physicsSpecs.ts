@@ -80,7 +80,7 @@ export const GRAVITY_SPEC: ComponentSpec<GravityComponent> = {
     category: 'Physics',
     icon: 'MoveDown',
     unique: true,
-    requiresInHierarchy: ['rigidBody'],
+    uniqueInScene: true,
     inspector: {
       fields: [
         { key: 'x', label: 'X', type: 'number', step: 0.1 },
@@ -98,7 +98,7 @@ export const BOX_COLLIDER_SPEC: ComponentSpec<BoxColliderComponent> = {
     type: 'boxCollider',
     label: 'Box Collider',
     icon: 'Box',
-    conflicts: COLLIDER_TYPES,
+    conflicts: COLLIDER_TYPES.filter(t => t !== 'boxCollider'),
     inspector: {
       fields: [
         { key: 'halfExtents.x', label: 'Half X', type: 'number', min: 0.001, step: 0.01 },
@@ -116,7 +116,7 @@ export const SPHERE_COLLIDER_SPEC: ComponentSpec<SphereColliderComponent> = {
     type: 'sphereCollider',
     label: 'Sphere Collider',
     icon: 'Circle',
-    conflicts: COLLIDER_TYPES,
+    conflicts: COLLIDER_TYPES.filter(t => t !== 'sphereCollider'),
     inspector: {
       fields: [
         { key: 'radius', label: 'Radius', type: 'number', min: 0.001, step: 0.01 },
@@ -132,7 +132,7 @@ export const CAPSULE_COLLIDER_SPEC: ComponentSpec<CapsuleColliderComponent> = {
     type: 'capsuleCollider',
     label: 'Capsule Collider',
     icon: 'Pill',
-    conflicts: COLLIDER_TYPES,
+    conflicts: COLLIDER_TYPES.filter(t => t !== 'capsuleCollider'),
     inspector: { fields: [...RADIUS_HALF_HEIGHT_FIELDS, ...COLLIDER_COMMON_FIELDS] },
   },
   defaults: { ...COLLIDER_BASE_DEFAULTS, radius: 0.5, halfHeight: 0.5 },
@@ -143,7 +143,7 @@ export const CYLINDER_COLLIDER_SPEC: ComponentSpec<CylinderColliderComponent> = 
     type: 'cylinderCollider',
     label: 'Cylinder Collider',
     icon: 'Cylinder',
-    conflicts: COLLIDER_TYPES,
+    conflicts: COLLIDER_TYPES.filter(t => t !== 'cylinderCollider'),
     inspector: { fields: [...RADIUS_HALF_HEIGHT_FIELDS, ...COLLIDER_COMMON_FIELDS] },
   },
   defaults: { ...COLLIDER_BASE_DEFAULTS, radius: 0.5, halfHeight: 0.5 },
@@ -154,7 +154,7 @@ export const CONE_COLLIDER_SPEC: ComponentSpec<ConeColliderComponent> = {
     type: 'coneCollider',
     label: 'Cone Collider',
     icon: 'Triangle',
-    conflicts: COLLIDER_TYPES,
+    conflicts: COLLIDER_TYPES.filter(t => t !== 'coneCollider'),
     inspector: { fields: [...RADIUS_HALF_HEIGHT_FIELDS, ...COLLIDER_COMMON_FIELDS] },
   },
   defaults: { ...COLLIDER_BASE_DEFAULTS, radius: 0.5, halfHeight: 0.5 },
@@ -165,7 +165,7 @@ export const TERRAIN_COLLIDER_SPEC: ComponentSpec<TerrainColliderComponent> = {
     type: 'terrainCollider',
     label: 'Terrain Collider',
     icon: 'Grid3x3',
-    conflicts: COLLIDER_TYPES,
+    conflicts: COLLIDER_TYPES.filter(t => t !== 'terrainCollider'),
     inspector: {
       fields: [
         { key: 'heightfield.columns', label: 'Columns', type: 'number', min: 2, step: 1 },

@@ -1,6 +1,7 @@
 import type { ComponentBase } from '../../domain/components';
 import type { Result } from '../../domain/utils';
 import { addComponent } from '../../domain/entities';
+import { guardUniqueInScene } from '../../domain/entities/entityGuards';
 import { defineEntityUseCase } from '../../domain/useCases';
 
 /** Parameters for the addComponentToEntity use case. */
@@ -20,6 +21,7 @@ export const addComponentToEntity = defineEntityUseCase<
     Result<void>
 >({
     name: 'addComponentToEntity',
+    guards: [guardUniqueInScene],
     execute(entity, { component }) {
         return addComponent(entity, component);
     },

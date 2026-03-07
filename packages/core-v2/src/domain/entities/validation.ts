@@ -22,17 +22,19 @@ export function validateAddComponent<T extends ComponentBase>(
     /* Scene-wide uniqueness needs a world context — deferred to application layer. */
   }
 
-  if (meta.requires) {
+  if (meta.requires && meta.requires.length > 0) {
     for (const req of meta.requires) {
-      if (!satisfiesRequirement(entity, req)) {
+      const satisfied = satisfiesRequirement(entity, req);
+      if (!satisfied) {
         return err('validation', `Missing required component "${req}".`);
       }
     }
   }
 
-  if (meta.requiresInHierarchy) {
+  if (meta.requiresInHierarchy && meta.requiresInHierarchy.length > 0) {
     for (const req of meta.requiresInHierarchy) {
-      if (!satisfiesHierarchyRequirement(entity, req)) {
+      const satisfied = satisfiesHierarchyRequirement(entity, req);
+      if (!satisfied) {
         return err('validation', `Required component "${req}" not found on entity or ancestors.`);
       }
     }
