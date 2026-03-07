@@ -1,5 +1,5 @@
 import type { ComponentSpec } from '../../types/core';
-import type { ScriptComponent, ScriptReference } from '../../types/gameplay/scripting';
+import type { ScriptComponent } from '../../types/gameplay/scripting';
 
 /** Script component spec. */
 export const SCRIPT_SPEC: ComponentSpec<ScriptComponent> = {

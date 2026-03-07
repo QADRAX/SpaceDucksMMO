@@ -187,7 +187,7 @@ describe('observers', () => {
     e.observers.addChangeListener(() => {
       changed = true;
     });
-    updateComponent(e, 'boxGeometry', () => { });
+    updateComponent(e, 'boxGeometry', () => {});
     expect(changed).toBe(true);
   });
 

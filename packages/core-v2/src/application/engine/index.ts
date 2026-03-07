@@ -1,8 +1,4 @@
-export {
-  type EngineUseCase,
-  defineEngineUseCase,
-  bindEngineUseCase,
-} from '../../domain/useCases';
+export { type EngineUseCase, defineEngineUseCase, bindEngineUseCase } from '../../domain/useCases';
 export { addSceneToEngine, type AddSceneParams } from './addSceneToEngine';
 export { removeSceneFromEngine, type RemoveSceneParams } from './removeSceneFromEngine';
 export { addViewport, type AddViewportParams } from './addViewport';

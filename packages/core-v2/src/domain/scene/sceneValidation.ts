@@ -24,10 +24,7 @@ export function findEntityWithComponent(
  * against the entities already present in the scene.
  * Returns an array of human-readable error messages (empty = valid).
  */
-export function validateUniqueInSceneSubtree(
-  scene: SceneState,
-  root: EntityState,
-): string[] {
+export function validateUniqueInSceneSubtree(scene: SceneState, root: EntityState): string[] {
   const errors: string[] = [];
   const seenInSubtree = new Map<string, string>();
 
@@ -46,9 +43,7 @@ export function validateUniqueInSceneSubtree(
 
       const existing = findEntityWithComponent(scene, comp.type as ComponentType, entity.id);
       if (existing) {
-        errors.push(
-          `Component '${comp.type}' is unique in scene and already on '${existing.id}'.`,
-        );
+        errors.push(`Component '${comp.type}' is unique in scene and already on '${existing.id}'.`);
       }
     }
     for (const child of entity.children) visit(child);

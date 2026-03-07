@@ -2,5 +2,5 @@ import type { ComponentBase } from '../core';
 
 /** Display name component used for scene/editor identity. */
 export interface NameComponent extends ComponentBase<'name'> {
-    value: string;
+  value: string;
 }

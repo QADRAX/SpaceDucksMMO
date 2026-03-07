@@ -1,6 +1,6 @@
-import type {  ViewportRect  } from '../../domain/types/../viewport';
-import type {  Result  } from '../../domain/types/../utils';
-import {  ok, err  } from '../../domain/types/../utils';
+import type { ViewportRect } from '../../domain/viewport';
+import type { Result } from '../../domain/utils';
+import { ok, err } from '../../domain/utils';
 import { findScene, isCameraEntity } from '../../domain/engine/engineValidation';
 import { createViewport } from '../../domain/engine/createViewport';
 import { defineEngineUseCase } from '../../domain/useCases';

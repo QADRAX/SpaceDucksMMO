@@ -1,8 +1,8 @@
 import type { ComponentType } from '../components';
 import type { DebugKind } from './types';
-import type { Result } from '../types/../utils';
-import { ok, err } from '../types/../utils';
-import type { EntityState, TransformState, EntityObservers } from './types';
+import type { Result } from '../utils';
+import { ok, err } from '../utils';
+import type { EntityState } from './types';
 import type { ComponentBase } from '../components';
 import { createEntityObservers } from './observers';
 import { createTransform, setTransformParent } from './transform';

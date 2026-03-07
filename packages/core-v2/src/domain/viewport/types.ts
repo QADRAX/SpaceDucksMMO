@@ -43,3 +43,13 @@ export interface ViewportState {
   /** Whether this viewport is rendered. */
   enabled: boolean;
 }
+
+/** Parameters for creating a viewport. */
+export interface CreateViewportParams {
+  readonly id: string;
+  readonly sceneId: string;
+  readonly cameraEntityId: string;
+  readonly canvasId: string;
+  readonly rect?: Partial<ViewportRect>;
+  readonly enabled?: boolean;
+}

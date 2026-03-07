@@ -1,13 +1,7 @@
 export { type SceneUseCase, defineSceneUseCase, bindSceneUseCase } from '../../domain/useCases';
 export { addEntityToScene, type AddEntityParams } from './addEntityToScene';
-export {
-  removeEntityFromScene,
-  type RemoveEntityParams,
-} from './removeEntityFromScene';
-export {
-  reparentEntityInScene,
-  type ReparentEntityParams,
-} from './reparentEntityInScene';
+export { removeEntityFromScene, type RemoveEntityParams } from './removeEntityFromScene';
+export { reparentEntityInScene, type ReparentEntityParams } from './reparentEntityInScene';
 export { setActiveCamera, type SetActiveCameraParams } from './setActiveCamera';
 export { clearActiveCamera } from './clearActiveCamera';
 export { toggleSceneDebug, type ToggleSceneDebugParams } from './toggleSceneDebug';

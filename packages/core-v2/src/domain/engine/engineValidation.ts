@@ -1,5 +1,5 @@
 import type { EngineState } from './types';
-import type {  SceneState  } from '../types/../scene';
+import type { SceneState } from '../scene';
 import type { EntityState } from '../entities';
 import { hasComponent } from '../entities';
 
@@ -17,10 +17,7 @@ export function sceneExists(engine: EngineState, sceneId: string): boolean {
  * Returns the entity if it exists in the scene and owns a `cameraView`
  * component, or undefined otherwise.
  */
-export function findCameraEntity(
-  scene: SceneState,
-  entityId: string,
-): EntityState | undefined {
+export function findCameraEntity(scene: SceneState, entityId: string): EntityState | undefined {
   const entity = scene.entities.get(entityId);
   if (!entity) return undefined;
   return hasComponent(entity, 'cameraView') ? entity : undefined;

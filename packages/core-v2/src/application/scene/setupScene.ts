@@ -1,4 +1,4 @@
-import type {  SceneSystemAdapter, SceneChangeListener  } from '../../domain/types/../scene';
+import type { SceneSystemAdapter, SceneChangeListener } from '../../domain/scene';
 import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 

@@ -1,5 +1,5 @@
-import type {  Result  } from '../../domain/types/../utils';
-import {  ok, err  } from '../../domain/types/../utils';
+import type { Result } from '../../domain/utils';
+import { ok, err } from '../../domain/utils';
 import { createScene } from '../../domain/scene/createScene';
 import { defineEngineUseCase } from '../../domain/useCases';
 

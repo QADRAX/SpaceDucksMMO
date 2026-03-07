@@ -1,4 +1,4 @@
-import type {  EngineSystemAdapter  } from '../../domain/types/../engine';
+import type { EngineSystemAdapter } from '../../domain/engine';
 import { defineEngineUseCase } from '../../domain/useCases';
 
 /** Parameters for the registerEngineAdapter use case. */

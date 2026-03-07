@@ -1,13 +1,8 @@
-import type { SceneState } from './types';
-import type { ComponentType } from '../components';
-import type { ComponentListener, ComponentChangeListener } from '../components';
-import type { EntityState } from '../entities';
-import { addComponent, removeComponent } from '../entities';
-import { onTransformChange, removeTransformChange } from '../entities';
-import { emitSceneChange } from './emitSceneChange';
-import { findEntityWithComponent } from './sceneValidation';
-import { validateHierarchyInSubtree } from '../entities/validation';
-
+import { emitSceneChange, findEntityWithComponent } from '.';
+import type { SceneState } from '.';
+import { addComponent, onTransformChange, removeComponent, removeTransformChange } from '..';
+import type { ComponentChangeListener, ComponentListener, ComponentType, EntityState } from '..';
+import { validateHierarchyInSubtree } from '../entities';
 /**
  * Attaches entity-level observers that forward events to the scene.
  * Returns a cleanup function that detaches all observers.

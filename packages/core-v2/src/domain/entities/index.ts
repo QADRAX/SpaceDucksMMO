@@ -23,10 +23,7 @@ export {
   getRight,
 } from './transformView';
 
-
-export {
-  createEntityObservers,
-} from './observers';
+export { createEntityObservers } from './observers';
 
 export {
   validateAddComponent,

@@ -1,6 +1,6 @@
 import type { ComponentType, ComponentDependency } from '../components';
-import type { Result } from '../types/../utils';
-import { ok, err } from '../types/../utils';
+import type { Result } from '../utils';
+import { ok, err } from '../utils';
 import type { ComponentBase } from '../components';
 import type { EntityState } from './types';
 

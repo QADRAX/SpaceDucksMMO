@@ -1,16 +1,5 @@
-import type { ComponentType } from '../components';
-import type { DebugKind } from './types';
-import type {
-  PresentationListener,
-  DebugListener,
-  EntityObservers
-} from './types';
-import type {
-  ComponentBase,
-  ComponentEvent,
-  ComponentListener,
-  ComponentChangeListener
-} from '../components';
+import type { PresentationListener, DebugListener, EntityObservers } from './types';
+import type { ComponentListener, ComponentChangeListener } from '../components';
 
 /** Creates a new observer hub with empty listener lists. */
 export function createEntityObservers(): EntityObservers {

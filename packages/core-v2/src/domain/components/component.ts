@@ -1,5 +1,5 @@
-import type {  ComponentType  } from './types';
-import type {  ComponentMetadata  } from './types';
+import type { ComponentType } from './types';
+import type { ComponentMetadata } from './types';
 import type { ComponentBase } from './types';
 
 /**

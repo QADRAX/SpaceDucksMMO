@@ -1,6 +1,6 @@
-import type {  EngineState  } from '../types/../engine';
-import type {  Result  } from '../types/../utils';
-import {  ok, err  } from '../types/../utils';
+import type { EngineState } from '../engine';
+import type { Result } from '../utils';
+import { ok, err } from '../utils';
 import type { EngineUseCase } from '../useCases';
 import type { SceneUseCase } from '../useCases';
 import type { ViewportUseCase } from '../useCases';
@@ -31,16 +31,18 @@ type WrapResult<O> = O extends Result<any> ? O : Result<O>;
  */
 type InferMethod<T extends SupportedUseCase> =
   T extends EngineUseCase<infer P, infer O>
-    ? [P] extends [void] ? () => O : (params: P) => O
-  : T extends SceneUseCase<infer P, infer O>
     ? [P] extends [void]
-      ? (sceneId: string) => WrapResult<O>
-      : (sceneId: string, params: P) => WrapResult<O>
-  : T extends ViewportUseCase<infer P, infer O>
-    ? [P] extends [void]
-      ? (viewportId: string) => WrapResult<O>
-      : (viewportId: string, params: P) => WrapResult<O>
-  : never;
+      ? () => O
+      : (params: P) => O
+    : T extends SceneUseCase<infer P, infer O>
+      ? [P] extends [void]
+        ? (sceneId: string) => WrapResult<O>
+        : (sceneId: string, params: P) => WrapResult<O>
+      : T extends ViewportUseCase<infer P, infer O>
+        ? [P] extends [void]
+          ? (viewportId: string) => WrapResult<O>
+          : (viewportId: string, params: P) => WrapResult<O>
+        : never;
 
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
@@ -114,10 +116,7 @@ export function composeAPI(engine: EngineState): APIComposer<Record<never, never
     return undefined; // all passed
   }
 
-  function add(
-    key: string,
-    useCase: SupportedUseCase,
-  ): APIComposer<Record<never, never>> {
+  function add(key: string, useCase: SupportedUseCase): APIComposer<Record<never, never>> {
     const guards = useCase.guards;
 
     switch (useCase.domain) {

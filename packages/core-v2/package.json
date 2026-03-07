@@ -14,8 +14,9 @@
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "test": "node --experimental-vm-modules ../../node_modules/jest/bin/jest.js",
-    "format": "prettier --write \"src/**/*.ts\"",
-    "format:check": "prettier --check \"src/**/*.ts\""
+    "format": "npx prettier --write \"src/**/*.ts\"",
+    "format:check": "npx prettier --check \"src/**/*.ts\"",
+    "clean-imports": "node consolidateImports.mjs"
   },
   "dependencies": {
     "@duckengine/web-core-api-client": "^0.1.0"

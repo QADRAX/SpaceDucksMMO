@@ -1,7 +1,7 @@
 import type { EngineState } from './types';
 import type { UseCaseGuard } from '../useCases/types';
-import type {  Result  } from '../types/../utils';
-import {  ok, err  } from '../types/../utils';
+
+import { ok, err } from '../utils';
 import { findScene, isCameraEntity } from './engineValidation';
 
 /**

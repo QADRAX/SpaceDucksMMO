@@ -1,5 +1,5 @@
-import type {  Vec3Like  } from '../types/../math';
-import type {  Color  } from '../types/../math';
+import type { Vec3Like } from '../math';
+import type { Color } from '../math';
 
 /**
  * Contract for imperative debug gizmo drawing.

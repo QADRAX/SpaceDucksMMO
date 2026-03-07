@@ -1,39 +1,30 @@
-import type { ComponentType } from './core';
+import type { ComponentType } from '.';
 import type {
   AmbientLightComponent,
-  DirectionalLightComponent,
-  PointLightComponent,
-  SpotLightComponent,
-} from './rendering/light';
-import type {
   BasicMaterialComponent,
-  LambertMaterialComponent,
-  PhongMaterialComponent,
-  StandardMaterialComponent,
-} from './rendering/material';
-import type {
   BasicShaderMaterialComponent,
-  PhysicalShaderMaterialComponent,
-  StandardShaderMaterialComponent,
-} from './rendering/shaderMaterial';
-import type { TextureTilingComponent } from './rendering/texture';
-import type {
-  CameraViewComponent,
-  PostProcessComponent,
-  PostProcessEffectDefinition,
-} from './rendering/camera';
-import type { LensFlareComponent } from './rendering/effects';
-import type { SkyboxComponent } from './rendering/environment';
-import type {
   BoxGeometryComponent,
+  CameraViewComponent,
   ConeGeometryComponent,
   CustomGeometryComponent,
   CylinderGeometryComponent,
+  DirectionalLightComponent,
   FullMeshComponent,
+  LambertMaterialComponent,
+  LensFlareComponent,
+  PhongMaterialComponent,
+  PhysicalShaderMaterialComponent,
   PlaneGeometryComponent,
+  PointLightComponent,
+  PostProcessComponent,
+  SkyboxComponent,
   SphereGeometryComponent,
+  SpotLightComponent,
+  StandardMaterialComponent,
+  StandardShaderMaterialComponent,
+  TextureTilingComponent,
   TorusGeometryComponent,
-} from './rendering/geometry';
+} from './rendering';
 import type {
   BoxColliderComponent,
   CapsuleColliderComponent,
@@ -43,10 +34,8 @@ import type {
   RigidBodyComponent,
   SphereColliderComponent,
   TerrainColliderComponent,
-} from './physics/physics';
-import type { NameComponent } from './gameplay/identity';
-import type { ScriptComponent } from './gameplay/scripting';
-
+} from './physics';
+import type { NameComponent, ScriptComponent } from './gameplay';
 /** Component types that can be created through the generic factory. */
 export type CreatableComponentType = Exclude<ComponentType, 'metadata'>;
 

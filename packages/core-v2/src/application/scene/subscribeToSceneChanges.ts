@@ -1,5 +1,5 @@
-import type {  SceneChangeEventWithError  } from '../../domain/types/../scene';
-import type {  SceneChangeListener  } from '../../domain/types/../scene';
+import type { SceneChangeEventWithError } from '../../domain/scene';
+import type { SceneChangeListener } from '../../domain/scene';
 import { defineSceneUseCase } from '../../domain/useCases';
 
 /** Parameters for the subscribeToSceneChanges use case. */
@@ -8,7 +8,10 @@ export interface SubscribeToSceneChangesParams {
 }
 
 /** Subscribes to scene change events. Returns an unsubscribe function. */
-export const subscribeToSceneChanges = defineSceneUseCase<SubscribeToSceneChangesParams, () => void>({
+export const subscribeToSceneChanges = defineSceneUseCase<
+  SubscribeToSceneChangesParams,
+  () => void
+>({
   name: 'subscribeToSceneChanges',
   execute(scene, { listener }) {
     const wrapped: SceneChangeListener = (_scene, event) => listener(event);
