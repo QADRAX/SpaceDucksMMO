@@ -164,7 +164,7 @@ export class MaterialFeature implements RenderFeature {
     }
 
     private async resolveAndApplyTextures(entity: Entity, material: THREE.Material, comp: AnyMaterialComponent, context: RenderContext) {
-        if (!context.textureCatalog) return;
+        if (!context.engineResourceResolver) return;
 
         try {
             const isCatalogId = (val: unknown): val is string => {
@@ -176,12 +176,11 @@ export class MaterialFeature implements RenderFeature {
                 const val = (comp as any)[field];
                 if (!isCatalogId(val)) return;
                 try {
-                    const variants = await context.textureCatalog!.getVariantsById(val);
-                    if (!variants?.length) return;
-                    const chosen = variants[0];
-                    if (!chosen?.path) return;
+                    // Resolve texture as a versioned resource from web-core
+                    const resolved = await context.engineResourceResolver!.resolve(val, "active");
+                    if (!resolved?.files?.texture?.url) return;
 
-                    const tex = await context.textureCache.load(chosen.path);
+                    const tex = await context.textureCache.load(resolved.files.texture.url);
                     let t: THREE.Texture;
                     try { t = (tex as THREE.Texture).clone(); } catch { t = tex as THREE.Texture; }
                     setter(t);

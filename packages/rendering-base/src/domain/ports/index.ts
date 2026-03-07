@@ -6,7 +6,6 @@
 
 export type { IRenderingEngine } from '@duckengine/core';
 export type { IRenderSyncSystem } from '@duckengine/core';
-export type { ITextureResolver, TextureCatalogService } from '@duckengine/core';
 
 /**
  * Export base feature interface

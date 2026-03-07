@@ -22,7 +22,7 @@ describe('MaterialFeature', () => {
             scene: new THREE.Scene(),
             registry: new RenderObjectRegistry(),
             textureCache: { load: jest.fn() } as any,
-            textureCatalog: { getVariantsById: jest.fn() } as any,
+            engineResourceResolver: { resolve: jest.fn() } as any,
             entities: new Map(),
             debugFlags: {},
             activeCameraEntityId: null,
@@ -162,18 +162,20 @@ describe('MaterialFeature', () => {
     });
 
     describe('Texture Resolving', () => {
-        it('resolves textures from catalog and cache asynchronously', async () => {
+        it('resolves textures from resource loader and cache asynchronously', async () => {
             const mesh = new THREE.Mesh();
             mockContext.registry.add(mockEntity.id, { entityId: mockEntity.id, object3D: mesh });
 
-            const stdComp = { enabled: true, texture: 'catalog-tex' } as any;
+            const stdComp = { enabled: true, texture: 'textures/some-texture' } as any;
             mockEntity.getComponent.mockImplementation((name) => name === 'standardMaterial' ? stdComp : undefined);
 
             const mockMat = new THREE.MeshStandardMaterial();
             (MaterialFactory.build as jest.Mock).mockReturnValue(mockMat);
 
             const texLoaded = new THREE.Texture();
-            (mockContext.textureCatalog!.getVariantsById as jest.Mock).mockResolvedValue([{ path: 'path/to/tex.png' }]);
+            (mockContext.engineResourceResolver!.resolve as jest.Mock).mockResolvedValue({
+                files: { texture: { url: 'https://web-core/textures/some-texture.png' } }
+            });
             (mockContext.textureCache.load as jest.Mock).mockResolvedValue(texLoaded);
 
             // Execute sync
@@ -182,8 +184,8 @@ describe('MaterialFeature', () => {
             // Wait for internal async resolution
             await new Promise(r => setTimeout(r, 100));
 
-            expect(mockContext.textureCatalog!.getVariantsById).toHaveBeenCalledWith('catalog-tex');
-            expect(mockContext.textureCache.load).toHaveBeenCalledWith('path/to/tex.png');
+            expect(mockContext.engineResourceResolver!.resolve).toHaveBeenCalledWith('textures/some-texture', 'active');
+            expect(mockContext.textureCache.load).toHaveBeenCalledWith('https://web-core/textures/some-texture.png');
             expect(mockMat.map).toBeInstanceOf(THREE.Texture);
         });
     });

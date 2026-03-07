@@ -1,7 +1,5 @@
 import type { IScene } from '../../domain/ports/IScene';
 import type { IRenderingEngine } from '../../domain/ports/IRenderingEngine';
-import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
-import TextureResolverService from '../../application/TextureResolverService';
 import { setCurrentEcsWorld, setPhysicsServices, Result, ok, err, DefaultEcsComponentFactory } from '../../domain/ecs';
 import type { Entity, ComponentType, IEcsComponentFactory, Vec3Like, EcsPhysicsRay } from '../../domain/ecs';
 import type SceneChangeEvent from '../../domain/scene/SceneChangeEvent';
@@ -47,7 +45,6 @@ export abstract class BaseScene implements IScene {
   };
 
   private settingsUnsubscribe?: () => void;
-  private textureResolver?: TextureResolverService;
 
   private validator: SceneValidator;
   private observerManager: SceneObserverManager;
@@ -209,7 +206,6 @@ export abstract class BaseScene implements IScene {
     setCurrentEcsWorld(this);
 
     this.initializePhysics();
-    this.initializeTextureResolver();
     this.initializeRenderSync(renderScene);
 
     const gizmoRenderer = this.engine?.createGizmoRenderer?.();
@@ -246,24 +242,9 @@ export abstract class BaseScene implements IScene {
     }
   }
 
-  private initializeTextureResolver(): void {
-    const catalog = this.engine?.getTextureCatalog?.();
-    if (!catalog) return;
-
-    this.textureResolver = new TextureResolverService(catalog, {
-      defaultQuality: this.settingsService.getSettings().graphics.textureQuality,
-    });
-
-    this.settingsUnsubscribe = this.settingsService.subscribe((s) => {
-      this.textureResolver?.setDefaultQuality(s.graphics.textureQuality);
-    });
-  }
-
   private initializeRenderSync(renderScene: any): void {
     this.renderSyncSystem = this.engine?.createRenderSyncSystem?.(
       renderScene,
-      this.engine.getTextureCatalog?.(),
-      this.textureResolver,
       this.engine.getResourceLoader?.()
     );
 
@@ -303,8 +284,6 @@ export abstract class BaseScene implements IScene {
   private cleanupSettings(): void {
     this.settingsUnsubscribe?.();
     this.settingsUnsubscribe = undefined;
-    this.textureResolver?.dispose();
-    this.textureResolver = undefined;
   }
 
   private cleanupEntities(): void {

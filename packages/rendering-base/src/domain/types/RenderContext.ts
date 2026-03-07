@@ -1,4 +1,4 @@
-import type { ITextureResolver, TextureCatalogService, LoadingTracker } from '@duckengine/core';
+import type { LoadingTracker } from '@duckengine/core';
 
 /**
  * Context provided to RenderFeatures during their lifecycle.
@@ -27,16 +27,6 @@ export interface RenderContext {
    * Type: TextureCache (but kept as unknown to avoid circular imports)
    */
   readonly textureCache: unknown;
-
-  /**
-   * Texture resolver for resolving texture references.
-   */
-  readonly textureResolver?: ITextureResolver;
-
-  /**
-   * Texture catalog service.
-   */
-  readonly textureCatalog?: TextureCatalogService;
 
   /**
    * Engine resource resolver for asset loading.

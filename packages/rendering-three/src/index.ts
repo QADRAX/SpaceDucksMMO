@@ -4,14 +4,6 @@
 export * from '@duckengine/core';
 export * from '@duckengine/core';
 
-// Make commonly-used texture types explicit for downstream type re-exports.
-export type {
-	TextureQuality,
-	TextureVariant,
-	TextureCatalog,
-	TextureCatalogService,
-} from '@duckengine/core';
-
 export { default } from './infrastructure/rendering/ThreeRenderer';
 export { ThreeRenderer } from './infrastructure/rendering/ThreeRenderer';
 

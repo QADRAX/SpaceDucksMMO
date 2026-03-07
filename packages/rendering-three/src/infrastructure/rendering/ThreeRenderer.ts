@@ -2,7 +2,7 @@
 import * as THREE from "three/webgpu";
 // @ts-ignore
 import { pass } from 'three/tsl';
-import type { IRenderSyncSystem, TextureCatalogService, ITextureResolver } from "@duckengine/core";
+import type { IRenderSyncSystem } from "@duckengine/core";
 import { CoreLogger } from "@duckengine/core";
 import type { IFpsController } from "../ui/dev/FpsController";
 import { DEBUG_LAYERS } from "../graphics/debug/DebugLayers";

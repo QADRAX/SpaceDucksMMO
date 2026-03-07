@@ -1,7 +1,5 @@
 import type { IScene } from './IScene';
-import type { TextureCatalogService } from '../assets/TextureCatalog';
 import { IRenderSyncSystem } from './IRenderSyncSystem';
-import { ITextureResolver } from './ITextureResolver';
 import type { IResourceLoader } from './IResourceLoader';
 import type { IPhysicsSystem } from '../physics/IPhysicsSystem';
 
@@ -58,8 +56,6 @@ export interface IRenderingEngine {
   disablePostProcessing(viewId?: string): void;
   getComposer(viewId?: string): any | undefined;
 
-  getTextureCatalog(): TextureCatalogService | undefined;
-
   /** Optional runtime resource loader (web-core, local files, etc.). */
   setResourceLoader?(loader: IResourceLoader): void;
   getResourceLoader?(): IResourceLoader | undefined;
@@ -86,8 +82,6 @@ export interface IRenderingEngine {
    */
   createRenderSyncSystem?(
     renderScene: any,
-    catalog?: TextureCatalogService,
-    textureResolver?: ITextureResolver,
     resourceLoader?: IResourceLoader,
   ): IRenderSyncSystem | undefined;
 

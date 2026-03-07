@@ -16,5 +16,5 @@ export type { RenderInitRequest, RenderInitResult } from './application/dtos/Ren
 export type { RenderFrameRequest, RenderFrameResult } from './application/dtos/RenderFrameRequest';
 
 // Re-export core abstractions
-export type { IRenderingEngine, IRenderSyncSystem, ITextureResolver, TextureCatalogService } from '@duckengine/core';
+export type { IRenderingEngine, IRenderSyncSystem } from '@duckengine/core';
 export { CoreLogger, LoadingTracker } from '@duckengine/core';

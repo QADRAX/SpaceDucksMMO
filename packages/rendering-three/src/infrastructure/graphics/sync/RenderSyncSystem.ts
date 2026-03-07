@@ -8,7 +8,7 @@ import type {
   ComponentType,
   IResourceLoader,
 } from "@duckengine/core";
-import type { IRenderSyncSystem, ITextureResolver, TextureCatalogService, LoadingTracker } from "@duckengine/core";
+import type { IRenderSyncSystem, LoadingTracker } from "@duckengine/core";
 import { RenderObjectRegistry } from "./RenderObjectRegistry";
 import { ShaderUniformUpdater } from "./ShaderUniformUpdater";
 import { TextureCache } from "../factories/TextureCache";
@@ -42,13 +42,8 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
   private debugFlags: Record<string, boolean> = { transform: false, mesh: false, collider: false, camera: false };
   private activeCameraEntityId: string | null = null;
 
-  // Note: textureResolver is in interface but maybe not used in new design?
-  // We pass it to context.
-
   constructor(
     scene: THREE.Scene,
-    textureCatalog?: TextureCatalogService,
-    textureResolver?: ITextureResolver,
     engineResourceResolver?: IResourceLoader,
     loadingTracker?: LoadingTracker
   ) {
@@ -58,8 +53,6 @@ export class RenderSyncSystem implements IRenderSyncSystem, IComponentObserver {
       scene,
       registry: this.registry,
       textureCache: this.textureCache,
-      textureCatalog,
-      textureResolver,
       engineResourceResolver,
       entities: this.entities,
       debugFlags: this.debugFlags,

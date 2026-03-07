@@ -1,9 +1,9 @@
 // @ts-ignore
 import * as THREE from "three/webgpu";
-import type { ITextureResolver, TextureCatalogService, LoadingTracker } from "@duckengine/core";
+import type { LoadingTracker } from "@duckengine/core";
 import { RenderObjectRegistry } from "../sync/RenderObjectRegistry";
 import { TextureCache } from "../factories/TextureCache";
-import type { EngineResourceResolver } from "../../resources/EngineResourceResolver";
+import type { IResourceLoader } from "@duckengine/core";
 
 /**
  * Context provided to RenderFeatures during their lifecycle.
@@ -14,9 +14,7 @@ export interface RenderContext {
     readonly registry: RenderObjectRegistry;
     readonly textureCache: TextureCache;
     readonly loadingTracker?: LoadingTracker;
-    readonly textureCatalog?: TextureCatalogService;
-    readonly textureResolver?: ITextureResolver;
-    readonly engineResourceResolver?: EngineResourceResolver;
+    readonly engineResourceResolver?: IResourceLoader;
     readonly entities: Map<string, any>; // Using any to avoid circular deps if Entity is used in RenderFeature which imports RenderContext
     readonly debugFlags: Record<string, boolean>;
     activeCameraEntityId: string | null;

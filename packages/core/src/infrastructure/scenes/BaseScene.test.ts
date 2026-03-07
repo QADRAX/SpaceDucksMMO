@@ -1,7 +1,6 @@
 import BaseScene from './BaseScene';
 import { Entity, Component, type ComponentType } from '../../domain/ecs';
 import { RigidBodyComponent, SphereColliderComponent, SkyboxComponent } from '../../domain/ecs';
-import type { TextureCatalogService } from '../../domain/assets/TextureCatalog';
 
 class TestComp extends Component {
   readonly type = 'test-comp' as ComponentType;
@@ -141,31 +140,21 @@ describe('BaseScene debug events', () => {
     expect(calls).toContain('dispose');
   });
 
-  it('setup creates a texture resolver from settings+catalog and passes it to createRenderSyncSystem', () => {
-    let settingsListener: any;
+  it('setup calls createRenderSyncSystem with resource loader', () => {
     const settingsService = {
       getSettings: () => ({ graphics: { textureQuality: 'low' } }),
-      subscribe: (listener: any) => {
-        settingsListener = listener;
-        return () => { };
-      },
+      subscribe: () => () => { },
     } as any;
 
-    const catalog: TextureCatalogService = {
-      getCatalog: async () => ({ variants: [] }),
-      getVariantsById: async () => [],
-      getBestVariant: async () => undefined,
-      subscribe: (listener) => {
-        listener({ variants: [] });
-        return () => { };
-      },
+    const resourceLoader: any = {
+      resolve: jest.fn(),
     };
 
-    let receivedResolver: any;
+    let receivedLoader: any;
     const engine: any = {
-      getTextureCatalog: () => catalog,
-      createRenderSyncSystem: jest.fn((_renderScene: any, _catalog: any, resolver: any) => {
-        receivedResolver = resolver;
+      getResourceLoader: () => resourceLoader,
+      createRenderSyncSystem: jest.fn((_renderScene: any, loader: any) => {
+        receivedLoader = loader;
         return undefined;
       }),
     };
@@ -175,13 +164,7 @@ describe('BaseScene debug events', () => {
     scene.setup(engine, renderScene);
 
     expect(engine.createRenderSyncSystem).toHaveBeenCalledTimes(1);
-    expect(receivedResolver).toBeDefined();
-    expect(typeof receivedResolver.resolve).toBe('function');
-    expect(receivedResolver.getCurrentQuality()).toBe('low');
-
-    // simulate settings update
-    settingsListener?.({ graphics: { textureQuality: 'ultra' } });
-    expect(receivedResolver.getCurrentQuality()).toBe('ultra');
+    expect(receivedLoader).toBe(resourceLoader);
   });
 
   it('emits entity-added and entity-removed and hierarchy-changed', () => {
