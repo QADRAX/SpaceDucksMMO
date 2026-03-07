@@ -1,3 +1,4 @@
+import type { ViewportState } from '../../domain/viewport';
 import type { ViewportRect } from '../../domain/viewport';
 import type { Result } from '../../domain/utils';
 import { ok, err } from '../../domain/utils';
@@ -19,8 +20,9 @@ export interface AddViewportParams {
  * Creates a viewport and registers it in the engine.
  * Validates the viewport id is unique, the scene exists,
  * and the camera entity exists in the scene with a cameraView component.
+ * Returns the created ViewportState on success.
  */
-export const addViewport = defineEngineUseCase<AddViewportParams, Result<void>>({
+export const addViewport = defineEngineUseCase<AddViewportParams, Result<ViewportState>>({
   name: 'addViewport',
   execute(engine, params) {
     if (engine.viewports.has(params.id)) {
@@ -41,6 +43,6 @@ export const addViewport = defineEngineUseCase<AddViewportParams, Result<void>>(
 
     const viewport = createViewport(params);
     engine.viewports.set(viewport.id, viewport);
-    return ok(undefined);
+    return ok(viewport);
   },
 });

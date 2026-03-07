@@ -1,36 +1,45 @@
 import type { EngineState } from '../../domain';
 import { composeAPI } from '../../domain/api';
-// ── engine use cases ─────────────────────────────────────────────
 import {
   addEntityToScene,
   addSceneToEngine,
   addViewport,
-  clearActiveCamera,
-  disableViewport,
-  enableViewport,
-  pauseEngine,
-  pauseScene,
+  setActiveCamera,
+  setEnginePaused,
   registerEngineAdapter,
   removeEntityFromScene,
   removeSceneFromEngine,
   removeViewport,
   reparentEntityInScene,
   resizeViewport,
-  resumeEngine,
-  resumeScene,
-  setActiveCamera,
   setViewportCamera,
   setViewportCanvas,
   setViewportScene,
+  setViewportEnabled,
   setupScene,
   teardownScene,
   toggleSceneDebug,
   updateEngine,
   updateScene,
   updateSettings,
+  setScenePaused,
+  subscribeToSceneChanges,
+  getSettings,
+  listScenes,
+  listViewports,
+  listEntities,
+  addComponentToEntity,
+  removeComponentFromEntity,
+  getEntityView,
+  setEntityDisplayName,
+  setEntityGizmoIcon,
+  setEntityDebugEnabled,
+  listEntityChildren,
+  setEnabled,
+  updateComponentFields,
+  getComponentSnapshot,
 } from '../../application';
-// ── scene use cases ──────────────────────────────────────────────
-// ── viewport use cases ───────────────────────────────────────────
+
 /**
  * Composes the full DuckEngine API from all registered use cases.
  *
@@ -39,8 +48,35 @@ import {
  * type is inferred from the use cases, so consumers get full
  * autocompletion and type safety without maintaining a manual interface.
  *
- * Guards declared on individual use cases (e.g. `guardSceneExists` on
- * `setViewportScene`) are executed automatically by the composer.
+ * Guards declared on individual use cases are executed automatically
+ * by the composer.
+ *
+ * @example
+ * ```ts
+ * const api = createDuckEngineAPI(engine);
+ *
+ * // Engine level
+ * api.addScene({ sceneId: 'main' });    // → Result<SceneState>
+ * api.setPaused({ paused: true });
+ * api.getSettings();                     // → Result<GameSettings>
+ *
+ * // Scene level
+ * const scene = api.scene('main');
+ * scene.addEntity({ entity });           // → Result<EntityView>
+ *
+ * // Entity level
+ * const entity = api.scene('main').entity('player');
+ * entity.addComponent({ component });    // → Result<void>
+ * entity.view();                         // → Result<EntityView>
+ *
+ * // Component level
+ * const rb = api.scene('main').entity('player').component('rigidBody');
+ * rb.setEnabled({ enabled: false });
+ *
+ * // Viewport level
+ * const vp = api.viewport('vp1');
+ * vp.setEnabled({ enabled: true });
+ * ```
  */
 export function createDuckEngineAPI(engine: EngineState) {
   return composeAPI(engine)
@@ -49,26 +85,39 @@ export function createDuckEngineAPI(engine: EngineState) {
     .add('removeScene', removeSceneFromEngine)
     .add('addViewport', addViewport)
     .add('removeViewport', removeViewport)
-    .add('pause', pauseEngine)
-    .add('resume', resumeEngine)
+    .add('setPaused', setEnginePaused)
     .add('registerAdapter', registerEngineAdapter)
     .add('update', updateEngine)
     .add('updateSettings', updateSettings)
+    .add('getSettings', getSettings)
+    .add('listScenes', listScenes)
+    .add('listViewports', listViewports)
     // ── scene ──────────────────────────────────────────────────
     .add('addEntity', addEntityToScene)
     .add('removeEntity', removeEntityFromScene)
     .add('reparentEntity', reparentEntityInScene)
     .add('setActiveCamera', setActiveCamera)
-    .add('clearActiveCamera', clearActiveCamera)
     .add('toggleDebug', toggleSceneDebug)
     .add('setupScene', setupScene)
     .add('teardownScene', teardownScene)
     .add('updateScene', updateScene)
-    .add('pauseScene', pauseScene)
-    .add('resumeScene', resumeScene)
+    .add('setPaused', setScenePaused)
+    .add('subscribe', subscribeToSceneChanges)
+    .add('listEntities', listEntities)
+    // ── entity ─────────────────────────────────────────────────
+    .add('addComponent', addComponentToEntity)
+    .add('removeComponent', removeComponentFromEntity)
+    .add('view', getEntityView)
+    .add('setDisplayName', setEntityDisplayName)
+    .add('setGizmoIcon', setEntityGizmoIcon)
+    .add('setDebug', setEntityDebugEnabled)
+    .add('listChildren', listEntityChildren)
+    // ── component ──────────────────────────────────────────────
+    .add('setEnabled', setEnabled)
+    .add('update', updateComponentFields)
+    .add('snapshot', getComponentSnapshot)
     // ── viewport ───────────────────────────────────────────────
-    .add('enable', enableViewport)
-    .add('disable', disableViewport)
+    .add('setEnabled', setViewportEnabled)
     .add('setScene', setViewportScene)
     .add('setCamera', setViewportCamera)
     .add('setCanvas', setViewportCanvas)

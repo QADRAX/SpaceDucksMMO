@@ -11,9 +11,9 @@ export interface UpdateSettingsParams {
  *
  * Each section (graphics, gameplay, audio) is shallow-merged
  * so callers can update individual fields without replacing
- * the entire section.
+ * the entire section. Returns the resulting GameSettings.
  */
-export const updateSettings = defineEngineUseCase<UpdateSettingsParams, void>({
+export const updateSettings = defineEngineUseCase<UpdateSettingsParams, GameSettings>({
   name: 'updateSettings',
   execute(engine, { patch }) {
     if (patch.graphics) {
@@ -34,5 +34,6 @@ export const updateSettings = defineEngineUseCase<UpdateSettingsParams, void>({
         audio: { ...engine.settings.audio, ...patch.audio },
       };
     }
+    return { ...engine.settings };
   },
 });

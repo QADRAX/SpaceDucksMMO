@@ -4,8 +4,7 @@ export {
   defineViewportUseCase,
   bindViewportUseCase,
 } from '../../domain/useCases';
-export { enableViewport } from './enableViewport';
-export { disableViewport } from './disableViewport';
+export { setViewportEnabled, type SetViewportEnabledParams } from './setViewportEnabled';
 export { setViewportScene, type SetViewportSceneParams } from './setViewportScene';
 export { setViewportCamera, type SetViewportCameraParams } from './setViewportCamera';
 export { setViewportCanvas, type SetViewportCanvasParams } from './setViewportCanvas';

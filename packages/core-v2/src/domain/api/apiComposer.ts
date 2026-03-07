@@ -1,9 +1,12 @@
 import type { EngineState } from '../engine';
+import type { ComponentType } from '../components';
 import type { Result } from '../utils';
 import { ok, err } from '../utils';
 import type { UseCase, EngineUseCase } from '../useCases';
 import type { SceneUseCase } from '../useCases';
 import type { ViewportUseCase } from '../useCases';
+import type { EntityUseCase } from '../useCases';
+import type { ComponentUseCase } from '../useCases';
 
 /* eslint-disable @typescript-eslint/no-explicit-any --
    `any` in type parameters is required for conditional-type inference
@@ -14,7 +17,9 @@ import type { ViewportUseCase } from '../useCases';
 type SupportedUseCase =
   | EngineUseCase<any, any>
   | SceneUseCase<any, any>
-  | ViewportUseCase<any, any>;
+  | ViewportUseCase<any, any>
+  | EntityUseCase<any, any>
+  | ComponentUseCase<any, any>;
 
 /** Wraps `O` in `Result` unless it already is one. */
 type WrapResult<O> = O extends Result<any> ? O : Result<O>;
@@ -32,24 +37,45 @@ type BoundMethod<T extends SupportedUseCase> =
 /**
  * Composable API builder. Register use cases with `.add(key, useCase)`,
  * then call `.build()` to produce the frozen, fully-typed API object.
+ *
+ * Supports 5 domain levels:
+ * - `engine`    → root methods on the API object.
+ * - `scene`     → scoped via `api.scene(id)`.
+ * - `entity`    → scoped via `api.scene(id).entity(id)`.
+ * - `component` → scoped via `api.scene(id).entity(id).component(type)`.
+ * - `viewport`  → scoped via `api.viewport(id)`.
  */
-export interface APIComposer<TEngine = {}, TScene = {}, TViewport = {}> {
+export interface APIComposer<
+  TEngine = {},
+  TScene = {},
+  TEntity = {},
+  TComponent = {},
+  TViewport = {},
+> {
   /** Bind a use case to the API. */
   add<K extends string, T extends SupportedUseCase>(
     key: K,
     useCase: T,
   ): T extends EngineUseCase<any, any>
-    ? APIComposer<TEngine & { readonly [P in K]: BoundMethod<T> }, TScene, TViewport>
+    ? APIComposer<TEngine & { readonly [P in K]: BoundMethod<T> }, TScene, TEntity, TComponent, TViewport>
     : T extends SceneUseCase<any, any>
-    ? APIComposer<TEngine, TScene & { readonly [P in K]: BoundMethod<T> }, TViewport>
+    ? APIComposer<TEngine, TScene & { readonly [P in K]: BoundMethod<T> }, TEntity, TComponent, TViewport>
+    : T extends EntityUseCase<any, any>
+    ? APIComposer<TEngine, TScene, TEntity & { readonly [P in K]: BoundMethod<T> }, TComponent, TViewport>
+    : T extends ComponentUseCase<any, any>
+    ? APIComposer<TEngine, TScene, TEntity, TComponent & { readonly [P in K]: BoundMethod<T> }, TViewport>
     : T extends ViewportUseCase<any, any>
-    ? APIComposer<TEngine, TScene, TViewport & { readonly [P in K]: BoundMethod<T> }>
+    ? APIComposer<TEngine, TScene, TEntity, TComponent, TViewport & { readonly [P in K]: BoundMethod<T> }>
     : never;
 
   /** Freeze and return the composed API object. */
   build(): Readonly<
     TEngine & {
-      readonly scene: (id: string) => Readonly<TScene>;
+      readonly scene: (id: string) => Readonly<TScene & {
+        readonly entity: (id: string) => Readonly<TEntity & {
+          readonly component: (type: ComponentType) => Readonly<TComponent>;
+        }>;
+      }>;
       readonly viewport: (id: string) => Readonly<TViewport>;
     }
   >;
@@ -68,9 +94,11 @@ function wrapResult(value: unknown): Result<unknown> {
  * Creates a composable API builder bound to an engine state.
  *
  * State resolution per domain tag:
- * - `engine`   → uses the `EngineState` directly.
- * - `scene`    → resolves `SceneState` by `sceneId` (first argument).
- * - `viewport` → resolves `ViewportState` by `viewportId` (first argument).
+ * - `engine`    → uses the `EngineState` directly.
+ * - `scene`     → resolves `SceneState` by `sceneId`.
+ * - `entity`    → resolves `EntityState` by `entityId` within a scene.
+ * - `component` → resolves `ComponentBase` by `componentType` within an entity.
+ * - `viewport`  → resolves `ViewportState` by `viewportId`.
  *
  * @example
  * ```ts
@@ -78,36 +106,43 @@ function wrapResult(value: unknown): Result<unknown> {
  *   .add('addScene', addSceneToEngine)
  *   .add('pause', pauseEngine)
  *   .add('addEntity', addEntityToScene)
- *   .add('setScene', setViewportScene)   // guards auto-read from UC
- *   .add('setCamera', setViewportCamera) // guards auto-read from UC
+ *   .add('addComponent', addComponentToEntity)
+ *   .add('setEnabled', setComponentEnabled)
+ *   .add('setScene', setViewportScene)
  *   .add('enable', enableViewport)
  *   .build();
  *
  * api.addScene({ sceneId: 'main' });
- * api.pause();
- * 
+ *
  * const scene = api.scene('main');
  * scene.addEntity({ entity });
- * 
+ *
+ * const entity = api.scene('main').entity('player');
+ * entity.addComponent({ component });
+ *
+ * const comp = api.scene('main').entity('player').component('rigidBody');
+ * comp.setEnabled({ enabled: false });
+ *
  * const vp = api.viewport('vp1');
- * vp.setScene({ sceneId: 'main' });   // guardSceneExists runs first
- * vp.setCamera({ cameraEntityId: 'cam1' }); // guardCameraInScene runs first
- * vp.enable();
+ * vp.setScene({ sceneId: 'main' });
  * ```
  */
 export function composeAPI(engine: EngineState): APIComposer {
   const engineMethods: Record<string, Function> = {};
   const sceneMethods: Record<string, SupportedUseCase> = {};
+  const entityMethods: Record<string, SupportedUseCase> = {};
+  const componentMethods: Record<string, SupportedUseCase> = {};
   const viewportMethods: Record<string, SupportedUseCase> = {};
 
   /** Run every guard declared on the use case; short-circuit on first failure. */
   function runGuards(
     guards: ReadonlyArray<Function>,
+    rootState: unknown,
     state: unknown,
     params: unknown,
   ): Result<void> | undefined {
     for (const guard of guards) {
-      const result = (guard as Function)(engine, state, params) as Result<void>;
+      const result = (guard as Function)(rootState, state, params) as Result<void>;
       if (!result.ok) return result;
     }
     return undefined; // all passed
@@ -118,7 +153,7 @@ export function composeAPI(engine: EngineState): APIComposer {
       case 'engine':
         engineMethods[key] = (params: unknown) => {
           if (useCase.guards.length) {
-            const fail = runGuards(useCase.guards, engine, params);
+            const fail = runGuards(useCase.guards, engine, engine, params);
             if (fail) return fail;
           }
           const out = useCase.execute(engine, params);
@@ -128,6 +163,12 @@ export function composeAPI(engine: EngineState): APIComposer {
       case 'scene':
         sceneMethods[key] = useCase;
         break;
+      case 'entity':
+        entityMethods[key] = useCase;
+        break;
+      case 'component':
+        componentMethods[key] = useCase;
+        break;
       case 'viewport':
         viewportMethods[key] = useCase;
         break;
@@ -135,23 +176,24 @@ export function composeAPI(engine: EngineState): APIComposer {
     return composer;
   }
 
-  function createScopedMethods(
-    id: string,
+  function createBoundMethods(
     useCases: Record<string, SupportedUseCase>,
-    resolveState: (id: string) => any,
+    state: unknown,
+    rootState: unknown,
     domainName: string,
+    id: string,
   ): Record<string, Function> {
     const bound: Record<string, Function> = {};
-    const state = resolveState(id);
-
     for (const [key, useCase] of Object.entries(useCases)) {
       bound[key] = (params: unknown) => {
         if (!state) return err('not-found', `${domainName} '${id}' not found.`);
         if (useCase.guards.length) {
-          const fail = runGuards(useCase.guards, state, params);
+          const fail = runGuards(useCase.guards, rootState, state, params);
           if (fail) return fail;
         }
-        return wrapResult(useCase.execute(state, params));
+        /* eslint-disable-next-line @typescript-eslint/no-explicit-any --
+             type safety enforced at add()-time; runtime state matches the domain tag. */
+        return wrapResult((useCase as any).execute(state, params));
       };
     }
     return bound;
@@ -160,13 +202,46 @@ export function composeAPI(engine: EngineState): APIComposer {
   function build(): any {
     return Object.freeze({
       ...engineMethods,
-      scene: (id: string) =>
+
+      scene: (sceneId: string) => {
+        const scene = engine.scenes.get(sceneId);
+
+        const sceneBound = createBoundMethods(
+          sceneMethods, scene, engine, 'Scene', sceneId,
+        );
+
+        sceneBound.entity = (entityId: string) => {
+          const entity = scene?.entities.get(entityId);
+
+          const entityBound = createBoundMethods(
+            entityMethods, entity, scene, 'Entity', entityId,
+          );
+
+          entityBound.component = (componentType: ComponentType) => {
+            const comp = entity?.components.get(componentType);
+
+            return Object.freeze(
+              createBoundMethods(
+                componentMethods, comp, entity, 'Component', componentType,
+              ),
+            );
+          };
+
+          return Object.freeze(entityBound);
+        };
+
+        return Object.freeze(sceneBound);
+      },
+
+      viewport: (viewportId: string) =>
         Object.freeze(
-          createScopedMethods(id, sceneMethods, (sId) => engine.scenes.get(sId), 'Scene'),
-        ),
-      viewport: (id: string) =>
-        Object.freeze(
-          createScopedMethods(id, viewportMethods, (vId) => engine.viewports.get(vId), 'Viewport'),
+          createBoundMethods(
+            viewportMethods,
+            engine.viewports.get(viewportId),
+            engine,
+            'Viewport',
+            viewportId,
+          ),
         ),
     });
   }

@@ -1,3 +1,4 @@
+import type { SceneState } from '../../domain/scene';
 import type { Result } from '../../domain/utils';
 import { ok, err } from '../../domain/utils';
 import { createScene } from '../../domain/scene/createScene';
@@ -11,8 +12,9 @@ export interface AddSceneParams {
 /**
  * Creates a new scene and registers it in the engine.
  * Fails if a scene with the same id already exists.
+ * Returns the created SceneState on success.
  */
-export const addSceneToEngine = defineEngineUseCase<AddSceneParams, Result<void>>({
+export const addSceneToEngine = defineEngineUseCase<AddSceneParams, Result<SceneState>>({
   name: 'addSceneToEngine',
   execute(engine, { sceneId }) {
     if (engine.scenes.has(sceneId)) {
@@ -22,6 +24,6 @@ export const addSceneToEngine = defineEngineUseCase<AddSceneParams, Result<void>
     const scene = createScene(sceneId);
     engine.scenes.set(sceneId, scene);
 
-    return ok(undefined);
+    return ok(scene);
   },
 });
