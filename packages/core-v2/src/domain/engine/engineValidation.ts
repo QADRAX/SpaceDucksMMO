@@ -1,7 +1,7 @@
 import type { EngineState } from './types';
 import type {  SceneState  } from '../types/../scene';
-import type { EntityState } from '../ecs';
-import { hasComponent } from '../ecs';
+import type { EntityState } from '../entities';
+import { hasComponent } from '../entities';
 
 /** Returns the scene if it exists in the engine, or undefined. */
 export function findScene(engine: EngineState, sceneId: string): SceneState | undefined {

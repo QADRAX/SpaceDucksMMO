@@ -1,5 +1,5 @@
-import type { EntityState, DebugKind } from '../ecs';
-import type {  ComponentType  } from '../types/../components';
+import type { EntityState, DebugKind } from '../entities';
+import type { ComponentType } from '../components';
 
 /** Event emitted when an entity is added to a scene. */
 export type EntityAddedEvent = {

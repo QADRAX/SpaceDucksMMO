@@ -1,7 +1,7 @@
 import type {  Result  } from '../../domain/types/../utils';
 import {  ok, err  } from '../../domain/types/../utils';
-import { addChild, removeChildById } from '../../domain/ecs';
-import { wouldCreateCycle, validateHierarchyInSubtree } from '../../domain/ecs/validation';
+import { addChild, removeChildById } from '../../domain/entities';
+import { wouldCreateCycle, validateHierarchyInSubtree } from '../../domain/entities/validation';
 import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 

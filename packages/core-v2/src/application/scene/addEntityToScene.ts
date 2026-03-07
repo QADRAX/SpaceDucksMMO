@@ -1,11 +1,11 @@
 import type {  SceneState  } from '../../domain/types/../scene';
-import type { EntityState } from '../../domain/ecs';
+import type { EntityState } from '../../domain/entities';
 import type {  Result  } from '../../domain/types/../utils';
 import {  ok, err  } from '../../domain/types/../utils';
 import { defineSceneUseCase } from '../../domain/useCases';
 import { attachEntityObservers } from '../../domain/scene/sceneObservers';
 import { validateUniqueInSceneSubtree } from '../../domain/scene/sceneValidation';
-import { validateHierarchyInSubtree } from '../../domain/ecs/validation';
+import { validateHierarchyInSubtree } from '../../domain/entities/validation';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Parameters for the addEntityToScene use case (scene is provided separately). */

@@ -1,7 +1,7 @@
 import type { SceneState } from './types';
-import type { EntityState } from '../ecs';
-import type {  ComponentType  } from '../types/../components';
-import { hasComponent } from '../ecs';
+import type { EntityState } from '../entities';
+import type { ComponentType } from '../components';
+import { hasComponent } from '../entities';
 
 /**
  * Finds the first entity in a scene that owns a component of the given type.

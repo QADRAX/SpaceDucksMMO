@@ -1,6 +1,6 @@
 export * from './domain/assets';
 export * from './domain/components';
-export * from './domain/ecs';
+export * from './domain/entities';
 export * from './domain/engine';
 export * from './domain/math';
 export * from './domain/physics';
@@ -9,7 +9,7 @@ export * from './domain/useCases';
 export * from './domain/utils';
 export * from './domain/viewport';
 export * from './domain/math';
-export * from './domain/ecs';
+export * from './domain/entities';
 export * from './domain/components';
 export * from './domain/ports';
 export * from './domain/scene';

@@ -1,12 +1,12 @@
 import type { SceneState } from './types';
-import type {  ComponentType  } from '../types/../components';
-import type { ComponentListener, ComponentChangeListener } from '../ecs';
-import type { EntityState } from '../ecs';
-import { addComponent, removeComponent } from '../ecs';
-import { onTransformChange, removeTransformChange } from '../ecs';
+import type { ComponentType } from '../components';
+import type { ComponentListener, ComponentChangeListener } from '../components';
+import type { EntityState } from '../entities';
+import { addComponent, removeComponent } from '../entities';
+import { onTransformChange, removeTransformChange } from '../entities';
 import { emitSceneChange } from './emitSceneChange';
 import { findEntityWithComponent } from './sceneValidation';
-import { validateHierarchyInSubtree } from '../ecs/validation';
+import { validateHierarchyInSubtree } from '../entities/validation';
 
 /**
  * Attaches entity-level observers that forward events to the scene.

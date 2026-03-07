@@ -1,6 +1,6 @@
 import type {  Result  } from '../../domain/types/../utils';
 import {  ok, err  } from '../../domain/types/../utils';
-import { hasComponent } from '../../domain/ecs';
+import { hasComponent } from '../../domain/entities';
 import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 

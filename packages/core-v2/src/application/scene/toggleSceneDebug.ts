@@ -1,4 +1,4 @@
-import type { DebugKind } from '../../domain/ecs';
+import type { DebugKind } from '../../domain/entities';
 import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 

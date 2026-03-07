@@ -1,10 +1,4 @@
 export * from './types';
-export * from './domains/rendering';
-export * from './domains/physics';
-export * from './domains/gameplay';
-export {
-  type CreatableComponentType,
-  type ComponentByType,
-  type ComponentCreateParams,
-} from './componentFactoryTypes';
-export { createComponent, getComponentMetadata } from './componentFactory';
+export * from './constants';
+export { createComponent, getComponentMetadata } from './factory';
+export { componentBase, narrowComponent } from './component';

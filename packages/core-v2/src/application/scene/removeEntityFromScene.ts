@@ -1,5 +1,5 @@
 import type {  SceneState  } from '../../domain/types/../scene';
-import type { EntityState } from '../../domain/ecs';
+import type { EntityState } from '../../domain/entities';
 import type {  Result  } from '../../domain/types/../utils';
 import {  ok, err  } from '../../domain/types/../utils';
 import { defineSceneUseCase } from '../../domain/useCases';
