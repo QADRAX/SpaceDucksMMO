@@ -61,4 +61,6 @@ export {
 } from './settings';
 export { type SceneState } from './sceneState';
 export { type SceneSystemAdapter, type SceneChangeListener } from './sceneSystemAdapter';
+export { type Viewport, type ViewportRect } from './viewport';
+export { type EngineSystemAdapter } from './engineSystemAdapter';
 export { type EngineState } from './engineState';

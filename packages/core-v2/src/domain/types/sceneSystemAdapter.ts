@@ -27,6 +27,8 @@ export interface SceneSystemAdapter {
   handleSceneEvent(scene: SceneState, event: SceneChangeEventWithError): void;
   /** Advance one frame tick (synchronous pipeline). */
   update?(scene: SceneState, dt: number): void;
+  /** If true, `update()` is called even when the scene is paused. */
+  updateWhenPaused?: boolean;
   /** Release resources when the adapter is detached from the scene. */
   dispose?(): void;
 }

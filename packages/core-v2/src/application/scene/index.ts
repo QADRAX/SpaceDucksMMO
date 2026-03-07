@@ -14,6 +14,8 @@ export { toggleSceneDebug, type ToggleSceneDebugParams } from './toggleSceneDebu
 export { setupScene, type SetupSceneParams } from './setupScene';
 export { teardownScene } from './teardownScene';
 export { updateScene, type UpdateSceneParams } from './updateScene';
+export { pauseScene } from './pauseScene';
+export { resumeScene } from './resumeScene';
 export {
   subscribeToSceneChanges,
   type SubscribeToSceneChangesParams,

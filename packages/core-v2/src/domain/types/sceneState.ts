@@ -17,4 +17,6 @@ export interface SceneState {
   readonly entityCleanups: Map<string, () => void>;
   /** Registered adapters in update-pipeline order. */
   readonly adapters: SceneSystemAdapter[];
+  /** When true, only adapters with updateWhenPaused run during update. */
+  paused: boolean;
 }

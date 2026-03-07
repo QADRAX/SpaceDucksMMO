@@ -11,5 +11,6 @@ export function createScene(id: string): SceneState {
     changeListeners: new Set(),
     entityCleanups: new Map(),
     adapters: [],
+    paused: false,
   };
 }

@@ -22,10 +22,6 @@ export const addSceneToEngine = defineEngineUseCase<AddSceneParams, Result<void>
     const scene = createScene(sceneId);
     engine.scenes.set(sceneId, scene);
 
-    if (engine.activeSceneId === null) {
-      engine.activeSceneId = sceneId;
-    }
-
     return ok(undefined);
   },
 });

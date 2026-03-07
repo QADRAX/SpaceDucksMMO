@@ -21,10 +21,6 @@ export const removeSceneFromEngine = defineEngineUseCase<RemoveSceneParams, Resu
 
     engine.scenes.delete(sceneId);
 
-    if (engine.activeSceneId === sceneId) {
-      engine.activeSceneId = null;
-    }
-
     return ok(undefined);
   },
 });
