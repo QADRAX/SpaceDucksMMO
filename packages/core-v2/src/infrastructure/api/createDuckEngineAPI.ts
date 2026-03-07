@@ -43,39 +43,37 @@ import {
  * `setViewportScene`) are executed automatically by the composer.
  */
 export function createDuckEngineAPI(engine: EngineState) {
-  return (
-    composeAPI(engine)
-      // ── engine ─────────────────────────────────────────────────
-      .add('addScene', addSceneToEngine)
-      .add('removeScene', removeSceneFromEngine)
-      .add('addViewport', addViewport)
-      .add('removeViewport', removeViewport)
-      .add('pause', pauseEngine)
-      .add('resume', resumeEngine)
-      .add('registerAdapter', registerEngineAdapter)
-      .add('update', updateEngine)
-      .add('updateSettings', updateSettings)
-      // ── scene ──────────────────────────────────────────────────
-      .add('addEntity', addEntityToScene)
-      .add('removeEntity', removeEntityFromScene)
-      .add('reparentEntity', reparentEntityInScene)
-      .add('setActiveCamera', setActiveCamera)
-      .add('clearActiveCamera', clearActiveCamera)
-      .add('toggleDebug', toggleSceneDebug)
-      .add('setupScene', setupScene)
-      .add('teardownScene', teardownScene)
-      .add('updateScene', updateScene)
-      .add('pauseScene', pauseScene)
-      .add('resumeScene', resumeScene)
-      // ── viewport ───────────────────────────────────────────────
-      .add('enableViewport', enableViewport)
-      .add('disableViewport', disableViewport)
-      .add('setViewportScene', setViewportScene)
-      .add('setViewportCamera', setViewportCamera)
-      .add('setViewportCanvas', setViewportCanvas)
-      .add('resizeViewport', resizeViewport)
-      .build()
-  );
+  return composeAPI(engine)
+    // ── engine ─────────────────────────────────────────────────
+    .add('addScene', addSceneToEngine)
+    .add('removeScene', removeSceneFromEngine)
+    .add('addViewport', addViewport)
+    .add('removeViewport', removeViewport)
+    .add('pause', pauseEngine)
+    .add('resume', resumeEngine)
+    .add('registerAdapter', registerEngineAdapter)
+    .add('update', updateEngine)
+    .add('updateSettings', updateSettings)
+    // ── scene ──────────────────────────────────────────────────
+    .add('addEntity', addEntityToScene)
+    .add('removeEntity', removeEntityFromScene)
+    .add('reparentEntity', reparentEntityInScene)
+    .add('setActiveCamera', setActiveCamera)
+    .add('clearActiveCamera', clearActiveCamera)
+    .add('toggleDebug', toggleSceneDebug)
+    .add('setupScene', setupScene)
+    .add('teardownScene', teardownScene)
+    .add('updateScene', updateScene)
+    .add('pauseScene', pauseScene)
+    .add('resumeScene', resumeScene)
+    // ── viewport ───────────────────────────────────────────────
+    .add('enable', enableViewport)
+    .add('disable', disableViewport)
+    .add('setScene', setViewportScene)
+    .add('setCamera', setViewportCamera)
+    .add('setCanvas', setViewportCanvas)
+    .add('resize', resizeViewport)
+    .build();
 }
 
 /** The fully-typed DuckEngine API surface. */

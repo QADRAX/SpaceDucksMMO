@@ -1,7 +1,7 @@
 import type { EngineState } from '../engine';
 import type { Result } from '../utils';
 import { ok, err } from '../utils';
-import type { EngineUseCase } from '../useCases';
+import type { UseCase, EngineUseCase } from '../useCases';
 import type { SceneUseCase } from '../useCases';
 import type { ViewportUseCase } from '../useCases';
 
@@ -19,51 +19,42 @@ type SupportedUseCase =
 /** Wraps `O` in `Result` unless it already is one. */
 type WrapResult<O> = O extends Result<any> ? O : Result<O>;
 
-/**
- * Infers the API method signature from a use case type.
- *
- * - **engine** — bound directly; signature matches the use case.
- * - **scene** — prepends `sceneId` argument; output wrapped in `Result`.
- * - **viewport** — prepends `viewportId` argument; output wrapped in `Result`.
- *
- * When the use case declares guards, the output is always wrapped in
- * `Result` because a guard may fail before `execute` runs.
- */
-type InferMethod<T extends SupportedUseCase> =
-  T extends EngineUseCase<infer P, infer O>
-    ? [P] extends [void]
-      ? () => O
-      : (params: P) => O
-    : T extends SceneUseCase<infer P, infer O>
-      ? [P] extends [void]
-        ? (sceneId: string) => WrapResult<O>
-        : (sceneId: string, params: P) => WrapResult<O>
-      : T extends ViewportUseCase<infer P, infer O>
-        ? [P] extends [void]
-          ? (viewportId: string) => WrapResult<O>
-          : (viewportId: string, params: P) => WrapResult<O>
-        : never;
+/** Infers the method signature for a bound use case. */
+type BoundMethod<T extends SupportedUseCase> =
+  T extends UseCase<any, infer P, infer O>
+  ? [P] extends [void]
+  ? () => WrapResult<O>
+  : (params: P) => WrapResult<O>
+  : never;
 
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 /**
  * Composable API builder. Register use cases with `.add(key, useCase)`,
  * then call `.build()` to produce the frozen, fully-typed API object.
- *
- * Guards declared on each use case are executed automatically before
- * `execute` — the composer reads `useCase.guards` and runs them with
- * `(engine, resolvedState, params)`. No extra wiring needed.
  */
-export interface APIComposer<TApi> {
-  /** Bind a use case to the API under the given key. */
+export interface APIComposer<TEngine = {}, TScene = {}, TViewport = {}> {
+  /** Bind a use case to the API. */
   add<K extends string, T extends SupportedUseCase>(
     key: K,
     useCase: T,
-  ): APIComposer<TApi & { readonly [P in K]: InferMethod<T> }>;
+  ): T extends EngineUseCase<any, any>
+    ? APIComposer<TEngine & { readonly [P in K]: BoundMethod<T> }, TScene, TViewport>
+    : T extends SceneUseCase<any, any>
+    ? APIComposer<TEngine, TScene & { readonly [P in K]: BoundMethod<T> }, TViewport>
+    : T extends ViewportUseCase<any, any>
+    ? APIComposer<TEngine, TScene, TViewport & { readonly [P in K]: BoundMethod<T> }>
+    : never;
 
   /** Freeze and return the composed API object. */
-  build(): Readonly<TApi>;
+  build(): Readonly<
+    TEngine & {
+      readonly scene: (id: string) => Readonly<TScene>;
+      readonly viewport: (id: string) => Readonly<TViewport>;
+    }
+  >;
 }
+
 
 function isResult(value: unknown): value is Result<unknown> {
   return typeof value === 'object' && value !== null && 'ok' in value;
@@ -94,14 +85,20 @@ function wrapResult(value: unknown): Result<unknown> {
  *
  * api.addScene({ sceneId: 'main' });
  * api.pause();
- * api.addEntity('main', { entity });
- * api.setScene('vp1', { sceneId: 'main' });   // guardSceneExists runs first
- * api.setCamera('vp1', { cameraEntityId: 'cam1' }); // guardCameraInScene runs first
- * api.enable('vp1');
+ * 
+ * const scene = api.scene('main');
+ * scene.addEntity({ entity });
+ * 
+ * const vp = api.viewport('vp1');
+ * vp.setScene({ sceneId: 'main' });   // guardSceneExists runs first
+ * vp.setCamera({ cameraEntityId: 'cam1' }); // guardCameraInScene runs first
+ * vp.enable();
  * ```
  */
-export function composeAPI(engine: EngineState): APIComposer<Record<never, never>> {
-  const methods: Record<string, Function> = {};
+export function composeAPI(engine: EngineState): APIComposer {
+  const engineMethods: Record<string, Function> = {};
+  const sceneMethods: Record<string, SupportedUseCase> = {};
+  const viewportMethods: Record<string, SupportedUseCase> = {};
 
   /** Run every guard declared on the use case; short-circuit on first failure. */
   function runGuards(
@@ -116,56 +113,64 @@ export function composeAPI(engine: EngineState): APIComposer<Record<never, never
     return undefined; // all passed
   }
 
-  function add(key: string, useCase: SupportedUseCase): APIComposer<Record<never, never>> {
-    const guards = useCase.guards;
-
+  function add(key: string, useCase: SupportedUseCase): any {
     switch (useCase.domain) {
       case 'engine':
-        methods[key] = (params: unknown) => {
-          if (guards.length) {
-            const fail = runGuards(guards, engine, params);
+        engineMethods[key] = (params: unknown) => {
+          if (useCase.guards.length) {
+            const fail = runGuards(useCase.guards, engine, params);
             if (fail) return fail;
           }
-          return useCase.execute(engine, params);
+          const out = useCase.execute(engine, params);
+          return wrapResult(out);
         };
         break;
-
       case 'scene':
-        methods[key] = (sceneId: string, params?: unknown) => {
-          const scene = engine.scenes.get(sceneId);
-          if (!scene) return err('not-found', `Scene '${sceneId}' not found.`);
-          if (guards.length) {
-            const fail = runGuards(guards, scene, params);
-            if (fail) return fail;
-          }
-          return wrapResult(useCase.execute(scene, params));
-        };
+        sceneMethods[key] = useCase;
         break;
-
       case 'viewport':
-        methods[key] = (viewportId: string, params?: unknown) => {
-          const vp = engine.viewports.get(viewportId);
-          if (!vp) return err('not-found', `Viewport '${viewportId}' not found.`);
-          if (guards.length) {
-            const fail = runGuards(guards, vp, params);
-            if (fail) return fail;
-          }
-          return wrapResult(useCase.execute(vp, params));
-        };
+        viewportMethods[key] = useCase;
         break;
     }
-
-    // The generic accumulation happens at the type level via APIComposer.
-    // At runtime the same builder instance is returned.
     return composer;
   }
 
-  function build(): Readonly<Record<never, never>> {
-    return Object.freeze({ ...methods }) as Readonly<Record<never, never>>;
+  function createScopedMethods(
+    id: string,
+    useCases: Record<string, SupportedUseCase>,
+    resolveState: (id: string) => any,
+    domainName: string,
+  ): Record<string, Function> {
+    const bound: Record<string, Function> = {};
+    const state = resolveState(id);
+
+    for (const [key, useCase] of Object.entries(useCases)) {
+      bound[key] = (params: unknown) => {
+        if (!state) return err('not-found', `${domainName} '${id}' not found.`);
+        if (useCase.guards.length) {
+          const fail = runGuards(useCase.guards, state, params);
+          if (fail) return fail;
+        }
+        return wrapResult(useCase.execute(state, params));
+      };
+    }
+    return bound;
   }
 
-  // Cast once: the external generic interface drives the type safety,
-  // the concrete implementation is untyped internally.
-  const composer = { add, build } as unknown as APIComposer<Record<never, never>>;
+  function build(): any {
+    return Object.freeze({
+      ...engineMethods,
+      scene: (id: string) =>
+        Object.freeze(
+          createScopedMethods(id, sceneMethods, (sId) => engine.scenes.get(sId), 'Scene'),
+        ),
+      viewport: (id: string) =>
+        Object.freeze(
+          createScopedMethods(id, viewportMethods, (vId) => engine.viewports.get(vId), 'Viewport'),
+        ),
+    });
+  }
+
+  const composer = { add, build } as unknown as APIComposer;
   return composer;
 }
