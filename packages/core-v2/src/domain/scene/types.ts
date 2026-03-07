@@ -130,3 +130,12 @@ export interface SceneState {
   /** When true, only adapters with updateWhenPaused run during update. */
   paused: boolean;
 }
+
+/** Readonly snapshot of a scene for application/UI consumers. */
+export interface SceneView {
+  readonly id: string;
+  readonly paused: boolean;
+  readonly activeCameraId: string | null;
+  readonly rootEntityIds: ReadonlyArray<string>;
+  readonly debugFlags: ReadonlyMap<DebugKind, boolean>;
+}

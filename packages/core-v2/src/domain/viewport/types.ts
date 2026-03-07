@@ -44,6 +44,16 @@ export interface ViewportState {
   enabled: boolean;
 }
 
+/** Readonly snapshot of a viewport for application/UI consumers. */
+export interface ViewportView {
+  readonly id: string;
+  readonly sceneId: string;
+  readonly cameraEntityId: string;
+  readonly canvasId: string;
+  readonly rect: ViewportRect;
+  readonly enabled: boolean;
+}
+
 /** Parameters for creating a viewport. */
 export interface CreateViewportParams {
   readonly id: string;
