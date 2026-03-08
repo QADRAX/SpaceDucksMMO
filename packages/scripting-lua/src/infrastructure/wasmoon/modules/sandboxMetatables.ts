@@ -1,4 +1,4 @@
-import { SystemScripts } from '../../../generated/ScriptAssets';
+import { SystemScripts } from '../generated/ScriptAssets';
 
 /**
  * Gets the Lua metatable definitions for the scripting sandbox.

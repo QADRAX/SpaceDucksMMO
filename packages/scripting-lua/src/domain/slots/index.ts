@@ -1,4 +1,5 @@
 export * from './types';
+export { detectHooksFromSource, ALL_HOOKS } from './detectHooks';
 export {
 	createScriptSlot,
 	slotKey,

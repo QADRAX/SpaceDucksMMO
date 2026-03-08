@@ -22,4 +22,4 @@ export {
 } from './mathExt';
 
 // Re-export generated scripts for external use
-export { SystemScripts, BuiltInScripts } from '../../../generated/ScriptAssets';
+export { SystemScripts, BuiltInScripts } from '../generated/ScriptAssets';

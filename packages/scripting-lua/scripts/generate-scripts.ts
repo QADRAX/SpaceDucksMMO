@@ -3,7 +3,7 @@ const path = require('path');
 
 const builtinDir = path.join(__dirname, '../res/scripts/builtin');
 const systemDir = path.join(__dirname, '../res/scripts/system');
-const targetDir = path.join(__dirname, '../src/generated');
+const targetDir = path.join(__dirname, '../src/infrastructure/wasmoon/generated');
 const targetFile = path.join(targetDir, 'ScriptAssets.ts');
 
 if (!fs.existsSync(targetDir)) {
