@@ -1,10 +1,11 @@
+import type { SceneState, ScriptSchema } from '@duckengine/core-v2';
 import type { BridgeDeclaration } from './types';
 
 /** Gizmo bridge — debug drawing proxied to the renderer's gizmo port. */
 export const gizmoBridge: BridgeDeclaration = {
   name: 'Gizmo',
   perEntity: false,
-  factory(_scene, _entityId, ports) {
+  factory(_scene: SceneState, _entityId: string, _schema: ScriptSchema | null, ports) {
     return {
       drawLine(from: { x: number; y: number; z: number }, to: { x: number; y: number; z: number }, color?: string) {
         ports.gizmo?.drawLine(from, to, color);

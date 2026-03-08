@@ -1,3 +1,4 @@
+import type { ScriptSchema } from '@duckengine/core-v2';
 import type { ScriptSlotState } from '../slots';
 import type { ScriptEventBus } from '../events';
 import type { BridgeDeclaration, BridgePorts, TimeState } from '../bridges';
@@ -27,4 +28,6 @@ export interface ScriptingSessionState {
   readonly ports: BridgePorts;
   /** Resolves a scriptId to source code. */
   readonly resolveSource: (scriptId: string) => Promise<string | null>;
+  /** Resolves a scriptId to its schema. */
+  readonly resolveScriptSchema: (scriptId: string) => Promise<ScriptSchema | null>;
 }

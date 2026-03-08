@@ -3,6 +3,7 @@ import type {
   SceneChangeEventWithError,
   SceneSystemAdapter,
   EngineState,
+  ScriptSchema,
 } from '@duckengine/core-v2';
 import type { BridgeDeclaration, BridgePorts, TimeState } from '../domain/bridges';
 import type { ScriptSandbox } from '../domain/ports';
@@ -31,6 +32,8 @@ export interface CreateScriptingAdapterParams {
   readonly timeState: TimeState;
   /** Optional script source resolver. Defaults to no-op. */
   readonly resolveSource?: (scriptId: string) => Promise<string | null>;
+  /** Optional script schema resolver. Defaults to no-op. */
+  readonly resolveScriptSchema?: (scriptId: string) => Promise<ScriptSchema | null>;
 }
 
 /**
@@ -52,6 +55,7 @@ export function createScriptingAdapter(
     eventBus: createScriptEventBus(),
     timeState,
     resolveSource: params.resolveSource ?? createBuiltInScriptResolver(),
+    resolveScriptSchema: params.resolveScriptSchema,
   });
 
   const boundReconcile = bindScriptingUseCase(session, reconcileSlots);

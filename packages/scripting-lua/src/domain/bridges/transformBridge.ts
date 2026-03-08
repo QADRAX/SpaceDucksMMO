@@ -1,4 +1,4 @@
-import type { SceneState } from '@duckengine/core-v2';
+import type { SceneState, ScriptSchema } from '@duckengine/core-v2';
 import {
   setPosition,
   setRotation,
@@ -12,7 +12,7 @@ import type { BridgeDeclaration } from './types';
 export const transformBridge: BridgeDeclaration = {
   name: 'Transform',
   perEntity: true,
-  factory(scene: SceneState, entityId: string) {
+  factory(scene: SceneState, entityId: string, _schema: ScriptSchema | null) {
     const resolve = () => {
       const e = scene.entities.get(entityId);
       if (!e) throw new Error(`Entity '${entityId}' not in scene.`);

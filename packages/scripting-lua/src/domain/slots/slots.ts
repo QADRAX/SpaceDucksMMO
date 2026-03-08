@@ -1,4 +1,4 @@
-import type { SceneState } from '@duckengine/core-v2';
+import type { SceneState, ScriptSchema } from '@duckengine/core-v2';
 import type { ScriptBridgeContext } from '../bridges';
 import type { ScriptSandbox } from '../ports';
 import type { ScriptEventBus } from '../events';
@@ -41,7 +41,7 @@ export function slotKey(entityId: string, scriptId: string): string {
 /**
  * Asynchronously initializes a script slot and registers it in the slot map.
  *
- * Source resolution failures are ignored by caller policy; missing source exits
+ * Source and schema resolution failures are ignored by caller policy; missing source exits
  * early without slot registration.
  */
 export function initScriptSlot(
@@ -49,7 +49,9 @@ export function initScriptSlot(
   pending: Map<string, Promise<void>>,
   sandbox: ScriptSandbox,
   resolveSource: (scriptId: string) => Promise<string | null>,
-  bridgeContextFactory: () => ScriptBridgeContext,
+  resolveScriptSchema: (scriptId: string) => Promise<ScriptSchema | null>,
+  bridgeContextFactory: (scene: SceneState, entityId: string, schema: ScriptSchema | null) => ScriptBridgeContext,
+  scene: SceneState,
   entityId: string,
   scriptId: string,
   properties: Record<string, unknown>,
@@ -58,13 +60,16 @@ export function initScriptSlot(
   if (slots.has(key) || pending.has(key)) return;
 
   const init = async () => {
-    const source = await resolveSource(scriptId);
+    const [source, schema] = await Promise.all([
+      resolveSource(scriptId),
+      resolveScriptSchema(scriptId),
+    ]);
     if (!source) return;
 
     const declaredHooks = sandbox.detectHooks(source);
     const slot = createScriptSlot(entityId, scriptId, properties, declaredHooks);
 
-    sandbox.createSlot(key, source, bridgeContextFactory(), slot.properties);
+    sandbox.createSlot(key, source, bridgeContextFactory(scene, entityId, schema), slot.properties);
     slot.sandboxHandle = key;
     slots.set(key, slot);
 

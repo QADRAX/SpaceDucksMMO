@@ -1,3 +1,4 @@
+import type { ScriptSchema } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from './types';
 import type { ScriptEventBus } from '../events';
 import type { BridgeDeclaration, BridgePorts, TimeState } from '../bridges';
@@ -11,6 +12,7 @@ export interface CreateScriptingSessionParams {
   readonly eventBus: ScriptEventBus;
   readonly timeState: TimeState;
   readonly resolveSource?: (scriptId: string) => Promise<string | null>;
+  readonly resolveScriptSchema?: (scriptId: string) => Promise<ScriptSchema | null>;
 }
 
 /** Creates a fresh ScriptingSessionState with empty slot maps. */
@@ -26,5 +28,6 @@ export function createScriptingSession(
     bridges: params.bridges,
     ports: params.ports ?? {},
     resolveSource: params.resolveSource ?? (() => Promise.resolve(null)),
+    resolveScriptSchema: params.resolveScriptSchema ?? (() => Promise.resolve(null)),
   };
 }

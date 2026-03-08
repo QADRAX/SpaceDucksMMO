@@ -9,6 +9,7 @@ export * from './domain/useCases';
 export * from './domain/utils';
 export * from './domain/viewport';
 export * from './domain/ports';
+export * from './domain/scripting';
 export * from './domain/api';
 export * from './application';
 export * from './infrastructure';

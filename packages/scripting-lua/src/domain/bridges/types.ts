@@ -1,9 +1,10 @@
-import type { SceneState } from '@duckengine/core-v2';
+import type { SceneState, ScriptSchema } from '@duckengine/core-v2';
 
 /** Factory signature for a single bridge. */
 export type BridgeFactory = (
   scene: SceneState,
   entityId: string,
+  schema: ScriptSchema | null,
   ports: BridgePorts,
 ) => Record<string, unknown>;
 

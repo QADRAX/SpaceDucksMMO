@@ -22,7 +22,8 @@ interface ScriptPropertyWithDefault<T> extends ScriptPropertyBase, DefaultValueA
  * Number property configuration.
  */
 export interface NumberProperty
-  extends PrimitivePropertyBase<'number'>,
+  extends
+    PrimitivePropertyBase<'number'>,
     ScriptPropertyWithDefault<number>,
     NumericConstraintAttributes {}
 
@@ -30,29 +31,27 @@ export interface NumberProperty
  * Boolean property configuration.
  */
 export interface BooleanProperty
-  extends PrimitivePropertyBase<'boolean'>,
-    ScriptPropertyWithDefault<boolean> {}
+  extends PrimitivePropertyBase<'boolean'>, ScriptPropertyWithDefault<boolean> {}
 
 /**
  * String property configuration.
  */
 export interface StringProperty
-  extends PrimitivePropertyBase<'string'>,
-    ScriptPropertyWithDefault<string> {}
+  extends PrimitivePropertyBase<'string'>, ScriptPropertyWithDefault<string> {}
 
 /**
  * Vec3 property configuration (3D vector).
  */
 export interface Vec3Property
-  extends PrimitivePropertyBase<'vec3'>,
+  extends
+    PrimitivePropertyBase<'vec3'>,
     ScriptPropertyWithDefault<readonly [number, number, number]> {}
 
 /**
  * Vec2 property configuration (2D vector).
  */
 export interface Vec2Property
-  extends PrimitivePropertyBase<'vec2'>,
-    ScriptPropertyWithDefault<readonly [number, number]> {}
+  extends PrimitivePropertyBase<'vec2'>, ScriptPropertyWithDefault<readonly [number, number]> {}
 
 /**
  * Entity reference property (single entity).
@@ -100,7 +99,8 @@ export interface PrefabRefProperty extends ScriptPropertyWithDefault<string | nu
  * Color property configuration (RGBA).
  */
 export interface ColorProperty
-  extends PrimitivePropertyBase<'color'>,
+  extends
+    PrimitivePropertyBase<'color'>,
     ScriptPropertyWithDefault<readonly [number, number, number, number]> {
   readonly type: PrimitiveTypeName<'color'>;
 }
@@ -109,7 +109,8 @@ export interface ColorProperty
  * Enum property configuration (dropdown selection).
  */
 export interface EnumProperty
-  extends PrimitivePropertyBase<'enum'>,
+  extends
+    PrimitivePropertyBase<'enum'>,
     ScriptPropertyWithDefault<string>,
     EnumValueConstraint<string> {
   readonly type: PrimitiveTypeName<'enum'>;

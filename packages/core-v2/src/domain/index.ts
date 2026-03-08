@@ -8,6 +8,7 @@ export * from './physics';
 export * from './properties';
 export * from './ports';
 export * from './scene';
+export * from './scripting';
 export * from './useCases';
 export * from './utils';
 export * from './viewport';

@@ -3,7 +3,7 @@ import type { ComponentType } from '../../components';
 /**
  * Script permissions define what entities, scripts, components, and prefabs
  * a script instance can access at runtime.
- * 
+ *
  * Permissions are derived from the script's property schema.
  */
 export interface ScriptPermissions {
