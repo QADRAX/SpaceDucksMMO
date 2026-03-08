@@ -1,17 +1,38 @@
 /**
- * Supported resource kinds in the engine.
- * Maps to web-core resource kinds.
+ * A resource kind maps 1:1 with a component type that can be persisted
+ * as a resource in the API. Each kind has a defined set of scalar attributes
+ * (ResourceData<K>) and named file slots (FileSlotsFor<K>).
  */
-export type ResourceKind = 'texture' | 'mesh' | 'skybox' | 'script' | 'shader';
+export type ResourceKind =
+    // ── Materials ────────────────────────────────────────────────
+    | 'standardMaterial'
+    | 'basicMaterial'
+    | 'phongMaterial'
+    | 'lambertMaterial'
+    // ── Custom Shader Materials ───────────────────────────────────
+    | 'basicShaderMaterial'
+    | 'standardShaderMaterial'
+    | 'physicalShaderMaterial'
+    // ── Geometry ─────────────────────────────────────────────────
+    | 'mesh'         // Used by FullMeshComponent and CustomGeometryComponent
+    // ── Environment ──────────────────────────────────────────────
+    | 'skybox'       // Used by SkyboxComponent
+    // ── Scripting ────────────────────────────────────────────────
+    | 'script'       // Used by ScriptComponent
+    // ── Standalone asset (referenced by materials per slot) ───────
+    | 'texture';
 
-/**
- * List of all supported resource kinds.
- * Useful for validation and iteration.
- */
+/** All supported resource kinds as a constant array. */
 export const RESOURCE_KINDS: readonly ResourceKind[] = [
-    'texture',
+    'standardMaterial',
+    'basicMaterial',
+    'phongMaterial',
+    'lambertMaterial',
+    'basicShaderMaterial',
+    'standardShaderMaterial',
+    'physicalShaderMaterial',
     'mesh',
     'skybox',
     'script',
-    'shader',
+    'texture',
 ];

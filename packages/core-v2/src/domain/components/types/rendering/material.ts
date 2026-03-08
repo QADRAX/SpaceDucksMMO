@@ -4,51 +4,62 @@ import type { ResourceRef } from '../../../resources';
 /** Shared fields for all material components. */
 export interface MaterialComponentBase<
     TType extends 'standardMaterial' | 'basicMaterial' | 'phongMaterial' | 'lambertMaterial' = 'standardMaterial' | 'basicMaterial' | 'phongMaterial' | 'lambertMaterial',
+    TResourceKind extends TType = TType,
     TSelf = unknown,
 > extends ComponentBase<TType, TSelf> {
-    /** Base color of the material. */
-    color: string;
+    /** 
+     * Blueprint material resource.
+     * If provided, its scalar data and files act as the base for this component.
+     */
+    material: ResourceRef<TResourceKind> | undefined;
+
+    // -- Overrides: These values take precedence over the blueprint --
+    /** Base color override. */
+    color: string | undefined;
     /** Whether the material supports transparency. */
-    transparent: boolean;
+    transparent: boolean | undefined;
     /** Opacity level (0-1). Only used if transparent is true. */
-    opacity: number;
-    /** Primary albedo/diffuse texture map. */
-    texture: ResourceRef<'texture'> | undefined;
+    opacity: number | undefined;
+
+    /** Primary albedo/diffuse texture map override. */
+    albedo: ResourceRef<'texture'> | undefined;
 }
 
 /** PBR standard material settings. */
-export interface StandardMaterialComponent extends MaterialComponentBase<'standardMaterial', StandardMaterialComponent> {
-    metalness: number;
-    roughness: number;
-    emissive: string;
-    emissiveIntensity: number;
-    /** Normal map for surface detail. */
+export interface StandardMaterialComponent extends MaterialComponentBase<'standardMaterial', 'standardMaterial', StandardMaterialComponent> {
+    metalness: number | undefined;
+    roughness: number | undefined;
+    emissive: string | undefined;
+    emissiveIntensity: number | undefined;
+
+    // -- Texture Overrides --
+    /** Normal map for surface detail override. */
     normalMap: ResourceRef<'texture'> | undefined;
-    /** Ambient occlusion map. */
+    /** Ambient occlusion map override. */
     aoMap: ResourceRef<'texture'> | undefined;
-    /** Roughness map (greyscale). */
+    /** Roughness map (greyscale) override. */
     roughnessMap: ResourceRef<'texture'> | undefined;
-    /** Metalness map (greyscale). */
-    metalnessMap: ResourceRef<'texture'> | undefined;
-    /** Environment reflection map. */
+    /** Metallic map (greyscale) override. */
+    metallicMap: ResourceRef<'texture'> | undefined;
+    /** Environment reflection map override. */
     envMap: ResourceRef<'texture'> | undefined;
 }
 
 /** Unlit basic material settings. */
-export interface BasicMaterialComponent extends MaterialComponentBase<'basicMaterial', BasicMaterialComponent> {
-    wireframe: boolean;
+export interface BasicMaterialComponent extends MaterialComponentBase<'basicMaterial', 'basicMaterial', BasicMaterialComponent> {
+    wireframe: boolean | undefined;
 }
 
 /** Phong material settings. */
-export interface PhongMaterialComponent extends MaterialComponentBase<'phongMaterial', PhongMaterialComponent> {
-    specular: string;
-    shininess: number;
-    emissive: string;
+export interface PhongMaterialComponent extends MaterialComponentBase<'phongMaterial', 'phongMaterial', PhongMaterialComponent> {
+    specular: string | undefined;
+    shininess: number | undefined;
+    emissive: string | undefined;
 }
 
 /** Lambert material settings. */
-export interface LambertMaterialComponent extends MaterialComponentBase<'lambertMaterial', LambertMaterialComponent> {
-    emissive: string;
+export interface LambertMaterialComponent extends MaterialComponentBase<'lambertMaterial', 'lambertMaterial', LambertMaterialComponent> {
+    emissive: string | undefined;
 }
 
 /** Union of all material components. */

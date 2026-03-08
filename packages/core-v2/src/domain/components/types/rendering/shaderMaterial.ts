@@ -7,10 +7,9 @@ export type ShaderBlendingMode = 'normal' | 'additive' | 'multiply' | 'subtracti
 /** Base fields shared by all custom shader material components. */
 export interface ShaderMaterialBase<
     TType extends 'basicShaderMaterial' | 'standardShaderMaterial' | 'physicalShaderMaterial',
+    TResourceKind extends 'basicShaderMaterial' | 'standardShaderMaterial' | 'physicalShaderMaterial',
     TSelf = unknown,
 > extends ComponentBase<TType, TSelf> {
-    /** Reference to the shader resource (vertex/fragment source). */
-    shader: ResourceRef<'shader'>;
     /** Dynamic uniform values for the shader. */
     uniforms: Record<string, unknown>;
     /** Whether the shader material supports transparency. */
@@ -19,19 +18,24 @@ export interface ShaderMaterialBase<
     depthWrite: boolean;
     /** How colors are combined with the background. */
     blending: ShaderBlendingMode;
+    /**
+     * Reference to the shader resource (vertex/fragment GLSL source).
+     * The resource kind matches this component's type for full type safety.
+     */
+    shader: ResourceRef<TResourceKind> | undefined;
 }
 
 /** Basic custom shader material. */
-export interface BasicShaderMaterialComponent extends ShaderMaterialBase<'basicShaderMaterial', BasicShaderMaterialComponent> { }
+export interface BasicShaderMaterialComponent extends ShaderMaterialBase<'basicShaderMaterial', 'basicShaderMaterial', BasicShaderMaterialComponent> { }
 
 /** Standard custom shader material. */
-export interface StandardShaderMaterialComponent extends ShaderMaterialBase<'standardShaderMaterial', StandardShaderMaterialComponent> {
+export interface StandardShaderMaterialComponent extends ShaderMaterialBase<'standardShaderMaterial', 'standardShaderMaterial', StandardShaderMaterialComponent> {
     roughness: number;
     metalness: number;
 }
 
 /** Physical custom shader material. */
-export interface PhysicalShaderMaterialComponent extends ShaderMaterialBase<'physicalShaderMaterial', PhysicalShaderMaterialComponent> {
+export interface PhysicalShaderMaterialComponent extends ShaderMaterialBase<'physicalShaderMaterial', 'physicalShaderMaterial', PhysicalShaderMaterialComponent> {
     roughness: number;
     metalness: number;
     clearcoat: number;

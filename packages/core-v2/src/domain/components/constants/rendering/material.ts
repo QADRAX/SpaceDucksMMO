@@ -17,13 +17,14 @@ const MATERIAL_CONFLICTS = [
 ] as const;
 
 const COMMON_FIELDS = [
+  { key: 'material', label: 'Material Resource', type: 'resource' as const, nullable: true },
   { key: 'color', label: 'Color', type: 'color' as const },
   { key: 'transparent', label: 'Transparent', type: 'boolean' as const },
   { key: 'opacity', label: 'Opacity', type: 'number' as const, min: 0, max: 1, step: 0.01 },
-  { key: 'texture', label: 'Texture', type: 'texture' as const, nullable: true },
+  { key: 'albedo', label: 'Albedo Map', type: 'texture' as const, nullable: true },
 ];
 
-const BASE_DEFAULTS = { color: '#ffffff', transparent: false, opacity: 1, texture: undefined };
+const BASE_DEFAULTS = { material: undefined, color: '#ffffff', transparent: false, opacity: 1, albedo: undefined };
 
 /** Standard material spec. */
 export const STANDARD_MATERIAL_SPEC: ComponentSpec<StandardMaterialComponent> = {
@@ -46,7 +47,7 @@ export const STANDARD_MATERIAL_SPEC: ComponentSpec<StandardMaterialComponent> = 
         { key: 'normalMap', label: 'Normal Map', type: 'texture', nullable: true },
         { key: 'aoMap', label: 'AO Map', type: 'texture', nullable: true },
         { key: 'roughnessMap', label: 'Roughness Map', type: 'texture', nullable: true },
-        { key: 'metalnessMap', label: 'Metalness Map', type: 'texture', nullable: true },
+        { key: 'metallicMap', label: 'Metallic Map', type: 'texture', nullable: true },
         { key: 'envMap', label: 'Environment Map', type: 'texture', nullable: true },
       ],
     },
@@ -60,7 +61,7 @@ export const STANDARD_MATERIAL_SPEC: ComponentSpec<StandardMaterialComponent> = 
     normalMap: undefined,
     aoMap: undefined,
     roughnessMap: undefined,
-    metalnessMap: undefined,
+    metallicMap: undefined,
     envMap: undefined,
   },
 };

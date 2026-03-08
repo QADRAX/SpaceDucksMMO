@@ -32,7 +32,7 @@ const SHADER_FIELDS = [
 ];
 
 const SHADER_BASE_DEFAULTS = {
-  shader: '' as any, // Casted to any as it will be branded ResourceRef<'shader'>
+  shader: undefined,
   uniforms: {},
   transparent: true,
   depthWrite: false,
