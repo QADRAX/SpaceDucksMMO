@@ -1,4 +1,9 @@
 export * from './apiComposer';
-export * from './adapterComposer';
+export type {
+	AdapterUpdateParams,
+	AdapterEventParams,
+	AdapterComposer,
+} from '../adapters';
+export { composeAdapter } from '../adapters';
 export * from './types';
 

@@ -5,9 +5,8 @@ export * from './domain';
 export * from './application';
 
 // Infrastructure
-export { createScriptingAdapter } from './infrastructure';
-export type { CreateScriptingAdapterParams } from './infrastructure';
-export { createWasmoonSandbox, createBuiltInScriptResolver } from './infrastructure';
+export { scriptingLuaSceneAdapterFactory } from './infrastructure';
+export { SCRIPTING_BRIDGE_PORT_KEYS } from './domain/bridges';
 
 // Generated assets
 export { BuiltInScripts } from './generated/ScriptAssets';

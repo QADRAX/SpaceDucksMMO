@@ -6,3 +6,4 @@ export { inputBridge } from './inputBridge';
 export { createTimeBridgeDeclaration, createTimeState } from './timeBridge';
 export { gizmoBridge } from './gizmoBridge';
 export { createScriptBridgeContext } from './bridgeContext';
+export { resolveBridgePortsFromRegistry } from './resolveBridgePortsFromRegistry';

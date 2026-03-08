@@ -1,4 +1,5 @@
 export * from './types';
+export type { SceneSystemAdapter } from '../adapters';
 export { createScene } from './createScene';
 export { emitSceneChange } from './emitSceneChange';
 export { attachEntityObservers } from './sceneObservers';

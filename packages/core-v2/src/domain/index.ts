@@ -1,4 +1,5 @@
 export * from './api';
+export * from './adapters';
 export * from './assets';
 export * from './components';
 export * from './engine';

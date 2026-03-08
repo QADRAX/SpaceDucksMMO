@@ -1,4 +1,5 @@
 export * from './domain/assets';
+export * from './domain/adapters';
 export * from './domain/components';
 export * from './domain/entities';
 export * from './domain/engine';

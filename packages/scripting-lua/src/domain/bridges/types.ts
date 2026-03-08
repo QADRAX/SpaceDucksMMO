@@ -1,4 +1,11 @@
-import type { SceneState, ScriptSchema } from '@duckengine/core-v2';
+import type {
+  AdapterPortKey,
+  GizmoPort,
+  InputPort,
+  PhysicsQueryPort,
+  SceneState,
+  ScriptSchema,
+} from '@duckengine/core-v2';
 
 /** Factory signature for a single bridge. */
 export type BridgeFactory = (
@@ -20,35 +27,17 @@ export interface BridgeDeclaration {
 
 /** External ports that bridges may optionally consume. */
 export interface BridgePorts {
-  readonly physicsQuery?: PhysicsQueryLike;
-  readonly gizmo?: GizmoLike;
-  readonly input?: InputStateLike;
+  readonly physicsQuery?: PhysicsQueryPort;
+  readonly gizmo?: Pick<GizmoPort, 'drawLine' | 'drawSphere' | 'drawBox' | 'drawLabel' | 'clear'>;
+  readonly input?: InputPort;
 }
 
-/** Minimal physics query surface (matches core-v2 PhysicsQueryPort). */
-export interface PhysicsQueryLike {
-  raycast(ray: {
-    origin: { x: number; y: number; z: number };
-    direction: { x: number; y: number; z: number };
-    maxDistance: number;
-  }): { entityId: string; point: { x: number; y: number; z: number }; distance: number } | null;
-}
-
-/** Minimal gizmo surface (matches core-v2 GizmoPort). */
-export interface GizmoLike {
-  drawLine(from: { x: number; y: number; z: number }, to: { x: number; y: number; z: number }, color?: string): void;
-  drawSphere(center: { x: number; y: number; z: number }, radius: number, color?: string): void;
-  drawBox(center: { x: number; y: number; z: number }, size: { x: number; y: number; z: number }, color?: string): void;
-  drawLabel(text: string, position: { x: number; y: number; z: number }, color?: string): void;
-  clear(): void;
-}
-
-/** Minimal input state surface for the input bridge. */
-export interface InputStateLike {
-  isKeyPressed(key: string): boolean;
-  getMouseDelta(): { x: number; y: number };
-  getMouseButtons(): { left: boolean; right: boolean; middle: boolean };
-}
+/** Default engine-level adapter port keys consumed by scripting bridges. */
+export const SCRIPTING_BRIDGE_PORT_KEYS: Readonly<Record<keyof BridgePorts, AdapterPortKey>> = {
+  physicsQuery: 'io:physics-query',
+  gizmo: 'io:gizmo',
+  input: 'io:input',
+};
 
 /** Resolved bridge APIs keyed by bridge name. */
 export type ScriptBridgeContext = Readonly<Record<string, Record<string, unknown>>>;

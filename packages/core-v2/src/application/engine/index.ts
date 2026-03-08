@@ -4,6 +4,7 @@ export { removeSceneFromEngine, type RemoveSceneParams } from './removeSceneFrom
 export { addViewport, type AddViewportParams } from './addViewport';
 export { removeViewport, type RemoveViewportParams } from './removeViewport';
 export { setEnginePaused, type SetEnginePausedParams } from './setEnginePaused';
+export { setupEngine, type SetupEngineParams } from './setupEngine';
 export { registerEngineAdapter, type RegisterEngineAdapterParams } from './registerEngineAdapter';
 export { updateEngine, type UpdateEngineParams } from './updateEngine';
 export { updateSettings, type UpdateSettingsParams } from './updateSettings';

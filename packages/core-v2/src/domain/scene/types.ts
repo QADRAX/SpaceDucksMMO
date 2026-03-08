@@ -1,5 +1,6 @@
 import type { EntityState, DebugKind } from '../entities';
 import type { ComponentType } from '../components';
+import type { SceneSystemAdapter } from '../adapters';
 
 /** Event emitted when an entity is added to a scene. */
 export type EntityAddedEvent = {
@@ -96,21 +97,6 @@ export type SceneChangeEventWithError = SceneChangeEvent | SceneErrorEvent;
  * Receives the scene state and the event that was emitted.
  */
 export type SceneChangeListener = (scene: SceneState, event: SceneChangeEventWithError) => void;
-
-/**
- * A scene system adapter reacts to scene change events and
- * participates in the frame-update pipeline.
- */
-export interface SceneSystemAdapter {
-  /** React to a scene change event (reactive channel). */
-  handleSceneEvent(scene: SceneState, event: SceneChangeEventWithError): void;
-  /** Advance one frame tick (synchronous pipeline). */
-  update?(scene: SceneState, dt: number): void;
-  /** If true, `update()` is called even when the scene is paused. */
-  updateWhenPaused?: boolean;
-  /** Release resources when the adapter is detached from the scene. */
-  dispose?(): void;
-}
 
 /**
  * Mutable scene state operated on by application-layer use cases.

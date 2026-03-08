@@ -1,6 +1,7 @@
-import type { SceneSystemAdapter, SceneChangeListener } from '../../domain/scene';
+import type { SceneSystemAdapter } from '../../domain/scene';
 import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
+import { attachSceneAdapters } from '../../domain/adapters';
 
 /** Parameters for the setupScene use case. */
 export interface SetupSceneParams {
@@ -18,11 +19,7 @@ export const setupScene = defineSceneUseCase<SetupSceneParams, void>({
   name: 'setupScene',
   execute(scene, { adapters }) {
     if (adapters) {
-      for (const adapter of adapters) {
-        scene.adapters.push(adapter);
-        const listener: SceneChangeListener = (s, ev) => adapter.handleSceneEvent(s, ev);
-        scene.changeListeners.add(listener);
-      }
+      attachSceneAdapters(scene, adapters);
     }
 
     emitSceneChange(scene, { kind: 'scene-setup' });
