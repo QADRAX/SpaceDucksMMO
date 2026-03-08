@@ -1,6 +1,48 @@
 import type { InspectorFieldConfig } from './types/core';
 import type { Result } from '../utils';
+import type { PrimitiveValidationRules } from '../properties';
 import { ok, err } from '../utils';
+import { validatePrimitiveValue } from '../properties';
+
+function toPrimitiveRules(field: InspectorFieldConfig): PrimitiveValidationRules | null {
+    switch (field.type) {
+        case 'number':
+            return {
+                kind: 'number',
+                required: true,
+                nullable: field.nullable,
+                min: field.min,
+                max: field.max,
+                step: field.step,
+            };
+        case 'boolean':
+            return { kind: 'boolean', required: true, nullable: field.nullable };
+        case 'string':
+        case 'texture':
+        case 'reference':
+            return { kind: 'string', required: true, nullable: field.nullable };
+        case 'color':
+            return {
+                kind: 'color',
+                colorMode: 'string',
+                required: true,
+                nullable: field.nullable,
+            };
+        case 'enum':
+            return {
+                kind: 'enum',
+                required: true,
+                nullable: field.nullable,
+                options: field.options.map((o) => o.value),
+            };
+        case 'vector':
+        case 'object':
+        case 'uniforms':
+            return { kind: 'object', required: true, nullable: field.nullable };
+        default:
+            return null;
+    }
+}
 
 /**
  * Validates a value against the constraints declared in an `InspectorFieldConfig`.
@@ -18,69 +60,15 @@ export function validateFieldValue(
     field: InspectorFieldConfig,
     value: unknown,
 ): Result<void> {
-    // 1. Nullability
-    if (value === null || value === undefined) {
-        if (field.nullable) return ok(undefined);
-        return err('validation', `Field '${field.key}' does not accept null/undefined.`);
+    const fail = (message: string): Result<void> =>
+        err('validation', `Field '${field.key}' ${message}`);
+
+    const rules = toPrimitiveRules(field);
+    if (!rules) {
+        // Unknown/unspecified field type — allow pass-through for backward compatibility.
+        return ok(undefined);
     }
 
-    // 2. Type check per inspector field type
-    switch (field.type) {
-        case 'number': {
-            if (typeof value !== 'number' || Number.isNaN(value)) {
-                return err('validation', `Field '${field.key}' expects a number, got ${typeof value}.`);
-            }
-            if (field.min !== undefined && value < field.min) {
-                return err(
-                    'validation',
-                    `Field '${field.key}' value ${value} is below minimum ${field.min}.`,
-                );
-            }
-            if (field.max !== undefined && value > field.max) {
-                return err(
-                    'validation',
-                    `Field '${field.key}' value ${value} exceeds maximum ${field.max}.`,
-                );
-            }
-            break;
-        }
-        case 'boolean': {
-            if (typeof value !== 'boolean') {
-                return err('validation', `Field '${field.key}' expects a boolean, got ${typeof value}.`);
-            }
-            break;
-        }
-        case 'string':
-        case 'color':
-        case 'texture':
-        case 'reference': {
-            if (typeof value !== 'string') {
-                return err('validation', `Field '${field.key}' expects a string, got ${typeof value}.`);
-            }
-            break;
-        }
-        case 'enum': {
-            if (!field.options || !field.options.some((o) => o.value === value)) {
-                const allowed = field.options?.map((o) => o.value).join(', ') ?? '(none)';
-                return err(
-                    'validation',
-                    `Field '${field.key}' value '${String(value)}' is not in allowed options: [${allowed}].`,
-                );
-            }
-            break;
-        }
-        case 'vector':
-        case 'object':
-        case 'uniforms': {
-            if (typeof value !== 'object') {
-                return err('validation', `Field '${field.key}' expects an object, got ${typeof value}.`);
-            }
-            break;
-        }
-        default:
-            // Unknown field type — allow the value through
-            break;
-    }
-
-    return ok(undefined);
+    const result = validatePrimitiveValue(rules, value);
+    return result.valid ? ok(undefined) : fail(result.error ?? 'is invalid.');
 }

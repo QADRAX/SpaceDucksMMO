@@ -1,3 +1,12 @@
+import type {
+    ComponentPrimitiveKind,
+    DefaultValueAttribute,
+    DescribedAttribute,
+    EnumOption,
+    NullableAttribute,
+    NumericConstraintAttributes,
+} from '../../properties';
+
 /**
  * Discriminator tag for all engine components.
  * Each component carries exactly one of these string literals as its `type` field.
@@ -42,21 +51,26 @@ export type ComponentType =
 /** Dependency token used by metadata validation rules. */
 export type ComponentDependency = ComponentType | 'geometry';
 
+/** Primitive field kinds reused from shared property typing. */
+export type InspectorPrimitiveFieldType = Extract<
+    ComponentPrimitiveKind,
+    ComponentPrimitiveKind
+>;
+
 /** UI field type for inspector rendering. */
 export type InspectorFieldType =
-    | 'number'
-    | 'boolean'
-    | 'string'
-    | 'color'
+    | InspectorPrimitiveFieldType
     | 'texture'
-    | 'enum'
     | 'vector'
-    | 'object'
     | 'reference'
     | 'uniforms';
 
-/** Configuration for a single inspector field bound to a component property. */
-export interface InspectorFieldConfig<TComponent = unknown, TValue = unknown> {
+/** Shared configuration for inspector fields. */
+interface InspectorFieldConfigBase<TComponent = unknown, TValue = unknown>
+    extends DescribedAttribute,
+    NullableAttribute,
+    DefaultValueAttribute<unknown>,
+    NumericConstraintAttributes {
     /** Property key on the component this field maps to. */
     key: string;
     /** Display label in the inspector UI. */
@@ -67,23 +81,28 @@ export interface InspectorFieldConfig<TComponent = unknown, TValue = unknown> {
     set?: (component: TComponent, value: TValue) => void;
     /** UI widget type to render for this field. */
     type?: InspectorFieldType;
-    /** Tooltip description. */
-    description?: string;
-    /** Whether the field accepts null/undefined values. */
-    nullable?: boolean;
-    /** Default value when creating the component. */
-    default?: unknown;
-    /** Minimum numeric value. */
-    min?: number;
-    /** Maximum numeric value. */
-    max?: number;
-    /** Numeric step increment. */
-    step?: number;
     /** Display unit suffix (e.g. "m", "°", "px"). */
     unit?: string;
-    /** Enum options for dropdown selectors. */
-    options?: ReadonlyArray<{ value: string | number; label: string; icon?: unknown }>;
 }
+
+/** Enum inspector field requires options. */
+export type InspectorEnumFieldConfig<TComponent = unknown, TValue = unknown> =
+    InspectorFieldConfigBase<TComponent, TValue> & {
+        type: 'enum';
+        options: ReadonlyArray<EnumOption<string | number>>;
+    };
+
+/** Non-enum inspector field does not allow enum options. */
+export type InspectorNonEnumFieldConfig<TComponent = unknown, TValue = unknown> =
+    InspectorFieldConfigBase<TComponent, TValue> & {
+        type?: Exclude<InspectorFieldType, 'enum'>;
+        options?: never;
+    };
+
+/** Configuration for a single inspector field bound to a component property. */
+export type InspectorFieldConfig<TComponent = unknown, TValue = unknown> =
+    | InspectorEnumFieldConfig<TComponent, TValue>
+    | InspectorNonEnumFieldConfig<TComponent, TValue>;
 
 /** Inspector metadata describing all editable fields of a component. */
 export interface InspectorMetadata<TComponent = unknown> {

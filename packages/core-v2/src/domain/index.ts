@@ -5,6 +5,7 @@ export * from './engine';
 export * from './entities';
 export * from './math';
 export * from './physics';
+export * from './properties';
 export * from './ports';
 export * from './scene';
 export * from './useCases';
