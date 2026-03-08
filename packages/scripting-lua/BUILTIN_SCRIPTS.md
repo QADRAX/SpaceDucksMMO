@@ -16,17 +16,14 @@
  * The adapter automatically uses built-in scripts if no custom resolver is provided:
  *
  * ```typescript
- * import { createScriptingAdapter, createMockSandbox, createScriptEventBus } from '@duckengine/scripting-lua';
+* import { createScriptingAdapter } from '@duckengine/scripting-lua';
  *
  * const adapter = createScriptingAdapter({
- *   engine: engineState,
- *   sceneId: 'main_scene',
- *   bridges: [...],
- *   sandbox: createMockSandbox(),
- *   eventBus: createScriptEventBus(),
- *   timeState: { delta: 0, elapsed: 0, frameCount: 0, scale: 1 },
- *   // resolveSource is optional; defaults to built-in scripts
+*   // resolveSource is optional; defaults to built-in scripts
+*   // ports is optional for physics/input integrations
  * });
+ *
+* // The adapter composes sandbox + bridges internally and receives scene at runtime
  * ```
  *
  * ## Built-In Scripts
@@ -63,7 +60,6 @@
  * };
  *
  * const adapter = createScriptingAdapter({
- *   ...,
  *   resolveSource: customResolver,
  * });
  * ```

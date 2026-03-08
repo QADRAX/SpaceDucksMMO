@@ -1,14 +1,9 @@
-import type { SceneState } from '@duckengine/core-v2';
+import type { AdapterEventParams } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import type { ScriptingUseCase } from '../domain/useCases';
 import { defineScriptingUseCase } from '../domain/useCases';
 import { slotKey, initScriptSlot, destroyScriptSlot } from '../domain/slots';
 import { createScriptBridgeContext } from '../domain/bridges';
-
-export interface ReconcileSlotsParams {
-  readonly scene: SceneState;
-  readonly entityId: string;
-}
 
 /**
  * Reconciles script slots for a single entity against its ECS `script` component.
@@ -19,12 +14,17 @@ export interface ReconcileSlotsParams {
  *
  * New slot creation is async (source resolution) and tracked in `pending`.
  */
-export const reconcileSlots: ScriptingUseCase<ReconcileSlotsParams, void> =
-  defineScriptingUseCase<ReconcileSlotsParams, void>({
+export const reconcileSlots: ScriptingUseCase<AdapterEventParams, void> =
+  defineScriptingUseCase<AdapterEventParams, void>({
     name: 'scripting/reconcileSlots',
 
-    execute(session: ScriptingSessionState, params: ReconcileSlotsParams): void {
-      const { scene, entityId } = params;
+    execute(session: ScriptingSessionState, params: AdapterEventParams): void {
+      const { scene, event } = params;
+      
+      // Only handle component-changed events for script components
+      if (event.kind !== 'component-changed' || event.componentType !== 'script') return;
+      
+      const { entityId } = event;
       const { slots, pending, sandbox } = session;
 
       const entity = scene.entities.get(entityId);

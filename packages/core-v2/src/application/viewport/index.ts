@@ -2,7 +2,6 @@ export {
   type ViewportUseCase,
   type ViewportGuard,
   defineViewportUseCase,
-  bindViewportUseCase,
 } from '../../domain/useCases';
 export { setViewportEnabled, type SetViewportEnabledParams } from './setViewportEnabled';
 export { setViewportScene, type SetViewportSceneParams } from './setViewportScene';

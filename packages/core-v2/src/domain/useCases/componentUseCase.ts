@@ -1,6 +1,5 @@
 import type { ComponentBase } from '../components';
-import type { ComponentUseCase, BoundUseCase } from './types';
-import { bindUseCase } from './bind';
+import type { ComponentUseCase } from './types';
 
 /**
  * Defines a component use case, automatically tagging it with `domain: 'component'`.
@@ -20,16 +19,4 @@ export function defineComponentUseCase<
     },
 ): ComponentUseCase<TComponent, TParams, TOutput> {
     return { ...definition, guards: definition.guards ?? [], domain: 'component' };
-}
-
-/** Binds a ComponentUseCase to a concrete component instance. */
-export function bindComponentUseCase<
-    TComponent extends ComponentBase,
-    TParams,
-    TOutput,
->(
-    component: TComponent,
-    useCase: ComponentUseCase<TComponent, TParams, TOutput>,
-): BoundUseCase<TParams, TOutput> {
-    return bindUseCase(component, useCase);
 }

@@ -1,6 +1,4 @@
-import type { EntityState } from '../entities';
-import type { EntityUseCase, BoundUseCase } from './types';
-import { bindUseCase } from './bind';
+import type { EntityUseCase } from './types';
 
 /**
  * Defines an entity use case, automatically tagging it with `domain: 'entity'`.
@@ -11,12 +9,4 @@ export function defineEntityUseCase<TParams = void, TOutput = void>(
     },
 ): EntityUseCase<TParams, TOutput> {
     return { ...definition, guards: definition.guards ?? [], domain: 'entity' };
-}
-
-/** Binds an EntityUseCase to a concrete EntityState. */
-export function bindEntityUseCase<TParams, TOutput>(
-    entity: EntityState,
-    useCase: EntityUseCase<TParams, TOutput>,
-): BoundUseCase<TParams, TOutput> {
-    return bindUseCase(entity, useCase);
 }

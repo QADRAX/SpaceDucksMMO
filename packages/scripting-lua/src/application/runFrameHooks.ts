@@ -1,4 +1,4 @@
-import type { SceneState } from '@duckengine/core-v2';
+import type { AdapterUpdateParams } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import type { ScriptingUseCase } from '../domain/useCases';
 import { defineScriptingUseCase } from '../domain/useCases';
@@ -8,11 +8,6 @@ import {
   syncSlotPropertiesFromScene,
   flushDirtySlotsToScene,
 } from '../domain/slots';
-
-export interface RunFrameHooksParams {
-  readonly scene: SceneState;
-  readonly dt: number;
-}
 
 /**
  * Executes the per-frame hook pipeline for all enabled slots.
@@ -27,11 +22,11 @@ export interface RunFrameHooksParams {
  *
  * If a hook call fails, the slot is automatically disabled.
  */
-export const runFrameHooks: ScriptingUseCase<RunFrameHooksParams, void> =
-  defineScriptingUseCase<RunFrameHooksParams, void>({
+export const runFrameHooks: ScriptingUseCase<AdapterUpdateParams, void> =
+  defineScriptingUseCase<AdapterUpdateParams, void>({
     name: 'scripting/runFrameHooks',
 
-    execute(session: ScriptingSessionState, params: RunFrameHooksParams): void {
+    execute(session: ScriptingSessionState, params: AdapterUpdateParams): void {
       const { scene, dt } = params;
       const { slots, sandbox, eventBus, timeState } = session;
 

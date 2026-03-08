@@ -1,3 +1,4 @@
+import type { AdapterEventParams } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import type { ScriptingUseCase } from '../domain/useCases';
 import { defineScriptingUseCase } from '../domain/useCases';
@@ -10,12 +11,15 @@ import { defineScriptingUseCase } from '../domain/useCases';
  *
  * Does NOT dispose the sandbox — that's the adapter's responsibility
  * (the sandbox may be shared or externally owned).
+ *
+ * Can be called from either `scene-teardown` event or `dispose` hook.
+ * Params are optional to support both contexts.
  */
-export const teardownSession: ScriptingUseCase<void, void> =
-  defineScriptingUseCase<void, void>({
+export const teardownSession: ScriptingUseCase<AdapterEventParams | void, void> =
+  defineScriptingUseCase<AdapterEventParams | void, void>({
     name: 'scripting/teardownSession',
 
-    execute(session: ScriptingSessionState): void {
+    execute(session: ScriptingSessionState, _params?: AdapterEventParams | void): void {
       const { slots, sandbox, eventBus } = session;
 
       for (const [key, slot] of slots) {

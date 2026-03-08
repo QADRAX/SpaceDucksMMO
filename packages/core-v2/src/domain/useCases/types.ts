@@ -139,3 +139,32 @@ export interface ComponentUseCase<
 /** Concrete guard type for component use cases (root = EntityState). */
 export type ComponentGuard<TComponent extends ComponentBase, TParams> =
     UseCaseGuard<EntityState, TComponent, TParams>;
+
+/**
+ * A use case that operates on an adapter's internal state.
+ * Adapters (physics, scripting, rendering) encapsulate subsystem logic
+ * and participate in the scene lifecycle via SceneSystemAdapter.
+ *
+ * Unlike domain use cases, adapter use cases:
+ * - Do not require guards (isolated subsystem state)
+ * - Are not composed into a public API (internal to the adapter)
+ * - Are bound via `composeAdapter` builder
+ *
+ * @template TState  - The adapter's internal state (e.g. ScriptingSessionState).
+ * @template TParams - Parameters accepted by the use case.
+ * @template TOutput - Return type of the use case (typically void).
+ *
+ * @example
+ * ```ts
+ * const reconcileSlots: AdapterUseCase<ScriptingSessionState, ReconcileParams, void> = {
+ *   name: 'reconcileSlots',
+ *   execute: (session, params) => { ... },
+ * };
+ * ```
+ */
+export interface AdapterUseCase<TState, TParams = void, TOutput = void> {
+    /** Unique name for logging, debugging, and introspection. */
+    readonly name: string;
+    /** Executes the use case against the adapter's state. */
+    execute(state: TState, params: TParams): TOutput;
+}

@@ -1,6 +1,4 @@
-import type { ViewportState } from '../viewport';
-import type { ViewportUseCase, ViewportGuard, BoundUseCase } from './types';
-import { bindUseCase } from './bind';
+import type { ViewportUseCase, ViewportGuard } from './types';
 
 /**
  * Defines a viewport use case, automatically tagging it with `domain: 'viewport'`.
@@ -15,12 +13,4 @@ export function defineViewportUseCase<TParams = void, TOutput = void>(
     guards: definition.guards ?? [],
     domain: 'viewport',
   };
-}
-
-/** Binds a ViewportUseCase to a concrete ViewportState. */
-export function bindViewportUseCase<TParams, TOutput>(
-  state: ViewportState,
-  useCase: ViewportUseCase<TParams, TOutput>,
-): BoundUseCase<TParams, TOutput> {
-  return bindUseCase(state, useCase);
 }

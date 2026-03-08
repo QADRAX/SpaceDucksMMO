@@ -5,3 +5,4 @@ export * from './engine';
 export * from './viewport';
 export * from './entityUseCase';
 export * from './componentUseCase';
+export * from './adapter';

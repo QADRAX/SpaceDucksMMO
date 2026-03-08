@@ -1,36 +1,61 @@
-import type {
-  SceneState,
-  SceneChangeEventWithError,
-  SceneSystemAdapter,
-  EngineState,
-  ScriptSchema,
-} from '@duckengine/core-v2';
-import type { BridgeDeclaration, BridgePorts, TimeState } from '../domain/bridges';
+import type { SceneSystemAdapter, ScriptSchema } from '@duckengine/core-v2';
+import { composeAdapter } from '@duckengine/core-v2';
+import type { BridgePorts } from '../domain/bridges';
+import {
+  transformBridge,
+  createSceneBridgeDeclaration,
+  physicsBridge,
+  inputBridge,
+  createTimeBridgeDeclaration,
+  createTimeState,
+  gizmoBridge,
+} from '../domain/bridges';
 import type { ScriptSandbox } from '../domain/ports';
 import { createScriptEventBus } from '../domain/events';
 import { createScriptingSession } from '../domain/session';
-import { bindScriptingUseCase } from '../domain/useCases';
 import { reconcileSlots } from '../application/reconcileSlots';
 import { destroyEntitySlots } from '../application/destroyEntitySlots';
 import { runFrameHooks } from '../application/runFrameHooks';
 import { teardownSession } from '../application/teardownSession';
 import { createBuiltInScriptResolver } from './createBuiltInScriptResolver';
 
-/** Configuration for creating a scripting adapter. */
+function createDefaultSandbox(): ScriptSandbox {
+  // Temporary infra-owned sandbox used until wasmoon runtime is implemented.
+  return {
+    detectHooks(_source: string) {
+      return [];
+    },
+    createSlot() {
+      // no-op
+    },
+    destroySlot() {
+      // no-op
+    },
+    callHook() {
+      return true;
+    },
+    syncProperties() {
+      // no-op
+    },
+    flushDirtyProperties() {
+      return null;
+    },
+    dispose() {
+      // no-op
+    },
+  };
+}
+
+/**
+ * Configuration for creating a scripting adapter.
+ *
+ * Infrastructure layer: receives only external dependencies and composes
+ * the concrete bridges, sandbox, and session internally.
+ */
 export interface CreateScriptingAdapterParams {
-  /** The root engine state (for cross-scene resolution). */
-  readonly engine: EngineState;
-  /** The scene this adapter manages. */
-  readonly sceneId: string;
-  /** Bridge declarations to install per slot. */
-  readonly bridges: ReadonlyArray<BridgeDeclaration>;
   /** External ports for bridges that need infra (physics, input, gizmo). */
   readonly ports?: BridgePorts;
-  /** The sandbox implementation (wasmoon or mock). */
-  readonly sandbox: ScriptSandbox;
-  /** Shared time state updated by the adapter each frame. */
-  readonly timeState: TimeState;
-  /** Optional script source resolver. Defaults to no-op. */
+  /** Optional script source resolver. Defaults to built-in resolver. */
   readonly resolveSource?: (scriptId: string) => Promise<string | null>;
   /** Optional script schema resolver. Defaults to no-op. */
   readonly resolveScriptSchema?: (scriptId: string) => Promise<ScriptSchema | null>;
@@ -39,52 +64,47 @@ export interface CreateScriptingAdapterParams {
 /**
  * Creates a `SceneSystemAdapter` that manages Lua script lifecycles.
  *
- * This is a thin composition root that delegates all business logic
- * to application-layer use cases. It owns the ScriptingSessionState
- * and routes SceneChangeEvents to the appropriate use case.
+ * Uses the `composeAdapter` builder to declaratively bind use cases
+ * to the scene lifecycle hooks. All business logic lives in application-layer
+ * use cases; this is a thin composition root.
+ *
+ * The adapter receives runtime state (scene, delta time) via its lifecycle
+ * methods (`handleSceneEvent`, `update`) — not at construction time.
  */
 export function createScriptingAdapter(
   params: CreateScriptingAdapterParams,
 ): SceneSystemAdapter {
-  const { engine: _engine, sceneId: _sceneId, bridges, ports, sandbox, timeState } = params;
+  const { ports } = params;
+
+  // Create shared state and event bus
+  const eventBus = createScriptEventBus();
+  const timeState = createTimeState();
+
+  // Compose concrete bridges (infrastructure responsibility)
+  const bridges = [
+    transformBridge,
+    createSceneBridgeDeclaration(eventBus),
+    physicsBridge,
+    inputBridge,
+    createTimeBridgeDeclaration(timeState),
+    gizmoBridge,
+  ];
 
   const session = createScriptingSession({
-    sandbox,
+    sandbox: createDefaultSandbox(),
     bridges,
     ports,
-    eventBus: createScriptEventBus(),
+    eventBus,
     timeState,
     resolveSource: params.resolveSource ?? createBuiltInScriptResolver(),
     resolveScriptSchema: params.resolveScriptSchema,
   });
 
-  const boundReconcile = bindScriptingUseCase(session, reconcileSlots);
-  const boundDestroy = bindScriptingUseCase(session, destroyEntitySlots);
-  const boundRunFrame = bindScriptingUseCase(session, runFrameHooks);
-  const boundTeardown = bindScriptingUseCase(session, teardownSession);
-
-  return {
-    handleSceneEvent(scene: SceneState, event: SceneChangeEventWithError): void {
-      if (event.kind === 'component-changed' && event.componentType === 'script') {
-        boundReconcile.execute({ scene, entityId: event.entityId });
-      }
-
-      if (event.kind === 'entity-removed') {
-        boundDestroy.execute({ entityId: event.entityId });
-      }
-
-      if (event.kind === 'scene-teardown') {
-        boundTeardown.execute(undefined as void);
-      }
-    },
-
-    update(scene: SceneState, dt: number): void {
-      boundRunFrame.execute({ scene, dt });
-    },
-
-    dispose(): void {
-      boundTeardown.execute(undefined as void);
-      sandbox.dispose();
-    },
-  };
+  return composeAdapter(session)
+    .on('component-changed', reconcileSlots)
+    .on('entity-removed', destroyEntitySlots)
+    .on('scene-teardown', teardownSession)
+    .onUpdate(runFrameHooks)
+    .onDispose(teardownSession)
+    .build();
 }

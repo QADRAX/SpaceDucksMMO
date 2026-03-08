@@ -1,11 +1,8 @@
+import type { AdapterEventParams } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import type { ScriptingUseCase } from '../domain/useCases';
 import { defineScriptingUseCase } from '../domain/useCases';
 import { destroyEntityScriptSlots } from '../domain/slots';
-
-export interface DestroyEntitySlotsParams {
-  readonly entityId: string;
-}
 
 /**
  * Destroys all script slots belonging to a given entity.
@@ -14,12 +11,17 @@ export interface DestroyEntitySlotsParams {
  * Runs `onDisable` → `onDestroy` lifecycle on each slot,
  * then cleans up sandbox and event bus subscriptions.
  */
-export const destroyEntitySlots: ScriptingUseCase<DestroyEntitySlotsParams, void> =
-  defineScriptingUseCase<DestroyEntitySlotsParams, void>({
+export const destroyEntitySlots: ScriptingUseCase<AdapterEventParams, void> =
+  defineScriptingUseCase<AdapterEventParams, void>({
     name: 'scripting/destroyEntitySlots',
 
-    execute(session: ScriptingSessionState, params: DestroyEntitySlotsParams): void {
-      const { entityId } = params;
+    execute(session: ScriptingSessionState, params: AdapterEventParams): void {
+      const { event } = params;
+      
+      // Only handle entity-removed events
+      if (event.kind !== 'entity-removed') return;
+      
+      const { entityId } = event;
       destroyEntityScriptSlots(session.slots, session.sandbox, session.eventBus, entityId);
     },
   });

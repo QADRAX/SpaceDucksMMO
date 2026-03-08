@@ -1,23 +1,15 @@
-import type { BoundUseCase } from '@duckengine/core-v2';
-import { bindUseCase } from '@duckengine/core-v2';
+import { defineAdapterUseCase } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../session';
 import type { ScriptingUseCase } from './types';
 
 /**
- * Defines a scripting use case, automatically tagging it with `domain: 'scripting'`.
+ * Defines a scripting use case using the adapter use case pattern.
+ * 
+ * This is a convenience wrapper around `defineAdapterUseCase` that
+ * pre-binds the `ScriptingSessionState` type.
  */
 export function defineScriptingUseCase<TParams = void, TOutput = void>(
-  definition: Omit<ScriptingUseCase<TParams, TOutput>, 'domain' | 'guards'> & {
-    readonly guards?: ScriptingUseCase<TParams, TOutput>['guards'];
-  },
+  definition: ScriptingUseCase<TParams, TOutput>,
 ): ScriptingUseCase<TParams, TOutput> {
-  return { ...definition, guards: definition.guards ?? [], domain: 'scripting' };
-}
-
-/** Binds a ScriptingUseCase to a concrete ScriptingSessionState. */
-export function bindScriptingUseCase<TParams, TOutput>(
-  session: ScriptingSessionState,
-  useCase: ScriptingUseCase<TParams, TOutput>,
-): BoundUseCase<TParams, TOutput> {
-  return bindUseCase(session, useCase);
+  return defineAdapterUseCase<ScriptingSessionState, TParams, TOutput>(definition);
 }
