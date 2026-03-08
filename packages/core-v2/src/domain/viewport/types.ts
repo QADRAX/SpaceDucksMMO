@@ -1,3 +1,5 @@
+import type { EntityId, SceneId, ViewportId, CanvasId } from '../ids';
+
 /** Normalised rectangle (all values 0–1). */
 export interface ViewportRect {
   readonly x: number;
@@ -13,13 +15,13 @@ export interface ViewportRect {
  * minimap) or to different scenes (editor + preview).
  */
 export interface Viewport {
-  readonly id: string;
+  readonly id: ViewportId;
   /** Which scene this viewport renders. */
-  readonly sceneId: string;
+  readonly sceneId: SceneId;
   /** Which camera entity to use (overrides scene.activeCameraId). */
-  readonly cameraEntityId: string;
+  readonly cameraEntityId: EntityId;
   /** Target canvas identifier. */
-  readonly canvasId: string;
+  readonly canvasId: CanvasId;
   /** Normalised region inside the canvas. */
   readonly rect: ViewportRect;
   /** Whether this viewport is rendered. */
@@ -31,13 +33,13 @@ export interface Viewport {
  * Created by `createViewport`, mutated by viewport use-case functions.
  */
 export interface ViewportState {
-  readonly id: string;
+  readonly id: ViewportId;
   /** Which scene this viewport renders. */
-  sceneId: string;
+  sceneId: SceneId;
   /** Which camera entity to use (overrides scene.activeCameraId). */
-  cameraEntityId: string;
+  cameraEntityId: EntityId;
   /** Target canvas identifier. */
-  canvasId: string;
+  canvasId: CanvasId;
   /** Normalised region inside the canvas. */
   rect: ViewportRect;
   /** Whether this viewport is rendered. */
@@ -46,20 +48,20 @@ export interface ViewportState {
 
 /** Readonly snapshot of a viewport for application/UI consumers. */
 export interface ViewportView {
-  readonly id: string;
-  readonly sceneId: string;
-  readonly cameraEntityId: string;
-  readonly canvasId: string;
+  readonly id: ViewportId;
+  readonly sceneId: SceneId;
+  readonly cameraEntityId: EntityId;
+  readonly canvasId: CanvasId;
   readonly rect: ViewportRect;
   readonly enabled: boolean;
 }
 
 /** Parameters for creating a viewport. */
 export interface CreateViewportParams {
-  readonly id: string;
-  readonly sceneId: string;
-  readonly cameraEntityId: string;
-  readonly canvasId: string;
+  readonly id: ViewportId;
+  readonly sceneId: SceneId;
+  readonly cameraEntityId: EntityId;
+  readonly canvasId: CanvasId;
   readonly rect?: Partial<ViewportRect>;
   readonly enabled?: boolean;
 }

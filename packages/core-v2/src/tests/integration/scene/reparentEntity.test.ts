@@ -1,65 +1,76 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { setupIntegrationTest } from '../setup';
+import { setupIntegrationTest, createSceneId, createEntityId } from '../setup';
 import type { TestContext } from '../setup';
-import { createEntity, addChild } from '../../../domain/entities/entity';
+import { createEntity } from '../../../domain/entities/entity';
+import type { EntityState } from '../../../domain/entities/types';
 
 describe('Integration: Scene > reparentEntity', () => {
     let ctx: TestContext;
+    let p1: EntityState;
+    let p2: EntityState;
+    let e1: EntityState;
 
     beforeEach(() => {
         ctx = setupIntegrationTest();
-        ctx.api.addScene({ sceneId: 'main' });
+        ctx.api.addScene({ sceneId: createSceneId('main') });
+
+        p1 = createEntity(createEntityId('p1'));
+        p2 = createEntity(createEntityId('p2'));
+        e1 = createEntity(createEntityId('e1'));
+
+        ctx.api.scene(createSceneId('main')).addEntity({ entity: p1 });
+        ctx.api.scene(createSceneId('main')).addEntity({ entity: p2 });
+        ctx.api.scene(createSceneId('main')).addEntity({ entity: e1 });
+
+        expect(ctx.engine.scenes.get(createSceneId('main'))?.rootEntityIds).toContain(createEntityId('e1'));
     });
 
     it('should move an entity from root to another parent', () => {
-        ctx.api.scene('main').addEntity({ entity: createEntity('p1') });
-        ctx.api.scene('main').addEntity({ entity: createEntity('e1') });
-
-        expect(ctx.engine.scenes.get('main')?.rootEntityIds).toContain('e1');
-
-        const result = ctx.api.scene('main').reparentEntity({
-            childId: 'e1',
-            newParentId: 'p1'
+        const result = ctx.api.scene(createSceneId('main')).reparentEntity({
+            childId: createEntityId('e1'),
+            newParentId: createEntityId('p1')
         });
 
         expect(result.ok).toBe(true);
-        expect(ctx.engine.scenes.get('main')?.rootEntityIds).not.toContain('e1');
-        expect(ctx.engine.scenes.get('main')?.entities.get('p1')?.children.map(c => c.id)).toContain('e1');
+        expect(ctx.engine.scenes.get(createSceneId('main'))?.rootEntityIds).not.toContain(createEntityId('e1'));
+        expect(ctx.engine.scenes.get(createSceneId('main'))?.entities.get(createEntityId('p1'))?.children.map(c => c.id)).toContain(createEntityId('e1'));
     });
 
     it('should move an entity back to root if newParentId is null', () => {
-        const p1 = createEntity('p1');
-        const e1 = createEntity('e1');
-        addChild(p1, e1);
+        ctx.api.scene(createSceneId('main')).reparentEntity({
+            childId: createEntityId('e1'),
+            newParentId: createEntityId('p1')
+        });
+        expect(ctx.engine.scenes.get(createSceneId('main'))?.rootEntityIds).not.toContain(createEntityId('e1'));
 
-        ctx.api.scene('main').addEntity({ entity: p1 });
-        expect(ctx.engine.scenes.get('main')?.rootEntityIds).not.toContain('e1');
-
-        const result = ctx.api.scene('main').reparentEntity({
-            childId: 'e1',
+        const result = ctx.api.scene(createSceneId('main')).reparentEntity({
+            childId: createEntityId('e1'),
             newParentId: null
         });
 
         expect(result.ok).toBe(true);
-        expect(ctx.engine.scenes.get('main')?.rootEntityIds).toContain('e1');
-        expect(ctx.engine.scenes.get('main')?.entities.get('p1')?.children).toHaveLength(0);
+        expect(ctx.engine.scenes.get(createSceneId('main'))?.rootEntityIds).toContain(createEntityId('e1'));
+        expect(ctx.engine.scenes.get(createSceneId('main'))?.entities.get(createEntityId('p1'))?.children).toHaveLength(0);
     });
 
     it('should fail if creating a circular dependency', () => {
-        const p1 = createEntity('p1');
-        const e1 = createEntity('e1');
-        addChild(p1, e1);
-        ctx.api.scene('main').addEntity({ entity: p1 });
+        // 1. p1 becomes child of e1 (e1 is parent)
+        const r1 = ctx.api.scene(createSceneId('main')).reparentEntity({
+            childId: createEntityId('p1'),
+            newParentId: createEntityId('e1')
+        });
+        expect(r1.ok).toBe(true);
 
-        const result = ctx.api.scene('main').reparentEntity({
-            childId: 'p1',
-            newParentId: 'e1'
+        // 2. Try to make e1 a child of p1 (Cycle!)
+        const circularResult = ctx.api.scene(createSceneId('main')).reparentEntity({
+            childId: createEntityId('e1'),
+            newParentId: createEntityId('p1')
         });
 
-        expect(result.ok).toBe(false);
-        if (!result.ok) {
-            expect(result.error.code).toBe('invalid-reparent');
-            expect(result.error.message).toContain('cycle');
+        expect(circularResult.ok).toBe(false);
+        if (!circularResult.ok) {
+            expect(circularResult.error.code).toBe('invalid-reparent');
+            expect(circularResult.error.message).toContain('cycle');
         }
     });
 });

@@ -2,9 +2,11 @@ import type { Result } from '../../domain/utils';
 import { ok, err } from '../../domain/utils';
 import { defineEngineUseCase } from '../../domain/useCases';
 
+import type { SceneId } from '../../domain/ids';
+
 /** Parameters for the removeSceneFromEngine use case. */
 export interface RemoveSceneParams {
-  readonly sceneId: string;
+  readonly sceneId: SceneId;
 }
 
 /**

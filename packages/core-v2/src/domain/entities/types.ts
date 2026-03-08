@@ -6,6 +6,7 @@ import type {
 } from '../components';
 
 import type { Vec3Like, EulerLike } from '../math';
+import type { EntityId } from '../ids';
 
 /**
  * Debug visualization category.
@@ -15,18 +16,18 @@ import type { Vec3Like, EulerLike } from '../math';
 export type DebugKind = 'transform' | 'mesh' | 'collider' | 'camera' | (string & {});
 
 /** Listener for presentation changes (display name, gizmo icon). */
-export type PresentationListener = (entityId: string) => void;
+export type PresentationListener = (entityId: EntityId) => void;
 
 /** Listener for debug flag changes. */
-export type DebugListener = (entityId: string, kind: DebugKind, enabled: boolean) => void;
+export type DebugListener = (entityId: EntityId, kind: DebugKind, enabled: boolean) => void;
 
 /** Centralised observer hub for a single entity. */
 export interface EntityObservers {
-  fireComponentAdded(entityId: string, comp: ComponentBase): void;
-  fireComponentRemoved(entityId: string, comp: ComponentBase): void;
-  fireComponentChanged(entityId: string, type: ComponentType): void;
-  firePresentationChanged(entityId: string): void;
-  fireDebugChanged(entityId: string, kind: DebugKind, enabled: boolean): void;
+  fireComponentAdded(entityId: EntityId, comp: ComponentBase): void;
+  fireComponentRemoved(entityId: EntityId, comp: ComponentBase): void;
+  fireComponentChanged(entityId: EntityId, type: ComponentType): void;
+  firePresentationChanged(entityId: EntityId): void;
+  fireDebugChanged(entityId: EntityId, kind: DebugKind, enabled: boolean): void;
 
   addComponentListener(fn: ComponentListener): void;
   removeComponentListener(fn: ComponentListener): void;
@@ -60,7 +61,7 @@ export interface TransformState {
  * All mutation functions operate on this type directly.
  */
 export interface EntityState {
-  readonly id: string;
+  readonly id: EntityId;
   readonly transform: TransformState;
   readonly components: Map<ComponentType, ComponentBase>;
   readonly observers: EntityObservers;

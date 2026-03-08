@@ -6,8 +6,9 @@ import { buildComponentsAPI } from './buildComponentsAPI';
 import { buildScriptsAPI } from './buildScriptsAPI';
 import { buildTransformAPI } from './buildTransformAPI';
 import type { EntityAPI, ScriptAPIBuildContext } from './types';
+import type { EntityId } from '../../ids';
 
-function defaultDestroyEntity(scene: SceneState, entityId: string): boolean {
+function defaultDestroyEntity(scene: SceneState, entityId: EntityId): boolean {
   return scene.entities.delete(entityId);
 }
 
@@ -65,7 +66,7 @@ export function buildEntityAPI(
 
       if (!canDestroySelfEntity(permissions)) return;
 
-      const destroyFn = context.destroyEntity ?? ((id: string) => defaultDestroyEntity(scene, id));
+      const destroyFn = context.destroyEntity ?? ((id: EntityId) => defaultDestroyEntity(scene, id));
       destroyFn(entity.id);
     },
   };
@@ -75,7 +76,7 @@ export function buildEntityAPI(
  * Resolves and builds an entity API from an entity id if permissions allow it.
  */
 export function buildEntityRefAPI(
-  entityId: string,
+  entityId: EntityId,
   scene: SceneState,
   permissions: ScriptPermissions,
   context: ScriptAPIBuildContext = {},

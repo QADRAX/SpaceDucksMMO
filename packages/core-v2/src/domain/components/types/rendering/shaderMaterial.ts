@@ -1,4 +1,5 @@
 import type { ComponentBase } from '../core';
+import type { ResourceRef } from '../../../resources';
 
 /** Shader blending mode for custom shader materials. */
 export type ShaderBlendingMode = 'normal' | 'additive' | 'multiply' | 'subtractive';
@@ -8,10 +9,15 @@ export interface ShaderMaterialBase<
     TType extends 'basicShaderMaterial' | 'standardShaderMaterial' | 'physicalShaderMaterial',
     TSelf = unknown,
 > extends ComponentBase<TType, TSelf> {
-    shaderId: string;
+    /** Reference to the shader resource (vertex/fragment source). */
+    shader: ResourceRef<'shader'>;
+    /** Dynamic uniform values for the shader. */
     uniforms: Record<string, unknown>;
+    /** Whether the shader material supports transparency. */
     transparent: boolean;
+    /** Whether to write to the depth buffer. */
     depthWrite: boolean;
+    /** How colors are combined with the background. */
     blending: ShaderBlendingMode;
 }
 

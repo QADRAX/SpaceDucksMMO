@@ -5,10 +5,12 @@ import { wouldCreateCycle, validateHierarchyInSubtree } from '../../domain/entit
 import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
+import type { EntityId } from '../../domain/ids';
+
 /** Parameters for the reparentEntityInScene use case. */
 export interface ReparentEntityParams {
-  readonly childId: string;
-  readonly newParentId: string | null;
+  readonly childId: EntityId;
+  readonly newParentId: EntityId | null;
 }
 
 /**

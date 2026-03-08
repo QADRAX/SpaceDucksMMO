@@ -1,7 +1,8 @@
+import type { SceneId } from '../ids';
 import type { SceneState } from './types';
 
 /** Creates an empty scene state. */
-export function createScene(id: string): SceneState {
+export function createScene(id: SceneId): SceneState {
   return {
     id,
     entities: new Map(),

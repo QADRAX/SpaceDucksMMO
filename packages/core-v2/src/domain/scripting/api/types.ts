@@ -1,6 +1,7 @@
 import type { ComponentBase } from '../../components';
 import type { ScriptReference } from '../../components/types/gameplay/scripting';
 import type { SceneState } from '../../scene';
+import type { EntityId } from '../../ids';
 
 /** Simple 3D vector API shape exposed to scripts. */
 export interface Vec3API {
@@ -38,7 +39,7 @@ export type ScriptsAPI = Record<string, ScriptAPI | undefined>;
 
 /** Entity API exposed to scripts. */
 export interface EntityAPI {
-  readonly id: string;
+  readonly id: EntityId;
   name: string;
   readonly transform: TransformAPI;
   readonly components: ComponentsAPI;
@@ -49,7 +50,7 @@ export interface EntityAPI {
 
 /** Optional callbacks used while building entity APIs. */
 export interface ScriptAPIBuildContext {
-  destroyEntity?(entityId: string): boolean;
+  destroyEntity?(entityId: EntityId): boolean;
 }
 
 /** Internal script reference lookup result. */
@@ -113,10 +114,10 @@ export interface SceneAPIBuildContext {
     prefabId: string,
     position?: Vec3API,
     rotation?: Vec3API,
-  ) => string | null;
-  readonly findEntityIdsByTag?: (scene: SceneState, tag: string) => string[];
+  ) => EntityId | null;
+  readonly findEntityIdsByTag?: (scene: SceneState, tag: string) => EntityId[];
   readonly raycast?: (query: SceneRaycastQuery) => {
-    entityId: string;
+    entityId: EntityId;
     point: Vec3API;
     distance: number;
   } | null;

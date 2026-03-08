@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { setupIntegrationTest } from '../setup';
+import { setupIntegrationTest, createSceneId, createEntityId } from '../setup';
 import type { TestContext } from '../setup';
 import { createComponent, getComponentMetadata } from '../../../domain/components/factory';
 import { createEntity } from '../../../domain/entities/entity';
@@ -37,18 +37,20 @@ const ALL_TYPES = Object.keys(ALL_SPECS) as CreatableComponentType[];
 
 describe('Integration: Component > setField', () => {
     let ctx: TestContext;
+    const MAIN_SCENE = createSceneId('main');
+    const E1 = createEntityId('e1');
 
     beforeEach(() => {
         ctx = setupIntegrationTest();
-        ctx.api.addScene({ sceneId: 'main' });
-        ctx.api.scene('main').addEntity({
-            entity: createEntity('e1')
+        ctx.api.addScene({ sceneId: MAIN_SCENE });
+        ctx.api.scene(MAIN_SCENE).addEntity({
+            entity: createEntity(E1)
         });
     });
 
     describe('All Component Types Validation', () => {
         it.each(ALL_TYPES)('%s: should successfully set and validate fields via API', (type) => {
-            const entityApi = ctx.api.scene('main').entity('e1');
+            const entityApi = ctx.api.scene(MAIN_SCENE).entity(E1);
             const meta = getComponentMetadata(type);
 
             // Satisfy requirements recursively for this test
@@ -105,8 +107,8 @@ describe('Integration: Component > setField', () => {
             expect(result.ok).toBe(true);
 
             // Verify in Engine State
-            const entityState = ctx.engine.scenes.get('main')?.entities.get('e1');
-            const compState = entityState?.components.get(type) as any;
+            const entityState = ctx.engine.scenes.get(MAIN_SCENE)?.entities.get(E1);
+            const compState = entityState?.components.get(type as any) as any;
             expect(getFieldValue(compState, targetKey)).toBe(newValue);
 
             // Verify via Snapshot API
@@ -119,7 +121,7 @@ describe('Integration: Component > setField', () => {
     });
 
     it('should support dot-notation path resolution (e.g. halfExtents.x)', () => {
-        const entityApi = ctx.api.scene('main').entity('e1');
+        const entityApi = ctx.api.scene(MAIN_SCENE).entity(E1);
         entityApi.addComponent({ component: createComponent('rigidBody') as any });
         entityApi.addComponent({ component: createComponent('boxCollider') as any });
 
@@ -133,12 +135,12 @@ describe('Integration: Component > setField', () => {
         if (!result.ok) console.error("FAILED dot-notation", result.error);
         expect(result.ok).toBe(true);
 
-        const state = ctx.engine.scenes.get('main')?.entities.get('e1')?.components.get('boxCollider') as any;
+        const state = ctx.engine.scenes.get(MAIN_SCENE)?.entities.get(E1)?.components.get('boxCollider' as any) as any;
         expect(state.halfExtents.x).toBe(0.99);
     });
 
     it('should return validation error for out-of-bounds values', () => {
-        const entityApi = ctx.api.scene('main').entity('e1');
+        const entityApi = ctx.api.scene(MAIN_SCENE).entity(E1);
         entityApi.addComponent({ component: createComponent('rigidBody') as any });
 
         const rbApi = entityApi.component('rigidBody');

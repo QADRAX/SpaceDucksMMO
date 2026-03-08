@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { setupIntegrationTest } from '../setup';
+import { setupIntegrationTest, createSceneId } from '../setup';
 import type { TestContext } from '../setup';
 import type { SceneSubsystemFactory } from '../../../domain/subsystems';
 
@@ -31,10 +31,11 @@ describe('Integration: Engine > setupEngine', () => {
       sceneSubsystems: [factory],
     });
 
-    ctx.api.addScene({ sceneId: 'main' });
-    ctx.api.scene('main').setupScene({});
+    const mainSceneId = createSceneId('main');
+    ctx.api.addScene({ sceneId: mainSceneId });
+    ctx.api.scene(mainSceneId).setupScene({});
 
-    expect(ctx.engine.scenes.get('main')?.subsystems).toHaveLength(1);
+    expect(ctx.engine.scenes.get(mainSceneId)?.subsystems).toHaveLength(1);
     expect(eventSpy).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({ kind: 'scene-setup' }),
@@ -59,7 +60,8 @@ describe('Integration: Engine > setupEngine', () => {
       sceneSubsystems: [factory],
     });
 
-    ctx.api.addScene({ sceneId: 'main' });
+    const mainSceneId = createSceneId('main');
+    ctx.api.addScene({ sceneId: mainSceneId });
 
     expect(factorySpy).toHaveBeenCalledTimes(1);
     expect(derivedPort.ping).toHaveBeenCalledTimes(1);

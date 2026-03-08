@@ -2,6 +2,7 @@ import type { EngineState } from '../engine';
 import type { ComponentType } from '../components';
 import { ok, err } from '../utils';
 import type { Result } from '../utils';
+import type { SceneId, EntityId, ViewportId } from '../ids';
 import type { APIComposer, SupportedUseCase } from './types';
 
 /**
@@ -98,11 +99,11 @@ export function composeAPI(engine: EngineState): APIComposer {
     return Object.freeze({
       ...engineMethods,
 
-      scene: (sceneId: string) => {
+      scene: (sceneId: SceneId) => {
         const scene = engine.scenes.get(sceneId);
         const sceneBound = createBoundMethods(sceneMethods, scene, engine, 'Scene', sceneId);
 
-        sceneBound.entity = (entityId: string) => {
+        sceneBound.entity = (entityId: EntityId) => {
           const entity = scene?.entities.get(entityId);
           const entityBound = createBoundMethods(entityMethods, entity, scene, 'Entity', entityId);
 
@@ -119,7 +120,7 @@ export function composeAPI(engine: EngineState): APIComposer {
         return Object.freeze(sceneBound);
       },
 
-      viewport: (viewportId: string) => Object.freeze(
+      viewport: (viewportId: ViewportId) => Object.freeze(
         createBoundMethods(
           viewportMethods,
           engine.viewports.get(viewportId),

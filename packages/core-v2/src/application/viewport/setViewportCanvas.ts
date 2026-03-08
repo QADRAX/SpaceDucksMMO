@@ -1,8 +1,9 @@
 import { defineViewportUseCase } from '../../domain/useCases';
+import type { CanvasId } from '../../domain/ids';
 
 /** Parameters for setViewportCanvas. */
 export interface SetViewportCanvasParams {
-  readonly canvasId: string;
+  readonly canvasId: CanvasId;
 }
 
 /** Changes the target canvas for this viewport. */

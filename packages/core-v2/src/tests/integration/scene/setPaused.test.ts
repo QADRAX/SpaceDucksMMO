@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { setupIntegrationTest } from '../setup';
+import { setupIntegrationTest, createSceneId } from '../setup';
 import type { TestContext } from '../setup';
 
 describe('Integration: Scene > setPaused', () => {
@@ -7,17 +7,17 @@ describe('Integration: Scene > setPaused', () => {
 
     beforeEach(() => {
         ctx = setupIntegrationTest();
-        ctx.api.addScene({ sceneId: 'main' });
+        ctx.api.addScene({ sceneId: createSceneId('main') });
     });
 
     it('should pause and resume the scene', () => {
-        const scene = ctx.engine.scenes.get('main');
+        const scene = ctx.engine.scenes.get(createSceneId('main'));
         expect(scene?.paused).toBe(false);
 
-        ctx.api.scene('main').setPaused({ paused: true });
+        ctx.api.scene(createSceneId('main')).setPaused({ paused: true });
         expect(scene?.paused).toBe(true);
 
-        ctx.api.scene('main').setPaused({ paused: false });
+        ctx.api.scene(createSceneId('main')).setPaused({ paused: false });
         expect(scene?.paused).toBe(false);
     });
 });

@@ -1,4 +1,5 @@
 import type { ComponentBase } from '../core';
+import type { ResourceRef } from '../../../resources';
 
 /** Shared fields for all geometry components. */
 export interface GeometryComponentBase<
@@ -52,14 +53,16 @@ export interface TorusGeometryComponent extends GeometryComponentBase<'torusGeom
   tubularSegments: number;
 }
 
-/** External mesh geometry resource. */
+/** External mesh geometry resource (GLB/GLTF). */
 export interface FullMeshComponent extends GeometryComponentBase<'fullMesh', FullMeshComponent> {
-  url: string;
+  /** Reference to the mesh resource. */
+  mesh: ResourceRef<'mesh'>;
 }
 
 /** External custom geometry resource. */
 export interface CustomGeometryComponent extends GeometryComponentBase<'customGeometry', CustomGeometryComponent> {
-  url: string;
+  /** Reference to the custom geometry resource. */
+  mesh: ResourceRef<'mesh'>;
 }
 
 /** Union of all geometry components. */

@@ -4,9 +4,11 @@ import { hasComponent } from '../../domain/entities';
 import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
+import type { EntityId } from '../../domain/ids';
+
 /** Parameters for the setActiveCamera use case. */
 export interface SetActiveCameraParams {
-  readonly entityId: string | null;
+  readonly entityId: EntityId | null;
 }
 
 /**

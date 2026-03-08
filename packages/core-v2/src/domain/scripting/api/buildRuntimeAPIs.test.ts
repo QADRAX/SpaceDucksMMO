@@ -1,15 +1,17 @@
+import { describe, it, expect, jest } from '@jest/globals';
 import { createEntity } from '../../entities';
 import { createScene } from '../../scene';
 import type { ScriptPermissions } from '../permissions';
 import { buildInputAPI } from './buildInputAPI';
 import { buildSceneAPI } from './buildSceneAPI';
 import { buildTimeAPI } from './buildTimeAPI';
+import { createEntityId, createSceneId } from '../../ids';
 
 describe('runtime scripting API builders', () => {
   function createPermissions(overrides: Partial<ScriptPermissions> = {}): ScriptPermissions {
     return {
-      selfEntityId: 'self',
-      allowedEntityIds: new Set<string>(),
+      selfEntityId: createEntityId('self'),
+      allowedEntityIds: new Set(),
       allowedScriptTypes: new Set<string>(),
       allowedComponentTypes: new Set(),
       allowedPrefabIds: new Set<string>(),
@@ -19,11 +21,13 @@ describe('runtime scripting API builders', () => {
   }
 
   it('blocks instantiate when prefab is not allowed', () => {
-    const scene = createScene('scene');
-    const self = createEntity('self');
+    const sceneId = createSceneId('scene');
+    const scene = createScene(sceneId);
+    const selfId = createEntityId('self');
+    const self = createEntity(selfId);
     scene.entities.set(self.id, self);
 
-    const instantiatePrefab = jest.fn(() => 'spawned');
+    const instantiatePrefab = jest.fn(() => createEntityId('spawned'));
 
     const api = buildSceneAPI(
       scene,
@@ -38,23 +42,26 @@ describe('runtime scripting API builders', () => {
   });
 
   it('filters findByTag results by entity permissions', () => {
-    const scene = createScene('scene');
-    const allowed = createEntity('allowed');
-    const hidden = createEntity('hidden');
+    const sceneId = createSceneId('scene');
+    const scene = createScene(sceneId);
+    const allowedId = createEntityId('allowed');
+    const hiddenId = createEntityId('hidden');
+    const allowed = createEntity(allowedId);
+    const hidden = createEntity(hiddenId);
     scene.entities.set(allowed.id, allowed);
     scene.entities.set(hidden.id, hidden);
 
     const api = buildSceneAPI(
       scene,
-      createPermissions({ allowedEntityIds: new Set(['allowed']) }),
+      createPermissions({ allowedEntityIds: new Set([allowedId]) }),
       {
-        findEntityIdsByTag: () => ['allowed', 'hidden'],
+        findEntityIdsByTag: () => [allowedId, hiddenId],
       },
     );
 
     const entities = api.findByTag('duck');
 
-    expect(entities.map((entity) => entity.id)).toEqual(['allowed']);
+    expect(entities.map((entity) => entity.id)).toEqual([allowedId]);
   });
 
   it('returns default values when input callbacks are missing', () => {

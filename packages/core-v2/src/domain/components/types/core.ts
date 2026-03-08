@@ -1,3 +1,4 @@
+import type { EntityId } from '../../ids';
 import type {
     ComponentPrimitiveKind,
     DefaultValueAttribute,
@@ -61,6 +62,11 @@ export type InspectorPrimitiveFieldType = Extract<
 export type InspectorFieldType =
     | InspectorPrimitiveFieldType
     | 'texture'
+    | 'mesh'
+    | 'skybox'
+    | 'script'
+    | 'shader'
+    | 'resource'
     | 'vector'
     | 'reference'
     | 'uniforms';
@@ -167,7 +173,7 @@ export interface ComponentBase<
 
 /** Fired when a component is added to or removed from an entity. */
 export interface ComponentEvent {
-    readonly entityId: string;
+    readonly entityId: EntityId;
     readonly component: ComponentBase;
     readonly action: 'added' | 'removed';
 }
@@ -176,4 +182,4 @@ export interface ComponentEvent {
 export type ComponentListener = (event: ComponentEvent) => void;
 
 /** Listener for component field-level changes. */
-export type ComponentChangeListener = (entityId: string, type: ComponentType) => void;
+export type ComponentChangeListener = (entityId: EntityId, type: ComponentType) => void;

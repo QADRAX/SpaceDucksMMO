@@ -1,42 +1,43 @@
 import type { EntityState, DebugKind } from '../entities';
 import type { ComponentType } from '../components';
 import type { SceneSubsystem } from '../subsystems';
+import type { EntityId, SceneId } from '../ids';
 
 /** Event emitted when an entity is added to a scene. */
 export type EntityAddedEvent = {
   readonly kind: 'entity-added';
-  readonly entityId: string;
+  readonly entityId: EntityId;
 };
 
 /** Event emitted when an entity is removed from a scene. */
 export type EntityRemovedEvent = {
   readonly kind: 'entity-removed';
-  readonly entityId: string;
+  readonly entityId: EntityId;
 };
 
 /** Event emitted when an entity is reparented in the hierarchy. */
 export type HierarchyChangedEvent = {
   readonly kind: 'hierarchy-changed';
-  readonly childId: string;
-  readonly newParentId: string | null;
+  readonly childId: EntityId;
+  readonly newParentId: EntityId | null;
 };
 
 /** Event emitted when the active camera changes. */
 export type ActiveCameraChangedEvent = {
   readonly kind: 'active-camera-changed';
-  readonly entityId: string | null;
+  readonly entityId: EntityId | null;
 };
 
 /** Event emitted when an entity's transform is modified. */
 export type TransformChangedEvent = {
   readonly kind: 'transform-changed';
-  readonly entityId: string;
+  readonly entityId: EntityId;
 };
 
 /** Event emitted when a component on an entity changes. */
 export type ComponentChangedEvent = {
   readonly kind: 'component-changed';
-  readonly entityId: string;
+  readonly entityId: EntityId;
   readonly componentType: ComponentType;
 };
 
@@ -103,14 +104,14 @@ export type SceneChangeListener = (scene: SceneState, event: SceneChangeEventWit
  * Created by `createScene`, mutated by use-case functions.
  */
 export interface SceneState {
-  readonly id: string;
-  readonly entities: Map<string, EntityState>;
-  readonly rootEntityIds: string[];
-  activeCameraId: string | null;
+  readonly id: SceneId;
+  readonly entities: Map<EntityId, EntityState>;
+  readonly rootEntityIds: EntityId[];
+  activeCameraId: EntityId | null;
   readonly debugFlags: Map<DebugKind, boolean>;
   readonly changeListeners: Set<SceneChangeListener>;
   /** Cleanup functions for detaching entity observers, keyed by entity id. */
-  readonly entityCleanups: Map<string, () => void>;
+  readonly entityCleanups: Map<EntityId, () => void>;
   /** Registered subsystems in update-pipeline order. */
   readonly subsystems: SceneSubsystem[];
   /** When true, only subsystems with updateWhenPaused run during update. */
@@ -119,9 +120,9 @@ export interface SceneState {
 
 /** Readonly snapshot of a scene for application/UI consumers. */
 export interface SceneView {
-  readonly id: string;
+  readonly id: SceneId;
   readonly paused: boolean;
-  readonly activeCameraId: string | null;
-  readonly rootEntityIds: ReadonlyArray<string>;
+  readonly activeCameraId: EntityId | null;
+  readonly rootEntityIds: ReadonlyArray<EntityId>;
   readonly debugFlags: ReadonlyMap<DebugKind, boolean>;
 }

@@ -7,9 +7,10 @@ import type { ComponentBase } from '../components';
 import { createEntityObservers } from './observers';
 import { createTransform, setTransformParent } from './transform';
 import { validateAddComponent, validateRemoveComponent } from './validation';
+import type { EntityId } from '../ids';
 
 /** Creates a new entity state with a fresh transform and empty component map. */
-export function createEntity(id: string, displayName?: string): EntityState {
+export function createEntity(id: EntityId, displayName?: string): EntityState {
   return {
     id,
     transform: createTransform(),
@@ -135,7 +136,7 @@ export function addChild(parent: EntityState, child: EntityState): void {
 }
 
 /** Removes a child by id, clearing parent refs and transform parenting. */
-export function removeChildById(parent: EntityState, childId: string): void {
+export function removeChildById(parent: EntityState, childId: EntityId): void {
   const idx = parent.children.findIndex((c) => c.id === childId);
   if (idx < 0) return;
   const child = parent.children[idx];
@@ -145,7 +146,7 @@ export function removeChildById(parent: EntityState, childId: string): void {
 }
 
 /** Finds a direct child by id. */
-export function getChild(parent: EntityState, childId: string): EntityState | undefined {
+export function getChild(parent: EntityState, childId: EntityId): EntityState | undefined {
   return parent.children.find((c) => c.id === childId);
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { setupIntegrationTest } from '../setup';
+import { setupIntegrationTest, createSceneId } from '../setup';
 import type { TestContext } from '../setup';
 
 describe('Integration: Scene > updateScene', () => {
@@ -7,7 +7,7 @@ describe('Integration: Scene > updateScene', () => {
 
     beforeEach(() => {
         ctx = setupIntegrationTest();
-        ctx.api.addScene({ sceneId: 'main' });
+        ctx.api.addScene({ sceneId: createSceneId('main') });
     });
 
     it('should trigger update on all scene subsystems', () => {
@@ -17,13 +17,13 @@ describe('Integration: Scene > updateScene', () => {
             update: updateSpy
         };
 
-        ctx.api.scene('main').setupScene({
+        ctx.api.scene(createSceneId('main')).setupScene({
             subsystems: [mockSubsystem as any]
         });
 
-        ctx.api.scene('main').updateScene({ dt: 0.16 });
+        ctx.api.scene(createSceneId('main')).updateScene({ dt: 0.16 });
 
-        expect(updateSpy).toHaveBeenCalledWith(ctx.engine.scenes.get('main'), 0.16);
+        expect(updateSpy).toHaveBeenCalledWith(ctx.engine.scenes.get(createSceneId('main')), 0.16);
     });
 
     it('should not update if scene is paused', () => {
@@ -33,12 +33,12 @@ describe('Integration: Scene > updateScene', () => {
             update: updateSpy
         };
 
-        ctx.api.scene('main').setupScene({
+        ctx.api.scene(createSceneId('main')).setupScene({
             subsystems: [mockSubsystem as any]
         });
-        ctx.api.scene('main').setPaused({ paused: true });
+        ctx.api.scene(createSceneId('main')).setPaused({ paused: true });
 
-        ctx.api.scene('main').updateScene({ dt: 0.16 });
+        ctx.api.scene(createSceneId('main')).updateScene({ dt: 0.16 });
 
         expect(updateSpy).not.toHaveBeenCalled();
     });

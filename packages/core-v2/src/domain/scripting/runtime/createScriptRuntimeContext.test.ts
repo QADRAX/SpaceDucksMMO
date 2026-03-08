@@ -1,3 +1,4 @@
+import { describe, it, expect } from '@jest/globals';
 import { createEntity } from '../../entities';
 import { createScene } from '../../scene';
 import type { ScriptInstance } from '../schema';
@@ -7,12 +8,13 @@ import {
   createScriptRuntimeContextFromScriptInstance,
   createScriptRuntimeContextFromInstance,
 } from './createScriptRuntimeContext';
+import { createEntityId, createSceneId } from '../../ids';
 
 describe('createScriptRuntimeContext', () => {
   function createPermissions(overrides: Partial<ScriptPermissions> = {}): ScriptPermissions {
     return {
-      selfEntityId: 'self',
-      allowedEntityIds: new Set<string>(),
+      selfEntityId: createEntityId('self'),
+      allowedEntityIds: new Set(),
       allowedScriptTypes: new Set<string>(),
       allowedComponentTypes: new Set(),
       allowedPrefabIds: new Set<string>(),
@@ -22,9 +24,11 @@ describe('createScriptRuntimeContext', () => {
   }
 
   it('composes self, scene, input and time APIs with explicit permissions', () => {
-    const scene = createScene('scene');
-    const self = createEntity('self');
-    const friend = createEntity('friend');
+    const scene = createScene(createSceneId('scene'));
+    const selfId = createEntityId('self');
+    const friendId = createEntityId('friend');
+    const self = createEntity(selfId);
+    const friend = createEntity(friendId);
 
     scene.entities.set(self.id, self);
     scene.entities.set(friend.id, friend);
@@ -33,12 +37,12 @@ describe('createScriptRuntimeContext', () => {
       scene,
       selfEntity: self,
       permissions: createPermissions({
-        allowedEntityIds: new Set(['friend']),
+        allowedEntityIds: new Set([friendId]),
         allowedPrefabIds: new Set(['duckPrefab']),
       }),
       context: {
         sceneApiContext: {
-          instantiatePrefab: () => 'friend',
+          instantiatePrefab: () => friendId,
         },
         inputApiContext: {
           isKeyPressed: (key) => key === 'W',
@@ -53,18 +57,21 @@ describe('createScriptRuntimeContext', () => {
       },
     });
 
-    expect(context.self.id).toBe('self');
-    expect(context.scene.instantiate('duckPrefab')?.id).toBe('friend');
+    expect(context.self.id).toBe(selfId);
+    expect(context.scene.instantiate('duckPrefab')?.id).toBe(friendId);
     expect(context.input.isKeyPressed('W')).toBe(true);
     expect(context.input.getMousePosition()).toEqual({ x: 10, y: 20 });
     expect(context.time.deltaSeconds).toBeCloseTo(0.016);
   });
 
   it('derives permissions from script instance schema', () => {
-    const scene = createScene('scene');
-    const self = createEntity('self');
-    const friend = createEntity('friend');
-    const hidden = createEntity('hidden');
+    const scene = createScene(createSceneId('scene'));
+    const selfId = createEntityId('self');
+    const friendId = createEntityId('friend');
+    const hiddenId = createEntityId('hidden');
+    const self = createEntity(selfId);
+    const friend = createEntity(friendId);
+    const hidden = createEntity(hiddenId);
 
     scene.entities.set(self.id, self);
     scene.entities.set(friend.id, friend);
@@ -79,7 +86,7 @@ describe('createScriptRuntimeContext', () => {
         },
       },
       properties: {
-        target: 'friend',
+        target: friendId,
         spawner: 'duckPrefab',
       },
       enabled: true,
@@ -91,19 +98,20 @@ describe('createScriptRuntimeContext', () => {
       instance,
       context: {
         sceneApiContext: {
-          findEntityIdsByTag: () => ['friend', 'hidden'],
+          findEntityIdsByTag: () => [friendId, hiddenId],
         },
       },
     });
 
-    expect(context.permissions.allowedEntityIds.has('friend')).toBe(true);
+    expect(context.permissions.allowedEntityIds.has(friendId)).toBe(true);
     expect(context.permissions.allowedPrefabIds.has('duckPrefab')).toBe(true);
-    expect(context.scene.findByTag('any').map((entity) => entity.id)).toEqual(['friend']);
+    expect(context.scene.findByTag('any').map((entity) => entity.id)).toEqual([friendId]);
   });
 
   it('honors permissionOptions.canDestroySelf when deriving from instance', () => {
-    const scene = createScene('scene');
-    const self = createEntity('self');
+    const scene = createScene(createSceneId('scene'));
+    const selfId = createEntityId('self');
+    const self = createEntity(selfId);
     scene.entities.set(self.id, self);
 
     const instance: ScriptInstance = {
@@ -124,12 +132,13 @@ describe('createScriptRuntimeContext', () => {
 
     context.self.destroy();
 
-    expect(scene.entities.has('self')).toBe(true);
+    expect(scene.entities.has(selfId)).toBe(true);
   });
 
   it('keeps backward-compatible alias for fromInstance helper', () => {
-    const scene = createScene('scene');
-    const self = createEntity('self');
+    const scene = createScene(createSceneId('scene'));
+    const selfId = createEntityId('self');
+    const self = createEntity(selfId);
     scene.entities.set(self.id, self);
 
     const instance: ScriptInstance = {
@@ -147,6 +156,6 @@ describe('createScriptRuntimeContext', () => {
       instance,
     });
 
-    expect(context.self.id).toBe('self');
+    expect(context.self.id).toBe(selfId);
   });
 });

@@ -14,7 +14,7 @@ const PLAIN_CONFLICTS = [
 ] as const;
 
 const SHADER_FIELDS = [
-  { key: 'shaderId', label: 'Shader Id', type: 'string' as const },
+  { key: 'shader', label: 'Shader', type: 'shader' as const },
   { key: 'uniforms', label: 'Uniforms', type: 'uniforms' as const },
   { key: 'transparent', label: 'Transparent', type: 'boolean' as const },
   { key: 'depthWrite', label: 'Depth Write', type: 'boolean' as const },
@@ -32,7 +32,7 @@ const SHADER_FIELDS = [
 ];
 
 const SHADER_BASE_DEFAULTS = {
-  shaderId: '',
+  shader: '' as any, // Casted to any as it will be branded ResourceRef<'shader'>
   uniforms: {},
   transparent: true,
   depthWrite: false,

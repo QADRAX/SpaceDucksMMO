@@ -1,5 +1,6 @@
 import type { EngineState } from './types';
 import type { UseCaseGuard } from '../useCases/types';
+import type { SceneId, EntityId } from '../ids';
 
 import { ok, err } from '../utils';
 import { findScene, isCameraEntity } from './engineValidation';
@@ -19,7 +20,7 @@ export type EngineGuard<TState, TParams> = UseCaseGuard<EngineState, TState, TPa
  * Generic over `TState` — works with any domain state (viewport, scene, engine)
  * because it only needs the engine root to look up the scene.
  */
-export const guardSceneExists: EngineGuard<unknown, { readonly sceneId: string }> = (
+export const guardSceneExists: EngineGuard<unknown, { readonly sceneId: SceneId }> = (
   engine,
   _state,
   params,
@@ -39,8 +40,8 @@ export const guardSceneExists: EngineGuard<unknown, { readonly sceneId: string }
  * carries a `sceneId`.
  */
 export const guardCameraInScene: EngineGuard<
-  { readonly sceneId: string },
-  { readonly cameraEntityId: string }
+  { readonly sceneId: SceneId },
+  { readonly cameraEntityId: EntityId }
 > = (engine, state, params) => {
   const scene = findScene(engine, state.sceneId);
   if (!scene) {

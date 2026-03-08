@@ -6,12 +6,14 @@ import { findScene, isCameraEntity } from '../../domain/engine/engineValidation'
 import { createViewport } from '../../domain/engine/createViewport';
 import { defineEngineUseCase } from '../../domain/useCases';
 
+import type { ViewportId, SceneId, EntityId, CanvasId } from '../../domain/ids';
+
 /** Parameters for the addViewport use case. */
 export interface AddViewportParams {
-  readonly id: string;
-  readonly sceneId: string;
-  readonly cameraEntityId: string;
-  readonly canvasId: string;
+  readonly id: ViewportId;
+  readonly sceneId: SceneId;
+  readonly cameraEntityId: EntityId;
+  readonly canvasId: CanvasId;
   readonly rect?: Partial<ViewportRect>;
   readonly enabled?: boolean;
 }

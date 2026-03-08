@@ -1,14 +1,16 @@
+import { describe, it, expect } from '@jest/globals';
 import { createComponent } from '../../components';
 import { addComponent, addChild, createEntity } from '../../entities';
 import { createScene } from '../../scene';
 import type { ScriptPermissions } from '../permissions';
 import { buildEntityAPI } from './buildEntityAPI';
+import { createEntityId, createSceneId } from '../../ids';
 
 describe('buildEntityAPI', () => {
   function createPermissions(overrides: Partial<ScriptPermissions> = {}): ScriptPermissions {
     return {
-      selfEntityId: 'self',
-      allowedEntityIds: new Set<string>(),
+      selfEntityId: createEntityId('self'),
+      allowedEntityIds: new Set(),
       allowedScriptTypes: new Set<string>(),
       allowedComponentTypes: new Set(),
       allowedPrefabIds: new Set<string>(),
@@ -18,8 +20,9 @@ describe('buildEntityAPI', () => {
   }
 
   it('allows writing self entity display name', () => {
-    const scene = createScene('scene');
-    const self = createEntity('self', 'Self Name');
+    const scene = createScene(createSceneId('scene'));
+    const selfId = createEntityId('self');
+    const self = createEntity(selfId, 'Self Name');
     scene.entities.set(self.id, self);
 
     const api = buildEntityAPI(self, scene, createPermissions(), {});
@@ -29,9 +32,11 @@ describe('buildEntityAPI', () => {
   });
 
   it('blocks writing external entity display name', () => {
-    const scene = createScene('scene');
-    const self = createEntity('self', 'Self Name');
-    const other = createEntity('other', 'Other Name');
+    const scene = createScene(createSceneId('scene'));
+    const selfId = createEntityId('self');
+    const otherId = createEntityId('other');
+    const self = createEntity(selfId, 'Self Name');
+    const other = createEntity(otherId, 'Other Name');
     scene.entities.set(self.id, self);
     scene.entities.set(other.id, other);
 
@@ -41,19 +46,21 @@ describe('buildEntityAPI', () => {
   });
 
   it('blocks destroying self when canDestroySelf is false', () => {
-    const scene = createScene('scene');
-    const self = createEntity('self', 'Self Name');
+    const scene = createScene(createSceneId('scene'));
+    const selfId = createEntityId('self');
+    const self = createEntity(selfId, 'Self Name');
     scene.entities.set(self.id, self);
 
     const api = buildEntityAPI(self, scene, createPermissions({ canDestroySelf: false }), {});
 
     api.destroy();
-    expect(scene.entities.has('self')).toBe(true);
+    expect(scene.entities.has(selfId)).toBe(true);
   });
 
   it('filters components by permission', () => {
-    const scene = createScene('scene');
-    const self = createEntity('self');
+    const scene = createScene(createSceneId('scene'));
+    const selfId = createEntityId('self');
+    const self = createEntity(selfId);
     scene.entities.set(self.id, self);
 
     addComponent(self, createComponent('rigidBody'));
@@ -71,8 +78,9 @@ describe('buildEntityAPI', () => {
   });
 
   it('filters sibling scripts by permission', () => {
-    const scene = createScene('scene');
-    const self = createEntity('self');
+    const scene = createScene(createSceneId('scene'));
+    const selfId = createEntityId('self');
+    const self = createEntity(selfId);
     scene.entities.set(self.id, self);
 
     addComponent(
@@ -97,10 +105,13 @@ describe('buildEntityAPI', () => {
   });
 
   it('returns only allowed children in transform.children', () => {
-    const scene = createScene('scene');
-    const self = createEntity('self');
-    const allowedChild = createEntity('allowed');
-    const hiddenChild = createEntity('hidden');
+    const scene = createScene(createSceneId('scene'));
+    const selfId = createEntityId('self');
+    const allowedId = createEntityId('allowed');
+    const hiddenId = createEntityId('hidden');
+    const self = createEntity(selfId);
+    const allowedChild = createEntity(allowedId);
+    const hiddenChild = createEntity(hiddenId);
 
     addChild(self, allowedChild);
     addChild(self, hiddenChild);
@@ -112,10 +123,10 @@ describe('buildEntityAPI', () => {
     const api = buildEntityAPI(
       self,
       scene,
-      createPermissions({ allowedEntityIds: new Set(['allowed']) }),
+      createPermissions({ allowedEntityIds: new Set([allowedId]) }),
       {},
     );
 
-    expect(api.transform.children.map((child) => child.id)).toEqual(['allowed']);
+    expect(api.transform.children.map((child) => child.id)).toEqual([allowedId]);
   });
 });

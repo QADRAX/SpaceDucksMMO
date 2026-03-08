@@ -19,10 +19,10 @@ export const SKYBOX_SPEC: ComponentSpec<SkyboxComponent> = {
       'customGeometry',
     ],
     inspector: {
-      fields: [{ key: 'key', label: 'Key', type: 'string' }],
+      fields: [{ key: 'skybox', label: 'Skybox Resource', type: 'reference' }],
     },
   },
-  defaults: { key: '' },
+  defaults: { skybox: undefined as any },
 };
 
 /** All environment specs keyed by type. */

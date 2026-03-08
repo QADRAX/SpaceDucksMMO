@@ -1,9 +1,10 @@
 import { guardCameraInScene } from '../../domain/engine/engineGuards';
 import { defineViewportUseCase } from '../../domain/useCases';
+import type { EntityId } from '../../domain/ids';
 
 /** Parameters for setViewportCamera. */
 export interface SetViewportCameraParams {
-  readonly cameraEntityId: string;
+  readonly cameraEntityId: EntityId;
 }
 
 /** Changes which camera entity this viewport uses for rendering. */

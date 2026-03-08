@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
-import { setupIntegrationTest } from '../setup';
+import { setupIntegrationTest, createSceneId } from '../setup';
 import type { TestContext } from '../setup';
 
 describe('Integration: Scene > teardownScene', () => {
@@ -7,7 +7,7 @@ describe('Integration: Scene > teardownScene', () => {
 
     beforeEach(() => {
         ctx = setupIntegrationTest();
-        ctx.api.addScene({ sceneId: 'main' });
+        ctx.api.addScene({ sceneId: createSceneId('main') });
     });
 
     it('should trigger disposal on all scene subsystems and clear them', () => {
@@ -17,13 +17,13 @@ describe('Integration: Scene > teardownScene', () => {
             dispose: disposeSpy
         };
 
-        ctx.api.scene('main').setupScene({
+        ctx.api.scene(createSceneId('main')).setupScene({
             subsystems: [mockSubsystem as any]
         });
 
-        ctx.api.scene('main').teardownScene();
+        ctx.api.scene(createSceneId('main')).teardownScene();
 
         expect(disposeSpy).toHaveBeenCalled();
-        expect(ctx.engine.scenes.get('main')?.subsystems).toHaveLength(0);
+        expect(ctx.engine.scenes.get(createSceneId('main'))?.subsystems).toHaveLength(0);
     });
 });

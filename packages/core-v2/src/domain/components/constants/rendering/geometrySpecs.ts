@@ -149,10 +149,10 @@ export const FULL_MESH_SPEC: ComponentSpec<FullMeshComponent> = {
     label: 'Full Mesh',
     icon: 'FileBox',
     inspector: {
-      fields: [{ key: 'url', label: 'URL', type: 'string' }, ...shadowFields],
+      fields: [{ key: 'mesh', label: 'Mesh Resource', type: 'reference' }, ...shadowFields],
     },
   },
-  defaults: { ...SHADOW_DEFAULTS, url: '' },
+  defaults: { ...SHADOW_DEFAULTS, mesh: undefined as any },
 };
 
 export const CUSTOM_GEOMETRY_SPEC: ComponentSpec<CustomGeometryComponent> = {
@@ -162,10 +162,10 @@ export const CUSTOM_GEOMETRY_SPEC: ComponentSpec<CustomGeometryComponent> = {
     label: 'Custom Geometry',
     icon: 'Shapes',
     inspector: {
-      fields: [{ key: 'url', label: 'URL', type: 'string' }, ...shadowFields],
+      fields: [{ key: 'mesh', label: 'Mesh Resource', type: 'reference' }, ...shadowFields],
     },
   },
-  defaults: { ...SHADOW_DEFAULTS, url: '' },
+  defaults: { ...SHADOW_DEFAULTS, mesh: undefined as any },
 };
 
 /** All geometry specs keyed by type. */

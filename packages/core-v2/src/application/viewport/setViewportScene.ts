@@ -1,9 +1,10 @@
 import { guardSceneExists } from '../../domain/engine/engineGuards';
 import { defineViewportUseCase } from '../../domain/useCases';
+import type { SceneId } from '../../domain/ids';
 
 /** Parameters for setViewportScene. */
 export interface SetViewportSceneParams {
-  readonly sceneId: string;
+  readonly sceneId: SceneId;
 }
 
 /** Changes which scene this viewport renders. */

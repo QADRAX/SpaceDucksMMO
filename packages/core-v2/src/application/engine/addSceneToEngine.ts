@@ -9,9 +9,11 @@ import {
   runSubsystemPortDerivers,
 } from '../../domain/subsystems';
 
+import type { SceneId } from '../../domain/ids';
+
 /** Parameters for the addSceneToEngine use case. */
 export interface AddSceneParams {
-  readonly sceneId: string;
+  readonly sceneId: SceneId;
 }
 
 /**

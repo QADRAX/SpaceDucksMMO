@@ -1,4 +1,5 @@
 import type { PropertySchema } from './propertyTypes';
+import type { EntityId, InstanceId } from '../../ids';
 
 export type { PropertySchema } from './propertyTypes';
 
@@ -56,8 +57,8 @@ export type PropertyValue =
   | readonly [number, number]
   | readonly [number, number, number]
   | readonly [number, number, number, number]
-  | string // entityRef (entity ID)
-  | readonly string[] // entityRefArray (entity IDs)
+  | EntityId // entityRef (entity ID)
+  | readonly EntityId[] // entityRefArray (entity IDs)
   | null;
 
 /**
@@ -88,7 +89,7 @@ export interface ScriptInstance {
   /**
    * Unique instance identifier within the entity.
    */
-  readonly instanceId?: string;
+  readonly instanceId?: InstanceId;
 }
 
 /**

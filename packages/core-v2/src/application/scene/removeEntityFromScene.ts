@@ -1,5 +1,6 @@
 import type { SceneState } from '../../domain/scene';
 import type { EntityState } from '../../domain/entities';
+import type { EntityId } from '../../domain/ids';
 import type { Result } from '../../domain/utils';
 import { ok, err } from '../../domain/utils';
 import { defineSceneUseCase } from '../../domain/useCases';
@@ -7,7 +8,7 @@ import { emitSceneChange } from '../../domain/scene/emitSceneChange';
 
 /** Parameters for the removeEntityFromScene use case. */
 export interface RemoveEntityParams {
-  readonly entityId: string;
+  readonly entityId: EntityId;
 }
 
 /**

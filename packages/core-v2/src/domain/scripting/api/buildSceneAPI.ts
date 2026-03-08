@@ -2,10 +2,11 @@ import type { ScriptPermissions } from '../permissions';
 import type { SceneState } from '../../scene';
 import type { EntityAPI, SceneAPI, SceneAPIBuildContext, SceneRaycastHit } from './types';
 import { buildEntityRefAPI } from './buildEntityAPI';
+import type { EntityId } from '../../ids';
 
 function toNullEntityRef(
   scene: SceneState,
-  entityId: string,
+  entityId: EntityId,
   permissions: ScriptPermissions,
 ): EntityAPI | null {
   if (!permissions.allowedEntityIds.has(entityId)) {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import { setupIntegrationTest } from '../setup';
+import { setupIntegrationTest, createSceneId } from '../setup';
 import type { TestContext } from '../setup';
 
 describe('Integration: Engine > listScenes', () => {
@@ -10,16 +10,16 @@ describe('Integration: Engine > listScenes', () => {
     });
 
     it('should list all scenes registered in the engine', () => {
-        ctx.api.addScene({ sceneId: 'scene1' });
-        ctx.api.addScene({ sceneId: 'scene2' });
+        ctx.api.addScene({ sceneId: createSceneId('scene1') });
+        ctx.api.addScene({ sceneId: createSceneId('scene2') });
 
         const result = ctx.api.listScenes();
 
         expect(result.ok).toBe(true);
         if (result.ok) {
             expect(result.value).toHaveLength(2);
-            expect(result.value.map(s => s.id)).toContain('scene1');
-            expect(result.value.map(s => s.id)).toContain('scene2');
+            expect(result.value.map(s => s.id)).toContain(createSceneId('scene1'));
+            expect(result.value.map(s => s.id)).toContain(createSceneId('scene2'));
         }
     });
 
