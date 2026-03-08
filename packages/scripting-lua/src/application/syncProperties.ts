@@ -1,7 +1,7 @@
 import type { SceneState } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
-import type { ScriptingUseCase } from '../domain/useCases';
-import { defineScriptingUseCase } from '../domain/useCases';
+import type { SubsystemUseCase } from '../domain/subsystems';
+import { defineSubsystemUseCase } from '../domain/subsystems';
 import { syncSlotPropertiesFromScene } from '../domain/slots';
 
 export interface SyncPropertiesParams {
@@ -15,8 +15,8 @@ export interface SyncPropertiesParams {
  * changes, pushes them into the sandbox, and fires `onPropertyChanged`
  * hooks for each changed key.
  */
-export const syncProperties: ScriptingUseCase<SyncPropertiesParams, void> =
-  defineScriptingUseCase<SyncPropertiesParams, void>({
+export const syncProperties: SubsystemUseCase<SyncPropertiesParams, void> =
+  defineSubsystemUseCase<SyncPropertiesParams, void>({
     name: 'scripting/syncProperties',
 
     execute(session: ScriptingSessionState, params: SyncPropertiesParams): void {

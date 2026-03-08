@@ -1,33 +1,33 @@
 import type {
-  AdapterPortDeriver,
-  EngineSystemAdapter,
-  SceneAdapterFactory,
-} from '../../domain/adapters';
+  SubsystemPortDeriver,
+  EngineSubsystem,
+  SceneSubsystemFactory,
+} from '../../domain/subsystems';
 import {
-  attachSceneAdapters,
-  instantiateSceneAdapters,
-  runAdapterPortDerivers,
-} from '../../domain/adapters';
+  attachSceneSubsystems,
+  instantiateSceneSubsystems,
+  runSubsystemPortDerivers,
+} from '../../domain/subsystems';
 import { defineEngineUseCase } from '../../domain/useCases';
 
-/** Parameters for initial engine adapter and port setup. */
+/** Parameters for initial engine subsystem and port setup. */
 export interface SetupEngineParams {
-  /** Engine-level adapters (render, audio, etc.) to register globally. */
-  readonly engineAdapters?: ReadonlyArray<EngineSystemAdapter>;
-  /** Scene adapter factories that should be applied to all scenes. */
-  readonly sceneAdapters?: ReadonlyArray<SceneAdapterFactory>;
-  /** Initial static ports (IO/capabilities) available to adapters. */
+  /** Engine-level subsystems (render, audio, etc.) to register globally. */
+  readonly engineSubsystems?: ReadonlyArray<EngineSubsystem>;
+  /** Scene subsystem factories that should be applied to all scenes. */
+  readonly sceneSubsystems?: ReadonlyArray<SceneSubsystemFactory>;
+  /** Initial static ports (IO/capabilities) available to subsystems. */
   readonly ports?: Readonly<Record<string, unknown>>;
   /** Hooks that can derive ports from engine state or other ports. */
-  readonly portDerivers?: ReadonlyArray<AdapterPortDeriver>;
+  readonly portDerivers?: ReadonlyArray<SubsystemPortDeriver>;
 }
 
 /**
- * Configures adapters and shared I/O ports at engine scope.
+ * Configures subsystems and shared I/O ports at engine scope.
  *
- * This is the composition-root use case for adapter topology:
- * - register engine adapters,
- * - register scene adapter factories,
+ * This is the composition-root use case for subsystem topology:
+ * - register engine subsystems,
+ * - register scene subsystem factories,
  * - inject/derive shared ports.
  */
 export const setupEngine = defineEngineUseCase<SetupEngineParams, void>({
@@ -35,27 +35,27 @@ export const setupEngine = defineEngineUseCase<SetupEngineParams, void>({
   execute(engine, params) {
     if (params.ports) {
       for (const [key, value] of Object.entries(params.ports)) {
-        engine.adapterRuntime.ports.set(key, value);
+        engine.subsystemRuntime.ports.set(key, value);
       }
     }
 
     if (params.portDerivers) {
-      engine.adapterRuntime.portDerivers.push(...params.portDerivers);
+      engine.subsystemRuntime.portDerivers.push(...params.portDerivers);
     }
 
-    runAdapterPortDerivers(engine);
+    runSubsystemPortDerivers(engine);
 
-    if (params.engineAdapters) {
-      engine.engineAdapters.push(...params.engineAdapters);
+    if (params.engineSubsystems) {
+      engine.engineSubsystems.push(...params.engineSubsystems);
     }
 
-    if (params.sceneAdapters && params.sceneAdapters.length > 0) {
-      engine.adapterRuntime.sceneAdapterFactories.push(...params.sceneAdapters);
+    if (params.sceneSubsystems && params.sceneSubsystems.length > 0) {
+      engine.subsystemRuntime.sceneSubsystemFactories.push(...params.sceneSubsystems);
 
-      // Apply newly configured scene adapters to already-existing scenes.
+      // Apply newly configured scene subsystems to already-existing scenes.
       for (const scene of engine.scenes.values()) {
-        const adapters = instantiateSceneAdapters(engine, scene, params.sceneAdapters);
-        attachSceneAdapters(scene, adapters);
+        const subsystems = instantiateSceneSubsystems(engine, scene, params.sceneSubsystems);
+        attachSceneSubsystems(scene, subsystems);
       }
     }
   },

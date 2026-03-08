@@ -1,5 +1,5 @@
 export * from './api';
-export * from './adapters';
+export * from './subsystems';
 export * from './assets';
 export * from './components';
 export * from './engine';

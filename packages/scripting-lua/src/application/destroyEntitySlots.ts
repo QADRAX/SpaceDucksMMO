@@ -1,5 +1,5 @@
-import type { AdapterEventParams } from '@duckengine/core-v2';
-import { defineAdapterEventUseCase } from '@duckengine/core-v2';
+import type { SubsystemEventParams } from '@duckengine/core-v2';
+import { defineSubsystemEventUseCase } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import { destroyEntityScriptSlots } from '../domain/slots';
 
@@ -11,11 +11,11 @@ import { destroyEntityScriptSlots } from '../domain/slots';
  * then cleans up sandbox and event bus subscriptions.
  */
 export const destroyEntitySlots =
-  defineAdapterEventUseCase<ScriptingSessionState, AdapterEventParams, void>({
+  defineSubsystemEventUseCase<ScriptingSessionState, SubsystemEventParams, void>({
     name: 'scripting/destroyEntitySlots',
     event: 'entity-removed',
 
-    execute(session: ScriptingSessionState, params: AdapterEventParams): void {
+    execute(session: ScriptingSessionState, params: SubsystemEventParams): void {
       // The builder handles event.kind routing automatically.
       const event = params.event as any;
 

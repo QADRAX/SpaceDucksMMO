@@ -1,8 +1,8 @@
-import { defineSceneAdapter } from '@duckengine/core-v2';
+import { defineSceneSubsystem } from '@duckengine/core-v2';
 import { resolveBridgePortsFromRegistry, type BridgePorts } from '../domain/bridges';
 import { createMutableScriptSandbox, createNoopScriptSandbox } from '../domain/ports';
 import { createScriptingSession } from '../domain/session';
-import { createDefaultScriptingBridges } from '../domain/adapter/defaultBridges';
+import { createDefaultScriptingBridges } from '../domain/subsystems';
 import { reconcileSlots } from '../application/reconcileSlots';
 import { destroyEntitySlots } from '../application/destroyEntitySlots';
 import { runFrameHooks } from '../application/runFrameHooks';
@@ -11,17 +11,17 @@ import { createBuiltInScriptResolver } from './createBuiltInScriptResolver';
 import { createWasmoonSandbox } from './wasmoon';
 
 /**
- * Scene adapter factory for Lua scripting.
+ * Scene subsystem factory for Lua scripting.
  * 
- * Uses the normalized `defineSceneAdapter` builder to wire ports, session state,
+ * Uses the normalized `defineSceneSubsystem` builder to wire ports, session state,
  * and lifecycle use cases in a single declarative block.
  */
-export const scriptingLuaSceneAdapterFactory = defineSceneAdapter('scripting-lua')
+export const scriptingLuaSubsystem = defineSceneSubsystem('scripting-lua')
   // 1. Resolve external ports from the registry
-  .withPorts((registry): BridgePorts => resolveBridgePortsFromRegistry(registry))
+  .withPorts((registry: any): BridgePorts => resolveBridgePortsFromRegistry(registry))
 
   // 2. Initialize internal state (the scripting session)
-  .withState(({ ports }) => {
+  .withState(({ ports }: any) => {
     const sandbox = createMutableScriptSandbox(createNoopScriptSandbox());
 
     // Boot real wasmoon engine asynchronously

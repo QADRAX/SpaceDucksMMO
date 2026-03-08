@@ -15,9 +15,9 @@ export interface UpdateSceneParams {
 export const updateScene = defineSceneUseCase<UpdateSceneParams, void>({
   name: 'updateScene',
   execute(scene, { dt }) {
-    for (const adapter of scene.adapters) {
-      if (scene.paused && !adapter.updateWhenPaused) continue;
-      adapter.update?.(scene, dt);
+    for (const subsystem of scene.subsystems) {
+      if (scene.paused && !subsystem.updateWhenPaused) continue;
+      subsystem.update?.(scene, dt);
     }
   },
 });

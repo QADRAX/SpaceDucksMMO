@@ -1,5 +1,5 @@
 export * from './types';
-export type { EngineSystemAdapter } from '../adapters';
+export type { EngineSubsystem } from '../subsystems';
 export * from './constants';
 export { createEngine } from './createEngine';
 export { createViewport } from './createViewport';

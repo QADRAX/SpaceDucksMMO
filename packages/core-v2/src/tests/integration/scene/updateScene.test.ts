@@ -10,15 +10,15 @@ describe('Integration: Scene > updateScene', () => {
         ctx.api.addScene({ sceneId: 'main' });
     });
 
-    it('should trigger update on all scene adapters', () => {
+    it('should trigger update on all scene subsystems', () => {
         const updateSpy = jest.fn();
-        const mockAdapter = {
+        const mockSubsystem = {
             id: 'mock',
             update: updateSpy
         };
 
         ctx.api.scene('main').setupScene({
-            adapters: [mockAdapter as any]
+            subsystems: [mockSubsystem as any]
         });
 
         ctx.api.scene('main').updateScene({ dt: 0.16 });
@@ -28,13 +28,13 @@ describe('Integration: Scene > updateScene', () => {
 
     it('should not update if scene is paused', () => {
         const updateSpy = jest.fn();
-        const mockAdapter = {
+        const mockSubsystem = {
             id: 'mock',
             update: updateSpy
         };
 
         ctx.api.scene('main').setupScene({
-            adapters: [mockAdapter as any]
+            subsystems: [mockSubsystem as any]
         });
         ctx.api.scene('main').setPaused({ paused: true });
 

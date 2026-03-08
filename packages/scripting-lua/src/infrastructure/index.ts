@@ -1,1 +1,1 @@
-export { scriptingLuaSceneAdapterFactory } from './scriptingAdapter';
+export { scriptingLuaSubsystem } from './scriptingSubsystem';

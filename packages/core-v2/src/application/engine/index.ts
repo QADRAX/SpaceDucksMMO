@@ -5,7 +5,7 @@ export { addViewport, type AddViewportParams } from './addViewport';
 export { removeViewport, type RemoveViewportParams } from './removeViewport';
 export { setEnginePaused, type SetEnginePausedParams } from './setEnginePaused';
 export { setupEngine, type SetupEngineParams } from './setupEngine';
-export { registerEngineAdapter, type RegisterEngineAdapterParams } from './registerEngineAdapter';
+export { registerEngineSubsystem, type RegisterEngineSubsystemParams } from './registerEngineSubsystem';
 export { updateEngine, type UpdateEngineParams } from './updateEngine';
 export { updateSettings, type UpdateSettingsParams } from './updateSettings';
 export { getSettings } from './getSettings';

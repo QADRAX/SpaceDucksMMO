@@ -1,6 +1,6 @@
 import type { EntityState, DebugKind } from '../entities';
 import type { ComponentType } from '../components';
-import type { SceneSystemAdapter } from '../adapters';
+import type { SceneSubsystem } from '../subsystems';
 
 /** Event emitted when an entity is added to a scene. */
 export type EntityAddedEvent = {
@@ -111,9 +111,9 @@ export interface SceneState {
   readonly changeListeners: Set<SceneChangeListener>;
   /** Cleanup functions for detaching entity observers, keyed by entity id. */
   readonly entityCleanups: Map<string, () => void>;
-  /** Registered adapters in update-pipeline order. */
-  readonly adapters: SceneSystemAdapter[];
-  /** When true, only adapters with updateWhenPaused run during update. */
+  /** Registered subsystems in update-pipeline order. */
+  readonly subsystems: SceneSubsystem[];
+  /** When true, only subsystems with updateWhenPaused run during update. */
   paused: boolean;
 }
 

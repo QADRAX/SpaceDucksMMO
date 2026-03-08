@@ -1,5 +1,5 @@
-import type { AdapterUpdateParams, AdapterUseCase } from '@duckengine/core-v2';
-import { defineAdapterUseCase } from '@duckengine/core-v2';
+import type { SubsystemUpdateParams, SubsystemUseCase } from '@duckengine/core-v2';
+import { defineSubsystemUseCase } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import {
   FRAME_HOOKS,
@@ -21,11 +21,11 @@ import {
  *
  * If a hook call fails, the slot is automatically disabled.
  */
-export const runFrameHooks: AdapterUseCase<ScriptingSessionState, AdapterUpdateParams, void> =
-  defineAdapterUseCase<ScriptingSessionState, AdapterUpdateParams, void>({
+export const runFrameHooks: SubsystemUseCase<ScriptingSessionState, SubsystemUpdateParams, void> =
+  defineSubsystemUseCase<ScriptingSessionState, SubsystemUpdateParams, void>({
     name: 'scripting/runFrameHooks',
 
-    execute(session: ScriptingSessionState, params: AdapterUpdateParams): void {
+    execute(session: ScriptingSessionState, params: SubsystemUpdateParams): void {
       const { scene, dt } = params;
       const { slots, sandbox, eventBus, timeState } = session;
 

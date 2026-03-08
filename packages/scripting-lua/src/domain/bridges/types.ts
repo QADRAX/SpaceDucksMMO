@@ -1,5 +1,5 @@
 import type {
-  AdapterPortKey,
+  SubsystemPortKey,
   GizmoPort,
   InputPort,
   PhysicsQueryPort,
@@ -32,8 +32,8 @@ export interface BridgePorts {
   readonly input?: InputPort;
 }
 
-/** Default engine-level adapter port keys consumed by scripting bridges. */
-export const SCRIPTING_BRIDGE_PORT_KEYS: Readonly<Record<keyof BridgePorts, AdapterPortKey>> = {
+/** Default engine-level subsystem port keys consumed by scripting bridges. */
+export const SCRIPTING_BRIDGE_PORT_KEYS: Readonly<Record<keyof BridgePorts, SubsystemPortKey>> = {
   physicsQuery: 'io:physics-query',
   gizmo: 'io:gizmo',
   input: 'io:input',

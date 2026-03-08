@@ -7,7 +7,7 @@ import {
   setActiveCamera,
   setEnginePaused,
   setupEngine,
-  registerEngineAdapter,
+  registerEngineSubsystem,
   removeEntityFromScene,
   removeSceneFromEngine,
   removeViewport,
@@ -88,7 +88,7 @@ export function createDuckEngineAPI(engine: EngineState) {
     .add('removeViewport', removeViewport)
     .add('setPaused', setEnginePaused)
     .add('setup', setupEngine)
-    .add('registerAdapter', registerEngineAdapter)
+    .add('registerSubsystem', registerEngineSubsystem)
     .add('update', updateEngine)
     .add('updateSettings', updateSettings)
     .add('getSettings', getSettings)

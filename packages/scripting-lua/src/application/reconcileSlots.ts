@@ -1,5 +1,5 @@
-import type { AdapterEventParams } from '@duckengine/core-v2';
-import { defineAdapterEventUseCase } from '@duckengine/core-v2';
+import type { SubsystemEventParams } from '@duckengine/core-v2';
+import { defineSubsystemEventUseCase } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import { slotKey, initScriptSlot, destroyScriptSlot } from '../domain/slots';
 import { createScriptBridgeContext } from '../domain/bridges';
@@ -14,11 +14,11 @@ import { createScriptBridgeContext } from '../domain/bridges';
  * New slot creation is async (source resolution) and tracked in `pending`.
  */
 export const reconcileSlots =
-  defineAdapterEventUseCase<ScriptingSessionState, AdapterEventParams, void>({
+  defineSubsystemEventUseCase<ScriptingSessionState, SubsystemEventParams, void>({
     name: 'scripting/reconcileSlots',
     event: 'component-changed',
 
-    execute(session: ScriptingSessionState, params: AdapterEventParams): void {
+    execute(session: ScriptingSessionState, params: SubsystemEventParams): void {
       const { scene } = params;
       const event = params.event as any;
 

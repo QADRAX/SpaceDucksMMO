@@ -1,42 +1,42 @@
 import type { SceneState, SceneChangeEventWithError } from '../scene';
-import type { AdapterUseCase } from '../useCases';
-import type { SceneSystemAdapter } from './types';
+import type { SubsystemUseCase } from '../useCases';
+import type { SceneSubsystem } from './types';
 
-/** Params passed to adapter use cases during the `update` lifecycle hook. */
-export interface AdapterUpdateParams {
+/** Params passed to subsystem use cases during the `update` lifecycle hook. */
+export interface SubsystemUpdateParams {
   readonly scene: SceneState;
   readonly dt: number;
 }
 
-/** Params passed to adapter use cases during `handleSceneEvent`. */
-export interface AdapterEventParams {
+/** Params passed to subsystem use cases during `handleSceneEvent`. */
+export interface SubsystemEventParams {
   readonly scene: SceneState;
   readonly event: SceneChangeEventWithError;
 }
 
-/** Fluent builder for composing a SceneSystemAdapter from adapter use cases. */
-export interface AdapterComposer<TState> {
+/** Fluent builder for composing a SceneSubsystem from subsystem use cases. */
+export interface SubsystemComposer<TState> {
   on<K extends SceneChangeEventWithError['kind']>(
     eventKind: K,
-    useCase: AdapterUseCase<TState, AdapterEventParams, void>,
+    useCase: SubsystemUseCase<TState, SubsystemEventParams, void>,
   ): this;
-  onUpdate(useCase: AdapterUseCase<TState, AdapterUpdateParams, void>): this;
-  onDispose(useCase: AdapterUseCase<TState, void, void>): this;
+  onUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
+  onDispose(useCase: SubsystemUseCase<TState, void, void>): this;
   updateWhenPaused(enabled: boolean): this;
-  build(): SceneSystemAdapter;
+  build(): SceneSubsystem;
 }
 
-/** Creates a composable adapter builder bound to an adapter's state. */
-export function composeAdapter<TState>(state: TState): AdapterComposer<TState> {
+/** Creates a composable subsystem builder bound to a subsystem's state. */
+export function composeSceneSubsystem<TState>(state: TState): SubsystemComposer<TState> {
   const eventHandlers = new Map<
     SceneChangeEventWithError['kind'],
-    Array<AdapterUseCase<TState, AdapterEventParams, void>>
+    Array<SubsystemUseCase<TState, SubsystemEventParams, void>>
   >();
-  let updateUseCase: AdapterUseCase<TState, AdapterUpdateParams, void> | undefined;
-  let disposeUseCase: AdapterUseCase<TState, void, void> | undefined;
+  let updateUseCase: SubsystemUseCase<TState, SubsystemUpdateParams, void> | undefined;
+  let disposeUseCase: SubsystemUseCase<TState, void, void> | undefined;
   let shouldUpdateWhenPaused = false;
 
-  const composer: AdapterComposer<TState> = {
+  const composer: SubsystemComposer<TState> = {
     on(eventKind, useCase) {
       const handlers = eventHandlers.get(eventKind) ?? [];
       handlers.push(useCase);
@@ -59,7 +59,7 @@ export function composeAdapter<TState>(state: TState): AdapterComposer<TState> {
       return composer;
     },
 
-    build(): SceneSystemAdapter {
+    build(): SceneSubsystem {
       return {
         handleSceneEvent(scene: SceneState, event: SceneChangeEventWithError): void {
           const handlers = eventHandlers.get(event.kind);
@@ -71,16 +71,16 @@ export function composeAdapter<TState>(state: TState): AdapterComposer<TState> {
 
         update: updateUseCase
           ? (scene: SceneState, dt: number) => {
-              updateUseCase!.execute(state, { scene, dt });
-            }
+            updateUseCase!.execute(state, { scene, dt });
+          }
           : undefined,
 
         updateWhenPaused: shouldUpdateWhenPaused,
 
         dispose: disposeUseCase
           ? () => {
-              disposeUseCase!.execute(state, undefined as void);
-            }
+            disposeUseCase!.execute(state, undefined as void);
+          }
           : undefined,
       };
     },

@@ -1,12 +1,12 @@
-import type { AdapterPortRegistry } from '@duckengine/core-v2';
+import type { SubsystemPortRegistry } from '@duckengine/core-v2';
 import type { BridgePorts } from './types';
 import { SCRIPTING_BRIDGE_PORT_KEYS } from './types';
 
 /**
- * Resolves scripting bridge ports from the shared engine adapter port registry.
+ * Resolves scripting bridge ports from the shared engine subsystem port registry.
  */
 export function resolveBridgePortsFromRegistry(
-  ports: AdapterPortRegistry,
+  ports: SubsystemPortRegistry,
 ): BridgePorts {
   return {
     physicsQuery: ports.get<BridgePorts['physicsQuery']>(SCRIPTING_BRIDGE_PORT_KEYS.physicsQuery),

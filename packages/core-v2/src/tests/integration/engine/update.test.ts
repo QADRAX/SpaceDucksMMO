@@ -14,27 +14,27 @@ describe('Integration: Engine > update', () => {
         expect(result.ok).toBe(true);
     });
 
-    it('should trigger adapter updates', () => {
+    it('should trigger subsystem updates', () => {
         const updateSpy = jest.fn();
-        const mockAdapter = {
+        const mockSubsystem = {
             id: 'mock',
             update: updateSpy
         };
 
-        ctx.api.registerAdapter({ adapter: mockAdapter as any });
+        ctx.api.registerSubsystem({ subsystem: mockSubsystem as any });
         ctx.api.update({ dt: 0.16 });
 
         expect(updateSpy).toHaveBeenCalledWith(ctx.engine, 0.16);
     });
 
-    it('should respect pause flag for adapters', () => {
+    it('should respect pause flag for subsystems', () => {
         const updateSpy = jest.fn();
-        const mockAdapter = {
+        const mockSubsystem = {
             id: 'mock',
             update: updateSpy
         };
 
-        ctx.api.registerAdapter({ adapter: mockAdapter as any });
+        ctx.api.registerSubsystem({ subsystem: mockSubsystem as any });
         ctx.api.setPaused({ paused: true });
         ctx.api.update({ dt: 0.16 });
 

@@ -1,6 +1,6 @@
 import type { SceneState } from '../scene';
 import type { ViewportState } from '../viewport';
-import type { AdapterRuntimeState, EngineSystemAdapter } from '../adapters';
+import type { SubsystemRuntimeState, EngineSubsystem } from '../subsystems';
 
 /** Mutable engine state operated on by application-layer engine use cases. */
 export interface EngineState {
@@ -9,10 +9,10 @@ export interface EngineState {
   settings: GameSettings;
   paused: boolean;
   running: boolean;
-  /** Engine-level adapters (render, audio …) in pipeline order. */
-  readonly engineAdapters: EngineSystemAdapter[];
-  /** Shared adapter runtime: scene factories + IO port registry + derivation hooks. */
-  readonly adapterRuntime: AdapterRuntimeState;
+  /** Engine-level subsystems (render, audio …) in pipeline order. */
+  readonly engineSubsystems: EngineSubsystem[];
+  /** Shared subsystem runtime: scene factories + IO port registry + derivation hooks. */
+  readonly subsystemRuntime: SubsystemRuntimeState;
 }
 
 /** Graphics quality and rendering settings. */

@@ -11,14 +11,14 @@ export const teardownScene = defineSceneUseCase({
   execute(scene) {
     emitSceneChange(scene, { kind: 'scene-teardown' });
 
-    for (const adapter of scene.adapters) {
+    for (const subsystem of scene.subsystems) {
       try {
-        adapter.dispose?.();
+        subsystem.dispose?.();
       } catch {
         /* swallow */
       }
     }
-    scene.adapters.length = 0;
+    scene.subsystems.length = 0;
 
     for (const [, cleanup] of scene.entityCleanups) {
       try {

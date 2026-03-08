@@ -1,6 +1,6 @@
 import type { EngineState } from './types';
 import { DEFAULT_GAME_SETTINGS } from './constants';
-import { createAdapterRuntimeState } from '../adapters';
+import { createSubsystemRuntimeState } from '../subsystems';
 
 /** Creates an empty engine state. */
 export function createEngine(): EngineState {
@@ -10,7 +10,7 @@ export function createEngine(): EngineState {
     settings: { ...DEFAULT_GAME_SETTINGS },
     paused: false,
     running: false,
-    engineAdapters: [],
-    adapterRuntime: createAdapterRuntimeState(),
+    engineSubsystems: [],
+    subsystemRuntime: createSubsystemRuntimeState(),
   };
 }

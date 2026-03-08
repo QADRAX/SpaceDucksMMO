@@ -10,20 +10,20 @@ describe('Integration: Scene > teardownScene', () => {
         ctx.api.addScene({ sceneId: 'main' });
     });
 
-    it('should trigger disposal on all scene adapters and clear them', () => {
+    it('should trigger disposal on all scene subsystems and clear them', () => {
         const disposeSpy = jest.fn();
-        const mockAdapter = {
+        const mockSubsystem = {
             id: 'mock',
             dispose: disposeSpy
         };
 
         ctx.api.scene('main').setupScene({
-            adapters: [mockAdapter as any]
+            subsystems: [mockSubsystem as any]
         });
 
         ctx.api.scene('main').teardownScene();
 
         expect(disposeSpy).toHaveBeenCalled();
-        expect(ctx.engine.scenes.get('main')?.adapters).toHaveLength(0);
+        expect(ctx.engine.scenes.get('main')?.subsystems).toHaveLength(0);
     });
 });

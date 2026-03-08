@@ -11,7 +11,7 @@ export interface InputMouseButtons {
   middle: boolean;
 }
 
-/** Query-only input contract for adapters and scripting runtimes. */
+/** Query-only input contract for subsystems and scripting runtimes. */
 export interface InputPort {
   isKeyPressed(key: string): boolean;
   getMouseDelta(): InputMouseDelta;

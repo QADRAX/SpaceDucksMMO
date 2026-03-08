@@ -10,21 +10,21 @@ describe('Integration: Scene > setupScene', () => {
         ctx.api.addScene({ sceneId: 'main' });
     });
 
-    it('should trigger initialization on all scene adapters', () => {
+    it('should trigger initialization on all scene subsystems', () => {
         const eventSpy = jest.fn();
-        const mockAdapter = {
+        const mockSubsystem = {
             id: 'mock',
             handleSceneEvent: eventSpy
         };
 
         ctx.api.scene('main').setupScene({
-            adapters: [mockAdapter as any]
+            subsystems: [mockSubsystem as any]
         });
 
         expect(eventSpy).toHaveBeenCalledWith(
             expect.anything(),
             expect.objectContaining({ kind: 'scene-setup' })
         );
-        expect(ctx.engine.scenes.get('main')?.adapters).toContain(mockAdapter);
+        expect(ctx.engine.scenes.get('main')?.subsystems).toContain(mockSubsystem);
     });
 });

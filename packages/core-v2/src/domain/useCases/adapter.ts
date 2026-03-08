@@ -1,14 +1,14 @@
-import type { AdapterUseCase } from './types';
+import type { SubsystemUseCase } from './types';
 
 /**
- * Defines an adapter use case, ensuring it conforms to the AdapterUseCase contract.
+ * Defines a subsystem use case, ensuring it conforms to the SubsystemUseCase contract.
  *
- * Adapters (physics, scripting, rendering) use this to declare operations
+ * Subsystems (physics, scripting, rendering) use this to declare operations
  * that participate in the scene lifecycle (event handling, frame updates, disposal).
  *
  * @example
  * ```ts
- * export const reconcileSlots = defineAdapterUseCase<
+ * export const reconcileSlots = defineSubsystemUseCase<
  *   ScriptingSessionState,
  *   ReconcileParams,
  *   void
@@ -20,8 +20,8 @@ import type { AdapterUseCase } from './types';
  * });
  * ```
  */
-export function defineAdapterUseCase<TState, TParams = void, TOutput = void>(
-  definition: AdapterUseCase<TState, TParams, TOutput>,
-): AdapterUseCase<TState, TParams, TOutput> {
+export function defineSubsystemUseCase<TState, TParams = void, TOutput = void>(
+  definition: SubsystemUseCase<TState, TParams, TOutput>,
+): SubsystemUseCase<TState, TParams, TOutput> {
   return definition;
 }

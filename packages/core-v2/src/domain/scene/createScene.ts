@@ -10,7 +10,7 @@ export function createScene(id: string): SceneState {
     debugFlags: new Map(),
     changeListeners: new Set(),
     entityCleanups: new Map(),
-    adapters: [],
+    subsystems: [],
     paused: false,
   };
 }
