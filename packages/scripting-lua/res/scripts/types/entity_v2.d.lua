@@ -1,0 +1,13 @@
+---@meta
+-- ═══════════════════════════════════════════════════════════════════════
+-- DuckEngine Lua API v2 — Entity
+-- The DuckEntityV2 class representing an ECS entity with OOP methods
+-- for transform, physics, and game logic in v2 scripting system.
+-- ═══════════════════════════════════════════════════════════════════════
+
+---An ECS entity exposed to Lua via the `__EntityMT` metatable.
+---Scripts receive `self` as a DuckEntityV2 in all lifecycle hooks.
+---@class DuckEntityV2
+---@field id string The unique UUID of this entity in the scene.
+---@field transform TransformV2 Transform component (position, rotation, scale).
+---@field state table Persistent per-instance state table. Survives across frames.

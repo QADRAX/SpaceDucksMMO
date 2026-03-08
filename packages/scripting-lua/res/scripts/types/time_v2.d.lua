@@ -1,0 +1,12 @@
+---@meta
+-- ═══════════════════════════════════════════════════════════════════════
+-- DuckEngine Lua API v2 — Time
+-- Frame timing and time scale control.
+-- ═══════════════════════════════════════════════════════════════════════
+
+---Time system providing frame timing information (read-only).
+---@class TimeV2
+---@field delta number Delta time for this frame in seconds.
+---@field elapsed number Total elapsed time in seconds.
+---@field frameCount number Total frame count since startup.
+---@field scale number Time scale multiplier (1.0 = normal speed).
