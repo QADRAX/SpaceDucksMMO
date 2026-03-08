@@ -1,7 +1,7 @@
 import type { AdapterEventParams } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import type { ScriptingUseCase } from '../domain/useCases';
-import { defineScriptingUseCase } from '../domain/useCases';
+import { defineScriptingEventUseCase } from '../domain/useCases';
 
 /**
  * Tears down the entire scripting session.
@@ -16,8 +16,9 @@ import { defineScriptingUseCase } from '../domain/useCases';
  * Params are optional to support both contexts.
  */
 export const teardownSession: ScriptingUseCase<AdapterEventParams | void, void> =
-  defineScriptingUseCase<AdapterEventParams | void, void>({
+  defineScriptingEventUseCase<AdapterEventParams | void, void>({
     name: 'scripting/teardownSession',
+    event: 'scene-teardown',
 
     execute(session: ScriptingSessionState, _params?: AdapterEventParams | void): void {
       const { slots, sandbox, eventBus } = session;

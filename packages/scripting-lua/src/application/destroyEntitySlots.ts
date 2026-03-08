@@ -1,7 +1,7 @@
 import type { AdapterEventParams } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import type { ScriptingUseCase } from '../domain/useCases';
-import { defineScriptingUseCase } from '../domain/useCases';
+import { defineScriptingEventUseCase } from '../domain/useCases';
 import { destroyEntityScriptSlots } from '../domain/slots';
 
 /**
@@ -12,8 +12,9 @@ import { destroyEntityScriptSlots } from '../domain/slots';
  * then cleans up sandbox and event bus subscriptions.
  */
 export const destroyEntitySlots: ScriptingUseCase<AdapterEventParams, void> =
-  defineScriptingUseCase<AdapterEventParams, void>({
+  defineScriptingEventUseCase<AdapterEventParams, void>({
     name: 'scripting/destroyEntitySlots',
+    event: 'entity-removed',
 
     execute(session: ScriptingSessionState, params: AdapterEventParams): void {
       const { event } = params;

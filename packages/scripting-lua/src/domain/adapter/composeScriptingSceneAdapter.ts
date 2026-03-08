@@ -1,4 +1,4 @@
-import type { AdapterEventParams, AdapterUpdateParams, SceneSystemAdapter } from '@duckengine/core-v2';
+import type { AdapterEventParams, AdapterUpdateParams, SceneSystemAdapter, SceneChangeEventWithError } from '@duckengine/core-v2';
 import { composeAdapter } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../session';
 import type { ScriptingUseCase } from '../useCases';
@@ -17,11 +17,19 @@ export interface ComposeScriptingSceneAdapterParams {
 export function composeScriptingSceneAdapter(
   params: ComposeScriptingSceneAdapterParams,
 ): SceneSystemAdapter {
-  return composeAdapter(params.session)
-    .on('component-changed', params.reconcileSlots)
-    .on('entity-removed', params.destroyEntitySlots)
-    .on('scene-teardown', params.teardownSession)
-    .onUpdate(params.runFrameHooks)
-    .onDispose(params.teardownSession)
-    .build();
+  const composer = composeAdapter(params.session);
+
+  const registerEventUseCase = (
+    useCase: ScriptingUseCase<AdapterEventParams, void> | ScriptingUseCase<AdapterEventParams | void, void>,
+  ) => {
+    const eventKind = (useCase as any).event as SceneChangeEventWithError['kind'] | undefined;
+    if (eventKind) composer.on(eventKind, useCase as any);
+    return composer;
+  };
+
+  registerEventUseCase(params.reconcileSlots);
+  registerEventUseCase(params.destroyEntitySlots);
+  registerEventUseCase(params.teardownSession);
+
+  return composer.onUpdate(params.runFrameHooks).onDispose(params.teardownSession).build();
 }
