@@ -1,7 +1,6 @@
-import type { AdapterUpdateParams } from '@duckengine/core-v2';
+import type { AdapterUpdateParams, AdapterUseCase } from '@duckengine/core-v2';
+import { defineAdapterUseCase } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
-import type { ScriptingUseCase } from '../domain/useCases';
-import { defineScriptingUseCase } from '../domain/useCases';
 import {
   FRAME_HOOKS,
   runHookOnAllSlots,
@@ -22,8 +21,8 @@ import {
  *
  * If a hook call fails, the slot is automatically disabled.
  */
-export const runFrameHooks: ScriptingUseCase<AdapterUpdateParams, void> =
-  defineScriptingUseCase<AdapterUpdateParams, void>({
+export const runFrameHooks: AdapterUseCase<ScriptingSessionState, AdapterUpdateParams, void> =
+  defineAdapterUseCase<ScriptingSessionState, AdapterUpdateParams, void>({
     name: 'scripting/runFrameHooks',
 
     execute(session: ScriptingSessionState, params: AdapterUpdateParams): void {

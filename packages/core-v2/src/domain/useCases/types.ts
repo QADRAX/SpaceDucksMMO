@@ -4,6 +4,8 @@ import type { SceneState } from '../scene';
 import type { ViewportState } from '../viewport';
 import type { EntityState } from '../entities';
 import type { ComponentBase } from '../components';
+import type { SceneChangeEventWithError } from '../scene';
+
 
 /**
  * A typed, named, domain-tagged use case.
@@ -168,3 +170,13 @@ export interface AdapterUseCase<TState, TParams = void, TOutput = void> {
     /** Executes the use case against the adapter's state. */
     execute(state: TState, params: TParams): TOutput;
 }
+
+/**
+ * An adapter use case that is tied to a specific scene event.
+ */
+export type AdapterEventUseCase<TState, TParams = void, TOutput = void> =
+    AdapterUseCase<TState, TParams, TOutput> & {
+        /** The scene event kind this use case handles. */
+        readonly event: SceneChangeEventWithError['kind'];
+    };
+

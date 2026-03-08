@@ -9,4 +9,4 @@ export { scriptingLuaSceneAdapterFactory } from './infrastructure';
 export { SCRIPTING_BRIDGE_PORT_KEYS } from './domain/bridges';
 
 // Generated assets
-export { BuiltInScripts } from './generated/ScriptAssets';
+export { BuiltInScripts } from './infrastructure/wasmoon/generated/ScriptAssets';

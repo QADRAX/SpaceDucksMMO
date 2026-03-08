@@ -1,7 +1,6 @@
 import type { AdapterEventParams } from '@duckengine/core-v2';
+import { defineAdapterEventUseCase } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
-import type { ScriptingUseCase } from '../domain/useCases';
-import { defineScriptingEventUseCase } from '../domain/useCases';
 import { slotKey, initScriptSlot, destroyScriptSlot } from '../domain/slots';
 import { createScriptBridgeContext } from '../domain/bridges';
 
@@ -14,17 +13,18 @@ import { createScriptBridgeContext } from '../domain/bridges';
  *
  * New slot creation is async (source resolution) and tracked in `pending`.
  */
-export const reconcileSlots: ScriptingUseCase<AdapterEventParams, void> =
-  defineScriptingEventUseCase<AdapterEventParams, void>({
+export const reconcileSlots =
+  defineAdapterEventUseCase<ScriptingSessionState, AdapterEventParams, void>({
     name: 'scripting/reconcileSlots',
     event: 'component-changed',
 
     execute(session: ScriptingSessionState, params: AdapterEventParams): void {
-      const { scene, event } = params;
-      
-      // Only handle component-changed events for script components
-      if (event.kind !== 'component-changed' || event.componentType !== 'script') return;
-      
+      const { scene } = params;
+      const event = params.event as any;
+
+      // The builder handles event.kind routing automatically.
+      if (event.componentType !== 'script') return;
+
       const { entityId } = event;
       const { slots, pending, sandbox } = session;
 
