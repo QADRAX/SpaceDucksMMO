@@ -42,9 +42,7 @@
 
 
 
----@class ScriptInstance<P, S> : DuckEntity
----@field properties P Read-only access to the script slot's inspector properties.
----@field state S Persistent per-slot state table. Survives across frames. Use it to store script variables.
+---@class ScriptInstance<P, S> : DuckEntity<P, S>
 
 ---The table returned by every script file. Contains optional schema,
 ---lifecycle hooks, and the script's behavior logic.

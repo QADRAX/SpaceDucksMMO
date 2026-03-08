@@ -1,0 +1,40 @@
+{
+  "workspace.library": [
+    "./res/scripts"
+  ],
+  "workspace.ignoreDir": [
+    "../scripting-lua",
+    "../core-v2",
+    "../rendering-base",
+    "../rendering-three",
+    "../physics-rapier",
+    "../web-core",
+    "../web-core-api-client",
+    "../editor-core"
+  ],
+  "std": "lua54",
+  "diagnostics.globals": [
+    "transform",
+    "physics",
+    "input",
+    "scene",
+    "time",
+    "gizmos",
+    "events"
+  ],
+  "runtime.version": "Lua 5.4",
+  "completion.callSnippet": "Replace",
+  "diagnostics.disable": [
+    "lowercase-global"
+  ],
+  "diagnostics.neededFileStatus": {
+    "undefined-field": "Opened",
+    "unknown-cast-variable": "Opened",
+    "inject-field": "Opened"
+  },
+  "diagnostics.severity": {
+    "undefined-field": "Error",
+    "unknown-cast-variable": "Warning",
+    "inject-field": "Error"
+  }
+}

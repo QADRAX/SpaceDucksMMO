@@ -41,9 +41,12 @@
 ---An ECS entity exposed to Lua via the `__EntityMT` metatable.
 ---Scripts receive `self` as a DuckEntity in all lifecycle hooks.
 ---Any entity referenced via schema properties is also a DuckEntity.
----@class DuckEntity
+---@generic P, S
+---@class DuckEntity<P, S>
 ---@field id string The unique UUID of this entity in the scene.
 ---@field scripts LuaScriptsProxy Cross-script property access. Read/write other scripts' properties via `entity.scripts.scriptName.property`.
+---@field properties P Read-only access to the script slot's inspector properties.
+---@field state S Persistent per-slot state table. Survives across frames. Use it to store script variables.
 ---
 ---@field transform TransformComponent Base Transform properties. Built-in, every entity has one.
 ---@field rigidBody RigidBodyComponent Dynamic physics component data.

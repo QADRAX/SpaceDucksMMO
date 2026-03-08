@@ -13,6 +13,7 @@ import { reconcileSlots } from '../application/reconcileSlots';
 import { destroyEntitySlots } from '../application/destroyEntitySlots';
 import { runFrameHooks } from '../application/runFrameHooks';
 import { teardownSession } from '../application/teardownSession';
+import { createBuiltInScriptResolver } from './createBuiltInScriptResolver';
 
 /** Configuration for creating a scripting adapter. */
 export interface CreateScriptingAdapterParams {
@@ -50,7 +51,7 @@ export function createScriptingAdapter(
     ports,
     eventBus: createScriptEventBus(),
     timeState,
-    resolveSource: params.resolveSource,
+    resolveSource: params.resolveSource ?? createBuiltInScriptResolver(),
   });
 
   const boundReconcile = bindScriptingUseCase(session, reconcileSlots);
