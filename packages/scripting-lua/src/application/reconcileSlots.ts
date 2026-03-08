@@ -1,0 +1,71 @@
+import type { SceneState } from '@duckengine/core-v2';
+import type { ScriptingSessionState } from '../domain/session';
+import type { ScriptingUseCase } from '../domain/useCases';
+import { defineScriptingUseCase } from '../domain/useCases';
+import { slotKey, initScriptSlot, destroyScriptSlot } from '../domain/slots';
+import { createScriptBridgeContext } from '../domain/bridges';
+
+export interface ReconcileSlotsParams {
+  readonly scene: SceneState;
+  readonly entityId: string;
+}
+
+/**
+ * Reconciles script slots for a single entity against its ECS `script` component.
+ *
+ * - Creates new slots for scripts that appear in the component but have no slot yet.
+ * - Destroys slots whose scripts were removed from the component.
+ * - Updates the `enabled` flag on existing slots.
+ *
+ * New slot creation is async (source resolution) and tracked in `pending`.
+ */
+export const reconcileSlots: ScriptingUseCase<ReconcileSlotsParams, void> =
+  defineScriptingUseCase<ReconcileSlotsParams, void>({
+    name: 'scripting/reconcileSlots',
+
+    execute(session: ScriptingSessionState, params: ReconcileSlotsParams): void {
+      const { scene, entityId } = params;
+      const { slots, pending, sandbox } = session;
+
+      const entity = scene.entities.get(entityId);
+      if (!entity) return;
+
+      const scriptComp = entity.components.get('script') as
+        | { scripts: Array<{ scriptId: string; enabled: boolean; properties: Record<string, unknown> }> }
+        | undefined;
+
+      const desired = new Set<string>();
+
+      if (scriptComp) {
+        for (const ref of scriptComp.scripts) {
+          const key = slotKey(entityId, ref.scriptId);
+          desired.add(key);
+
+          if (!slots.has(key) && !pending.has(key)) {
+            initScriptSlot(
+              slots,
+              pending,
+              sandbox,
+              session.resolveSource,
+              () => createScriptBridgeContext(scene, entityId, session.bridges, session.ports),
+              entityId,
+              ref.scriptId,
+              ref.properties,
+            );
+          }
+
+          const slot = slots.get(key);
+          if (slot && slot.enabled !== ref.enabled) {
+            slot.enabled = ref.enabled;
+            sandbox.callHook(key, ref.enabled ? 'onEnable' : 'onDisable', 0);
+          }
+        }
+      }
+
+      for (const [key, slot] of slots) {
+        if (slot.entityId === entityId && !desired.has(key)) {
+          destroyScriptSlot(slots, sandbox, session.eventBus, entityId, slot.scriptId);
+        }
+      }
+    },
+  });

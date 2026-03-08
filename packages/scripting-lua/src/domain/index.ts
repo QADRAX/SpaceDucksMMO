@@ -3,3 +3,5 @@ export * from './properties';
 export * from './events';
 export * from './bridges';
 export * from './ports';
+export * from './session';
+export * from './useCases';
