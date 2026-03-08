@@ -7,8 +7,13 @@ export type {
   SceneSubsystemFactory,
   SubsystemPortDeriverContext,
   SubsystemPortDeriver,
+  SubsystemUpdateParams,
+  EngineSubsystemBuilder,
+  SceneSubsystemBuilder,
 } from './types';
+
 export type { SubsystemRuntimeState } from './runtime';
+
 export {
   createSubsystemRuntimeState,
   createSubsystemPortRegistry,
@@ -17,5 +22,10 @@ export {
   attachSceneSubsystem,
   attachSceneSubsystems,
 } from './runtime';
-export type { SubsystemUpdateParams, SubsystemEventParams, SubsystemComposer } from './composeSceneSubsystem';
+
+export { defineSceneSubsystem } from './defineSceneSubsystem';
+export { defineEngineSubsystem } from './defineEngineSubsystem';
+export { defineSubsystemEventUseCase } from './defineSubsystemEventUseCase';
+
+export type { SubsystemEventParams, SubsystemComposer } from './composeSceneSubsystem';
 export { composeSceneSubsystem } from './composeSceneSubsystem';

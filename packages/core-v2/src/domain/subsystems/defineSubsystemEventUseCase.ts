@@ -7,6 +7,9 @@ import { defineSubsystemUseCase } from '../../domain/useCases';
  *
  * This allows the subsystem builder to automatically route events to the
  * correct use case and apply event kind guards.
+ * 
+ * @param definition - Use case definition with the target event kind.
+ * @returns A SubsystemEventUseCase that can be used with .onEvent().
  */
 export function defineSubsystemEventUseCase<TState, TParams = void, TOutput = void>(
     definition: SubsystemUseCase<TState, TParams, TOutput> & {

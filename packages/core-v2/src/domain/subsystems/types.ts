@@ -1,5 +1,6 @@
 import type { EngineState } from '../engine';
 import type { SceneChangeEventWithError, SceneState } from '../scene';
+import type { SubsystemUseCase, SubsystemEventUseCase } from '../useCases';
 
 /**
  * A scene system subsystem reacts to scene change events and
@@ -70,3 +71,57 @@ export interface SubsystemPortDeriverContext {
 
 /** Hook that can derive or override ports during engine setup. */
 export type SubsystemPortDeriver = (context: SubsystemPortDeriverContext) => void;
+
+/** Parameters for the subsystem update tick. */
+export interface SubsystemUpdateParams {
+  readonly scene: SceneState;
+  readonly dt: number;
+}
+
+/** Fluent builder for creating an EngineSubsystem. */
+export interface EngineSubsystemBuilder<TState> {
+  /** Initialize the subsystem's internal state. */
+  withState(
+    factory: (ctx: { engine: EngineState }) => TState,
+  ): EngineSubsystemBuilder<TState>;
+
+  /** Register a use case for the engine frame update tick. */
+  onUpdate(useCase: SubsystemUseCase<TState, { engine: EngineState; dt: number }, void>): this;
+
+  /** Register a use case for subsystem disposal. */
+  onDispose(useCase: SubsystemUseCase<TState, void, void>): this;
+
+  /** Enable updates even when the engine is paused. */
+  updateWhenPaused(enabled?: boolean): this;
+
+  /** Produces the final EngineSubsystem. */
+  build(): EngineSubsystem;
+}
+
+/** Fluent builder for creating a SceneSubsystemFactory. */
+export interface SceneSubsystemBuilder<TState, TPorts = void> {
+  /** Declare which ports this subsystem consumes from the registry. */
+  withPorts<TNewPorts>(
+    resolver: (registry: SubsystemPortRegistry) => TNewPorts,
+  ): SceneSubsystemBuilder<TState, TNewPorts>;
+
+  /** Initialize the subsystem's internal state (per scene). */
+  withState(
+    factory: (ctx: { ports: TPorts; scene: SceneState; engine: EngineState }) => TState,
+  ): SceneSubsystemBuilder<TState, TPorts>;
+
+  /** Register a use case tied to a specific scene event. */
+  onEvent<TParams>(useCase: SubsystemEventUseCase<TState, TParams, void>): this;
+
+  /** Register a use case for the frame update tick. */
+  onUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
+
+  /** Register a use case for subsystem disposal. */
+  onDispose(useCase: SubsystemUseCase<TState, void, void>): this;
+
+  /** Enable updates even when the scene/engine is paused. */
+  updateWhenPaused(enabled?: boolean): this;
+
+  /** Produces the final SceneSubsystemFactory. */
+  build(): SceneSubsystemFactory;
+}

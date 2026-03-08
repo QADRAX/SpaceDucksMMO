@@ -1,40 +1,14 @@
-import type { EngineState } from '../../domain/engine';
-import type { SceneState } from '../../domain/scene';
-import type { SubsystemUseCase, SubsystemEventUseCase } from '../../domain/useCases';
+import type { EngineState } from '../engine';
+import type { SceneState } from '../scene';
+import type { SubsystemUseCase, SubsystemEventUseCase } from '../useCases';
 import type {
     SubsystemPortRegistry,
     SceneSubsystemFactory,
     SubsystemUpdateParams,
-} from '../../domain/subsystems';
-import { composeSceneSubsystem } from '../../domain/subsystems';
-
-/** Fluent builder for creating a SceneSubsystemFactory. */
-export interface SceneSubsystemBuilder<TState, TPorts = void> {
-    /** Declare which ports this subsystem consumes from the registry. */
-    withPorts<TNewPorts>(
-        resolver: (registry: SubsystemPortRegistry) => TNewPorts,
-    ): SceneSubsystemBuilder<TState, TNewPorts>;
-
-    /** Initialize the subsystem's internal state (per scene). */
-    withState(
-        factory: (ctx: { ports: TPorts; scene: SceneState; engine: EngineState }) => TState,
-    ): SceneSubsystemBuilder<TState, TPorts>;
-
-    /** Register a use case tied to a specific scene event. */
-    onEvent<TParams>(useCase: SubsystemEventUseCase<TState, TParams, void>): this;
-
-    /** Register a use case for the frame update tick. */
-    onUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
-
-    /** Register a use case for subsystem disposal. */
-    onDispose(useCase: SubsystemUseCase<TState, void, void>): this;
-
-    /** Enable updates even when the scene/engine is paused. */
-    updateWhenPaused(enabled?: boolean): this;
-
-    /** Produces the final SceneSubsystemFactory. */
-    build(): SceneSubsystemFactory;
-}
+    SceneSubsystemBuilder,
+    SceneSubsystemFactoryContext,
+} from './types';
+import { composeSceneSubsystem } from './composeSceneSubsystem';
 
 /**
  * Creates a fluent builder to define a SceneSubsystemFactory.
@@ -43,22 +17,23 @@ export interface SceneSubsystemBuilder<TState, TPorts = void> {
  * single declarative block.
  *
  * @param name - Unique name for the subsystem (used in logging/debugging).
+ * @returns A builder to configure the subsystem.
  */
 export function defineSceneSubsystem<TState, TPorts = void>(
     name: string,
 ): SceneSubsystemBuilder<TState, TPorts> {
-    let portsResolver: (registry: SubsystemPortRegistry) => any = () => undefined;
-    let stateFactory: (ctx: { ports: any; scene: SceneState; engine: EngineState }) => TState;
+    let portsResolver: (registry: SubsystemPortRegistry) => TPorts = (() => undefined) as any;
+    let stateFactory: (ctx: { ports: TPorts; scene: SceneState; engine: EngineState }) => TState;
 
-    const eventHandlers: Array<SubsystemEventUseCase<TState, any, void>> = [];
+    const eventHandlers: Array<SubsystemEventUseCase<TState, unknown, void>> = [];
     let updateUseCase: SubsystemUseCase<TState, SubsystemUpdateParams, void> | undefined;
     let disposeUseCase: SubsystemUseCase<TState, void, void> | undefined;
     let shouldUpdateWhenPaused = false;
 
-    const builder: SceneSubsystemBuilder<TState, any> = {
-        withPorts(resolver) {
-            portsResolver = resolver;
-            return builder as any;
+    const builder: SceneSubsystemBuilder<TState, TPorts> = {
+        withPorts<TNewPorts>(resolver: (registry: SubsystemPortRegistry) => TNewPorts): SceneSubsystemBuilder<TState, TNewPorts> {
+            portsResolver = resolver as any;
+            return builder as unknown as SceneSubsystemBuilder<TState, TNewPorts>;
         },
 
         withState(factory) {
@@ -67,7 +42,7 @@ export function defineSceneSubsystem<TState, TPorts = void>(
         },
 
         onEvent(useCase) {
-            eventHandlers.push(useCase);
+            eventHandlers.push(useCase as SubsystemEventUseCase<TState, unknown, void>);
             return builder;
         },
 
@@ -91,25 +66,25 @@ export function defineSceneSubsystem<TState, TPorts = void>(
                 throw new Error(`Subsystem '${name}' is missing a state factory. Call .withState() before .build().`);
             }
 
-            return (context: any) => {
+            return (context: SceneSubsystemFactoryContext) => {
                 const ports = portsResolver(context.ports);
                 const state = stateFactory({
                     ports,
                     scene: context.scene,
-                    engine: context.engine
+                    engine: context.engine,
                 });
 
                 const composer = composeSceneSubsystem(state);
 
                 for (const useCase of eventHandlers) {
-                    const kind = useCase.event;
+                    const kind = (useCase as any).event; // We know it's a SubsystemEventUseCase
                     composer.on(kind, {
                         name: useCase.name,
-                        execute: (s: any, params: any) => {
+                        execute: (s: TState, params: any) => {
                             // Auto-guard by event kind
                             if (params.event.kind !== kind) return;
                             useCase.execute(s, params);
-                        }
+                        },
                     });
                 }
 
