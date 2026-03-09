@@ -33,11 +33,11 @@ export interface ScriptSandbox {
   syncProperties(slotKey: string, properties: Record<string, unknown>): void;
 
   /**
-   * Pull dirty property keys from a slot (sandbox → ECS).
-   * Returns the set of keys that were modified by the script,
+   * Pull dirty property values from a slot (sandbox → ECS).
+   * Returns a record of keys and their new values that were modified by the script,
    * or null if nothing changed.
    */
-  flushDirtyProperties(slotKey: string): Set<string> | null;
+  flushDirtyProperties(slotKey: string): Record<string, unknown> | null;
 
   /** Tear down the entire sandbox and release all resources. */
   dispose(): void;

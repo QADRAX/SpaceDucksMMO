@@ -3,10 +3,16 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testPathIgnorePatterns: ['/node_modules/', '/dist/'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
   transform: {
     '^.+\\.tsx?$': 'babel-jest',
+    '^.+\\.js$': 'babel-jest',
   },
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
+  transformIgnorePatterns: [
+    '/node_modules/(?!@duckengine)',
+  ],
   testMatch: ['**/*.test.ts'],
-  testTimeout: 10000,
+  testTimeout: 20000,
 };
+
+

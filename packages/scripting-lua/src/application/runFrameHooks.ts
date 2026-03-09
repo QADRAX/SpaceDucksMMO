@@ -53,6 +53,16 @@ export const runFrameHooks: SubsystemUseCase<ScriptingSessionState, SubsystemUpd
       }
 
       // 6. Flush dirty properties (Lua → ECS)
+      for (const slot of slots.values()) {
+        if (!slot.enabled || !slot.sandboxHandle) continue;
+        const dirty = sandbox.flushDirtyProperties(slot.sandboxHandle as string);
+        if (dirty) {
+          for (const [key, value] of Object.entries(dirty)) {
+            slot.properties[key] = value;
+            slot.dirtyKeys.add(key);
+          }
+        }
+      }
       flushDirtySlotsToScene(slots, scene);
     },
   });

@@ -149,7 +149,7 @@ describe('createWasmoonSandbox', () => {
             sandbox.callHook('e3::s2', 'init', 0);
             const dirty = sandbox.flushDirtyProperties('e3::s2');
             expect(dirty).not.toBeNull();
-            expect(dirty?.has('counter')).toBe(true);
+            expect(dirty?.counter).toBe(42);
         });
 
         it('clears dirty keys after flush (second flush returns null)', () => {

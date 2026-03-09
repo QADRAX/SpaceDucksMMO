@@ -169,7 +169,7 @@ __PropertiesMT = {
       if not __DirtyProperties[slotKey] then
         __DirtyProperties[slotKey] = {}
       end
-      __DirtyProperties[slotKey][k] = true
+      __DirtyProperties[slotKey][k] = v
     end
   end,
 }

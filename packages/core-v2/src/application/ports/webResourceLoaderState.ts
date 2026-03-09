@@ -6,4 +6,5 @@ import type { ResolvedResource } from '../../domain/resources';
  */
 export interface WebResourceLoaderState {
     readonly cache: Map<string, ResolvedResource<any>>;
+    readonly fileCache: Map<string, string | Blob>;
 }

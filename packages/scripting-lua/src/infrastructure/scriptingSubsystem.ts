@@ -1,17 +1,16 @@
-import { defineSceneSubsystem } from '@duckengine/core-v2';
-import { resolveBridgePortsFromRegistry, type BridgePorts } from '../domain/bridges';
-import { createMutableScriptSandbox, createNoopScriptSandbox } from '../domain/ports';
-import { createScriptingSession } from '../domain/session';
-import { createDefaultScriptingBridges } from '../domain/subsystems';
+import { defineSceneSubsystem, ResourceLoaderPortDef } from '@duckengine/core-v2';
+import { resolveBridgePortsFromRegistry } from '../domain/bridges';
+import type { LuaEngine } from 'wasmoon';
+import { initializeScriptRuntime } from '../domain/session';
 import { reconcileSlots } from '../application/reconcileSlots';
 import { destroyEntitySlots } from '../application/destroyEntitySlots';
 import { runFrameHooks } from '../application/runFrameHooks';
 import { teardownSession } from '../application/teardownSession';
 import { createBuiltInScriptResolver } from './createBuiltInScriptResolver';
+import { createResourceScriptResolver } from './resourceScriptResolver';
 import { createWasmoonSandbox } from './wasmoon';
 
 import type { SubsystemPortRegistry } from '@duckengine/core-v2';
-import type { LuaEngine } from 'wasmoon';
 
 export interface ScriptingSubsystemConfig {
   /**
@@ -34,58 +33,35 @@ export interface ScriptingSubsystemConfig {
  * and lifecycle use cases in a single declarative block. Allows configuring
  * hooks to inject custom bridges.
  */
-export function createScriptingSubsystem(config?: ScriptingSubsystemConfig) {
+export async function createScriptingSubsystem(config?: ScriptingSubsystemConfig) {
+  // Boot real wasmoon engine asynchronously before defining the subsystem
+  const { sandbox, engine } = await createWasmoonSandbox().catch((err) => {
+    console.warn('[scripting-lua] Failed to boot wasmoon.', err);
+    throw err;
+  });
+
   return defineSceneSubsystem('scripting-lua')
     // 1. Resolve external ports from the registry
-    .withPorts((registry: any): BridgePorts => resolveBridgePortsFromRegistry(registry))
+    .withPorts((registry) => ({
+      registry,
+      bridgePorts: resolveBridgePortsFromRegistry(registry),
+      resourceLoader: registry.get(ResourceLoaderPortDef),
+    }))
 
     // 2. Initialize internal state (the scripting session)
-    .withState(({ ports, engine: engineState }: any) => {
-      const sandbox = createMutableScriptSandbox(createNoopScriptSandbox());
+    .withState(({ ports: { bridgePorts, registry, resourceLoader }, engine: engineState }) => {
+      const resolver = resourceLoader
+        ? createResourceScriptResolver(resourceLoader, createBuiltInScriptResolver())
+        : { resolveSource: createBuiltInScriptResolver() };
 
-      // Boot real wasmoon engine asynchronously
-      void createWasmoonSandbox()
-        .then(({ sandbox: wasmoonSandbox, engine }) => {
-          sandbox.setTarget(wasmoonSandbox);
-
-          // Auto-bridge dynamically registered ports
-          const portDefinitions = engineState.subsystemRuntime.portDefinitions;
-          const portImplementations = engineState.subsystemRuntime.ports;
-
-          const scriptPorts: Record<string, any> = {};
-
-          for (const [id, def] of portDefinitions.entries()) {
-            const impl = portImplementations.get(id) as Record<string, Function> | undefined;
-            if (!impl) continue;
-
-            const bridgeTable: Record<string, Function> = {};
-            for (const method of def.methods) {
-              if (typeof impl[method.name] === 'function') {
-                bridgeTable[method.name] = impl[method.name].bind(impl);
-              }
-            }
-            scriptPorts[id] = bridgeTable;
-          }
-
-          engine.global.set('engine_ports', scriptPorts);
-
-          if (config?.onSandboxReady) {
-            config.onSandboxReady({ lua: engine, ports });
-          }
-        })
-        .catch((err) => {
-          console.warn('[scripting-lua] Failed to boot wasmoon, using noop.', err);
-        });
-
-      const { bridges, eventBus, timeState } = createDefaultScriptingBridges();
-
-      return createScriptingSession({
-        sandbox: sandbox.sandbox,
-        bridges,
-        ports,
-        eventBus,
-        timeState,
-        resolveSource: createBuiltInScriptResolver(),
+      return initializeScriptRuntime({
+        sandbox,
+        engine,
+        registry,
+        bridgePorts,
+        runtimeState: engineState.subsystemRuntime,
+        onSandboxReady: config?.onSandboxReady,
+        resolveSource: (id) => resolver.resolveSource(id),
       });
     })
 

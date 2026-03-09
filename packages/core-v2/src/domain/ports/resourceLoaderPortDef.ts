@@ -7,4 +7,5 @@ import type { ResourceLoaderPort } from './resourceLoaderPort';
  */
 export const ResourceLoaderPortDef = definePort<ResourceLoaderPort>('resourceLoader')
     .addMethod('resolve', { async: true })
+    .addMethod('fetchFile', { async: true })
     .build();

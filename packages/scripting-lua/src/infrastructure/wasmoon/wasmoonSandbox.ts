@@ -88,12 +88,13 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
       }
     },
 
-    flushDirtyProperties(slotKey: string): Set<string> | null {
+    flushDirtyProperties(slotKey: string): Record<string, unknown> | null {
       try {
         const dirty = callLuaGlobal(lua, '__FlushDirtyProperties', slotKey);
         if (!dirty || typeof dirty !== 'object') return null;
-        const keys = Object.keys(dirty as Record<string, unknown>);
-        return keys.length > 0 ? new Set(keys) : null;
+        // The sandbox_runtime.lua returns a table of { [key] = value }
+        const record = dirty as Record<string, unknown>;
+        return Object.keys(record).length > 0 ? record : null;
       } catch {
         return null;
       }
