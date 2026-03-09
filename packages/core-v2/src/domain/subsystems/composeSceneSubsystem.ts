@@ -1,30 +1,6 @@
 import type { SceneState, SceneChangeEventWithError } from '../scene';
 import type { SubsystemUseCase } from '../useCases';
-import type { SceneSubsystem } from './types';
-
-/** Params passed to subsystem use cases during the `update` lifecycle hook. */
-export interface SubsystemUpdateParams {
-  readonly scene: SceneState;
-  readonly dt: number;
-}
-
-/** Params passed to subsystem use cases during `handleSceneEvent`. */
-export interface SubsystemEventParams {
-  readonly scene: SceneState;
-  readonly event: SceneChangeEventWithError;
-}
-
-/** Fluent builder for composing a SceneSubsystem from subsystem use cases. */
-export interface SubsystemComposer<TState> {
-  on<K extends SceneChangeEventWithError['kind']>(
-    eventKind: K,
-    useCase: SubsystemUseCase<TState, SubsystemEventParams, void>,
-  ): this;
-  onUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
-  onDispose(useCase: SubsystemUseCase<TState, void, void>): this;
-  updateWhenPaused(enabled: boolean): this;
-  build(): SceneSubsystem;
-}
+import type { SceneSubsystem, SubsystemUpdateParams, SubsystemEventParams, SubsystemComposer } from './types';
 
 /** Creates a composable subsystem builder bound to a subsystem's state. */
 export function composeSceneSubsystem<TState>(state: TState): SubsystemComposer<TState> {

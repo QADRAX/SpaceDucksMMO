@@ -10,6 +10,7 @@ import {
 } from '../../domain/subsystems';
 import { defineEngineUseCase } from '../../domain/useCases';
 import type { EnginePorts } from '../../domain/ports';
+import type { PortBinding } from '../../domain/subsystems/types';
 
 /** Parameters for initial engine subsystem and port setup. */
 export interface SetupEngineParams {
@@ -19,6 +20,8 @@ export interface SetupEngineParams {
   readonly sceneSubsystems?: ReadonlyArray<SceneSubsystemFactory>;
   /** Initial static ports (IO/capabilities) available to subsystems. */
   readonly ports?: EnginePorts;
+  /** Custom engine ports to explicitly bind. */
+  readonly customPorts?: ReadonlyArray<PortBinding<any>>;
   /** Hooks that can derive ports from engine state or other ports. */
   readonly portDerivers?: ReadonlyArray<SubsystemPortDeriver>;
 }
@@ -35,8 +38,18 @@ export const setupEngine = defineEngineUseCase<SetupEngineParams, void>({
   name: 'setupEngine',
   execute(engine, params) {
     if (params.ports) {
-      for (const [key, value] of Object.entries(params.ports)) {
-        engine.subsystemRuntime.ports.set(key, value);
+      for (const binding of Object.values(params.ports)) {
+        if (binding) {
+          engine.subsystemRuntime.portDefinitions.set(binding.definition.id, binding.definition);
+          engine.subsystemRuntime.ports.set(binding.definition.id, binding.implementation);
+        }
+      }
+    }
+
+    if (params.customPorts) {
+      for (const binding of params.customPorts) {
+        engine.subsystemRuntime.portDefinitions.set(binding.definition.id, binding.definition);
+        engine.subsystemRuntime.ports.set(binding.definition.id, binding.implementation);
       }
     }
 

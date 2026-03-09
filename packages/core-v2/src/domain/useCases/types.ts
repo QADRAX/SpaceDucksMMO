@@ -1,4 +1,5 @@
 import type { Result } from '../utils';
+import type { PortBinding } from '../subsystems/types';
 import type { EngineState } from '../engine';
 import type { SceneState } from '../scene';
 import type { ViewportState } from '../viewport';
@@ -180,3 +181,60 @@ export type SubsystemEventUseCase<TState, TParams = void, TOutput = void> =
         readonly event: SceneChangeEventWithError['kind'];
     };
 
+/**
+ * A use case that operates on a Port implementation's internal state.
+ * Like SubsystemUseCase, it does not require guards and is not exposed in the API.
+ * 
+ * Note: TParams is an array (tuple) of the arguments the Port method accepts,
+ * allowing it to perfectly mirror the method's parameter signature.
+ */
+export interface PortUseCase<TState, TParams extends readonly any[] = [], TOutput = void> {
+    /** Unique name for logging, debugging, and introspection. */
+    readonly name: string;
+    /** Executes the use case against the port's internal state, receiving arguments as a tuple array. */
+    execute(state: TState, params: TParams): TOutput;
+}
+/**
+ * A fluent builder to define a Port Implementation Factory.
+ *
+ * This pattern allows defining the operations of a Port as isolated Use Cases,
+ * ensuring symmetry with the rest of the engine's UseCase-driven architecture.
+ *
+ * @template TState - The internal closure state format of the port.
+ * @template TPort - The interface contract the port implements.
+ * @template TContext - The optional parameters required to construct the state.
+ */
+export interface PortImplementationBuilder<TState, TPort, TContext = void> {
+    /**
+     * Declares the factory function that creates the state for this port implementation.
+     */
+    withState(factory: (ctx: TContext) => TState): PortImplementationBuilder<TState, TPort, TContext>;
+
+    /**
+     * Binds a PortUseCase to a specific method of the port.
+     * The UseCase's `TParams` is automatically inferred as the tuple of arguments the method expects.
+     *
+     * @example
+     * ```ts
+     * const logCase: PortUseCase<State, [string, number], void> = {
+     *   name: 'log',
+     *   execute: (state, [msg, level]) => console.log(msg, level)
+     * };
+     * builder.withMethod('log', logCase);
+     * ```
+     */
+    withMethod<K extends Extract<keyof TPort, string>>(
+        name: K,
+        useCase: PortUseCase<
+            TState,
+            TPort[K] extends (...args: any[]) => any ? Parameters<TPort[K]> : [],
+            TPort[K] extends (...args: any[]) => any ? ReturnType<TPort[K]> : void
+        >
+    ): PortImplementationBuilder<TState, TPort, TContext>;
+
+    /**
+     * Instantiates the internal state and produces the final port binding.
+     * @param args The context required to initialize the state (if TContext is not void).
+     */
+    build(...args: TContext extends void ? [] : [context: TContext]): PortBinding<TPort>;
+}

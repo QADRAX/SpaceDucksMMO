@@ -1,18 +1,15 @@
 import type { EngineState } from '../engine';
 import type { SceneChangeListener, SceneState } from '../scene';
 import type {
-  SubsystemPortDeriver,
   SubsystemPortRegistry,
   SceneSubsystemFactory,
   SceneSubsystem,
+  SubsystemRuntimeState,
+  PortDefinition,
 } from './types';
 
-/** Internal mutable subsystem runtime bag stored on EngineState. */
-export interface SubsystemRuntimeState {
-  readonly sceneSubsystemFactories: SceneSubsystemFactory[];
-  readonly portDerivers: SubsystemPortDeriver[];
-  readonly ports: Map<string, unknown>;
-}
+/** Name of the subsystem runtime bag on EngineState. */
+export const SUBSYSTEM_RUNTIME_KEY = 'subsystemRuntime';
 
 /** Creates an empty subsystem runtime state. */
 export function createSubsystemRuntimeState(): SubsystemRuntimeState {
@@ -20,30 +17,41 @@ export function createSubsystemRuntimeState(): SubsystemRuntimeState {
     sceneSubsystemFactories: [],
     portDerivers: [],
     ports: new Map(),
+    portDefinitions: new Map(),
   };
 }
 
 /** Creates a strongly-typed port registry wrapper over a map. */
-export function createSubsystemPortRegistry(ports: Map<string, unknown>): SubsystemPortRegistry {
+export function createSubsystemPortRegistry(
+  ports: Map<string, unknown>,
+  definitions: Map<string, PortDefinition<any>>
+): SubsystemPortRegistry {
   return {
-    get<T = unknown>(key: string): T | undefined {
-      return ports.get(key) as T | undefined;
+    get<T>(def: PortDefinition<T>): T | undefined {
+      return ports.get(def.id) as T | undefined;
     },
-    set<T = unknown>(key: string, value: T): void {
-      ports.set(key, value);
+    getById<T = unknown>(id: string): T | undefined {
+      return ports.get(id) as T | undefined;
     },
-    has(key: string): boolean {
-      return ports.has(key);
+    register<T>(def: PortDefinition<T>, implementation: T): void {
+      ports.set(def.id, implementation);
+      definitions.set(def.id, def);
     },
-    entries(): ReadonlyArray<readonly [string, unknown]> {
-      return Array.from(ports.entries());
+    has<T>(def: PortDefinition<T>): boolean {
+      return ports.has(def.id);
+    },
+    entries(): ReadonlyArray<readonly [PortDefinition<any>, unknown]> {
+      return Array.from(definitions.values()).map((def) => [def, ports.get(def.id)!]);
     },
   };
 }
 
 /** Runs all registered port derivation hooks in registration order. */
 export function runSubsystemPortDerivers(engine: EngineState): void {
-  const registry = createSubsystemPortRegistry(engine.subsystemRuntime.ports);
+  const registry = createSubsystemPortRegistry(
+    engine.subsystemRuntime.ports,
+    engine.subsystemRuntime.portDefinitions
+  );
   for (const deriver of engine.subsystemRuntime.portDerivers) {
     deriver({ engine, ports: registry });
   }
@@ -55,7 +63,10 @@ export function instantiateSceneSubsystems(
   scene: SceneState,
   factories: ReadonlyArray<SceneSubsystemFactory>,
 ): SceneSubsystem[] {
-  const registry = createSubsystemPortRegistry(engine.subsystemRuntime.ports);
+  const registry = createSubsystemPortRegistry(
+    engine.subsystemRuntime.ports,
+    engine.subsystemRuntime.portDefinitions
+  );
   return factories.map((factory) => factory({ engine, scene, ports: registry }));
 }
 

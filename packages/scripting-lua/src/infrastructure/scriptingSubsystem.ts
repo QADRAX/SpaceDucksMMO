@@ -40,13 +40,34 @@ export function createScriptingSubsystem(config?: ScriptingSubsystemConfig) {
     .withPorts((registry: any): BridgePorts => resolveBridgePortsFromRegistry(registry))
 
     // 2. Initialize internal state (the scripting session)
-    .withState(({ ports }: any) => {
+    .withState(({ ports, engine: engineState }: any) => {
       const sandbox = createMutableScriptSandbox(createNoopScriptSandbox());
 
       // Boot real wasmoon engine asynchronously
       void createWasmoonSandbox()
         .then(({ sandbox: wasmoonSandbox, engine }) => {
           sandbox.setTarget(wasmoonSandbox);
+
+          // Auto-bridge dynamically registered ports
+          const portDefinitions = engineState.subsystemRuntime.portDefinitions;
+          const portImplementations = engineState.subsystemRuntime.ports;
+
+          const scriptPorts: Record<string, any> = {};
+
+          for (const [id, def] of portDefinitions.entries()) {
+            const impl = portImplementations.get(id) as Record<string, Function> | undefined;
+            if (!impl) continue;
+
+            const bridgeTable: Record<string, Function> = {};
+            for (const method of def.methods) {
+              if (typeof impl[method.name] === 'function') {
+                bridgeTable[method.name] = impl[method.name].bind(impl);
+              }
+            }
+            scriptPorts[id] = bridgeTable;
+          }
+
+          engine.global.set('engine_ports', scriptPorts);
 
           if (config?.onSandboxReady) {
             config.onSandboxReady({ lua: engine, ports });

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { setupIntegrationTest, createSceneId } from '../setup';
 import type { TestContext } from '../setup';
 import type { SceneSubsystemFactory } from '../../../domain/subsystems';
+import { definePort } from '../../../domain/subsystems';
 
 describe('Integration: Engine > setupEngine', () => {
   let ctx: TestContext;
@@ -44,8 +45,12 @@ describe('Integration: Engine > setupEngine', () => {
 
   it('should expose derived ports to scene subsystem factories', () => {
     const derivedPort = { ping: jest.fn(() => 'pong') };
+    const derivedPortDef = definePort<typeof derivedPort>('io:derived')
+      .addMethod('ping')
+      .build();
+
     const factorySpy = jest.fn((context: Parameters<SceneSubsystemFactory>[0]) => {
-      const io = context.ports.get<typeof derivedPort>('io:derived');
+      const io = context.ports.get(derivedPortDef);
       io?.ping();
       return {
         handleSceneEvent: () => {
@@ -56,7 +61,7 @@ describe('Integration: Engine > setupEngine', () => {
     const factory: SceneSubsystemFactory = factorySpy;
 
     ctx.api.setup({
-      portDerivers: [({ ports }: any) => ports.set('io:derived', derivedPort)],
+      portDerivers: [({ ports }: any) => ports.register(derivedPortDef, derivedPort)],
       sceneSubsystems: [factory],
     });
 

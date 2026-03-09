@@ -42,10 +42,20 @@ export type SubsystemPortKey = string;
  * subsystems/engine state during setup.
  */
 export interface SubsystemPortRegistry {
-  get<T = unknown>(key: SubsystemPortKey): T | undefined;
-  set<T = unknown>(key: SubsystemPortKey, value: T): void;
-  has(key: SubsystemPortKey): boolean;
-  entries(): ReadonlyArray<readonly [SubsystemPortKey, unknown]>;
+  /** Retrieves a strongly-typed port by its definition. */
+  get<T>(def: PortDefinition<T>): T | undefined;
+
+  /** Retrieves a port by its string ID, returning unknown. Useful for dynamic lookup. */
+  getById<T = unknown>(id: string): T | undefined;
+
+  /** Registers a port implementation conforming to its definition. */
+  register<T>(def: PortDefinition<T>, implementation: T): void;
+
+  /** Checks if a port definition is registered. */
+  has<T>(def: PortDefinition<T>): boolean;
+
+  /** Get all registered port definitions and their implementations for introspection. */
+  entries(): ReadonlyArray<readonly [PortDefinition<any>, unknown]>;
 }
 
 /** Context given to a scene subsystem factory. */
@@ -76,6 +86,12 @@ export type SubsystemPortDeriver = (context: SubsystemPortDeriverContext) => voi
 export interface SubsystemUpdateParams {
   readonly scene: SceneState;
   readonly dt: number;
+}
+
+/** Params passed to subsystem use cases during `handleSceneEvent`. */
+export interface SubsystemEventParams {
+  readonly scene: SceneState;
+  readonly event: SceneChangeEventWithError;
 }
 
 /** Fluent builder for creating an EngineSubsystem. */
@@ -124,4 +140,66 @@ export interface SceneSubsystemBuilder<TState, TPorts = void> {
 
   /** Produces the final SceneSubsystemFactory. */
   build(): SceneSubsystemFactory;
+}
+
+/** Fluent builder for composing a SceneSubsystem from subsystem use cases. */
+export interface SubsystemComposer<TState> {
+  on<K extends SceneChangeEventWithError['kind']>(
+    eventKind: K,
+    useCase: SubsystemUseCase<TState, SubsystemEventParams, void>,
+  ): this;
+  onUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
+  onDispose(useCase: SubsystemUseCase<TState, void, void>): this;
+  updateWhenPaused(enabled: boolean): this;
+  build(): SceneSubsystem;
+}
+
+export interface PortMethodDefinition {
+  readonly name: string;
+  readonly async: boolean;
+}
+
+export interface PortDefinition<T> {
+  readonly id: string;
+  readonly methods: ReadonlyArray<PortMethodDefinition>;
+  readonly _phantom?: T; // For type inference
+  /** Creates a PortBinding for this definition */
+  bind(implementation: T): PortBinding<T>;
+}
+
+export interface PortMethodOptions {
+  /** If true, the method returns a Promise and should be treated as async by scripting languages. */
+  async?: boolean;
+}
+
+export interface PortBuilder<T> {
+  /**
+   * Declares a method on this port.
+   *
+   * @param name The name of the method. Must be a key on the port interface.
+   * @param options Additional options, such as whether the method is asynchronous.
+   */
+  addMethod(name: keyof T & string, options?: PortMethodOptions): PortBuilder<T>;
+
+  /**
+   * Produces the final, strongly-typed port definition.
+   */
+  build(): PortDefinition<T>;
+}
+
+/**
+ * Associates a full port implementation with its definition schema.
+ * This is meant to be passed to engine setup use-cases to properly register the port.
+ */
+export interface PortBinding<T> {
+  readonly definition: PortDefinition<T>;
+  readonly implementation: T;
+}
+
+/** Internal mutable subsystem runtime bag stored on EngineState. */
+export interface SubsystemRuntimeState {
+  readonly sceneSubsystemFactories: SceneSubsystemFactory[];
+  readonly portDerivers: SubsystemPortDeriver[];
+  readonly ports: Map<string, unknown>;
+  readonly portDefinitions: Map<string, PortDefinition<any>>;
 }

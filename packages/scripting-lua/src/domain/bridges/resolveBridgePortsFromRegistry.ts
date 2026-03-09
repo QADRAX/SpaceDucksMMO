@@ -9,8 +9,8 @@ export function resolveBridgePortsFromRegistry(
   ports: SubsystemPortRegistry,
 ): BridgePorts {
   return {
-    physicsQuery: ports.get<BridgePorts['physicsQuery']>(SCRIPTING_BRIDGE_PORT_KEYS.physicsQuery),
-    gizmo: ports.get<BridgePorts['gizmo']>(SCRIPTING_BRIDGE_PORT_KEYS.gizmo),
-    input: ports.get<BridgePorts['input']>(SCRIPTING_BRIDGE_PORT_KEYS.input),
+    physicsQuery: ports.getById<BridgePorts['physicsQuery']>(SCRIPTING_BRIDGE_PORT_KEYS.physicsQuery),
+    gizmo: ports.getById<BridgePorts['gizmo']>(SCRIPTING_BRIDGE_PORT_KEYS.gizmo),
+    input: ports.getById<BridgePorts['input']>(SCRIPTING_BRIDGE_PORT_KEYS.input),
   };
 }

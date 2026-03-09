@@ -6,7 +6,8 @@ export type EngineErrorCode =
   | 'validation'
   | 'scene-not-found'
   | 'scene-not-inspectable'
-  | 'operation-not-allowed';
+  | 'operation-not-allowed'
+  | 'network-error';
 
 /** Structured error returned by fallible engine operations. */
 export interface EngineError {
