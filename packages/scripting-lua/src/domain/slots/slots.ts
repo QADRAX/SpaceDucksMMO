@@ -1,4 +1,4 @@
-import type { SceneState, ScriptSchema } from '@duckengine/core-v2';
+import type { SceneState, ScriptSchema, EntityId } from '@duckengine/core-v2';
 import type { ScriptBridgeContext } from '../bridges';
 import type { ScriptSandbox } from '../ports';
 import type { ScriptEventBus } from '../events';
@@ -147,7 +147,7 @@ export function syncSlotPropertiesFromScene(
   slot: ScriptSlotState,
   sandbox: ScriptSandbox,
 ): void {
-  const entity = scene.entities.get(slot.entityId);
+  const entity = scene.entities.get(slot.entityId as EntityId);
   if (!entity) return;
 
   const scriptComp = entity.components.get('script') as
@@ -178,7 +178,7 @@ export function flushDirtySlotsToScene(
   for (const slot of slots.values()) {
     if (slot.dirtyKeys.size === 0) continue;
 
-    const entity = scene.entities.get(slot.entityId);
+    const entity = scene.entities.get(slot.entityId as EntityId);
     if (!entity) continue;
 
     const scriptComp = entity.components.get('script') as

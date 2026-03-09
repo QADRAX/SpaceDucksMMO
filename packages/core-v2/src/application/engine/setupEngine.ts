@@ -9,6 +9,7 @@ import {
   runSubsystemPortDerivers,
 } from '../../domain/subsystems';
 import { defineEngineUseCase } from '../../domain/useCases';
+import type { EnginePorts } from '../../domain/ports';
 
 /** Parameters for initial engine subsystem and port setup. */
 export interface SetupEngineParams {
@@ -17,7 +18,7 @@ export interface SetupEngineParams {
   /** Scene subsystem factories that should be applied to all scenes. */
   readonly sceneSubsystems?: ReadonlyArray<SceneSubsystemFactory>;
   /** Initial static ports (IO/capabilities) available to subsystems. */
-  readonly ports?: Readonly<Record<string, unknown>>;
+  readonly ports?: EnginePorts;
   /** Hooks that can derive ports from engine state or other ports. */
   readonly portDerivers?: ReadonlyArray<SubsystemPortDeriver>;
 }

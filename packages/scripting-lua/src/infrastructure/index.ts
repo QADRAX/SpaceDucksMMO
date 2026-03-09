@@ -1,1 +1,1 @@
-export { scriptingLuaSubsystem } from './scriptingSubsystem';
+export { createScriptingSubsystem, type ScriptingSubsystemConfig } from './scriptingSubsystem';

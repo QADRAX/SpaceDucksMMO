@@ -1,4 +1,5 @@
 import { LuaFactory } from 'wasmoon';
+import type { LuaEngine } from 'wasmoon';
 import type { ScriptSandbox } from '../../domain/ports';
 import type { ScriptBridgeContext } from '../../domain/bridges';
 import { detectHooksFromSource } from '../../domain/slots';
@@ -12,18 +13,9 @@ import { callLuaGlobal } from './luaUtils';
 
 /**
  * Creates a Lua sandbox backed by wasmoon (Lua 5.4 via WebAssembly).
- *
- * Boot sequence:
- * 1. Create LuaEngine via LuaFactory.
- * 2. Execute system scripts synchronously in declaration order:
- *    sandbox_security → sandbox_metatables → sandbox_runtime → math_ext
- * 3. Return the ScriptSandbox implementation wired to the live Lua state.
- *
- * Domain logic (hook detection) lives in `domain/slots/detectHooks.ts`.
- * Slot loading logic (`__LoadSlot`, `__WrapSelf`, etc.) lives in `sandbox_runtime.lua`.
- * Lua metatable infrastructure lives in `sandbox_metatables.lua`.
+ * Returns both the abstract sandbox and the raw LuaEngine.
  */
-export async function createWasmoonSandbox(): Promise<ScriptSandbox> {
+export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; engine: LuaEngine }> {
   const factory = new LuaFactory();
   const lua = await factory.createEngine();
 
@@ -34,7 +26,7 @@ export async function createWasmoonSandbox(): Promise<ScriptSandbox> {
   lua.doStringSync(getSandboxRuntimeLua());
   lua.doStringSync(getMathExtLua());
 
-  return {
+  const sandbox: ScriptSandbox = {
     detectHooks(source) {
       return detectHooksFromSource(source);
     },
@@ -111,4 +103,7 @@ export async function createWasmoonSandbox(): Promise<ScriptSandbox> {
       lua.global.close();
     },
   };
+
+  return { sandbox, engine: lua };
 }
+

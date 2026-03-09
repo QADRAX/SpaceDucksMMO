@@ -10,44 +10,70 @@ import { teardownSession } from '../application/teardownSession';
 import { createBuiltInScriptResolver } from './createBuiltInScriptResolver';
 import { createWasmoonSandbox } from './wasmoon';
 
+import type { SubsystemPortRegistry } from '@duckengine/core-v2';
+import type { LuaEngine } from 'wasmoon';
+
+export interface ScriptingSubsystemConfig {
+  /**
+   * Hook for games to inject custom Lua bridges.
+   * Runs right after the built-in Sandbox and standard bridges are created.
+   *
+   * @param params.lua The underlying Wasmoon Lua instance.
+   * @param params.ports The populated engine port registry.
+   */
+  readonly onSandboxReady?: (params: {
+    lua: LuaEngine;
+    ports: SubsystemPortRegistry;
+  }) => void;
+}
+
 /**
- * Scene subsystem factory for Lua scripting.
- * 
+ * Creates the scene subsystem factory for Lua scripting.
+ *
  * Uses the normalized `defineSceneSubsystem` builder to wire ports, session state,
- * and lifecycle use cases in a single declarative block.
+ * and lifecycle use cases in a single declarative block. Allows configuring
+ * hooks to inject custom bridges.
  */
-export const scriptingLuaSubsystem = defineSceneSubsystem('scripting-lua')
-  // 1. Resolve external ports from the registry
-  .withPorts((registry: any): BridgePorts => resolveBridgePortsFromRegistry(registry))
+export function createScriptingSubsystem(config?: ScriptingSubsystemConfig) {
+  return defineSceneSubsystem('scripting-lua')
+    // 1. Resolve external ports from the registry
+    .withPorts((registry: any): BridgePorts => resolveBridgePortsFromRegistry(registry))
 
-  // 2. Initialize internal state (the scripting session)
-  .withState(({ ports }: any) => {
-    const sandbox = createMutableScriptSandbox(createNoopScriptSandbox());
+    // 2. Initialize internal state (the scripting session)
+    .withState(({ ports }: any) => {
+      const sandbox = createMutableScriptSandbox(createNoopScriptSandbox());
 
-    // Boot real wasmoon engine asynchronously
-    void createWasmoonSandbox()
-      .then((lua) => sandbox.setTarget(lua))
-      .catch((err) => {
-        console.warn('[scripting-lua] Failed to boot wasmoon, using noop.', err);
+      // Boot real wasmoon engine asynchronously
+      void createWasmoonSandbox()
+        .then(({ sandbox: wasmoonSandbox, engine }) => {
+          sandbox.setTarget(wasmoonSandbox);
+
+          if (config?.onSandboxReady) {
+            config.onSandboxReady({ lua: engine, ports });
+          }
+        })
+        .catch((err) => {
+          console.warn('[scripting-lua] Failed to boot wasmoon, using noop.', err);
+        });
+
+      const { bridges, eventBus, timeState } = createDefaultScriptingBridges();
+
+      return createScriptingSession({
+        sandbox: sandbox.sandbox,
+        bridges,
+        ports,
+        eventBus,
+        timeState,
+        resolveSource: createBuiltInScriptResolver(),
       });
+    })
 
-    const { bridges, eventBus, timeState } = createDefaultScriptingBridges();
+    // 3. Register lifecycle use cases (auto-routed by event.kind)
+    .onEvent(reconcileSlots)
+    .onEvent(destroyEntitySlots)
+    .onEvent(teardownSession)
+    .onUpdate(runFrameHooks)
+    .onDispose(teardownSession)
 
-    return createScriptingSession({
-      sandbox: sandbox.sandbox,
-      bridges,
-      ports,
-      eventBus,
-      timeState,
-      resolveSource: createBuiltInScriptResolver(),
-    });
-  })
-
-  // 3. Register lifecycle use cases (auto-routed by event.kind)
-  .onEvent(reconcileSlots)
-  .onEvent(destroyEntitySlots)
-  .onEvent(teardownSession)
-  .onUpdate(runFrameHooks)
-  .onDispose(teardownSession)
-
-  .build();
+    .build();
+}

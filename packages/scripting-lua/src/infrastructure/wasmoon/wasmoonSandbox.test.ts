@@ -51,8 +51,9 @@ return {
 describe('createWasmoonSandbox', () => {
     let sandbox: ScriptSandbox;
 
-    beforeAll(async () => {
-        sandbox = await createWasmoonSandbox();
+    beforeEach(async () => {
+        const { sandbox: createdSandbox } = await createWasmoonSandbox();
+        sandbox = createdSandbox;
     });
 
     afterAll(() => {

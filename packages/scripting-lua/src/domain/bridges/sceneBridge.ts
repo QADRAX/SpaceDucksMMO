@@ -1,4 +1,4 @@
-import type { SceneState, ScriptSchema, ScriptPermissions } from '@duckengine/core-v2';
+import type { SceneState, ScriptSchema, ScriptPermissions, EntityId } from '@duckengine/core-v2';
 import { createEntityView, emitSceneChange, buildSceneAPI, createPermissionsFromSchema } from '@duckengine/core-v2';
 import type { BridgeDeclaration } from './types';
 import type { ScriptEventBus } from '../events';
@@ -24,16 +24,19 @@ export function createSceneBridgeDeclaration(eventBus: ScriptEventBus): BridgeDe
       const permissions: ScriptPermissions = schema
         ? createPermissionsFromSchema(schema, {}, entityId)
         : {
-            selfEntityId: entityId,
-            allowedEntityIds: new Set(scene.entities.keys()),
-            allowedScriptTypes: new Set<string>(),
-            allowedComponentTypes: new Set(),
-            allowedPrefabIds: new Set<string>(),
-            canDestroySelf: true,
-          };
+          selfEntityId: entityId,
+          allowedEntityIds: new Set(scene.entities.keys()),
+          allowedScriptTypes: new Set<string>(),
+          allowedComponentTypes: new Set(),
+          allowedPrefabIds: new Set<string>(),
+          canDestroySelf: true,
+        };
 
       const sceneApi = buildSceneAPI(scene, permissions, {
-        raycast: (query) => ports.physicsQuery?.raycast(query) ?? null,
+        raycast: (query) => {
+          const hit = ports.physicsQuery?.raycast(query);
+          return hit ? { ...hit, entityId: hit.entityId as EntityId } : null;
+        },
         emitEvent: (eventName, payload) => {
           eventBus.fire(eventName, toEventPayload(payload));
         },
@@ -42,19 +45,19 @@ export function createSceneBridgeDeclaration(eventBus: ScriptEventBus): BridgeDe
       return {
         /** Get a readonly snapshot of any entity in the scene. */
         getEntity(id: string) {
-          const e = scene.entities.get(id);
+          const e = scene.entities.get(id as EntityId);
           if (!e) return null;
           return createEntityView(e);
         },
 
         /** Check if an entity exists in the scene. */
         exists(id: string) {
-          return scene.entities.has(id);
+          return scene.entities.has(id as EntityId);
         },
 
         /** Get a component property value. */
         getComponentProperty(targetEntityId: string, componentType: string, key: string) {
-          const e = scene.entities.get(targetEntityId);
+          const e = scene.entities.get(targetEntityId as EntityId);
           if (!e) return undefined;
           const comp = e.components.get(componentType as never);
           if (!comp) return undefined;
@@ -68,21 +71,21 @@ export function createSceneBridgeDeclaration(eventBus: ScriptEventBus): BridgeDe
           key: string,
           value: unknown,
         ) {
-          const e = scene.entities.get(targetEntityId);
+          const e = scene.entities.get(targetEntityId as EntityId);
           if (!e) return;
           const comp = e.components.get(componentType as never);
           if (!comp) return;
           (comp as unknown as Record<string, unknown>)[key] = value;
           emitSceneChange(scene, {
             kind: 'component-changed',
-            entityId: targetEntityId,
+            entityId: targetEntityId as EntityId,
             componentType: componentType as never,
           });
         },
 
         /** Check if an entity has a specific component. */
         hasComponent(targetEntityId: string, componentType: string) {
-          const e = scene.entities.get(targetEntityId);
+          const e = scene.entities.get(targetEntityId as EntityId);
           return e ? e.components.has(componentType as never) : false;
         },
 

@@ -5,7 +5,7 @@ export * from './domain';
 export * from './application';
 
 // Infrastructure
-export { scriptingLuaSubsystem } from './infrastructure';
+export { createScriptingSubsystem, type ScriptingSubsystemConfig } from './infrastructure';
 export { SCRIPTING_BRIDGE_PORT_KEYS } from './domain/bridges';
 
 // Generated assets
