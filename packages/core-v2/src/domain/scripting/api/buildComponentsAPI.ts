@@ -1,7 +1,5 @@
 import type { ComponentType } from '../../components';
 import type { EntityState } from '../../entities';
-import type { ScriptPermissions } from '../permissions';
-import { canAccessComponentType } from '../permissions';
 import type { ComponentsAPI } from './types';
 
 /**
@@ -9,7 +7,6 @@ import type { ComponentsAPI } from './types';
  */
 export function buildComponentsAPI(
   entity: EntityState,
-  permissions: ScriptPermissions,
 ): ComponentsAPI {
   return new Proxy(
     {},
@@ -20,10 +17,6 @@ export function buildComponentsAPI(
         }
 
         const type = propertyKey as ComponentType;
-        if (!canAccessComponentType(permissions, type)) {
-          return undefined;
-        }
-
         return entity.components.get(type);
       },
 
@@ -33,7 +26,7 @@ export function buildComponentsAPI(
         }
 
         const type = propertyKey as ComponentType;
-        return canAccessComponentType(permissions, type) && entity.components.has(type);
+        return entity.components.has(type);
       },
 
       set() {
@@ -41,15 +34,13 @@ export function buildComponentsAPI(
       },
 
       ownKeys() {
-        return [...entity.components.keys()].filter((type) =>
-          canAccessComponentType(permissions, type),
-        );
+        return [...entity.components.keys()];
       },
 
       getOwnPropertyDescriptor(_target, propertyKey) {
         if (typeof propertyKey !== 'string') return undefined;
         const type = propertyKey as ComponentType;
-        if (!canAccessComponentType(permissions, type) || !entity.components.has(type)) {
+        if (!entity.components.has(type)) {
           return undefined;
         }
         return {

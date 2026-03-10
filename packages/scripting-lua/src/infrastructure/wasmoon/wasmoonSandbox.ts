@@ -2,6 +2,8 @@ import { LuaFactory } from 'wasmoon';
 import type { LuaEngine } from 'wasmoon';
 import type { ScriptSandbox } from '../../domain/ports';
 import type { ScriptBridgeContext } from '../../domain/bridges';
+import type { ScriptSchema, EntityId, ComponentType, PropertyValues } from '@duckengine/core-v2';
+import { BuiltInScripts } from '@duckengine/core-v2';
 import { detectHooksFromSource } from '../../domain/slots';
 import {
   getSandboxSecurityLua,
@@ -19,6 +21,9 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
   const factory = new LuaFactory();
   const lua = await factory.createEngine();
 
+  // Inject Engine constants into global sandbox
+  lua.global.set('BuiltInScripts', BuiltInScripts);
+
   // Boot system scripts in order. Security runs first to remove dangerous globals
   // before any user-facing setup executes.
   lua.doStringSync(getSandboxSecurityLua());
@@ -35,7 +40,8 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
       slotKey: string,
       source: string,
       bridges: ScriptBridgeContext,
-      properties: Record<string, unknown>,
+      properties: PropertyValues,
+      schema: ScriptSchema | null,
     ): void {
       // Inject bridge APIs as Lua globals so scripts can access them directly
       // (e.g. Transform.getPosition()) and via self-proxy resolution.
@@ -51,10 +57,32 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
       // Create the self proxy and register context in __Contexts[slotKey].
       // Bridges table is passed for __SelfMT bridge resolution (self.Transform, etc.).
       const entityId = slotKey.split('::')[0] ?? slotKey;
-      const rawProps: Record<string, unknown> = { ...properties };
+      const rawProps: PropertyValues = { ...properties };
       const bridgesTable: Record<string, unknown> = { ...bridges };
+      
+      const schemaTypes: Record<string, string> = {};
+      const schemaComponentTypes: Record<string, string> = {};
+
+      if (schema) {
+        for (const [key, prop] of Object.entries(schema.properties)) {
+          schemaTypes[key] = prop.type;
+          if (prop.type === 'entityComponentRef' || prop.type === 'entityComponentRefArray') {
+            schemaComponentTypes[key] = prop.componentType;
+          }
+        }
+      }
+
       try {
-        callLuaGlobal(lua, '__WrapSelf', slotKey, entityId, rawProps, bridgesTable);
+        callLuaGlobal(
+          lua,
+          '__WrapSelf',
+          slotKey,
+          entityId,
+          rawProps,
+          bridgesTable,
+          schemaTypes,
+          schemaComponentTypes
+        );
       } catch (err) {
         console.error(`[scripting-lua] __WrapSelf failed for '${slotKey}':`, err);
       }
@@ -78,7 +106,7 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
       }
     },
 
-    syncProperties(slotKey: string, properties: Record<string, unknown>): void {
+    syncProperties(slotKey: string, properties: PropertyValues): void {
       try {
         for (const [key, value] of Object.entries(properties)) {
           callLuaGlobal(lua, '__UpdateProperty', slotKey, key, value);
@@ -88,12 +116,12 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
       }
     },
 
-    flushDirtyProperties(slotKey: string): Record<string, unknown> | null {
+    flushDirtyProperties(slotKey: string): PropertyValues | null {
       try {
         const dirty = callLuaGlobal(lua, '__FlushDirtyProperties', slotKey);
         if (!dirty || typeof dirty !== 'object') return null;
         // The sandbox_runtime.lua returns a table of { [key] = value }
-        const record = dirty as Record<string, unknown>;
+        const record = dirty as PropertyValues;
         return Object.keys(record).length > 0 ? record : null;
       } catch {
         return null;
@@ -103,6 +131,14 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
     dispose(): void {
       lua.global.close();
     },
+    
+    bindComponentAccessors(
+      getter: <T = unknown>(entityId: EntityId, componentType: ComponentType, key: string) => T | undefined,
+      setter: <T = unknown>(entityId: EntityId, componentType: ComponentType, key: string, value: T) => void
+    ): void {
+      lua.global.set('__GetResourceProperty', getter);
+      lua.global.set('__SetResourceProperty', setter);
+    }
   };
 
   return { sandbox, engine: lua };

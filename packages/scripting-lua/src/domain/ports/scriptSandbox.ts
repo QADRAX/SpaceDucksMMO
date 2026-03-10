@@ -1,3 +1,4 @@
+import type { ScriptSchema, EntityId, ComponentType, PropertyValues } from '@duckengine/core-v2';
 import type { ScriptHook } from '../slots';
 import type { ScriptBridgeContext } from '../bridges';
 
@@ -16,7 +17,8 @@ export interface ScriptSandbox {
     slotKey: string,
     source: string,
     bridges: ScriptBridgeContext,
-    properties: Record<string, unknown>,
+    properties: PropertyValues,
+    schema: ScriptSchema | null,
   ): void;
 
   /** Destroy a slot and release its resources. */
@@ -30,15 +32,21 @@ export interface ScriptSandbox {
   callHook(slotKey: string, hook: string, dt: number, ...args: unknown[]): boolean;
 
   /** Push updated properties into a slot (ECS → sandbox). */
-  syncProperties(slotKey: string, properties: Record<string, unknown>): void;
+  syncProperties(slotKey: string, properties: PropertyValues): void;
 
   /**
    * Pull dirty property values from a slot (sandbox → ECS).
    * Returns a record of keys and their new values that were modified by the script,
    * or null if nothing changed.
    */
-  flushDirtyProperties(slotKey: string): Record<string, unknown> | null;
+  flushDirtyProperties(slotKey: string): PropertyValues | null;
 
   /** Tear down the entire sandbox and release all resources. */
   dispose(): void;
+
+  /** Bind functions to resolve component properties dynamically. */
+  bindComponentAccessors?(
+    getter: <T = unknown>(entityId: EntityId, componentType: ComponentType, key: string) => T | undefined,
+    setter: <T = unknown>(entityId: EntityId, componentType: ComponentType, key: string, value: T) => void
+  ): void;
 }

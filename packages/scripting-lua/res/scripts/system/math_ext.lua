@@ -115,6 +115,20 @@ end
 
 --- Easing functions.
 math.ext.easing = {}
+
+--- Generic easing helper.
+--- @param name string  Easing function name (e.g. "cubicInOut").
+--- @param t number     Normalized time [0, 1].
+--- @return number      Eased value.
+function math.ext.ease(name, t)
+  local fn = math.ext.easing[name]
+  if not fn then
+    -- Fallback to linear if easing function not found
+    return t
+  end
+  return fn(t)
+end
+
 function math.ext.easing.linear(t) return t end
 
 function math.ext.easing.smoothstep(t) return t * t * (3 - 2 * t) end
@@ -132,3 +146,34 @@ end
 function math.ext.easing.sineIn(t) return 1 - math.cos(t * math.pi / 2) end
 
 function math.ext.easing.sineOut(t) return math.sin(t * math.pi / 2) end
+
+function math.ext.easing.sineInOut(t)
+  return -(math.cos(math.pi * t) - 1) / 2
+end
+
+function math.ext.easing.cubicInOut(t)
+  if t < 0.5 then
+    return 4 * t * t * t
+  else
+    local f = ((2 * t) - 2)
+    return 0.5 * f * f * f + 1
+  end
+end
+
+function math.ext.easing.bounceOut(t)
+  local n1 = 7.5625
+  local d1 = 2.75
+
+  if t < 1 / d1 then
+    return n1 * t * t
+  elseif t < 2 / d1 then
+    t = t - 1.5 / d1
+    return n1 * t * t + 0.75
+  elseif t < 2.5 / d1 then
+    t = t - 2.25 / d1
+    return n1 * t * t + 0.9375
+  else
+    t = t - 2.625 / d1
+    return n1 * t * t + 0.984375
+  end
+end

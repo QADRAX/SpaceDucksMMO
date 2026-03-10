@@ -1,23 +1,18 @@
-import type { ScriptPermissions } from '../permissions';
 import type { SceneState } from '../../scene';
 import type { EntityAPI, SceneAPI, SceneAPIBuildContext, SceneRaycastHit } from './types';
-import { buildEntityRefAPI } from './buildEntityAPI';
+import { buildEntityAPI } from './buildEntityAPI';
 import type { EntityId } from '../../ids';
 
-function toNullEntityRef(
+function toEntityRef(
   scene: SceneState,
   entityId: EntityId,
-  permissions: ScriptPermissions,
 ): EntityAPI | null {
-  if (!permissions.allowedEntityIds.has(entityId)) {
+  const entity = scene.entities.get(entityId);
+  if (!entity) {
     return null;
   }
 
-  if (!scene.entities.has(entityId)) {
-    return null;
-  }
-
-  return buildEntityRefAPI(entityId, scene, permissions, {});
+  return buildEntityAPI(entity, scene, false, {});
 }
 
 function createEmptyHit(): SceneRaycastHit {
@@ -30,31 +25,26 @@ function createEmptyHit(): SceneRaycastHit {
 }
 
 /**
- * Builds a scene-level scripting API from permissions and host callbacks.
+ * Builds a scene-level scripting API from host callbacks.
  */
 export function buildSceneAPI(
   scene: SceneState,
-  permissions: ScriptPermissions,
   apiContext: SceneAPIBuildContext,
 ): SceneAPI {
   return {
     instantiate(prefabId, position, rotation) {
-      if (!permissions.allowedPrefabIds.has(prefabId)) {
-        return null;
-      }
-
       const entityId = apiContext.instantiatePrefab?.(scene, prefabId, position, rotation);
       if (!entityId) {
         return null;
       }
 
-      return toNullEntityRef(scene, entityId, permissions);
+      return toEntityRef(scene, entityId);
     },
 
     findByTag(tag) {
       const ids = apiContext.findEntityIdsByTag?.(scene, tag) ?? [];
       return ids
-        .map((entityId) => toNullEntityRef(scene, entityId, permissions))
+        .map((entityId) => toEntityRef(scene, entityId))
         .filter((entity): entity is EntityAPI => entity !== null);
     },
 
@@ -64,7 +54,7 @@ export function buildSceneAPI(
         return null;
       }
 
-      const entity = toNullEntityRef(scene, hit.entityId, permissions);
+      const entity = toEntityRef(scene, hit.entityId);
       if (!entity) {
         return createEmptyHit();
       }

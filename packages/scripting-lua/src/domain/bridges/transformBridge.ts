@@ -12,52 +12,52 @@ import type { BridgeDeclaration } from './types';
 export const transformBridge: BridgeDeclaration = {
   name: 'Transform',
   perEntity: true,
-  factory(scene: SceneState, entityId: string, _schema: ScriptSchema | null) {
-    const resolve = () => {
-      const e = scene.entities.get(entityId as EntityId);
-      if (!e) throw new Error(`Entity '${entityId}' not in scene.`);
+  factory(scene: SceneState, _entityId: string, _schema: ScriptSchema | null) {
+    const resolve = (targetId: string) => {
+      const e = scene.entities.get(targetId as EntityId);
+      if (!e) throw new Error(`Entity '${targetId}' not in scene.`);
       return e.transform;
     };
 
     return {
-      getPosition() {
-        const t = resolve();
+      getPosition(id: string) {
+        const t = resolve(id);
         ensureClean(t);
         return { x: t.worldPosition.x, y: t.worldPosition.y, z: t.worldPosition.z };
       },
-      setPosition(x: number, y: number, z: number) {
-        setPosition(resolve(), x, y, z);
+      setPosition(id: string, x: number, y: number, z: number) {
+        setPosition(resolve(id), x, y, z);
       },
-      getRotation() {
-        const t = resolve();
+      getRotation(id: string) {
+        const t = resolve(id);
         ensureClean(t);
         return { x: t.worldRotation.x, y: t.worldRotation.y, z: t.worldRotation.z };
       },
-      setRotation(x: number, y: number, z: number) {
-        setRotation(resolve(), x, y, z);
+      setRotation(id: string, x: number, y: number, z: number) {
+        setRotation(resolve(id), x, y, z);
       },
-      getScale() {
-        const t = resolve();
+      getScale(id: string) {
+        const t = resolve(id);
         ensureClean(t);
         return { x: t.worldScale.x, y: t.worldScale.y, z: t.worldScale.z };
       },
-      setScale(x: number, y: number, z: number) {
-        setScale(resolve(), x, y, z);
+      setScale(id: string, x: number, y: number, z: number) {
+        setScale(resolve(id), x, y, z);
       },
-      getLocalPosition() {
-        const t = resolve();
+      getLocalPosition(id: string) {
+        const t = resolve(id);
         return { x: t.localPosition.x, y: t.localPosition.y, z: t.localPosition.z };
       },
-      getLocalRotation() {
-        const t = resolve();
+      getLocalRotation(id: string) {
+        const t = resolve(id);
         return { x: t.localRotation.x, y: t.localRotation.y, z: t.localRotation.z };
       },
-      getLocalScale() {
-        const t = resolve();
+      getLocalScale(id: string) {
+        const t = resolve(id);
         return { x: t.localScale.x, y: t.localScale.y, z: t.localScale.z };
       },
-      lookAt(target: { x: number; y: number; z: number }) {
-        lookAt(resolve(), target);
+      lookAt(id: string, target: { x: number; y: number; z: number }) {
+        lookAt(resolve(id), target);
       },
     };
   },

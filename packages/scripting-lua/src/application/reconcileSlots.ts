@@ -1,4 +1,4 @@
-import type { SubsystemEventParams } from '@duckengine/core-v2';
+import type { SubsystemEventParams, EntityId, PropertyValues } from '@duckengine/core-v2';
 import { defineSubsystemEventUseCase } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import { slotKey, initScriptSlot, destroyScriptSlot } from '../domain/slots';
@@ -25,14 +25,14 @@ export const reconcileSlots =
       // The builder handles event.kind routing automatically.
       if (event.componentType !== 'script') return;
 
-      const { entityId } = event;
+      const entityId = event.entityId as EntityId;
       const { slots, pending, sandbox } = session;
 
       const entity = scene.entities.get(entityId);
       if (!entity) return;
 
       const scriptComp = entity.components.get('script') as
-        | { scripts: Array<{ scriptId: string; enabled: boolean; properties: Record<string, unknown> }> }
+        | { scripts: Array<{ scriptId: string; enabled: boolean; properties: PropertyValues }> }
         | undefined;
 
       const desired = new Set<string>();
@@ -49,7 +49,7 @@ export const reconcileSlots =
               sandbox,
               session.resolveSource,
               session.resolveScriptSchema,
-              (scene, entityId, schema) => createScriptBridgeContext(scene, entityId, schema, session.bridges, session.ports),
+              (scene, targetId, schema) => createScriptBridgeContext(scene, targetId, schema, session.bridges, session.ports),
               scene,
               entityId,
               ref.scriptId,

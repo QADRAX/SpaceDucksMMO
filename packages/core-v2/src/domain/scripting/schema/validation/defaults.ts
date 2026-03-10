@@ -40,8 +40,10 @@ export function getDefaultPropertyValue(schema: PropertySchema): PropertyValue {
     case 'color':
       return [1, 1, 1, 1];
     case 'entityRef':
+    case 'entityComponentRef':
       return null;
     case 'entityRefArray':
+    case 'entityComponentRefArray':
       return [];
     case 'prefabRef':
       return null;

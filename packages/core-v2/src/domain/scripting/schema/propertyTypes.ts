@@ -70,6 +70,24 @@ export interface EntityRefArrayProperty extends ScriptPropertyWithDefault<readon
 }
 
 /**
+ * Entity component reference property (single entity component).
+ * Allows script to access a specific component on another referenced entity.
+ */
+export interface EntityComponentRefProperty extends ScriptPropertyWithDefault<string | null> {
+  readonly type: 'entityComponentRef';
+  readonly componentType: ComponentType;
+}
+
+/**
+ * Entity component reference array property (multiple entity components).
+ * Allows script to access a specific component on an array of referenced entities.
+ */
+export interface EntityComponentRefArrayProperty extends ScriptPropertyWithDefault<readonly string[]> {
+  readonly type: 'entityComponentRefArray';
+  readonly componentType: ComponentType;
+}
+
+/**
  * Script reference property (sibling script on same entity).
  * Allows script to communicate with another script on the same entity.
  */
@@ -127,6 +145,8 @@ export type PropertySchema =
   | Vec2Property
   | EntityRefProperty
   | EntityRefArrayProperty
+  | EntityComponentRefProperty
+  | EntityComponentRefArrayProperty
   | ScriptRefProperty
   | ComponentRefProperty
   | PrefabRefProperty
@@ -145,6 +165,20 @@ export function isEntityRefProperty(schema: PropertySchema): schema is EntityRef
  */
 export function isEntityRefArrayProperty(schema: PropertySchema): schema is EntityRefArrayProperty {
   return schema.type === 'entityRefArray';
+}
+
+/**
+ * Type guard to check if a property schema is an entity component reference.
+ */
+export function isEntityComponentRefProperty(schema: PropertySchema): schema is EntityComponentRefProperty {
+  return schema.type === 'entityComponentRef';
+}
+
+/**
+ * Type guard to check if a property schema is an entity component reference array.
+ */
+export function isEntityComponentRefArrayProperty(schema: PropertySchema): schema is EntityComponentRefArrayProperty {
+  return schema.type === 'entityComponentRefArray';
 }
 
 /**

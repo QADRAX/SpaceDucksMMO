@@ -2,6 +2,145 @@
 // Run 'npm run build:scripts' to regenerate.
 
 export const BuiltInScripts: Record<string, string> = {
+  "builtin://move_to_point": `-- =======================================================================
+-- move_to_point.lua (V2)
+-- Moves the entity to a target point over a fixed duration using easing.
+-- =======================================================================
+
+---@class MoveToPointState
+---@field startPos  Vec3
+---@field elapsed   number
+---@field active    boolean
+
+return {
+    schema = {
+        name = "Move to Point (V2)",
+        description = "Interpolates position towards a target point.",
+        properties = {
+            targetPoint = { type = "vec3", default = { 0, 0, 0 }, description = "Destination point." },
+            duration    = { type = "number", default = 2.0, description = "Duration in seconds." },
+            easing      = { type = "string", default = "cubicInOut", description = "Easing name." },
+            delay       = { type = "number", default = 0, description = "Initial delay." }
+        }
+    },
+
+    ---@param self ScriptInstance<MoveToPointProps, MoveToPointState>
+    init = function(self)
+        self.state.startPos = Transform.getPosition()
+        self.state.elapsed  = 0
+        self.state.active   = true
+    end,
+
+    --- Restart if target changes
+    ---@param self ScriptInstance<MoveToPointProps, MoveToPointState>
+    onPropertyChanged = function(self, key, value)
+        if key == "targetPoint" then
+            self.state.startPos = Transform.getPosition()
+            self.state.elapsed  = 0
+            self.state.active   = true
+        end
+    end,
+
+    ---@param self ScriptInstance<MoveToPointProps, MoveToPointState>
+    update = function(self, dt)
+        if not self.state.active then return end
+
+        local props        = self.properties
+        local secs         = dt / 1000
+        self.state.elapsed = self.state.elapsed + secs
+
+        local delay        = props.delay or 0
+        if self.state.elapsed < delay then return end
+
+        local t = (self.state.elapsed - delay) / math.max(0.001, props.duration)
+        if t >= 1 then
+            t = 1
+            self.state.active = false
+        end
+
+        local easedT = math.ext.ease(props.easing, t)
+        local target = props.targetPoint
+        local start  = self.state.startPos
+
+        -- Interpolate
+        Transform.setPosition(
+            math.ext.lerp(start.x, target.x, easedT),
+            math.ext.lerp(start.y, target.y, easedT),
+            math.ext.lerp(start.z, target.z, easedT)
+        )
+    end
+}
+`,
+  "builtin://waypoint_path": `-- =======================================================================
+-- waypoint_path.lua (V2)
+-- Follows a list of waypoint entities by driving a sibling move_to_point script.
+-- =======================================================================
+
+---@class WaypointPathState
+---@field index   number  Current target waypoint index (1-based)
+---@field waiting boolean True when waiting for move_to_point to reach target
+
+return {
+    schema = {
+        name = "Waypoint Path (V2)",
+        description = "Sequences movement through entity waypoints.",
+        properties = {
+            speed            = { type = "number", default = 3, description = "Units per second." },
+            loop             = { type = "boolean", default = true, description = "Loop back to start." },
+            waypoints        = { type = "entityArray", default = {}, description = "Entities to follow." },
+            easing           = { type = "string", default = "cubicInOut", description = "Forwarded easing." },
+            arrivalThreshold = { type = "number", default = 0.2, description = "Distance threshold." }
+        }
+    },
+
+    ---@param self ScriptInstance<WaypointPathProps, WaypointPathState>
+    init = function(self)
+        self.state.index   = 1
+        self.state.waiting = false
+    end,
+
+    ---@param self ScriptInstance<WaypointPathProps, WaypointPathState>
+    update = function(self, dt)
+        local waypoints = self.properties.waypoints
+        if not waypoints or #waypoints == 0 then return end
+
+        local targetId = waypoints[self.state.index]
+        if not targetId then return end
+
+        -- Check if we arrived at target
+        local pos    = Transform.getPosition()
+        local target = Transform.getPosition(targetId)
+        local dist   = math.vec3(pos.x, pos.y, pos.z):distanceTo(math.vec3(target.x, target.y, target.z))
+
+        if dist < (self.properties.arrivalThreshold or 0.2) then
+            -- Arrived! Advance index
+            local nextIdx = self.state.index + 1
+            if nextIdx > #waypoints then
+                if self.properties.loop then
+                    nextIdx = 1
+                else
+                    return -- finished
+                end
+            end
+            self.state.index   = nextIdx
+            self.state.waiting = false
+        end
+
+        -- Drive sibling move_to_point if not already moving towards CURRENT target
+        if not self.state.waiting then
+            -- We just changed target or just started
+            local duration = dist / math.max(0.1, self.properties.speed)
+
+            -- Drive the sibling script
+            Scripts.setProperty("builtin://move_to_point.lua", "targetPoint", target)
+            Scripts.setProperty("builtin://move_to_point.lua", "duration", duration)
+            Scripts.setProperty("builtin://move_to_point.lua", "easing", self.properties.easing or "cubicInOut")
+
+            self.state.waiting = true
+        end
+    end
+}
+`,
 };
 
 export const SystemScripts: Record<string, string> = {
@@ -122,6 +261,20 @@ end
 
 --- Easing functions.
 math.ext.easing = {}
+
+--- Generic easing helper.
+--- @param name string  Easing function name (e.g. "cubicInOut").
+--- @param t number     Normalized time [0, 1].
+--- @return number      Eased value.
+function math.ext.ease(name, t)
+  local fn = math.ext.easing[name]
+  if not fn then
+    -- Fallback to linear if easing function not found
+    return t
+  end
+  return fn(t)
+end
+
 function math.ext.easing.linear(t) return t end
 
 function math.ext.easing.smoothstep(t) return t * t * (3 - 2 * t) end
@@ -139,6 +292,37 @@ end
 function math.ext.easing.sineIn(t) return 1 - math.cos(t * math.pi / 2) end
 
 function math.ext.easing.sineOut(t) return math.sin(t * math.pi / 2) end
+
+function math.ext.easing.sineInOut(t)
+  return -(math.cos(math.pi * t) - 1) / 2
+end
+
+function math.ext.easing.cubicInOut(t)
+  if t < 0.5 then
+    return 4 * t * t * t
+  else
+    local f = ((2 * t) - 2)
+    return 0.5 * f * f * f + 1
+  end
+end
+
+function math.ext.easing.bounceOut(t)
+  local n1 = 7.5625
+  local d1 = 2.75
+
+  if t < 1 / d1 then
+    return n1 * t * t
+  elseif t < 2 / d1 then
+    t = t - 1.5 / d1
+    return n1 * t * t + 0.75
+  elseif t < 2.5 / d1 then
+    t = t - 2.25 / d1
+    return n1 * t * t + 0.9375
+  else
+    t = t - 2.625 / d1
+    return n1 * t * t + 0.984375
+  end
+end
 `,
   "sandbox_metatables": `-- Lua metatable definitions for the scripting sandbox.
 -- Defines __SelfMT and the properties dirty-tracking proxy.

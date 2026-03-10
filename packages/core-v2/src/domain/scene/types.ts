@@ -15,6 +15,18 @@ export type EntityRemovedEvent = {
   readonly entityId: EntityId;
 };
 
+/** Event emitted when a prefab is added to the scene's prefab cache. */
+export type ScenePrefabAddedEvent = {
+  readonly kind: 'prefab-added';
+  readonly prefabId: string;
+};
+
+/** Event emitted when a prefab is removed from the scene's prefab cache. */
+export type ScenePrefabRemovedEvent = {
+  readonly kind: 'prefab-removed';
+  readonly prefabId: string;
+};
+
 /** Event emitted when an entity is reparented in the hierarchy. */
 export type HierarchyChangedEvent = {
   readonly kind: 'hierarchy-changed';
@@ -87,6 +99,8 @@ export type SceneChangeEvent =
   | SceneDebugChangedEvent
   | SceneMeshDebugChangedEvent
   | SceneColliderDebugChangedEvent
+  | ScenePrefabAddedEvent
+  | ScenePrefabRemovedEvent
   | SceneSetupEvent
   | SceneTeardownEvent;
 
@@ -114,6 +128,8 @@ export interface SceneState {
   readonly entityCleanups: Map<EntityId, () => void>;
   /** Registered subsystems in update-pipeline order. */
   readonly subsystems: SceneSubsystem[];
+  /** Cached prefabs (entities not in active scene graph but instantiable). */
+  readonly prefabs: Map<string, EntityState>;
   /** When true, only subsystems with updateWhenPaused run during update. */
   paused: boolean;
 }
@@ -125,4 +141,5 @@ export interface SceneView {
   readonly activeCameraId: EntityId | null;
   readonly rootEntityIds: ReadonlyArray<EntityId>;
   readonly debugFlags: ReadonlyMap<DebugKind, boolean>;
+  readonly prefabs: ReadonlyMap<string, EntityState>;
 }

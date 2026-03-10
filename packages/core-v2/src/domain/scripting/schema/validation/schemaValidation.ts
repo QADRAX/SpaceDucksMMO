@@ -1,4 +1,9 @@
-import type { ComponentRefProperty, ScriptRefProperty } from '../propertyTypes';
+import type {
+  ComponentRefProperty,
+  ScriptRefProperty,
+  EntityComponentRefProperty,
+  EntityComponentRefArrayProperty,
+} from '../propertyTypes';
 import type { ScriptSchema } from '../types';
 import { isNumberTuple } from './common';
 
@@ -25,6 +30,20 @@ export function validateScriptSchema(schema: ScriptSchema): { valid: boolean; er
 
       if (propSchema.type === 'scriptRef' && !(propSchema as ScriptRefProperty).scriptType) {
         errors.push(`ScriptRef property "${key}" must specify scriptType`);
+      }
+
+      if (
+        propSchema.type === 'entityComponentRef' &&
+        !(propSchema as EntityComponentRefProperty).componentType
+      ) {
+        errors.push(`EntityComponentRef property "${key}" must specify componentType`);
+      }
+
+      if (
+        propSchema.type === 'entityComponentRefArray' &&
+        !(propSchema as EntityComponentRefArrayProperty).componentType
+      ) {
+        errors.push(`EntityComponentRefArray property "${key}" must specify componentType`);
       }
 
       if (

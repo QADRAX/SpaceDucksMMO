@@ -104,7 +104,6 @@ describe('Integration: Scripting Subsystem', () => {
 
         const entity = createEntity('e1' as EntityId);
         sceneApi.addEntity({ entity });
-
         const entityApi = sceneApi.entity('e1' as EntityId);
 
         // 5. Add script component with initial property

@@ -1,7 +1,5 @@
 import type { ScriptComponent } from '../../components';
 import type { EntityState } from '../../entities';
-import type { ScriptPermissions } from '../permissions';
-import { canAccessScriptType } from '../permissions';
 import type { ScriptAPI, ScriptRefResolutionResult, ScriptsAPI } from './types';
 
 function resolveScriptReference(
@@ -45,33 +43,28 @@ function createScriptAPI(entity: EntityState, scriptId: string): ScriptAPI | und
   };
 }
 
-export function buildScriptsAPI(entity: EntityState, permissions: ScriptPermissions): ScriptsAPI {
+export function buildScriptsAPI(entity: EntityState): ScriptsAPI {
   return new Proxy(
     {},
     {
       get(_target, propertyKey) {
         if (typeof propertyKey !== 'string') return undefined;
-        if (!canAccessScriptType(permissions, propertyKey)) return undefined;
         return createScriptAPI(entity, propertyKey);
       },
 
       has(_target, propertyKey) {
         if (typeof propertyKey !== 'string') return false;
-        if (!canAccessScriptType(permissions, propertyKey)) return false;
         return resolveScriptReference(entity, propertyKey) !== null;
       },
 
       ownKeys() {
         const component = entity.components.get('script') as ScriptComponent | undefined;
         if (!component) return [];
-        return component.scripts
-          .map((script) => script.scriptId)
-          .filter((scriptId) => canAccessScriptType(permissions, scriptId));
+        return component.scripts.map((script) => script.scriptId);
       },
 
       getOwnPropertyDescriptor(_target, propertyKey) {
         if (typeof propertyKey !== 'string') return undefined;
-        if (!canAccessScriptType(permissions, propertyKey)) return undefined;
         if (resolveScriptReference(entity, propertyKey) === null) return undefined;
         return {
           enumerable: true,

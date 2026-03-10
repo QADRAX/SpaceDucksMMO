@@ -59,11 +59,13 @@ export function validatePropertyValue(
 
   switch (schema.type) {
     case 'entityRef':
+    case 'entityComponentRef':
       return typeof value === 'string' || value === null
         ? { valid: true }
         : { valid: false, error: 'Expected entity ID string or null' };
 
     case 'entityRefArray':
+    case 'entityComponentRefArray':
       if (!Array.isArray(value)) {
         return { valid: false, error: 'Expected array of entity IDs' };
       }

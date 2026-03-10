@@ -1,7 +1,5 @@
 import type { EntityState } from '../../entities';
 import type { SceneState } from '../../scene';
-import type { ScriptPermissions } from '../permissions';
-import { canAccessEntity, canDestroySelfEntity } from '../permissions';
 import { buildComponentsAPI } from './buildComponentsAPI';
 import { buildScriptsAPI } from './buildScriptsAPI';
 import { buildTransformAPI } from './buildTransformAPI';
@@ -13,17 +11,16 @@ function defaultDestroyEntity(scene: SceneState, entityId: EntityId): boolean {
 }
 
 /**
- * Builds an ECS-first entity API for scripting with permission checks.
+ * Builds an ECS-first entity API for scripting.
  */
 export function buildEntityAPI(
   entity: EntityState,
   scene: SceneState,
-  permissions: ScriptPermissions,
+  isSelf: boolean,
   context: ScriptAPIBuildContext = {},
-  isSelf = entity.id === permissions.selfEntityId,
 ): EntityAPI {
   const resolveEntityAPI = (target: EntityState, targetIsSelf: boolean): EntityAPI =>
-    buildEntityAPI(target, scene, permissions, context, targetIsSelf);
+    buildEntityAPI(target, scene, targetIsSelf, context);
 
   return {
     get id() {
@@ -43,18 +40,17 @@ export function buildEntityAPI(
         entity.transform,
         entity,
         scene,
-        permissions,
         isSelf,
         resolveEntityAPI,
       );
     },
 
     get components() {
-      return buildComponentsAPI(entity, permissions);
+      return buildComponentsAPI(entity);
     },
 
     get scripts() {
-      return buildScriptsAPI(entity, permissions);
+      return buildScriptsAPI(entity);
     },
 
     isValid() {
@@ -64,8 +60,6 @@ export function buildEntityAPI(
     destroy() {
       if (!isSelf) return;
 
-      if (!canDestroySelfEntity(permissions)) return;
-
       const destroyFn = context.destroyEntity ?? ((id: EntityId) => defaultDestroyEntity(scene, id));
       destroyFn(entity.id);
     },
@@ -73,18 +67,14 @@ export function buildEntityAPI(
 }
 
 /**
- * Resolves and builds an entity API from an entity id if permissions allow it.
+ * Resolves and builds an entity API from an entity id. Returns null if not found.
  */
 export function buildEntityRefAPI(
   entityId: EntityId,
   scene: SceneState,
-  permissions: ScriptPermissions,
+  isSelf: boolean,
   context: ScriptAPIBuildContext = {},
 ): EntityAPI | null {
-  if (!canAccessEntity(permissions, entityId)) {
-    return null;
-  }
-
   const entity = scene.entities.get(entityId);
   if (!entity) {
     return null;
@@ -93,8 +83,7 @@ export function buildEntityRefAPI(
   return buildEntityAPI(
     entity,
     scene,
-    permissions,
+    isSelf,
     context,
-    entity.id === permissions.selfEntityId,
   );
 }

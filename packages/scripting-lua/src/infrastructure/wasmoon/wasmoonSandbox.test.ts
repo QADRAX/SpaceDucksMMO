@@ -88,33 +88,33 @@ describe('createWasmoonSandbox', () => {
 
     describe('createSlot and callHook', () => {
         it('creates a slot and runs init hook without error', () => {
-            sandbox.createSlot('e1::s1', RETURN_TABLE_SCRIPT, stubBridges, {});
+            sandbox.createSlot('e1::s1', RETURN_TABLE_SCRIPT, stubBridges, {}, null);
             const ok = sandbox.callHook('e1::s1', 'init', 0);
             expect(ok).toBe(true);
         });
 
         it('runs update hook with dt', () => {
-            sandbox.createSlot('e1::s2', RETURN_TABLE_SCRIPT, stubBridges, {});
+            sandbox.createSlot('e1::s2', RETURN_TABLE_SCRIPT, stubBridges, {}, null);
             sandbox.callHook('e1::s2', 'init', 0);
             const ok = sandbox.callHook('e1::s2', 'update', 0.016);
             expect(ok).toBe(true);
         });
 
         it('returns true when calling an undeclared hook', () => {
-            sandbox.createSlot('e1::s3', RETURN_TABLE_SCRIPT, stubBridges, {});
+            sandbox.createSlot('e1::s3', RETURN_TABLE_SCRIPT, stubBridges, {}, null);
             // onEnable is not declared in RETURN_TABLE_SCRIPT
             const ok = sandbox.callHook('e1::s3', 'onEnable', 0);
             expect(ok).toBe(true);
         });
 
         it('returns false when script hook throws', () => {
-            sandbox.createSlot('e1::s4', ERROR_SCRIPT, stubBridges, {});
+            sandbox.createSlot('e1::s4', ERROR_SCRIPT, stubBridges, {}, null);
             const ok = sandbox.callHook('e1::s4', 'update', 0.016);
             expect(ok).toBe(false);
         });
 
         it('loads top-level function style scripts', () => {
-            sandbox.createSlot('e1::s5', TOP_LEVEL_FN_SCRIPT, stubBridges, {});
+            sandbox.createSlot('e1::s5', TOP_LEVEL_FN_SCRIPT, stubBridges, {}, null);
             const ok = sandbox.callHook('e1::s5', 'init', 0);
             expect(ok).toBe(true);
         });
@@ -126,7 +126,7 @@ describe('createWasmoonSandbox', () => {
 
     describe('syncProperties', () => {
         it('pushes properties into a slot without error', () => {
-            sandbox.createSlot('e2::s1', RETURN_TABLE_SCRIPT, stubBridges, { speed: 5 });
+            sandbox.createSlot('e2::s1', RETURN_TABLE_SCRIPT, stubBridges, { speed: 5 }, null);
             expect(() => {
                 sandbox.syncProperties('e2::s1', { speed: 10, active: true });
             }).not.toThrow();
@@ -139,13 +139,13 @@ describe('createWasmoonSandbox', () => {
 
     describe('flushDirtyProperties', () => {
         it('returns null when no properties are dirty', () => {
-            sandbox.createSlot('e3::s1', RETURN_TABLE_SCRIPT, stubBridges, {});
+            sandbox.createSlot('e3::s1', RETURN_TABLE_SCRIPT, stubBridges, {}, null);
             const dirty = sandbox.flushDirtyProperties('e3::s1');
             expect(dirty).toBeNull();
         });
 
         it('returns dirty keys after script mutates self.properties', () => {
-            sandbox.createSlot('e3::s2', DIRTY_PROPS_SCRIPT, stubBridges, { counter: 0 });
+            sandbox.createSlot('e3::s2', DIRTY_PROPS_SCRIPT, stubBridges, { counter: 0 }, null);
             sandbox.callHook('e3::s2', 'init', 0);
             const dirty = sandbox.flushDirtyProperties('e3::s2');
             expect(dirty).not.toBeNull();
@@ -153,7 +153,7 @@ describe('createWasmoonSandbox', () => {
         });
 
         it('clears dirty keys after flush (second flush returns null)', () => {
-            sandbox.createSlot('e3::s3', DIRTY_PROPS_SCRIPT, stubBridges, { counter: 0 });
+            sandbox.createSlot('e3::s3', DIRTY_PROPS_SCRIPT, stubBridges, { counter: 0 }, null);
             sandbox.callHook('e3::s3', 'init', 0);
             sandbox.flushDirtyProperties('e3::s3'); // consume
             const second = sandbox.flushDirtyProperties('e3::s3');
@@ -167,12 +167,12 @@ describe('createWasmoonSandbox', () => {
 
     describe('destroySlot', () => {
         it('destroys a slot without throwing', () => {
-            sandbox.createSlot('e4::s1', RETURN_TABLE_SCRIPT, stubBridges, {});
+            sandbox.createSlot('e4::s1', RETURN_TABLE_SCRIPT, stubBridges, {}, null);
             expect(() => sandbox.destroySlot('e4::s1')).not.toThrow();
         });
 
         it('callHook returns true (no-op) after slot is destroyed', () => {
-            sandbox.createSlot('e4::s2', RETURN_TABLE_SCRIPT, stubBridges, {});
+            sandbox.createSlot('e4::s2', RETURN_TABLE_SCRIPT, stubBridges, {}, null);
             sandbox.destroySlot('e4::s2');
             const ok = sandbox.callHook('e4::s2', 'init', 0);
             expect(ok).toBe(true);

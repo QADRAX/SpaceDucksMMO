@@ -5,6 +5,7 @@ import {
     gizmoBridge,
     inputBridge,
     physicsBridge,
+    scriptsBridge,
     transformBridge,
     type BridgeDeclaration,
 } from '../bridges';
@@ -28,6 +29,7 @@ export function createDefaultScriptingBridges(): ScriptingBridges {
     const bridges = [
         transformBridge,
         createSceneBridgeDeclaration(eventBus),
+        scriptsBridge,
         physicsBridge,
         inputBridge,
         createTimeBridgeDeclaration(timeState),

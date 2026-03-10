@@ -14,6 +14,7 @@ describe('runtime scripting API builders', () => {
       allowedEntityIds: new Set(),
       allowedScriptTypes: new Set<string>(),
       allowedComponentTypes: new Set(),
+      allowedExternalComponents: new Map(),
       allowedPrefabIds: new Set<string>(),
       canDestroySelf: true,
       ...overrides,

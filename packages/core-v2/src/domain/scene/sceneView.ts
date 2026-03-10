@@ -12,5 +12,6 @@ export function createSceneView(scene: SceneState): SceneView {
         activeCameraId: scene.activeCameraId,
         rootEntityIds: [...scene.rootEntityIds],
         debugFlags: new Map(scene.debugFlags),
+        prefabs: new Map(scene.prefabs),
     };
 }

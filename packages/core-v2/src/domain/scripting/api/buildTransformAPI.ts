@@ -9,8 +9,6 @@ import {
 import type { EntityState, TransformState } from '../../entities';
 import { addChild, removeChildById } from '../../entities';
 import type { SceneState } from '../../scene';
-import type { ScriptPermissions } from '../permissions';
-import { canAccessEntity } from '../permissions';
 import type { EntityAPI, TransformAPI, Vec3API } from './types';
 
 function toVec3Like(value: Vec3API): Vec3API {
@@ -28,7 +26,6 @@ export function buildTransformAPI(
   transform: TransformState,
   ownerEntity: EntityState,
   scene: SceneState,
-  permissions: ScriptPermissions,
   isSelf: boolean,
   resolveEntityAPI: (entity: EntityState, isSelfEntity: boolean) => EntityAPI,
 ): TransformAPI {
@@ -104,14 +101,12 @@ export function buildTransformAPI(
     get parent() {
       const parentEntity = getParentEntity();
       if (!parentEntity) return null;
-      if (!canAccessEntity(permissions, parentEntity.id)) return null;
-      return resolveEntityAPI(parentEntity, parentEntity.id === permissions.selfEntityId);
+      return resolveEntityAPI(parentEntity, false);
     },
 
     get children() {
       return getChildrenEntities()
-        .filter((child) => canAccessEntity(permissions, child.id))
-        .map((child) => resolveEntityAPI(child, child.id === permissions.selfEntityId));
+        .map((child) => resolveEntityAPI(child, false));
     },
 
     lookAt(target: Vec3API) {

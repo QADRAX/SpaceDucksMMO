@@ -8,13 +8,17 @@
 --- @param id string       Entity ID
 --- @param rawProps table  Raw properties table (values synced from ECS)
 --- @param bridges table   Bridge API table (name → api object)
+--- @param schemaTypes table?  Map of property keys to schema type strings
+--- @param schemaComponentTypes table? Map of property keys to component type strings 
 --- @return table  self proxy
-function __WrapSelf(slotKey, id, rawProps, bridges)
+function __WrapSelf(slotKey, id, rawProps, bridges, schemaTypes, schemaComponentTypes)
   local ctx = {
     id = id,
     state = {},
     properties = __MakePropertiesProxy(slotKey, rawProps),
     bridges = bridges or {},
+    schemaTypes = schemaTypes or {},
+    schemaComponentTypes = schemaComponentTypes or {},
   }
   __Contexts[slotKey] = ctx
 

@@ -12,6 +12,7 @@ export function createScene(id: SceneId): SceneState {
     changeListeners: new Set(),
     entityCleanups: new Map(),
     subsystems: [],
+    prefabs: new Map(),
     paused: false,
   };
 }

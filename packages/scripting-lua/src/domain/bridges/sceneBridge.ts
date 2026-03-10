@@ -1,5 +1,5 @@
-import type { SceneState, ScriptSchema, ScriptPermissions, EntityId } from '@duckengine/core-v2';
-import { createEntityView, emitSceneChange, buildSceneAPI, createPermissionsFromSchema } from '@duckengine/core-v2';
+import type { SceneState, EntityId } from '@duckengine/core-v2';
+import { buildSceneAPI, buildEntityAPI } from '@duckengine/core-v2';
 import type { BridgeDeclaration } from './types';
 import type { ScriptEventBus } from '../events';
 
@@ -20,19 +20,8 @@ export function createSceneBridgeDeclaration(eventBus: ScriptEventBus): BridgeDe
   return {
     name: 'Scene',
     perEntity: false,
-    factory(scene: SceneState, entityId: string, schema: ScriptSchema | null, ports) {
-      const permissions: ScriptPermissions = schema
-        ? createPermissionsFromSchema(schema, {}, entityId)
-        : {
-          selfEntityId: entityId,
-          allowedEntityIds: new Set(scene.entities.keys()),
-          allowedScriptTypes: new Set<string>(),
-          allowedComponentTypes: new Set(),
-          allowedPrefabIds: new Set<string>(),
-          canDestroySelf: true,
-        };
-
-      const sceneApi = buildSceneAPI(scene, permissions, {
+    factory(scene: SceneState, _entityId: string, _schema: unknown, ports) {
+      const sceneApi = buildSceneAPI(scene, {
         raycast: (query) => {
           const hit = ports.physicsQuery?.raycast(query);
           return hit ? { ...hit, entityId: hit.entityId as EntityId } : null;
@@ -43,11 +32,11 @@ export function createSceneBridgeDeclaration(eventBus: ScriptEventBus): BridgeDe
       });
 
       return {
-        /** Get a readonly snapshot of any entity in the scene. */
+        /** Get a capability-wrapped entity from the scene by ID. */
         getEntity(id: string) {
           const e = scene.entities.get(id as EntityId);
           if (!e) return null;
-          return createEntityView(e);
+          return buildEntityAPI(e, scene, false);
         },
 
         /** Check if an entity exists in the scene. */
@@ -55,32 +44,9 @@ export function createSceneBridgeDeclaration(eventBus: ScriptEventBus): BridgeDe
           return scene.entities.has(id as EntityId);
         },
 
-        /** Get a component property value. */
-        getComponentProperty(targetEntityId: string, componentType: string, key: string) {
-          const e = scene.entities.get(targetEntityId as EntityId);
-          if (!e) return undefined;
-          const comp = e.components.get(componentType as never);
-          if (!comp) return undefined;
-          return (comp as unknown as Record<string, unknown>)[key];
-        },
-
-        /** Set a component property value. */
-        setComponentProperty(
-          targetEntityId: string,
-          componentType: string,
-          key: string,
-          value: unknown,
-        ) {
-          const e = scene.entities.get(targetEntityId as EntityId);
-          if (!e) return;
-          const comp = e.components.get(componentType as never);
-          if (!comp) return;
-          (comp as unknown as Record<string, unknown>)[key] = value;
-          emitSceneChange(scene, {
-            kind: 'component-changed',
-            entityId: targetEntityId as EntityId,
-            componentType: componentType as never,
-          });
+        /** Find entities by tag. Returns wrapped entities (capabilities). */
+        findByTag(tag: string) {
+          return sceneApi.findByTag(tag);
         },
 
         /** Check if an entity has a specific component. */
@@ -116,6 +82,11 @@ export function createSceneBridgeDeclaration(eventBus: ScriptEventBus): BridgeDe
         /** Get the list of all entity IDs in the scene. */
         getAllEntityIds(): string[] {
           return Array.from(scene.entities.keys());
+        },
+
+        /** Instantiates a prefab. Returns a wrapped entity (capability). */
+        instantiate(prefabId: string, position?: {x: number, y: number, z: number}, rotation?: {x: number, y: number, z: number}) {
+          return sceneApi.instantiate(prefabId, position, rotation);
         },
       };
     },

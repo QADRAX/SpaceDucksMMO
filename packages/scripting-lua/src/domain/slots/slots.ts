@@ -1,4 +1,4 @@
-import type { SceneState, ScriptSchema, EntityId } from '@duckengine/core-v2';
+import type { SceneState, ScriptSchema, EntityId, PropertyValues } from '@duckengine/core-v2';
 import type { ScriptBridgeContext } from '../bridges';
 import type { ScriptSandbox } from '../ports';
 import type { ScriptEventBus } from '../events';
@@ -14,9 +14,9 @@ import type { ScriptSlotState, ScriptHook } from './types';
  * @param hooks      - Set of hooks the script source declares.
  */
 export function createScriptSlot(
-  entityId: string,
+  entityId: EntityId,
   scriptId: string,
-  properties: Record<string, unknown>,
+  properties: PropertyValues,
   hooks: ReadonlyArray<ScriptHook>,
 ): ScriptSlotState {
   return {
@@ -34,7 +34,7 @@ export function createScriptSlot(
  * Generates a deterministic slot key from entity + script IDs.
  * Used as the lookup key in the adapter's slot registry.
  */
-export function slotKey(entityId: string, scriptId: string): string {
+export function slotKey(entityId: EntityId, scriptId: string): string {
   return `${entityId}::${scriptId}`;
 }
 
@@ -50,11 +50,11 @@ export function initScriptSlot(
   sandbox: ScriptSandbox,
   resolveSource: (scriptId: string) => Promise<string | null>,
   resolveScriptSchema: (scriptId: string) => Promise<ScriptSchema | null>,
-  bridgeContextFactory: (scene: SceneState, entityId: string, schema: ScriptSchema | null) => ScriptBridgeContext,
+  bridgeContextFactory: (scene: SceneState, entityId: EntityId, schema: ScriptSchema | null) => ScriptBridgeContext,
   scene: SceneState,
-  entityId: string,
+  entityId: EntityId,
   scriptId: string,
-  properties: Record<string, unknown>,
+  properties: PropertyValues,
 ): void {
   const key = slotKey(entityId, scriptId);
   if (slots.has(key) || pending.has(key)) return;
@@ -69,7 +69,7 @@ export function initScriptSlot(
     const declaredHooks = sandbox.detectHooks(source);
     const slot = createScriptSlot(entityId, scriptId, properties, declaredHooks);
 
-    sandbox.createSlot(key, source, bridgeContextFactory(scene, entityId, schema), slot.properties);
+    sandbox.createSlot(key, source, bridgeContextFactory(scene, entityId, schema), slot.properties, schema);
     slot.sandboxHandle = key;
     slots.set(key, slot);
 
@@ -93,7 +93,7 @@ export function destroyScriptSlot(
   slots: Map<string, ScriptSlotState>,
   sandbox: ScriptSandbox,
   eventBus: ScriptEventBus,
-  entityId: string,
+  entityId: EntityId,
   scriptId: string,
 ): void {
   const key = slotKey(entityId, scriptId);
@@ -112,7 +112,7 @@ export function destroyEntityScriptSlots(
   slots: Map<string, ScriptSlotState>,
   sandbox: ScriptSandbox,
   eventBus: ScriptEventBus,
-  entityId: string,
+  entityId: EntityId,
 ): void {
   for (const [key, slot] of slots) {
     if (slot.entityId !== entityId) continue;
@@ -151,7 +151,7 @@ export function syncSlotPropertiesFromScene(
   if (!entity) return;
 
   const scriptComp = entity.components.get('script') as
-    | { scripts: Array<{ scriptId: string; properties: Record<string, unknown> }> }
+    | { scripts: Array<{ scriptId: string; properties: PropertyValues }> }
     | undefined;
   if (!scriptComp) return;
 
@@ -182,7 +182,7 @@ export function flushDirtySlotsToScene(
     if (!entity) continue;
 
     const scriptComp = entity.components.get('script') as
-      | { scripts: Array<{ scriptId: string; properties: Record<string, unknown> }> }
+      | { scripts: Array<{ scriptId: string; properties: PropertyValues }> }
       | undefined;
     if (!scriptComp) continue;
 

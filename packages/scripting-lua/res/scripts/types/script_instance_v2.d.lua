@@ -6,10 +6,21 @@
 
 ---Script instance self parameter (passed to all lifecycle hooks).
 ---@class ScriptInstanceV2
----@field id string Entity ID this script is attached to.
+---@field id string Unique instance ID of this script component.
 ---@field state table Persistent state object for storing variables per instance.
----@field properties table Read-only properties synced from the ECS.
+---@field properties table Read-only properties synced from the ECS (schema values).
+---@field entity EntityWrapperV2 Wrapper for the entity owning this script.
+---@field references table<string, EntityWrapperV2 | EntityWrapperV2[] | any> Resolved references from schema properties.
+---@field schema table Schema definition for the script properties.
 local ScriptInstanceV2 = {}
+
+---Generic alias for strong typing property and state records in user scripts.
+---@class ScriptInstance<TProps, TState> : ScriptInstanceV2
+---@field properties TProps
+---@field state TState
+---@field entity EntityWrapperV2
+---@field references table<string, EntityWrapperV2 | EntityWrapperV2[] | any>
+local ScriptInstance = {}
 
 ---Lifecycle hook: Called once on script initialization.
 ---@param self ScriptInstanceV2

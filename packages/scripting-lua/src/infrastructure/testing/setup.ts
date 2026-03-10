@@ -11,7 +11,6 @@ import type {
     PhysicsQueryPort,
     ResourceLoaderPort,
     PortBinding,
-    SceneSubsystemFactory
 } from '@duckengine/core-v2';
 import { createScriptingSubsystem, ScriptingSubsystemConfig } from '../scriptingSubsystem';
 
@@ -124,7 +123,7 @@ export async function setupScriptingIntegrationTest(params?: {
             ResourceLoaderPortDef.bind(loader),
             ...(params?.customPorts ?? [])
         ],
-        sceneSubsystems: [scriptingSubsystem as SceneSubsystemFactory]
+        sceneSubsystems: [scriptingSubsystem]
     });
 
     return {

@@ -1,3 +1,5 @@
+import type { PropertyValue, PropertyValues } from '@duckengine/core-v2';
+
 /**
  * Compares previous and incoming property bags and returns
  * the set of keys whose values changed.
@@ -11,8 +13,8 @@
  * @returns Array of changed keys (empty if nothing changed).
  */
 export function diffProperties(
-  prev: Record<string, unknown>,
-  next: Record<string, unknown>,
+  prev: PropertyValues,
+  next: PropertyValues,
 ): string[] {
   const changed: string[] = [];
 
@@ -33,8 +35,8 @@ export function diffProperties(
 
 /** Applies changed properties from ECS into the slot's property bag. */
 export function applyPropertyChanges(
-  target: Record<string, unknown>,
-  source: Record<string, unknown>,
+  target: PropertyValues,
+  source: PropertyValues,
   changedKeys: ReadonlyArray<string>,
 ): void {
   for (const key of changedKeys) {
@@ -47,7 +49,7 @@ export function applyPropertyChanges(
 }
 
 /** Shallow equality check for primitives, arrays, and plain objects. */
-export function shallowEqual(a: unknown, b: unknown): boolean {
+export function shallowEqual(a: PropertyValue | undefined, b: PropertyValue | undefined): boolean {
   if (a === b) return true;
   if (a == null || b == null) return false;
   if (typeof a !== typeof b) return false;
@@ -61,13 +63,7 @@ export function shallowEqual(a: unknown, b: unknown): boolean {
   }
 
   if (typeof a === 'object' && typeof b === 'object') {
-    const ka = Object.keys(a as Record<string, unknown>);
-    const kb = Object.keys(b as Record<string, unknown>);
-    if (ka.length !== kb.length) return false;
-    for (const k of ka) {
-      if ((a as Record<string, unknown>)[k] !== (b as Record<string, unknown>)[k]) return false;
-    }
-    return true;
+    return false; // Vec3/Vec2/Color are arrays, handled above. No other objects in PropertyValue.
   }
 
   return false;

@@ -2,7 +2,6 @@ import { describe, it, expect } from '@jest/globals';
 import { createEntity } from '../../entities';
 import { createScene } from '../../scene';
 import type { ScriptInstance } from '../schema';
-import type { ScriptPermissions } from '../permissions';
 import {
   createScriptRuntimeContext,
   createScriptRuntimeContextFromScriptInstance,
@@ -11,19 +10,8 @@ import {
 import { createEntityId, createSceneId } from '../../ids';
 
 describe('createScriptRuntimeContext', () => {
-  function createPermissions(overrides: Partial<ScriptPermissions> = {}): ScriptPermissions {
-    return {
-      selfEntityId: createEntityId('self'),
-      allowedEntityIds: new Set(),
-      allowedScriptTypes: new Set<string>(),
-      allowedComponentTypes: new Set(),
-      allowedPrefabIds: new Set<string>(),
-      canDestroySelf: true,
-      ...overrides,
-    };
-  }
 
-  it('composes self, scene, input and time APIs with explicit permissions', () => {
+  it('composes self, scene, input and time APIs', () => {
     const scene = createScene(createSceneId('scene'));
     const selfId = createEntityId('self');
     const friendId = createEntityId('friend');
@@ -36,10 +24,6 @@ describe('createScriptRuntimeContext', () => {
     const context = createScriptRuntimeContext({
       scene,
       selfEntity: self,
-      permissions: createPermissions({
-        allowedEntityIds: new Set([friendId]),
-        allowedPrefabIds: new Set(['duckPrefab']),
-      }),
       context: {
         sceneApiContext: {
           instantiatePrefab: () => friendId,
@@ -64,7 +48,7 @@ describe('createScriptRuntimeContext', () => {
     expect(context.time.deltaSeconds).toBeCloseTo(0.016);
   });
 
-  it('derives permissions from script instance schema', () => {
+  it('allows accessing any entity from scene (capability-based)', () => {
     const scene = createScene(createSceneId('scene'));
     const selfId = createEntityId('self');
     const friendId = createEntityId('friend');
@@ -82,12 +66,10 @@ describe('createScriptRuntimeContext', () => {
         name: 'FollowTarget',
         properties: {
           target: { type: 'entityRef' },
-          spawner: { type: 'prefabRef' },
         },
       },
       properties: {
         target: friendId,
-        spawner: 'duckPrefab',
       },
       enabled: true,
     };
@@ -103,37 +85,12 @@ describe('createScriptRuntimeContext', () => {
       },
     });
 
-    expect(context.permissions.allowedEntityIds.has(friendId)).toBe(true);
-    expect(context.permissions.allowedPrefabIds.has('duckPrefab')).toBe(true);
-    expect(context.scene.findByTag('any').map((entity) => entity.id)).toEqual([friendId]);
+    // In the new model, if findByTag returns it, we can access it.
+    expect(context.scene.findByTag('any').map((entity) => entity.id)).toContain(friendId);
+    expect(context.scene.findByTag('any').map((entity) => entity.id)).toContain(hiddenId);
   });
 
-  it('honors permissionOptions.canDestroySelf when deriving from instance', () => {
-    const scene = createScene(createSceneId('scene'));
-    const selfId = createEntityId('self');
-    const self = createEntity(selfId);
-    scene.entities.set(self.id, self);
 
-    const instance: ScriptInstance = {
-      schema: {
-        name: 'SafeScript',
-        properties: {},
-      },
-      properties: {},
-      enabled: true,
-    };
-
-    const context = createScriptRuntimeContextFromInstance({
-      scene,
-      selfEntity: self,
-      instance,
-      permissionOptions: { canDestroySelf: false },
-    });
-
-    context.self.destroy();
-
-    expect(scene.entities.has(selfId)).toBe(true);
-  });
 
   it('keeps backward-compatible alias for fromInstance helper', () => {
     const scene = createScene(createSceneId('scene'));

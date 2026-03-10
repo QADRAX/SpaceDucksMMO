@@ -1,3 +1,5 @@
+import type { EntityId, PropertyValues } from '@duckengine/core-v2';
+
 /** Ordered lifecycle hook names. */
 export type ScriptHook =
   | 'init'
@@ -34,11 +36,11 @@ export const LIFECYCLE_ORDER: ReadonlyArray<ScriptHook> = [
 
 /** Runtime state of a single script instance bound to an entity. */
 export interface ScriptSlotState {
-  readonly entityId: string;
+  readonly entityId: EntityId;
   readonly scriptId: string;
   enabled: boolean;
   /** Properties synced from ECS. Mutated during property sync phase. */
-  properties: Record<string, unknown>;
+  properties: PropertyValues;
   /** Keys changed since last sync (outbound: Lua → ECS). */
   readonly dirtyKeys: Set<string>;
   /** Hooks the script declared (sparse — only declared hooks are present). */

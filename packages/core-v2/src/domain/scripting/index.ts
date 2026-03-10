@@ -15,22 +15,7 @@ export {
   createDefaultPropertyValues,
 } from './schema';
 
-// Public permission contracts
-export type {
-  ScriptPermissions,
-  PermissionCheckResult,
-  CreateScriptPermissionsOptions,
-} from './permissions';
-
-// Public permission helpers
-export {
-  createPermissionsFromSchema,
-  canAccessEntity,
-  canAccessScriptType,
-  canAccessComponentType,
-  canInstantiatePrefab,
-  canDestroySelfEntity,
-} from './permissions';
+export * from './builtinScripts';
 
 // Public ECS-first API builders
 export type {

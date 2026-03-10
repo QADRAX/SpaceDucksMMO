@@ -14,6 +14,7 @@
 --   • script_instance_v2.d.lua
 --   • time_v2.d.lua
 --   • transform_v2.d.lua
+--   • scripts_v2.d.lua
 --
 -- All classes and APIs are suffixed with V2 to avoid conflicts with core v1.
 -- ═══════════════════════════════════════════════════════════════════════

@@ -1,5 +1,4 @@
 import { buildEntityAPI, buildInputAPI, buildSceneAPI, buildTimeAPI } from '../api';
-import { createPermissionsFromSchema } from '../permissions';
 import type {
   CreateScriptRuntimeContextFromInstanceParams,
   CreateScriptRuntimeContextParams,
@@ -15,14 +14,13 @@ import type {
 export function createScriptRuntimeContext(
   params: CreateScriptRuntimeContextParams,
 ): ScriptRuntimeContext {
-  const { scene, selfEntity, permissions, context } = params;
+  const { scene, selfEntity, context } = params;
 
   return {
-    self: buildEntityAPI(selfEntity, scene, permissions, context?.entityApiContext ?? {}),
-    scene: buildSceneAPI(scene, permissions, context?.sceneApiContext ?? {}),
+    self: buildEntityAPI(selfEntity, scene, true, context?.entityApiContext ?? {}),
+    scene: buildSceneAPI(scene, context?.sceneApiContext ?? {}),
     input: buildInputAPI(context?.inputApiContext ?? {}),
     time: buildTimeAPI(context?.timeApiContext ?? {}),
-    permissions,
   };
 }
 
@@ -35,19 +33,11 @@ export function createScriptRuntimeContext(
 export function createScriptRuntimeContextFromScriptInstance(
   params: CreateScriptRuntimeContextFromInstanceParams,
 ): ScriptRuntimeContext {
-  const { scene, selfEntity, instance, permissionOptions, context } = params;
-
-  const permissions = createPermissionsFromSchema(
-    instance.schema,
-    instance.properties,
-    selfEntity.id,
-    permissionOptions,
-  );
+  const { scene, selfEntity, context } = params;
 
   return createScriptRuntimeContext({
     scene,
     selfEntity,
-    permissions,
     context,
   });
 }

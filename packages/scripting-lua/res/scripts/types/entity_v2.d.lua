@@ -5,9 +5,12 @@
 -- for transform, physics, and game logic in v2 scripting system.
 -- ═══════════════════════════════════════════════════════════════════════
 
+---@class EntityComponentsV2
+---@field transform TransformV2
+---@field script ScriptsV2
+
 ---An ECS entity exposed to Lua via the `__EntityMT` metatable.
----Scripts receive `self` as a DuckEntityV2 in all lifecycle hooks.
----@class DuckEntityV2
+---Returned by `self.entity` and `self.references`.
+---@class EntityWrapperV2
 ---@field id string The unique UUID of this entity in the scene.
----@field transform TransformV2 Transform component (position, rotation, scale).
----@field state table Persistent per-instance state table. Survives across frames.
+---@field components EntityComponentsV2 Access to the entity's component APIs.
