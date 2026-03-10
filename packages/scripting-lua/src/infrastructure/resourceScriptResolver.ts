@@ -1,5 +1,6 @@
 import type { ResourceLoaderPort } from '@duckengine/core-v2';
 import { createResourceKey } from '@duckengine/core-v2';
+import { isBuiltInOrTestScript } from '../domain/scriptResolution';
 
 export interface ScriptResolver {
     resolveSource(scriptId: string): Promise<string | null>;
@@ -7,7 +8,7 @@ export interface ScriptResolver {
 
 /**
  * Creates a script resolver that delegates to:
- * 1. A built-in resolver for 'builtin://' scripts.
+ * 1. A built-in resolver for 'builtin://' and 'test://' scripts.
  * 2. The engine's ResourceLoaderPort for everything else.
  */
 export function createResourceScriptResolver(
@@ -16,7 +17,7 @@ export function createResourceScriptResolver(
 ): ScriptResolver {
     return {
         async resolveSource(scriptId: string): Promise<string | null> {
-            if (scriptId.startsWith('builtin://') || scriptId.startsWith('test://')) {
+            if (isBuiltInOrTestScript(scriptId)) {
                 return builtInResolver(scriptId);
             }
 

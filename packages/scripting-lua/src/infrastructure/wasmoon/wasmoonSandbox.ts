@@ -31,6 +31,39 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
   lua.doStringSync(getSandboxRuntimeLua());
   lua.doStringSync(getMathExtLua());
 
+  const bridgesBySlot = new Map<string, ScriptBridgeContext>();
+
+  const PER_ENTITY_BRIDGES = new Set(['Transform', 'Script']);
+
+  function createScopedBridge(
+    bridge: Record<string, unknown>,
+    entityId: string,
+  ): Record<string, (...args: unknown[]) => unknown> {
+    const scoped: Record<string, (...args: unknown[]) => unknown> = {};
+    for (const [name, fn] of Object.entries(bridge)) {
+      if (typeof fn === 'function') {
+        scoped[name] = (...args: unknown[]) =>
+          (fn as (id: string, ...a: unknown[]) => unknown)(entityId, ...args);
+      }
+    }
+    return Object.freeze(scoped) as Record<string, (...args: unknown[]) => unknown>;
+  }
+
+  const getScopedBridge = (
+    slotKey: string,
+    entityId: string,
+    bridgeName: string,
+  ): Record<string, (...args: unknown[]) => unknown> | undefined => {
+    const bridges = bridgesBySlot.get(slotKey);
+    if (!bridges) return undefined;
+    const bridge = bridges[bridgeName];
+    if (!bridge || typeof bridge !== 'object') return undefined;
+    if (PER_ENTITY_BRIDGES.has(bridgeName)) {
+      return createScopedBridge(bridge as Record<string, unknown>, entityId);
+    }
+    return bridge as Record<string, (...args: unknown[]) => unknown>;
+  };
+
   const sandbox: ScriptSandbox = {
     detectHooks(source) {
       return detectHooksFromSource(source);
@@ -43,11 +76,7 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
       properties: PropertyValues,
       schema: ScriptSchema | null,
     ): void {
-      // Inject bridge APIs as Lua globals so scripts can access them directly
-      // (e.g. Transform.getPosition()) and via self-proxy resolution.
-      for (const [name, api] of Object.entries(bridges)) {
-        lua.global.set(name, api);
-      }
+      bridgesBySlot.set(slotKey, bridges);
 
       // Load and register user script hooks via __LoadSlot (defined in sandbox_runtime.lua).
       // Returns false on compile/runtime error — slot is left unregistered.
@@ -81,7 +110,8 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
           rawProps,
           bridgesTable,
           schemaTypes,
-          schemaComponentTypes
+          schemaComponentTypes,
+          getScopedBridge,
         );
       } catch (err) {
         console.error(`[scripting-lua] __WrapSelf failed for '${slotKey}':`, err);
@@ -89,6 +119,7 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
     },
 
     destroySlot(slotKey: string): void {
+      bridgesBySlot.delete(slotKey);
       try {
         callLuaGlobal(lua, '__DestroySlot', slotKey);
       } catch {

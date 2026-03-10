@@ -2,7 +2,7 @@
 // Run 'npm run build:scripts' to regenerate.
 
 export const BuiltInScripts: Record<string, string> = {
-  "builtin://move_to_point": `-- =======================================================================
+  "builtin://move_to_point.lua": `-- =======================================================================
 -- move_to_point.lua (V2)
 -- Moves the entity to a target point over a fixed duration using easing.
 -- =======================================================================
@@ -36,16 +36,19 @@ local MoveToPoint = {
 
 function MoveToPoint:init()
     self.state = {
-        startPos = self.entity.components.transform.getPosition(),
+        startPos = self.entity.components.transform.getLocalPosition(),
         elapsed  = 0,
         active   = true
     }
 end
 
 --- Restart if target changes
-function MoveToPoint:onPropertyChanged(key, value)
+--- @param _dt number (unused, 0 for property changes)
+--- @param key string Property key that changed
+--- @param value any New value
+function MoveToPoint:onPropertyChanged(_dt, key, value)
     if key == "targetPoint" then
-        self.state.startPos = self.entity.components.transform.getPosition()
+        self.state.startPos = self.entity.components.transform.getLocalPosition()
         self.state.elapsed  = 0
         self.state.active   = true
     end
@@ -55,8 +58,10 @@ function MoveToPoint:update(dt)
     if not self.state.active then return end
 
     local props   = self.properties
+    local target  = props.targetPoint
+    if not target then return end
     local state   = self.state
-    local secs    = dt / 1000
+    local secs    = dt
     state.elapsed = state.elapsed + secs
 
     local delay   = props.delay or 0
@@ -70,7 +75,6 @@ function MoveToPoint:update(dt)
 
     local easedFn = math.ext.easing[props.easing] or math.ext.easing.linear
     local easedT  = easedFn(t)
-    local target  = props.targetPoint
     local start   = state.startPos
 
     -- Interpolate
@@ -82,7 +86,7 @@ end
 
 return MoveToPoint
 `,
-  "builtin://waypoint_path": `-- =======================================================================
+  "builtin://waypoint_path.lua": `-- =======================================================================
 -- waypoint_path.lua (V2)
 -- Follows a list of waypoint entities by driving a sibling move_to_point script.
 -- =======================================================================
@@ -131,6 +135,7 @@ function WaypointPath:update(dt)
     if not targetEntity then return end
 
     -- Check if we arrived at target
+    -- Note: Waypoint Path uses WORLD position for distance check because waypoints might be parented elsewhere
     local posRaw = self.entity.components.transform.getPosition()
     local targetRaw = targetEntity.components.transform.getPosition()
     
@@ -152,6 +157,12 @@ function WaypointPath:update(dt)
         end
         state.index   = nextIdx
         state.waiting = false
+        -- Re-fetch targetEntity for the new index before driving MoveToPoint
+        targetEntity = waypoints[state.index]
+        if not targetEntity then return end
+        targetRaw = targetEntity.components.transform.getPosition()
+        target = math.vec3.new(targetRaw.x, targetRaw.y, targetRaw.z)
+        dist = pos:distanceTo(target)
     end
 
     -- Drive sibling move_to_point if not already moving towards CURRENT target
@@ -160,6 +171,16 @@ function WaypointPath:update(dt)
         local duration = dist / math.max(0.1, props.speed)
 
         -- Drive the sibling script
+        -- IMPORTANT: MoveToPoint expects LOCAL coordinates if it's going to use setPosition
+        -- However, Built-in scripts often assume they are at root OR they target world coords.
+        -- If mover is not at root, we'd need to convert world target to local target.
+        -- For simplicity, let's assume mover is at root for now or MoveToPoint handles world? 
+        -- No, MoveToPoint uses setPosition (local).
+        
+        -- Logic: If we want to reach a world point via local movement:
+        -- localTarget = moverParentInv * worldTarget
+        
+        -- For built-in simplicity, let's assume world==local for now or add a setWorldPosition bridge.
         self.entity.components.script.setProperty(BuiltInScripts.MoveToPoint, "targetPoint", target)
         self.entity.components.script.setProperty(BuiltInScripts.MoveToPoint, "duration", duration)
         self.entity.components.script.setProperty(BuiltInScripts.MoveToPoint, "easing",
@@ -170,6 +191,80 @@ function WaypointPath:update(dt)
 end
 
 return WaypointPath
+`,
+};
+
+export const TestScripts: Record<string, string> = {
+  "test://minimal_engine_ports.lua": `-- Minimal test: init calls engine_ports (custom port).
+-- Isolates: engine_ports injection, port resolution.
+-- Verification: properties.greeting set from port.hello() result.
+return {
+    init = function(self)
+        local portKey = self.properties.portKey or "io:test-custom"
+        local port = engine_ports and engine_ports[portKey]
+        if port and port.hello then
+            self.properties.greeting = port.hello("Test")
+        else
+            self.properties.greeting = "no-port"
+        end
+    end
+}
+`,
+  "test://minimal_init.lua": `-- Minimal test: init only, no bridges, no self.entity.
+-- Isolates: slot creation, __LoadSlot, __WrapSelf, init hook.
+-- Verification: properties.initCalled = true (readable from ECS snapshot).
+return {
+    init = function(self)
+        self.properties.initCalled = true
+    end
+}
+`,
+  "test://minimal_properties.lua": `-- Minimal test: init writes to self.properties.
+-- Isolates: properties proxy, dirty tracking, flush to ECS.
+return {
+    init = function(self)
+        self.properties.foo = "bar"
+    end
+}
+`,
+  "test://minimal_transform.lua": `-- Minimal test: init calls self.entity.components.transform.getLocalPosition().
+-- Isolates: entity proxy, components proxy, transform bridge.
+-- Verification: properties.initCalled = true, properties.startX/Y/Z from position.
+return {
+    init = function(self)
+        local pos = self.entity.components.transform.getLocalPosition()
+        self.properties.startX = pos.x
+        self.properties.startY = pos.y
+        self.properties.startZ = pos.z
+        self.properties.initCalled = true
+    end
+}
+`,
+  "test://minimal_transform_global.lua": `-- Minimal test: init calls self.Transform.getLocalPosition() (bridge shortcut).
+-- Uses self.Transform instead of self.entity.components.transform — same scoped bridge.
+return {
+    init = function(self)
+        local pos = self.Transform and self.Transform.getLocalPosition()
+        if pos then
+            self.properties.startX = pos.x
+            self.properties.startY = pos.y
+            self.properties.startZ = pos.z
+        end
+        self.properties.initCalled = true
+    end
+}
+`,
+  "test://minimal_update.lua": `-- Minimal test: update hook only, no bridges.
+-- Isolates: runFrameHooks, update pipeline, dt passing.
+-- Verification: properties.updateCount incremented each frame.
+return {
+    init = function(self)
+        self.properties.updateCount = 0
+    end,
+    update = function(self, dt)
+        self.properties.updateCount = (self.properties.updateCount or 0) + 1
+    end
+}
 `,
 };
 
@@ -253,6 +348,7 @@ end
 math3 = {
   vec3 = setmetatable({
     -- Static constructors
+    new     = newVec3,
     zero    = function() return newVec3(0, 0, 0) end,
     one     = function() return newVec3(1, 1, 1) end,
     up      = function() return newVec3(0, 1, 0) end,
@@ -429,6 +525,17 @@ __EntityComponentsMT = {
       return genericProxy
     end
 
+    -- Return scoped bridge from TypeScript (no Lua proxy). pairs(bridge) + Lua wrappers
+    -- triggers wasmoon "Cannot read properties of null (reading 'then')" when crossing Lua↔JS.
+    if ctx.getScopedBridge then
+      local scoped = ctx.getScopedBridge(slotKey, tostring(entityId), bridgeName)
+      if scoped then
+        cachedBridges[bridgeName] = scoped
+        return scoped
+      end
+    end
+
+    -- Fallback: build proxy in Lua (may fail for some bridges)
     local bridgeProxy = {}
     for funcName, fn in pairs(bridge) do
       if type(fn) == "function" then
@@ -529,11 +636,13 @@ __SelfMT = {
       return refs
     end
 
-    -- Support the old bridge shortcut optionally for a while or remove it?
-    -- Let's keep it for fallback if they mistakenly use global syntax still?
-    -- Wait, the task said: "eliminates global access". They must use self.entity.components.Transform
-    -- We can keep ctx object fields
+    -- Bridge shortcuts (self.Transform, self.Scene, etc.) — use scoped bridge when available.
+    -- Only call getScopedBridge for bridge names; returning null from JS can trigger wasmoon errors.
     local bridge = ctx.bridges[k]
+    if bridge ~= nil and ctx.getScopedBridge then
+      local scoped = ctx.getScopedBridge(slotKey, ctx.id, k)
+      if scoped then return scoped end
+    end
     if bridge ~= nil then return bridge end
 
     return ctx[k]
@@ -554,9 +663,10 @@ __SelfMT = {
 --- @param rawProps table  Raw properties table (values synced from ECS)
 --- @param bridges table   Bridge API table (name → api object)
 --- @param schemaTypes table?  Map of property keys to schema type strings
---- @param schemaComponentTypes table? Map of property keys to component type strings 
+--- @param schemaComponentTypes table? Map of property keys to component type strings
+--- @param getScopedBridge function? (slotKey, entityId, bridgeName) -> scoped bridge (JS object)
 --- @return table  self proxy
-function __WrapSelf(slotKey, id, rawProps, bridges, schemaTypes, schemaComponentTypes)
+function __WrapSelf(slotKey, id, rawProps, bridges, schemaTypes, schemaComponentTypes, getScopedBridge)
   local ctx = {
     id = id,
     state = {},
@@ -564,6 +674,7 @@ function __WrapSelf(slotKey, id, rawProps, bridges, schemaTypes, schemaComponent
     bridges = bridges or {},
     schemaTypes = schemaTypes or {},
     schemaComponentTypes = schemaComponentTypes or {},
+    getScopedBridge = getScopedBridge or nil,
   }
   __Contexts[slotKey] = ctx
 

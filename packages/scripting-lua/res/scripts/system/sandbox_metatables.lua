@@ -73,6 +73,17 @@ __EntityComponentsMT = {
       return genericProxy
     end
 
+    -- Return scoped bridge from TypeScript (no Lua proxy). pairs(bridge) + Lua wrappers
+    -- triggers wasmoon "Cannot read properties of null (reading 'then')" when crossing Lua↔JS.
+    if ctx.getScopedBridge then
+      local scoped = ctx.getScopedBridge(slotKey, tostring(entityId), bridgeName)
+      if scoped then
+        cachedBridges[bridgeName] = scoped
+        return scoped
+      end
+    end
+
+    -- Fallback: build proxy in Lua (may fail for some bridges)
     local bridgeProxy = {}
     for funcName, fn in pairs(bridge) do
       if type(fn) == "function" then
@@ -173,11 +184,13 @@ __SelfMT = {
       return refs
     end
 
-    -- Support the old bridge shortcut optionally for a while or remove it?
-    -- Let's keep it for fallback if they mistakenly use global syntax still?
-    -- Wait, the task said: "eliminates global access". They must use self.entity.components.Transform
-    -- We can keep ctx object fields
+    -- Bridge shortcuts (self.Transform, self.Scene, etc.) — use scoped bridge when available.
+    -- Only call getScopedBridge for bridge names; returning null from JS can trigger wasmoon errors.
     local bridge = ctx.bridges[k]
+    if bridge ~= nil and ctx.getScopedBridge then
+      local scoped = ctx.getScopedBridge(slotKey, ctx.id, k)
+      if scoped then return scoped end
+    end
     if bridge ~= nil then return bridge end
 
     return ctx[k]

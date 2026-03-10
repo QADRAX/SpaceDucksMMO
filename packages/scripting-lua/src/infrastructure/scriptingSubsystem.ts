@@ -7,6 +7,7 @@ import { destroyEntitySlots } from '../application/destroyEntitySlots';
 import { runFrameHooks } from '../application/runFrameHooks';
 import { teardownSession } from '../application/teardownSession';
 import { createBuiltInScriptResolver } from './createBuiltInScriptResolver';
+import { createBuiltInScriptSchemaResolver } from './createBuiltInScriptSchemaResolver';
 import { createResourceScriptResolver } from './resourceScriptResolver';
 import { createWasmoonSandbox } from './wasmoon';
 
@@ -62,6 +63,7 @@ export async function createScriptingSubsystem(config?: ScriptingSubsystemConfig
         runtimeState: engineState.subsystemRuntime,
         onSandboxReady: config?.onSandboxReady,
         resolveSource: (id) => resolver.resolveSource(id),
+        resolveScriptSchema: createBuiltInScriptSchemaResolver(),
       });
     })
 

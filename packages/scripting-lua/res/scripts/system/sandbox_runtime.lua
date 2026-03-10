@@ -9,9 +9,10 @@
 --- @param rawProps table  Raw properties table (values synced from ECS)
 --- @param bridges table   Bridge API table (name → api object)
 --- @param schemaTypes table?  Map of property keys to schema type strings
---- @param schemaComponentTypes table? Map of property keys to component type strings 
+--- @param schemaComponentTypes table? Map of property keys to component type strings
+--- @param getScopedBridge function? (slotKey, entityId, bridgeName) -> scoped bridge (JS object)
 --- @return table  self proxy
-function __WrapSelf(slotKey, id, rawProps, bridges, schemaTypes, schemaComponentTypes)
+function __WrapSelf(slotKey, id, rawProps, bridges, schemaTypes, schemaComponentTypes, getScopedBridge)
   local ctx = {
     id = id,
     state = {},
@@ -19,6 +20,7 @@ function __WrapSelf(slotKey, id, rawProps, bridges, schemaTypes, schemaComponent
     bridges = bridges or {},
     schemaTypes = schemaTypes or {},
     schemaComponentTypes = schemaComponentTypes or {},
+    getScopedBridge = getScopedBridge or nil,
   }
   __Contexts[slotKey] = ctx
 

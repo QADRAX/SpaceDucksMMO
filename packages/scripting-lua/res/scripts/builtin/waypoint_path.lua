@@ -69,6 +69,12 @@ function WaypointPath:update(dt)
         end
         state.index   = nextIdx
         state.waiting = false
+        -- Re-fetch targetEntity for the new index before driving MoveToPoint
+        targetEntity = waypoints[state.index]
+        if not targetEntity then return end
+        targetRaw = targetEntity.components.transform.getPosition()
+        target = math.vec3.new(targetRaw.x, targetRaw.y, targetRaw.z)
+        dist = pos:distanceTo(target)
     end
 
     -- Drive sibling move_to_point if not already moving towards CURRENT target

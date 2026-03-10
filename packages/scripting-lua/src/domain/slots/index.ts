@@ -10,3 +10,4 @@ export {
 	syncSlotPropertiesFromScene,
 	flushDirtySlotsToScene,
 } from './slots';
+export { syncSiblingPropertyToSlot } from './syncSiblingProperty';

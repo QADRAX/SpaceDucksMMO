@@ -13,6 +13,7 @@ export type BridgeFactory = (
   entityId: string,
   schema: ScriptSchema | null,
   ports: BridgePorts,
+  session?: import('../session').ScriptingSessionState,
 ) => Record<string, unknown>;
 
 /** Declaration of a bridge that can be installed into the sandbox. */

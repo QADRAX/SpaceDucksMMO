@@ -1,4 +1,4 @@
-import type { SubsystemUpdateParams, SubsystemUseCase, EntityId, ComponentType } from '@duckengine/core-v2';
+import type { SubsystemUpdateParams, SubsystemUseCase } from '@duckengine/core-v2';
 import { defineSubsystemUseCase } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import {
@@ -7,6 +7,7 @@ import {
   syncSlotPropertiesFromScene,
   flushDirtySlotsToScene,
 } from '../domain/slots';
+import { createComponentAccessorPair } from '../domain/componentAccessors';
 
 /**
  * Executes the per-frame hook pipeline for all enabled slots.
@@ -34,31 +35,9 @@ export const runFrameHooks: SubsystemUseCase<ScriptingSessionState, SubsystemUpd
       timeState.elapsed += dt;
       timeState.frameCount++;
 
-      // 1.5. Bind generic component accessors for this frame using the active scene
       if (sandbox.bindComponentAccessors) {
-          sandbox.bindComponentAccessors(
-              <T = unknown>(entityId: EntityId, componentType: ComponentType, key: string): T | undefined => {
-                  if (!scene) return undefined;
-                  const entity = scene.entities.get(entityId);
-                  if (!entity) return undefined;
-                  
-                  const comp = entity.components.get(componentType);
-                  if (!comp) return undefined;
-                  
-                  return (comp as unknown as Record<string, T>)[key];
-              },
-              <T = unknown>(entityId: EntityId, componentType: ComponentType, key: string, value: T): void => {
-                  if (!scene) return;
-                  const entity = scene.entities.get(entityId);
-                  if (!entity) return;
-                  
-                  const comp = entity.components.get(componentType);
-                  if (!comp) return;
-                  
-                  (comp as unknown as Record<string, T>)[key] = value;
-                  entity.observers.fireComponentChanged(entityId, componentType);
-              }
-          );
+        const { getter, setter } = createComponentAccessorPair(scene);
+        sandbox.bindComponentAccessors(getter, setter);
       }
 
       // 2. Sync properties (ECS → Lua) for all enabled slots

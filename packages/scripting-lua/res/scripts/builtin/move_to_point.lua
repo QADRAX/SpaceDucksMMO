@@ -39,7 +39,10 @@ function MoveToPoint:init()
 end
 
 --- Restart if target changes
-function MoveToPoint:onPropertyChanged(key, value)
+--- @param _dt number (unused, 0 for property changes)
+--- @param key string Property key that changed
+--- @param value any New value
+function MoveToPoint:onPropertyChanged(_dt, key, value)
     if key == "targetPoint" then
         self.state.startPos = self.entity.components.transform.getLocalPosition()
         self.state.elapsed  = 0
@@ -51,6 +54,8 @@ function MoveToPoint:update(dt)
     if not self.state.active then return end
 
     local props   = self.properties
+    local target  = props.targetPoint
+    if not target then return end
     local state   = self.state
     local secs    = dt
     state.elapsed = state.elapsed + secs
@@ -66,7 +71,6 @@ function MoveToPoint:update(dt)
 
     local easedFn = math.ext.easing[props.easing] or math.ext.easing.linear
     local easedT  = easedFn(t)
-    local target  = props.targetPoint
     local start   = state.startPos
 
     -- Interpolate

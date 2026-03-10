@@ -1,16 +1,16 @@
 /** @jest-environment node */
 jest.unmock('wasmoon');
 
-import {
-    createComponent,
-    createEntity,
-    definePort,
-} from '@duckengine/core-v2';
-import type {
-    EntityId,
-    SceneId
-} from '@duckengine/core-v2';
+import { definePort } from '@duckengine/core-v2';
+import { createSceneId, createEntityId } from '@duckengine/core-v2';
 import { setupScriptingIntegrationTest } from './testing/setup';
+import {
+    addSceneWithEntity,
+    addEntityWithScripts,
+    waitForSlotInit,
+    runFrames,
+} from './testing/testHelpers';
+import { getScriptProperties } from './testing/testUtils';
 
 describe('Integration: Scripting Subsystem', () => {
     it('should inject mocked internal ports (Input, Physics, Gizmo) and dynamic custom ports into the Lua sandbox', async () => {
@@ -36,39 +36,30 @@ describe('Integration: Scripting Subsystem', () => {
             end,
             update = function(self)
               self.state.updated = true
-              local pressed = Input.isKeyPressed('space')
+              local pressed = self.Input and self.Input.isKeyPressed('space')
             end
           }
         `;
         registerScript('test-res', testScriptSource);
 
-        // 4. Create scene and entity via API to ensure proper structure
-        api.addScene({ sceneId: 'main' as SceneId });
-        const sceneApi = api.scene('main' as SceneId);
-        const entity = createEntity('e1' as EntityId);
-        sceneApi.addEntity({ entity });
-        const entityApi = sceneApi.entity('e1' as EntityId);
+        // 4. Create scene and entity via helpers
+        const sceneId = createSceneId('main');
+        const entityId = createEntityId('e1');
+        addSceneWithEntity(api, sceneId, entityId);
+        addEntityWithScripts(api, sceneId, entityId, [
+            { scriptId: 'test-res', enabled: true, properties: {} }
+        ]);
 
-        // 5. Add script component
-        const scriptComp = createComponent('script', {
-            scripts: [{
-                scriptId: 'test-res',
-                enabled: true,
-                properties: {}
-            }]
-        });
-        entityApi.addComponent({ component: scriptComp });
+        // 5. Wait for async init
+        await waitForSlotInit(200);
 
-        // 6. Wait for async init
-        await new Promise(resolve => setTimeout(resolve, 200));
+        // 6. Run an update to trigger 'update' hook and bridge calls
+        runFrames(api, 1);
 
-        // 7. Run an update to trigger 'update' hook and bridge calls
-        api.update({ dt: 0.016 });
-
-        // 8. Verify the Dynamic Port was called during Lua init
+        // 7. Verify the Dynamic Port was called during Lua init
         expect(customFeaturePort.doSomethingCrazy).toHaveBeenCalledWith(21);
 
-        // 9. Verify standard bridge call from update hook
+        // 8. Verify standard bridge call from update hook
         expect(mocks.input.isKeyPressed).toHaveBeenCalledWith('space');
     });
 
@@ -98,38 +89,27 @@ describe('Integration: Scripting Subsystem', () => {
             }
         `);
 
-        // 4. Create scene and entity via API
-        api.addScene({ sceneId: 'main' as SceneId });
-        const sceneApi = api.scene('main' as SceneId);
+        // 4. Create scene and entity via helpers
+        const sceneId = createSceneId('main');
+        const entityId = createEntityId('e1');
+        addSceneWithEntity(api, sceneId, entityId);
+        addEntityWithScripts(api, sceneId, entityId, [
+            { scriptId: 'dynamic-script', enabled: true, properties: { message: '' } }
+        ]);
 
-        const entity = createEntity('e1' as EntityId);
-        sceneApi.addEntity({ entity });
-        const entityApi = sceneApi.entity('e1' as EntityId);
+        // 5. Wait for async resolving & init hook (increased delay for safety)
+        await waitForSlotInit(250);
 
-        // 5. Add script component with initial property
-        const scriptComp = createComponent('script', {
-            scripts: [{
-                scriptId: 'dynamic-script',
-                enabled: true,
-                properties: { message: '' }
-            }]
-        });
-        entityApi.addComponent({ component: scriptComp });
+        // 6. Run an engine update to flush Lua property changes to ECS components
+        runFrames(api, 1);
 
-        // 6. Wait for async resolving & init hook (increased delay for safety)
-        await new Promise(resolve => setTimeout(resolve, 250));
-
-        // 7. Run an engine update to flush Lua property changes to ECS components
-        api.update({ dt: 0.016 });
-
-        // 8. Verify property was updated by Lua calling the custom port
+        // 7. Verify property was updated by Lua calling the custom port
+        const entityApi = api.scene(sceneId).entity(entityId);
         const result = entityApi.component('script').snapshot();
         if (!result.ok) throw new Error('Snapshot failed');
 
-        const snapshot = result.value as any;
-        // In some cases, snapshot might still be the old one if reconciliation didn't run.
-        // But api.update() should have triggered reconcile->runFrameHooks->flush.
-        expect(snapshot.scripts[0].properties.message).toBe('Hello Duck!');
+        const props = getScriptProperties(result, 0);
+        expect(props?.message).toBe('Hello Duck!');
         expect(customPort.hello).toHaveBeenCalledWith('Duck');
     });
 });

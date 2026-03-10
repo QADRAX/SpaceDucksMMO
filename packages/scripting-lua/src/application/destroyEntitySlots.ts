@@ -16,10 +16,7 @@ export const destroyEntitySlots =
     event: 'entity-removed',
 
     execute(session: ScriptingSessionState, params: SubsystemEventParams): void {
-      // The builder handles event.kind routing automatically.
-      const event = params.event as any;
-
-      const { entityId } = event;
-      destroyEntityScriptSlots(session.slots, session.sandbox, session.eventBus, entityId);
+      if (params.event.kind !== 'entity-removed') return;
+      destroyEntityScriptSlots(session.slots, session.sandbox, session.eventBus, params.event.entityId);
     },
   });

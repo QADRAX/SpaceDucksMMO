@@ -1,3 +1,6 @@
+export * from './componentAccessors';
+export * from './schemas';
+export * from './scriptResolution';
 export * from './slots';
 export * from './properties';
 export * from './events';

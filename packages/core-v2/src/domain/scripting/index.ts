@@ -8,6 +8,9 @@ export type {
   ScriptRegistryEntry,
 } from './schema';
 
+// Script component types (from domain/components)
+export type { ScriptReference, ScriptComponent } from '../components/types/gameplay/scripting';
+
 // Public schema helpers
 export {
   validateScriptSchema,

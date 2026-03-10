@@ -1,8 +1,9 @@
-import type { SubsystemEventParams, EntityId, PropertyValues, ComponentType } from '@duckengine/core-v2';
+import type { SubsystemEventParams, PropertyValues } from '@duckengine/core-v2';
 import { defineSubsystemEventUseCase } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import { slotKey, initScriptSlot, destroyScriptSlot } from '../domain/slots';
 import { createScriptBridgeContext } from '../domain/bridges';
+import { createComponentAccessorPair } from '../domain/componentAccessors';
 
 /**
  * Reconciles script slots for a single entity against its ECS `script` component.
@@ -20,33 +21,15 @@ export const reconcileSlots =
 
     execute(session: ScriptingSessionState, params: SubsystemEventParams): void {
       const { scene } = params;
-      const event = params.event as any;
+      if (params.event.kind !== 'component-changed') return;
+      if (params.event.componentType !== 'script') return;
 
-      // The builder handles event.kind routing automatically.
-      if (event.componentType !== 'script') return;
-
-      const entityId = event.entityId as EntityId;
+      const entityId = params.event.entityId;
       const { slots, pending, sandbox } = session;
 
-      // Ensure component accessors are bound before any Lua hooks run (including async init).
       if (sandbox.bindComponentAccessors) {
-        sandbox.bindComponentAccessors(
-          <T = unknown>(eid: EntityId, componentType: ComponentType, key: string): T | undefined => {
-            const ent = scene.entities.get(eid);
-            if (!ent) return undefined;
-            const comp = ent.components.get(componentType);
-            if (!comp) return undefined;
-            return (comp as unknown as Record<string, T>)[key];
-          },
-          <T = unknown>(eid: EntityId, componentType: ComponentType, key: string, value: T): void => {
-            const ent = scene.entities.get(eid);
-            if (!ent) return;
-            const comp = ent.components.get(componentType);
-            if (!comp) return;
-            (comp as unknown as Record<string, T>)[key] = value;
-            ent.observers.fireComponentChanged(eid, componentType);
-          }
-        );
+        const { getter, setter } = createComponentAccessorPair(scene);
+        sandbox.bindComponentAccessors(getter, setter);
       }
 
       const entity = scene.entities.get(entityId);
@@ -70,7 +53,8 @@ export const reconcileSlots =
               sandbox,
               session.resolveSource,
               session.resolveScriptSchema,
-              (scene, targetId, schema) => createScriptBridgeContext(scene, targetId, schema, session.bridges, session.ports),
+              (scene, targetId, schema) =>
+                createScriptBridgeContext(scene, targetId, schema, session.bridges, session.ports, session),
               scene,
               entityId,
               ref.scriptId,
