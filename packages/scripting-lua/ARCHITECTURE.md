@@ -1,184 +1,351 @@
-# @duckengine/scripting-lua Architecture Guide
+# @duckengine/scripting-lua — Architecture (4+1 Model)
 
-This document defines the architectural structure, design principles, and guidelines for `@duckengine/scripting-lua`. The package follows the same **Clean Architecture** principles as `@duckengine/core-v2`, adapted for the scripting domain.
+This document describes the actual architecture of the Lua scripting subsystem using Kruchten's **4+1** model. The goal is to be honest about how the system is built today, not how it ideally should be.
+
+---
 
 ## Relationship with core-v2
 
-This package is an **external system adapter** — analogous to `rendering-three` and `physics-rapier`. It depends on `@duckengine/core-v2` but core-v2 **never** depends on it.
-
-| Concern | Where it lives |
-|---|---|
-| `SceneSystemAdapter`, `SceneState`, `EntityState`, `TransformState`, types shared across the engine | `@duckengine/core-v2` (imported as external dependency) |
-| `ScriptHook`, `ScriptSlotState`, `BridgeDeclaration`, script lifecycle logic, bridge factories | `@duckengine/scripting-lua/domain` |
-| Use cases that orchestrate domain functions for consumer actions | `@duckengine/scripting-lua/application` |
-| `ScriptSandbox` port, Lua modules, wasmoon adapter, mock adapter | `@duckengine/scripting-lua/infrastructure` (port interface in `domain/ports`) |
-
-**Rule**: Any type or function that is _general to the engine_ (entities, scenes, transforms, components) stays in core-v2. Any type or function _specific to scripting_ (hooks, slots, bridges, sandbox, Lua modules) lives here.
+This package is a **scene subsystem adapter** (SceneSubsystem). It depends on `@duckengine/core-v2`; core-v2 never depends on it. It registers as a scene subsystem via `defineSceneSubsystem` and connects to the engine lifecycle through events and `onUpdate`.
 
 ---
 
-## Layer Overview
+## 4+1 Model: The Four Views + Scenarios
 
-### 1. Domain Layer (`src/domain/`)
+### Logical View
 
-**Purpose**: Core scripting logic — types, pure functions, and port interfaces. Zero external dependencies beyond `@duckengine/core-v2` types.
+Main domain abstractions:
 
-- **Rules**:
-  - Functions must be pure: they compute or mutate _only_ the state passed to them.
-  - No side effects, no I/O, no runtime-specific code.
-  - Port interfaces (`domain/ports/`) define contracts that infrastructure implements.
-  - Types and logic are separated within each module (see Feature Modules below).
+```mermaid
+flowchart LR
+    subgraph Session["ScriptingSessionState"]
+        Slots[(slots)]
+        Pending[(pending)]
+        SB[sandbox]
+        BR[bridges]
+        PT[ports]
+        EB[eventBus]
+        TS[timeState]
+    end
 
-### 2. Application Layer (`src/application/`)
+    subgraph Slot["ScriptSlotState"]
+        EID[entityId]
+        SID[scriptId]
+        Props[properties]
+        Dirty[dirtyKeys]
+        Handle[sandboxHandle]
+    end
 
-**Purpose**: Contains **only Use Cases**. Each use case is a named, domain-tagged operation following the `UseCase<TState, TParams, TOutput>` pattern from core-v2.
+    subgraph SandboxAPI["ScriptSandbox"]
+        Create[createSlot]
+        Hook[callHook]
+        Sync[syncProperties]
+        Flush[flushDirtyProperties]
+        Destroy[destroySlot]
+    end
 
-- **Rules**:
-  - **Only use cases live here**. No generic functions, no factories, no types (beyond use-case params interfaces).
-  - A use case orchestrates domain pure functions — it never implements business logic directly.
-  - Use cases may read from ports but never implement them.
-  - Each use case file exports a single `const` created via a `define*UseCase` helper.
-
-### 3. Infrastructure Layer (`src/infrastructure/`)
-
-**Purpose**: Implements the Domain Ports using external libraries (wasmoon/WASM, test mocks).
-
-- **Rules**:
-  - Acts as adapters connecting ports to concrete implementations.
-  - Infrastructure depends on Domain, but never vice versa.
-  - Lua script templates (security, metatables, runtime, math extensions) live under `wasmoon/modules/`.
-  - The `SceneSystemAdapter` factory (`createScriptingAdapter`) lives here — it wires domain logic, ports, and sandbox into the core-v2 adapter contract.
-
----
-
-## Domain Feature Modules
-
-The domain is organized into **feature modules**, each following core-v2's feature-sliced pattern:
-
-```text
-src/domain/
-    ├── slots/                 # Script instance lifecycle
-    │   ├── types.ts           # ScriptHook, ScriptSlotState, FRAME_HOOKS, LIFECYCLE_ORDER
-    │   ├── slots.ts           # createScriptSlot(), slotKey()
-    │   └── index.ts
-    │
-    ├── properties/            # ECS ↔ Lua property synchronization
-    │   ├── properties.ts      # diffProperties(), applyPropertyChanges(), shallowEqual()
-    │   └── index.ts
-    │
-    ├── events/                # In-frame script-to-script communication
-    │   ├── types.ts           # ScriptEventBus, ScriptEventEntry, ScriptEventSubscription
-    │   ├── eventBus.ts        # createScriptEventBus()
-    │   └── index.ts
-    │
-    ├── bridges/               # Bridge declarations and factories
-    │   ├── types.ts           # BridgeDeclaration, BridgeFactory, BridgePorts,
-    │   │                      # PhysicsQueryLike, GizmoLike, InputStateLike,
-    │   │                      # ScriptBridgeContext, TimeState
-    │   ├── transformBridge.ts # Transform bridge factory (calls core-v2 domain fns)
-    │   ├── sceneBridge.ts     # Scene bridge factory (entity views, component access, events)
-    │   ├── physicsBridge.ts   # Physics bridge factory (proxies PhysicsQueryLike)
-    │   ├── inputBridge.ts     # Input bridge factory (proxies InputStateLike)
-    │   ├── timeBridge.ts      # Time bridge factory + createTimeState()
-    │   ├── gizmoBridge.ts     # Gizmo bridge factory (proxies GizmoLike)
-    │   ├── bridgeContext.ts   # createScriptBridgeContext() — composes bridges per entity
-    │   └── index.ts
-    │
-    ├── ports/                 # Contracts for infrastructure (dependency inversion)
-    │   ├── scriptSandbox.ts   # ScriptSandbox interface
-    │   └── index.ts
-    │
-    └── index.ts               # Root domain barrel
+    Slots --> Slot
+    Session --> SandboxAPI
 ```
 
-Each module keeps **types.ts** (data shapes + interfaces) separate from **logic files** (pure functions). If a module's types are minimal (< 30 lines), they can inline into the logic file — but as soon as they grow, extract them.
+| Concept | Description |
+|---------|-------------|
+| **ScriptSlotState** | State of a script instance: entityId, scriptId, properties, dirtyKeys, sandboxHandle, declared hooks. |
+| **ScriptSandbox** | Port that abstracts Lua execution (createSlot, callHook, syncProperties, flushDirtyProperties, destroySlot). |
+| **ScriptBridgeContext** | Context injected per slot: Transform, Scene, Script, references, etc. |
+| **BridgeDeclaration** | Factory that creates a bridge from ports and state (inputBridge, physicsBridge, gizmoBridge, timeBridge, etc.). |
+| **ScriptEventBus** | In-frame event bus for script-to-script communication (fire/on, flush). |
+| **ScriptingSessionState** | Global session state: slots, pending, sandbox, bridges, ports, eventBus, timeState, resolvers. |
 
-### Why bridges are domain, not application
+**Entity-scoped bridges**: Transform, Scene, Script are scoped per entityId. Input, Gizmo, Physics, Time are global and live in `Engine.*`.
 
-Bridges are **pure factory functions** that compose a scoped API from domain functions and port proxies. They don't orchestrate multi-step workflows, they don't depend on infrastructure, and they don't carry state. They are domain logic — the same way `setPosition(transform, x, y, z)` is domain logic in core-v2.
-
----
-
-## Application Use Cases
-
-Use cases follow the typed `UseCase<TState, TParams, TOutput>` pattern, with a `define*UseCase` helper that tags them with a domain discriminator. Expected use cases:
-
-| Use Case | State | Description |
-|---|---|---|
-| `initScriptSlot` | `ScriptSlotState` | Create and initialize a script slot for an entity |
-| `destroyScriptSlot` | `ScriptSlotState` | Teardown lifecycle (onDisable, onDestroy, cleanup) |
-| `syncSlotProperties` | `ScriptSlotState` | Diff ECS → Lua properties, push into sandbox |
-| `runFrameHooks` | `ScriptSlotState[]` | Execute per-frame hook pipeline (earlyUpdate → update → lateUpdate → drawGizmos) |
-| `reconcileScriptSlots` | `SceneState` | Diff desired vs actual slots for an entity after component-changed |
-| `enableSlot` / `disableSlot` | `ScriptSlotState` | Toggle slot enabled state with lifecycle hooks |
-
-Each use case:
-1. Lives in `src/application/<useCaseName>.ts`
-2. Exports a single `const` via `defineScriptUseCase(...)` or similar helper
-3. Has a co-located `<useCaseName>.test.ts`
+**Custom ports**: `engine_ports['port-id']` is resolved from `SubsystemRuntimeState` (portDefinitions + ports). Async methods accept a callback as the last argument: `callback(err, result)`.
 
 ---
 
-## Infrastructure Adapters
+### Process View
 
-### ScriptSandbox Port
+Runtime execution flows:
 
-```text
-domain/ports/scriptSandbox.ts   → ScriptSandbox interface
-infrastructure/mock/            → createMockSandbox() (JS-based, for tests)
-infrastructure/wasmoon/         → createWasmoonSandbox() (Lua 5.4 via WASM)
+```mermaid
+flowchart TB
+    subgraph Events["Engine events"]
+        A[component-changed script]
+        B[onUpdate each frame]
+        C[entity-removed]
+        D[scene-teardown / dispose]
+    end
+
+    subgraph Reconcile["reconcileSlots"]
+        R1[initScriptSlot async]
+        R2[resolveSource + resolveScriptSchema]
+        R3[createSlot → init → onEnable]
+        R4[destroyScriptSlot if removed]
+    end
+
+    subgraph Frame["runFrameHooks"]
+        F1[timeState]
+        F2[bindComponentAccessors]
+        F3[Sync ECS → Lua]
+        F4[earlyUpdate]
+        F5[eventBus.flush]
+        F6[update, lateUpdate, onDrawGizmos]
+        F7[flushDirtyProperties]
+        F8[flushDirtySlotsToScene]
+    end
+
+    subgraph Destroy["destroyEntitySlots"]
+        D1[onDisable → onDestroy]
+        D2[destroySlot]
+    end
+
+    subgraph Teardown["teardownSession"]
+        T1[onDisable → onDestroy]
+        T2[slots.clear]
+        T3[eventBus.dispose]
+    end
+
+    A --> Reconcile
+    B --> Frame
+    C --> Destroy
+    D --> Teardown
 ```
 
-### Scripting Adapter
+**Note**: `syncProperties` is an exported use case but is not wired to the subsystem lifecycle. The actual ECS → Lua sync happens inside `runFrameHooks`. `syncProperties` is useful for tests or manual invocation.
 
-The `createScriptingAdapter()` factory lives in **infrastructure** because it:
-- Wires together domain logic + sandbox port + bridge factories
-- Returns a `SceneSystemAdapter` (core-v2 contract)
-- Manages async initialization (script source resolution)
-- Holds mutable internal state (slot registry, pending inits)
+---
 
-This is not a use case — it's the infrastructure composition root for this package.
+### Development View
 
-```text
-infrastructure/
-    ├── scriptingAdapter.ts     # createScriptingAdapter() → SceneSystemAdapter
-    ├── scriptSandbox.ts        # (deprecated ← moved to domain/ports/)
-    ├── mock/
-    │   ├── mockSandbox.ts
-    │   └── index.ts
-    └── wasmoon/
-        ├── wasmoonSandbox.ts
-        ├── modules/
-        │   ├── sandboxSecurity.ts
-        │   ├── sandboxMetatables.ts
-        │   ├── sandboxRuntime.ts
-        │   ├── mathExt.ts
-        │   └── index.ts
-        └── index.ts
+Code organization:
+
+```
+src/
+├── domain/                    # Business logic, types, ports
+│   ├── slots/                 # ScriptSlotState, createScriptSlot, initScriptSlot,
+│   │                          # destroyScriptSlot, runHookOnAllSlots, syncSlotPropertiesFromScene,
+│   │                          # flushDirtySlotsToScene, slotKey
+│   ├── properties/            # diffProperties, applyPropertyChanges, normalizePropertyValue
+│   ├── events/                # ScriptEventBus, createScriptEventBus
+│   ├── bridges/               # BridgeDeclaration, factory, resolveRuntimeBridgeTable (engine_ports)
+│   │   ├── inputBridge, physicsBridge, gizmoBridge, timeBridge, transformBridge,
+│   │   ├── sceneBridge, scriptsBridge, bridgeContext
+│   ├── session/               # initializeScriptRuntime, createScriptingSession
+│   ├── ports/                 # ScriptSandbox (interface)
+│   ├── componentAccessors/    # createComponentAccessorPair (ECS getter/setter)
+│   ├── schemas/               # builtInSchemas
+│   └── subsystems/            # defineSubsystemUseCase (local)
+│
+├── application/               # Use cases
+│   ├── reconcileSlots        # component-changed → init/destroy slots
+│   ├── destroyEntitySlots    # entity-removed → destroy slots
+│   ├── runFrameHooks          # onUpdate → hook pipeline + sync
+│   ├── syncProperties         # (standalone) ECS → Lua for all slots
+│   └── teardownSession        # scene-teardown / dispose → full cleanup
+│
+└── infrastructure/            # Concrete implementations
+    ├── scriptingSubsystem.ts  # createScriptingSubsystem → defineSceneSubsystem
+    ├── wasmoon/               # createWasmoonSandbox (Lua 5.4 via WASM)
+    │   ├── wasmoonSandbox.ts  # Implements ScriptSandbox
+    │   ├── modules/           # sandboxSecurity, sandboxMetatables, sandboxRuntime, mathExt
+    │   └── luaUtils.ts        # callLuaGlobal
+    ├── resourceScriptResolver.ts
+    ├── createBuiltInScriptResolver.ts
+    ├── createBuiltInScriptSchemaResolver.ts
+    └── builtin/               # move_to_point, waypoint_path
+```
+
+**Dependency rule**:
+- `domain` does not import from `application` or `infrastructure`
+- `application` does not import from `infrastructure`
+- `infrastructure` imports from `domain` and `application`
+
+---
+
+### Physical View
+
+```mermaid
+flowchart TB
+    subgraph DuckEngine["DuckEngine (Node process)"]
+        subgraph Core["@duckengine/core-v2"]
+            C1[defineSceneSubsystem]
+            C2[SceneState]
+            C3[EventBus]
+        end
+
+        subgraph Scripting["@duckengine/scripting-lua"]
+            subgraph Subsystem["SceneSubsystem"]
+                S1[ScriptingSessionState]
+                S2[bridgePorts, resourceLoader]
+                S3[reconcileSlots]
+                S4[destroyEntitySlots]
+                S5[teardownSession]
+                S6[runFrameHooks]
+            end
+            subgraph Wasmoon["wasmoon"]
+                W1[Lua 5.4 WASM]
+                W2[1 instance per session]
+            end
+        end
+    end
+
+    Subsystem --> Core
+    Subsystem --> Wasmoon
 ```
 
 ---
 
-## Feature Development Flow
+## Scenarios (+1): Use Cases
 
-1. **Define Types**: Model state shapes in `domain/<module>/types.ts`
-2. **Implement Pure Logic**: Write functions in `domain/<module>/` with co-located tests
-3. **Define Use Cases**: Create an Application Use Case in `application/` that orchestrates the domain functions. One file per use case.
-4. **Define Ports** (if needed): Add the interface to `domain/ports/`
-5. **Implement Adapters**: Provide concrete implementations in `infrastructure/`
+Scenarios tie the views together and explain the system's behavior.
+
+### UC-1: Entity with script added to scene
+
+1. User adds a `script` component with `scripts: [{ scriptId, enabled, properties }]`
+2. core-v2 emits `component-changed` (script)
+3. `reconcileSlots` receives the event
+4. For each new script: `initScriptSlot` (async)
+   - `resolveSource(scriptId)` and `resolveScriptSchema(scriptId)` (ResourceLoader or builtin)
+   - `createScriptSlot` + `sandbox.createSlot` (compiles Lua, creates context)
+   - `sandbox.callHook(key, 'init', 0)` and `sandbox.callHook(key, 'onEnable', 0)`
+5. Slot is stored in `slots` and ready for the next frame
+
+```mermaid
+sequenceDiagram
+    participant User as User/Editor
+    participant Core as core-v2
+    participant Reconcile as reconcileSlots
+    participant Init as initScriptSlot
+    participant Resolver as ResourceLoader
+    participant Sandbox as ScriptSandbox
+    participant Lua as Lua VM
+
+    User->>Core: addComponent(script, { scripts: [...] })
+    Core->>Core: component-changed (script)
+    Core->>Reconcile: event
+    Reconcile->>Init: initScriptSlot (async)
+    Init->>Resolver: resolveSource + resolveScriptSchema
+    Resolver-->>Init: source, schema
+    Init->>Sandbox: createSlot(key, source, bridges, props)
+    Sandbox->>Lua: doString + __CreateSlot
+    Init->>Sandbox: callHook(init)
+    Sandbox->>Lua: init(self)
+    Init->>Sandbox: callHook(onEnable)
+    Init->>Reconcile: slots.set(key, slot)
+```
+
+### UC-2: Update frame
+
+1. core-v2 calls the subsystem's `onUpdate` with `{ scene, dt }`
+2. `runFrameHooks` executes:
+   - Updates `timeState`
+   - `syncSlotPropertiesFromScene`: diff ECS vs slot.properties → `sandbox.syncProperties` → `onPropertyChanged` if changed
+   - `runHookOnAllSlots('earlyUpdate', dt)`
+   - `eventBus.flush()` (delivers queued events)
+   - `runHookOnAllSlots('update', dt)`, `lateUpdate`, `onDrawGizmos`
+   - `sandbox.flushDirtyProperties` → `flushDirtySlotsToScene` (Lua → ECS)
+
+```mermaid
+sequenceDiagram
+    participant Core as core-v2
+    participant RFH as runFrameHooks
+    participant Slots as domain/slots
+    participant Sandbox as ScriptSandbox
+    participant Lua as Lua VM
+
+    Core->>RFH: onUpdate({ scene, dt })
+    RFH->>RFH: timeState.delta = dt
+    loop For each slot
+        RFH->>Slots: syncSlotPropertiesFromScene
+        Slots->>Sandbox: syncProperties(slotKey, props)
+        Sandbox->>Lua: __UpdateProperty
+        opt If changed
+            Sandbox->>Lua: callHook(onPropertyChanged)
+        end
+    end
+    RFH->>Sandbox: callHook(earlyUpdate)
+    Sandbox->>Lua: init/update/...
+    RFH->>RFH: eventBus.flush()
+    RFH->>Sandbox: callHook(update, lateUpdate, onDrawGizmos)
+    loop For each slot
+        RFH->>Sandbox: flushDirtyProperties(slotKey)
+        Sandbox->>Lua: __FlushDirtyProperties
+        Lua-->>Sandbox: dirty { key: value }
+        RFH->>Slots: flushDirtySlotsToScene
+    end
+```
+
+### UC-3: Script calls async port with callback
+
+1. In `init` or `update`, the script calls `engine_ports['game:api'].fetchData('id', function(err, data) ... end)`
+2. `resolveRuntimeBridgeTable` exposes the method wrapped with `wrapAsyncWithCallback`
+3. The wrapper detects 2+ args, uses the last as callback
+4. `fn(id)` returns a `Promise` → `callback(undefined, result)` on resolve
+5. The Lua callback runs in a microtask; writes to `self.properties`; the next frame flushes to ECS
+
+### UC-4: Entity removed
+
+1. core-v2 emits `entity-removed`
+2. `destroyEntitySlots` receives the event
+3. For each slot of the entity: `onDisable` → `onDestroy` → `sandbox.destroySlot` → `eventBus.removeSlot`
+4. Slots removed from `slots`
+
+### UC-5: Scene teardown
+
+1. core-v2 emits `scene-teardown` or calls `dispose`
+2. `teardownSession` executes
+3. For each slot: `onDisable` → `onDestroy` → `sandbox.destroySlot`
+4. `slots.clear()`, `eventBus.dispose()`
 
 ---
 
-## Dependency Direction
+## Dependency Summary
 
-```
-infrastructure/ ──depends-on──▶ application/ ──depends-on──▶ domain/
-                                                                │
-                                                      imports types from
-                                                                │
-                                                      @duckengine/core-v2
+```mermaid
+flowchart TB
+    subgraph Infra["infrastructure"]
+        I1[scriptingSubsystem]
+        I2[wasmoon]
+    end
+
+    subgraph App["application"]
+        A1[reconcileSlots]
+        A2[destroyEntitySlots]
+        A3[runFrameHooks]
+        A4[teardownSession]
+    end
+
+    subgraph Domain["domain"]
+        D1[slots]
+        D2[properties]
+        D3[events]
+        D4[bridges]
+        D5[session]
+        D6[ports]
+    end
+
+    subgraph Core["@duckengine/core-v2"]
+        C1[types]
+        C2[defineSceneSubsystem]
+        C3[defineSubsystemUseCase]
+    end
+
+    Infra --> App
+    Infra --> Domain
+    App --> Domain
+    Domain --> Core
 ```
 
-Domain never imports from application or infrastructure.
-Application never imports from infrastructure.
-Infrastructure may import from both domain and application.
+---
+
+## Notes
+
+> Caveats and implementation details that may surprise developers.
+
+**syncProperties** — The `syncProperties` use case is exported but not wired to the subsystem lifecycle. The actual ECS → Lua sync happens inside `runFrameHooks` (step 3). Use `syncProperties` for tests or when you need to sync without running the full frame pipeline.
+
+**Bridges** — Bridge declarations are pure factory functions in domain. Infrastructure calls them with the correct ports; bridges do not hold state or orchestrate workflows.
+
+**engine_ports** — Custom ports are resolved at runtime from `SubsystemRuntimeState` (portDefinitions + port implementations). There are no static types per port for clients; each game extends `engine_ports_v2.d.lua` with its own port shapes.
+
+**Lua VM** — One wasmoon (Lua 5.4) instance per session. All slots share the same VM; isolation is by `slotKey` (context tables, metatables), not by separate VMs.

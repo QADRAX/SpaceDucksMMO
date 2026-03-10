@@ -1,4 +1,10 @@
-export * from './types';
+export {
+  ENGINE_SYSTEM_BRIDGES,
+  SCRIPTING_BRIDGE_PORT_KEYS,
+  type BridgePorts,
+  type TimeState,
+} from './types';
+export type { BridgeDeclaration, BridgeFactory, ScriptBridgeContext } from './types';
 export { transformBridge } from './transformBridge';
 export { createSceneBridgeDeclaration } from './sceneBridge';
 export { physicsBridge } from './physicsBridge';

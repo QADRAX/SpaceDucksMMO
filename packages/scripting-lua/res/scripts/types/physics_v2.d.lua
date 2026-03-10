@@ -4,12 +4,6 @@
 -- Physics queries and force application for rigid bodies.
 -- ═══════════════════════════════════════════════════════════════════════
 
----Physics raycast query parameters.
----@class RaycastQueryV2
----@field origin Vec3V2 Ray origin in world space.
----@field direction Vec3V2 Ray direction (should be normalized).
----@field maxDistance number Maximum raycast distance.
-
 ---Physics raycast hit result.
 ---@class RaycastHitV2
 ---@field entityId string ID of the entity that was hit.
@@ -30,6 +24,8 @@ function physics:applyImpulse(force) end
 function physics:applyForce(force) end
 
 ---Cast a ray and return the first collider hit.
----@param ray RaycastQueryV2 Raycast parameters.
+---@param origin Vec3V2 Ray origin in world space.
+---@param direction Vec3V2 Ray direction (should be normalized).
+---@param maxDistance number Maximum raycast distance.
 ---@return RaycastHitV2|nil hit The first hit result, or nil if nothing was hit.
-function physics.raycast(ray) end
+function physics.raycast(origin, direction, maxDistance) end

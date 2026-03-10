@@ -6,7 +6,7 @@ export * from './application';
 
 // Infrastructure
 export { createScriptingSubsystem, type ScriptingSubsystemConfig } from './infrastructure';
-export { SCRIPTING_BRIDGE_PORT_KEYS } from './domain/bridges';
+export { ENGINE_SYSTEM_BRIDGES, SCRIPTING_BRIDGE_PORT_KEYS } from './domain/bridges';
 
 // Generated assets
 export { BuiltInScripts } from './infrastructure/wasmoon/generated/ScriptAssets';

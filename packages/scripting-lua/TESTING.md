@@ -53,6 +53,7 @@ This runs typecheck (`tsc --noEmit`) followed by Jest.
 | File | Scenario |
 |------|----------|
 | `infrastructure/testing/scenarios/dynamicEntityWithScript.scenario.test.ts` | Add entity at runtime with Lua script resolved via ResourceLoader; register script after scene setup |
+| `infrastructure/testing/scenarios/portsUsage.scenario.test.ts` | System ports (Input, Gizmo, Physics) via bridges; custom ports via `engine_ports` |
 
 ## Test Helpers
 
@@ -71,6 +72,7 @@ Located in `infrastructure/testing/testHelpers.ts`:
 Scenarios live in `infrastructure/testing/scenarios/` and test end-to-end flows:
 
 - **Dynamic entity with runtime script**: Add entities at runtime; register Lua scripts via ResourceLoader; verify scripts run after reconcile and slot init.
+- **Ports usage**: System ports via `Engine` namespace (`Engine.Input`, `Engine.Gizmo`, `Engine.Physics`, `Engine.Time`); custom ports via `engine_ports[portId]` (e.g. `engine_ports['game:analytics'].trackEvent(...)`).
 
 To add a scenario:
 

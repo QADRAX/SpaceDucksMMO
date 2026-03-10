@@ -36,7 +36,7 @@ describe('Integration: Scripting Subsystem', () => {
             end,
             update = function(self)
               self.state.updated = true
-              local pressed = self.Input and self.Input.isKeyPressed('space')
+              local pressed = Engine.Input and Engine.Input.isKeyPressed('space')
             end
           }
         `;

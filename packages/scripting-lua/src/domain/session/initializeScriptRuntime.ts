@@ -1,6 +1,14 @@
 import type { LuaEngine } from 'wasmoon';
-import type { SubsystemPortRegistry, SubsystemRuntimeState, ScriptSchema } from '@duckengine/core-v2';
-import { resolveRuntimeBridgeTable, type BridgePorts } from '../bridges';
+import type { SubsystemPortRegistry, SubsystemRuntimeState, ScriptSchema, SceneState } from '@duckengine/core-v2';
+import {
+  resolveRuntimeBridgeTable,
+  ENGINE_SYSTEM_BRIDGES,
+  inputBridge,
+  gizmoBridge,
+  physicsBridge,
+  createTimeBridgeDeclaration,
+  type BridgePorts,
+} from '../bridges';
 import { createDefaultScriptingBridges } from '../subsystems/defaultBridges';
 import { createScriptingSession, type ScriptingSessionState } from './index';
 import type { ScriptSandbox } from '../ports';
@@ -35,7 +43,28 @@ export function initializeScriptRuntime(options: ScriptRuntimeOptions): Scriptin
     // 3. Create standard bridges and time/event infrastructure
     const { bridges, eventBus, timeState } = createDefaultScriptingBridges();
 
-    // 4. Return the fully initialized session state
+    // 4. Inject Engine global (Input, Gizmo, Physics, Time) — system ports live here, not on self
+    const Engine: Record<string, unknown> = {};
+    const engineBridges = [
+      { name: 'Input', decl: inputBridge },
+      { name: 'Gizmo', decl: gizmoBridge },
+      { name: 'Physics', decl: physicsBridge },
+      { name: 'Time', decl: createTimeBridgeDeclaration(timeState) },
+    ];
+    for (const { name, decl } of engineBridges) {
+      if (ENGINE_SYSTEM_BRIDGES.has(name)) {
+        Engine[name] = decl.factory(
+          null as unknown as SceneState,
+          '',
+          null,
+          bridgePorts,
+          undefined,
+        );
+      }
+    }
+    engine.global.set('Engine', Engine);
+
+    // 5. Return the fully initialized session state
     return createScriptingSession({
         sandbox,
         bridges,

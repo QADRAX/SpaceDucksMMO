@@ -2,7 +2,7 @@ import type { SubsystemEventParams, PropertyValues } from '@duckengine/core-v2';
 import { defineSubsystemEventUseCase } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import { slotKey, initScriptSlot, destroyScriptSlot } from '../domain/slots';
-import { createScriptBridgeContext } from '../domain/bridges';
+import { createScriptBridgeContext, ENGINE_SYSTEM_BRIDGES } from '../domain/bridges';
 import { createComponentAccessorPair } from '../domain/componentAccessors';
 
 /**
@@ -53,8 +53,19 @@ export const reconcileSlots =
               sandbox,
               session.resolveSource,
               session.resolveScriptSchema,
-              (scene, targetId, schema) =>
-                createScriptBridgeContext(scene, targetId, schema, session.bridges, session.ports, session),
+              (scene, targetId, schema) => {
+                const full = createScriptBridgeContext(
+                  scene,
+                  targetId,
+                  schema,
+                  session.bridges,
+                  session.ports,
+                  session,
+                );
+                const filtered = { ...full };
+                for (const name of ENGINE_SYSTEM_BRIDGES) delete (filtered as Record<string, unknown>)[name];
+                return filtered;
+              },
               scene,
               entityId,
               ref.scriptId,

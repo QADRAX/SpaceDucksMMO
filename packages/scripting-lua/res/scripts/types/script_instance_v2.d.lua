@@ -8,10 +8,13 @@
 ---@class ScriptInstanceV2
 ---@field id string Unique instance ID of this script component.
 ---@field state table Persistent state object for storing variables per instance.
----@field properties table Read-only properties synced from the ECS (schema values).
+---@field properties table Read-write properties synced with ECS (read from schema, writes flush back).
 ---@field entity EntityWrapperV2 Wrapper for the entity owning this script.
 ---@field references table<string, EntityWrapperV2 | EntityWrapperV2[] | any> Resolved references from schema properties.
 ---@field schema table Schema definition for the script properties.
+---@field Transform TransformV2? Entity transform. Per-entity.
+---@field Scene SceneV2? Scene access. Per-entity.
+---@field Script ScriptsV2? Entity script component. Per-entity.
 local ScriptInstanceV2 = {}
 
 ---Generic alias for strong typing property and state records in user scripts.

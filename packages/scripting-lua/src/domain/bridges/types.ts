@@ -33,6 +33,14 @@ export interface BridgePorts {
   readonly input?: InputPort;
 }
 
+/** Bridge names exposed as Engine.Input, Engine.Gizmo, etc. (not on self). */
+export const ENGINE_SYSTEM_BRIDGES: ReadonlySet<string> = new Set([
+  'Input',
+  'Gizmo',
+  'Physics',
+  'Time',
+]);
+
 /** Default engine-level subsystem port keys consumed by scripting bridges. */
 export const SCRIPTING_BRIDGE_PORT_KEYS: Readonly<Record<keyof BridgePorts, SubsystemPortKey>> = {
   physicsQuery: 'io:physics-query',

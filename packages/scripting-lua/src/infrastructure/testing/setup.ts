@@ -55,7 +55,12 @@ export function createMockPorts() {
     };
 
     const mockPhysics: PhysicsQueryPort = {
-        raycast: jest.fn(() => ({ hit: true, distance: 10 } as any)),
+        raycast: jest.fn(() => ({
+            entityId: 'hit-entity',
+            point: { x: 0, y: -10, z: 0 },
+            normal: { x: 0, y: 1, z: 0 },
+            distance: 10,
+        })),
         getCollisionEvents: jest.fn(() => []),
     };
 
