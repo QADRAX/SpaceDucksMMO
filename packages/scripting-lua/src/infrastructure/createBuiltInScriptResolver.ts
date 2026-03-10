@@ -1,13 +1,19 @@
-import { BuiltInScripts } from './wasmoon/generated/ScriptAssets';
+import { BuiltInScripts, TestScripts } from './wasmoon/generated/ScriptAssets';
 
 /**
- * Creates a script source resolver using built-in bundled scripts.
+ * Creates a script source resolver for bundled scripts (builtin + test).
  *
- * Returns a function that looks up a scriptId in the BuiltInScripts map.
+ * Handles:
+ * - builtin:// — BuiltInScripts (production scripts)
+ * - test:// — TestScripts (integration test scripts from res/scripts/tests)
+ *
  * Async for API compatibility (real resolvers might fetch from network/disk).
  */
 export function createBuiltInScriptResolver(): (scriptId: string) => Promise<string | null> {
   return async (scriptId: string): Promise<string | null> => {
+    if (scriptId.startsWith('test://')) {
+      return TestScripts[scriptId] ?? null;
+    }
     return BuiltInScripts[scriptId] ?? null;
   };
 }

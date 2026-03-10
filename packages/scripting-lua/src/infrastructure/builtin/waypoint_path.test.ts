@@ -1,9 +1,9 @@
 import { describe, it, expect } from '@jest/globals';
 import { createEntity, createComponent, createEntityId, createSceneId } from '@duckengine/core-v2';
-import type { ScriptComponent } from '@duckengine/core-v2';
+import { getScriptProperties } from '../testing/testUtils';
 import { setupScriptingIntegrationTest } from '../testing/setup';
 
-async function waitForScripts(_engine: any) {
+async function waitForScripts(_engine: unknown) {
     // Wait a few ticks for async slot initialization
     await new Promise(resolve => setTimeout(resolve, 50));
 }
@@ -62,11 +62,8 @@ describe('Built-in Script: Waypoint Path', () => {
         api.update({ dt: 0.016 });
 
         // Verify MTP received target from WP1
-        const scriptSnap1 = scene.entity(moverId).component('script').snapshot();
-        if (scriptSnap1.ok) {
-            const data = scriptSnap1.value as ScriptComponent;
-            expect(data.scripts[0].properties.targetPoint).toEqual({ x: 10, y: 0, z: 0 });
-        }
+        const props1 = getScriptProperties(scene.entity(moverId).component('script').snapshot());
+        if (props1) expect(props1.targetPoint).toEqual({ x: 10, y: 0, z: 0 });
 
         // Wait for movement to WP1 (Dist 10 at speed 10 = 1s)
         api.update({ dt: 1.1 });
@@ -77,11 +74,8 @@ describe('Built-in Script: Waypoint Path', () => {
             expect(view1.value.transform.localPosition.x).toBeCloseTo(10);
         }
 
-        const scriptSnap2 = scene.entity(moverId).component('script').snapshot();
-        if (scriptSnap2.ok) {
-            const data = scriptSnap2.value as ScriptComponent;
-            expect(data.scripts[0].properties.targetPoint).toEqual({ x: 20, y: 10, z: 0 });
-        }
+        const props2 = getScriptProperties(scene.entity(moverId).component('script').snapshot());
+        if (props2) expect(props2.targetPoint).toEqual({ x: 20, y: 10, z: 0 });
 
         // Wait for movement to WP2
         // Dist from (10,0,0) to (20,10,0) is ~14.14. At speed 10, ~1.4s
@@ -138,10 +132,7 @@ describe('Built-in Script: Waypoint Path', () => {
         api.update({ dt: 1.1 });
 
         // Should be targeting WP1 AGAIN
-        const scriptSnap = scene.entity(moverId).component('script').snapshot();
-        if (scriptSnap.ok) {
-            const data = scriptSnap.value as ScriptComponent;
-            expect(data.scripts[0].properties.targetPoint).toEqual({ x: 10, y: 0, z: 0 });
-        }
+        const props = getScriptProperties(scene.entity(moverId).component('script').snapshot());
+        if (props) expect(props.targetPoint).toEqual({ x: 10, y: 0, z: 0 });
     });
 });

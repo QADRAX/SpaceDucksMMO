@@ -1,4 +1,4 @@
-import type { SubsystemEventParams, EntityId, PropertyValues } from '@duckengine/core-v2';
+import type { SubsystemEventParams, EntityId, PropertyValues, ComponentType } from '@duckengine/core-v2';
 import { defineSubsystemEventUseCase } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import { slotKey, initScriptSlot, destroyScriptSlot } from '../domain/slots';
@@ -27,6 +27,27 @@ export const reconcileSlots =
 
       const entityId = event.entityId as EntityId;
       const { slots, pending, sandbox } = session;
+
+      // Ensure component accessors are bound before any Lua hooks run (including async init).
+      if (sandbox.bindComponentAccessors) {
+        sandbox.bindComponentAccessors(
+          <T = unknown>(eid: EntityId, componentType: ComponentType, key: string): T | undefined => {
+            const ent = scene.entities.get(eid);
+            if (!ent) return undefined;
+            const comp = ent.components.get(componentType);
+            if (!comp) return undefined;
+            return (comp as unknown as Record<string, T>)[key];
+          },
+          <T = unknown>(eid: EntityId, componentType: ComponentType, key: string, value: T): void => {
+            const ent = scene.entities.get(eid);
+            if (!ent) return;
+            const comp = ent.components.get(componentType);
+            if (!comp) return;
+            (comp as unknown as Record<string, T>)[key] = value;
+            ent.observers.fireComponentChanged(eid, componentType);
+          }
+        );
+      }
 
       const entity = scene.entities.get(entityId);
       if (!entity) return;

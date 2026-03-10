@@ -16,7 +16,7 @@ export function createResourceScriptResolver(
 ): ScriptResolver {
     return {
         async resolveSource(scriptId: string): Promise<string | null> {
-            if (scriptId.startsWith('builtin://')) {
+            if (scriptId.startsWith('builtin://') || scriptId.startsWith('test://')) {
                 return builtInResolver(scriptId);
             }
 

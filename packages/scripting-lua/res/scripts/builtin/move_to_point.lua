@@ -31,7 +31,6 @@ local MoveToPoint = {
 }
 
 function MoveToPoint:init()
-    error("FORCE_INIT_ERROR")
     self.state = {
         startPos = self.entity.components.transform.getLocalPosition(),
         elapsed  = 0,

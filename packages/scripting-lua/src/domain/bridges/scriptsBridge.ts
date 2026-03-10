@@ -1,6 +1,13 @@
-import type { SceneState, EntityId, ScriptComponent } from '@duckengine/core-v2';
+import type { SceneState, EntityId } from '@duckengine/core-v2';
 import { emitSceneChange } from '@duckengine/core-v2';
 import type { BridgeDeclaration } from './types';
+
+/** Script slot shape (core-v2 ScriptReference). */
+interface ScriptSlot {
+  scriptId: string;
+  enabled: boolean;
+  properties: Record<string, unknown>;
+}
 
 /** 
  * Scripts bridge — allows interacting with other scripts on the same entity.
@@ -13,7 +20,7 @@ export const scriptsBridge: BridgeDeclaration = {
         const getScriptComponent = (entityId: string) => {
             const e = scene.entities.get(entityId as EntityId);
             if (!e) throw new Error(`Entity '${entityId}' not in scene.`);
-            const scriptComp = e.components.get('script') as ScriptComponent | undefined;
+            const scriptComp = e.components.get('script') as { scripts: ScriptSlot[] } | undefined;
             return scriptComp;
         };
 
@@ -23,7 +30,7 @@ export const scriptsBridge: BridgeDeclaration = {
                 const comp = getScriptComponent(id);
                 if (!comp) return;
 
-                const index = comp.scripts.findIndex(s => s.scriptId === scriptId);
+                const index = comp.scripts.findIndex((s: ScriptSlot) => s.scriptId === scriptId);
                 if (index === -1) return;
 
                 comp.scripts[index].properties[key] = value;
@@ -40,7 +47,7 @@ export const scriptsBridge: BridgeDeclaration = {
                 const comp = getScriptComponent(id);
                 if (!comp) return undefined;
 
-                const script = comp.scripts.find(s => s.scriptId === scriptId);
+                const script = comp.scripts.find((s: ScriptSlot) => s.scriptId === scriptId);
                 if (!script) return undefined;
 
                 return script.properties[key];
@@ -50,7 +57,7 @@ export const scriptsBridge: BridgeDeclaration = {
             hasScript(id: string, scriptId: string) {
                 const comp = getScriptComponent(id);
                 if (!comp) return false;
-                return comp.scripts.some(s => s.scriptId === scriptId);
+                return comp.scripts.some((s: ScriptSlot) => s.scriptId === scriptId);
             }
         };
     },

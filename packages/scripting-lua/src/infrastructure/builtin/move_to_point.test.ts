@@ -1,9 +1,15 @@
 import { describe, it, expect } from '@jest/globals';
 import { createEntity, createComponent, createEntityId, createSceneId } from '@duckengine/core-v2';
-import type { ScriptComponent } from '@duckengine/core-v2';
 import { setupScriptingIntegrationTest } from '../testing/setup';
 
-async function waitForScripts(_engine: any) {
+/** Matches ScriptReference shape for test assertions (core-v2 may not export it). */
+interface ScriptSlot {
+  scriptId: string;
+  enabled: boolean;
+  properties: Record<string, unknown>;
+}
+
+async function waitForScripts(_engine: unknown) {
     // Wait a few ticks for async slot initialization
     await new Promise(resolve => setTimeout(resolve, 50));
 }
@@ -137,16 +143,16 @@ describe('Built-in Script: Move To Point', () => {
 
         // Change target to 20,0,0
         const scriptComp = scene.entity(moverId).component('script').snapshot();
-        if (scriptComp.ok) {
-            const data = scriptComp.value as ScriptComponent;
-            const updatedScripts = [...data.scripts];
+        if (scriptComp.ok && scriptComp.value) {
+            const data = scriptComp.value as unknown as { scripts: ScriptSlot[] };
+            const updatedScripts: ScriptSlot[] = [...data.scripts];
             updatedScripts[0] = {
                 ...updatedScripts[0],
                 properties: { ...updatedScripts[0].properties, targetPoint: { x: 20, y: 0, z: 0 } }
             };
             scene.entity(moverId).component('script').setField({
                 fieldKey: 'scripts',
-                value: updatedScripts
+                value: updatedScripts as unknown
             });
         }
 
