@@ -7,12 +7,21 @@ export const BuiltInScripts: Record<string, string> = {
 -- Moves the entity to a target point over a fixed duration using easing.
 -- =======================================================================
 
----@class MoveToPointState
----@field startPos  Vec3
----@field elapsed   number
----@field active    boolean
+---@class MoveToPointPropsV2
+---@field targetPoint Vec3V2|table Destination world coordinate.
+---@field duration? number Travel time in seconds. Default: 2.0.
+---@field easing? string Easing curve name. Default: "cubicInOut".
+---@field delay? number Delay in seconds before starting movement. Default: 0.
 
-return {
+---@class MoveToPointStateV2
+---@field startPos Vec3V2 Starting position before movement.
+---@field elapsed number Elapsed time since movement start.
+---@field active boolean Whether the movement is currently active.
+
+---@class MoveToPointScript : ScriptInstanceV2
+---@field properties MoveToPointPropsV2
+---@field state MoveToPointStateV2
+local MoveToPoint = {
     schema = {
         name = "Move to Point (V2)",
         description = "Interpolates position towards a target point.",
@@ -22,124 +31,145 @@ return {
             easing      = { type = "string", default = "cubicInOut", description = "Easing name." },
             delay       = { type = "number", default = 0, description = "Initial delay." }
         }
-    },
+    }
+}
 
-    ---@param self ScriptInstance<MoveToPointProps, MoveToPointState>
-    init = function(self)
-        self.state.startPos = Transform.getPosition()
+function MoveToPoint:init()
+    self.state = {
+        startPos = self.entity.components.transform.getPosition(),
+        elapsed  = 0,
+        active   = true
+    }
+end
+
+--- Restart if target changes
+function MoveToPoint:onPropertyChanged(key, value)
+    if key == "targetPoint" then
+        self.state.startPos = self.entity.components.transform.getPosition()
         self.state.elapsed  = 0
         self.state.active   = true
-    end,
-
-    --- Restart if target changes
-    ---@param self ScriptInstance<MoveToPointProps, MoveToPointState>
-    onPropertyChanged = function(self, key, value)
-        if key == "targetPoint" then
-            self.state.startPos = Transform.getPosition()
-            self.state.elapsed  = 0
-            self.state.active   = true
-        end
-    end,
-
-    ---@param self ScriptInstance<MoveToPointProps, MoveToPointState>
-    update = function(self, dt)
-        if not self.state.active then return end
-
-        local props        = self.properties
-        local secs         = dt / 1000
-        self.state.elapsed = self.state.elapsed + secs
-
-        local delay        = props.delay or 0
-        if self.state.elapsed < delay then return end
-
-        local t = (self.state.elapsed - delay) / math.max(0.001, props.duration)
-        if t >= 1 then
-            t = 1
-            self.state.active = false
-        end
-
-        local easedT = math.ext.ease(props.easing, t)
-        local target = props.targetPoint
-        local start  = self.state.startPos
-
-        -- Interpolate
-        Transform.setPosition(
-            math.ext.lerp(start.x, target.x, easedT),
-            math.ext.lerp(start.y, target.y, easedT),
-            math.ext.lerp(start.z, target.z, easedT)
-        )
     end
-}
+end
+
+function MoveToPoint:update(dt)
+    if not self.state.active then return end
+
+    local props   = self.properties
+    local state   = self.state
+    local secs    = dt / 1000
+    state.elapsed = state.elapsed + secs
+
+    local delay   = props.delay or 0
+    if state.elapsed < delay then return end
+
+    local t = (state.elapsed - delay) / math.max(0.001, props.duration)
+    if t >= 1 then
+        t = 1
+        state.active = false
+    end
+
+    local easedFn = math.ext.easing[props.easing] or math.ext.easing.linear
+    local easedT  = easedFn(t)
+    local target  = props.targetPoint
+    local start   = state.startPos
+
+    -- Interpolate
+    local nx      = math.ext.lerp(start.x, target.x, easedT)
+    local ny      = math.ext.lerp(start.y, target.y, easedT)
+    local nz      = math.ext.lerp(start.z, target.z, easedT)
+    self.entity.components.transform.setPosition(math.vec3.new(nx, ny, nz))
+end
+
+return MoveToPoint
 `,
   "builtin://waypoint_path": `-- =======================================================================
 -- waypoint_path.lua (V2)
 -- Follows a list of waypoint entities by driving a sibling move_to_point script.
 -- =======================================================================
 
----@class WaypointPathState
----@field index   number  Current target waypoint index (1-based)
----@field waiting boolean True when waiting for move_to_point to reach target
+---@class WaypointPathPropsV2
+---@field speed? number Movement speed in units/sec. Default: 3.
+---@field loop? boolean If true, loops back to first waypoint. Default: true.
+---@field waypoints? EntityWrapperV2[] Ordered list of waypoint entities.
+---@field easing? string Easing curve forwarded to MoveToPoint. Default: "cubicInOut".
+---@field arrivalThreshold? number Distance at which the waypoint is considered reached. Default: 0.15.
 
-return {
+---@class WaypointPathStateV2
+---@field index number Current target waypoint index (1-based).
+---@field waiting boolean True when waiting for MoveToPoint to reach target.
+
+---@class WaypointPathScript : ScriptInstanceV2
+---@field properties WaypointPathPropsV2
+---@field state WaypointPathStateV2
+local WaypointPath = {
     schema = {
         name = "Waypoint Path (V2)",
         description = "Sequences movement through entity waypoints.",
         properties = {
             speed            = { type = "number", default = 3, description = "Units per second." },
             loop             = { type = "boolean", default = true, description = "Loop back to start." },
-            waypoints        = { type = "entityArray", default = {}, description = "Entities to follow." },
+            waypoints        = { type = "entityRefArray", default = {}, description = "Entities to follow." },
             easing           = { type = "string", default = "cubicInOut", description = "Forwarded easing." },
             arrivalThreshold = { type = "number", default = 0.2, description = "Distance threshold." }
         }
-    },
-
-    ---@param self ScriptInstance<WaypointPathProps, WaypointPathState>
-    init = function(self)
-        self.state.index   = 1
-        self.state.waiting = false
-    end,
-
-    ---@param self ScriptInstance<WaypointPathProps, WaypointPathState>
-    update = function(self, dt)
-        local waypoints = self.properties.waypoints
-        if not waypoints or #waypoints == 0 then return end
-
-        local targetId = waypoints[self.state.index]
-        if not targetId then return end
-
-        -- Check if we arrived at target
-        local pos    = Transform.getPosition()
-        local target = Transform.getPosition(targetId)
-        local dist   = math.vec3(pos.x, pos.y, pos.z):distanceTo(math.vec3(target.x, target.y, target.z))
-
-        if dist < (self.properties.arrivalThreshold or 0.2) then
-            -- Arrived! Advance index
-            local nextIdx = self.state.index + 1
-            if nextIdx > #waypoints then
-                if self.properties.loop then
-                    nextIdx = 1
-                else
-                    return -- finished
-                end
-            end
-            self.state.index   = nextIdx
-            self.state.waiting = false
-        end
-
-        -- Drive sibling move_to_point if not already moving towards CURRENT target
-        if not self.state.waiting then
-            -- We just changed target or just started
-            local duration = dist / math.max(0.1, self.properties.speed)
-
-            -- Drive the sibling script
-            Scripts.setProperty("builtin://move_to_point.lua", "targetPoint", target)
-            Scripts.setProperty("builtin://move_to_point.lua", "duration", duration)
-            Scripts.setProperty("builtin://move_to_point.lua", "easing", self.properties.easing or "cubicInOut")
-
-            self.state.waiting = true
-        end
-    end
+    }
 }
+
+function WaypointPath:init()
+    self.state = {
+        index   = 1,
+        waiting = false
+    }
+end
+
+function WaypointPath:update(dt)
+    local waypoints = self.references.waypoints
+    if not waypoints or #waypoints == 0 then return end
+
+    local state = self.state
+    local targetEntity = waypoints[state.index]
+    if not targetEntity then return end
+
+    -- Check if we arrived at target
+    local posRaw = self.entity.components.transform.getPosition()
+    local targetRaw = targetEntity.components.transform.getPosition()
+    
+    local pos = math.vec3.new(posRaw.x, posRaw.y, posRaw.z)
+    local target = math.vec3.new(targetRaw.x, targetRaw.y, targetRaw.z)
+    local dist = pos:distanceTo(target)
+
+    local props  = self.properties
+
+    if dist < (props.arrivalThreshold or 0.2) then
+        -- Arrived! Advance index
+        local nextIdx = state.index + 1
+        if nextIdx > #waypoints then
+            if props.loop then
+                nextIdx = 1
+            else
+                return     -- finished
+            end
+        end
+        state.index   = nextIdx
+        state.waiting = false
+    end
+
+    -- Drive sibling move_to_point if not already moving towards CURRENT target
+    if not state.waiting then
+        -- We just changed target or just started
+        local duration = dist / math.max(0.1, props.speed)
+
+        -- Drive the sibling script
+        self.entity.components.script.setProperty(BuiltInScripts.MoveToPoint, "targetPoint", target)
+        self.entity.components.script.setProperty(BuiltInScripts.MoveToPoint, "duration", duration)
+        self.entity.components.script.setProperty(BuiltInScripts.MoveToPoint, "easing",
+            props.easing or "cubicInOut")
+
+        state.waiting = true
+    end
+end
+
+return WaypointPath
 `,
 };
 
@@ -324,13 +354,10 @@ function math.ext.easing.bounceOut(t)
   end
 end
 `,
-  "sandbox_metatables": `-- Lua metatable definitions for the scripting sandbox.
--- Defines __SelfMT and the properties dirty-tracking proxy.
--- The \`self\` table exposed to user scripts provides:
---   self.id          → entity ID string
---   self.state       → persistent per-instance state table
---   self.properties  → ECS-synced properties (writes tracked as dirty)
---   self.<bridge>    → bridge API (e.g. self.Transform, self.Scene, …)
+  "sandbox_metatables": `--   self.<bridge>    → bridge API (e.g. self.Transform, self.Scene, …)
+
+---@diagnostic disable: undefined-global
+---@diagnostic disable: lowercase-global
 
 -- Slot contexts keyed by slotKey → { id, self, bridges }
 __Contexts = {}
@@ -370,22 +397,148 @@ function __MakePropertiesProxy(slotKey, rawProps)
   return proxy
 end
 
--- Self metatable: resolves bridge APIs and falls back to context fields.
-__SelfMT = {
+__EntityComponentsMT = {
+  __index = function(t, k)
+    -- Normalize the key to match injected TypeScript bridge names (e.g. 'transform' -> 'Transform')
+    local bridgeName = k:gsub("^%l", string.upper)
+    if k == "script" then
+      bridgeName = "Script" 
+    end
+
+    local slotKey = rawget(t, '__slotKey')
+    local ctx = __Contexts[slotKey]
+    if not ctx then return nil end
+    
+    local entityId = rawget(t, '__entityId')
+    local cachedBridges = rawget(t, '__cachedBridges')
+    if cachedBridges[bridgeName] then return cachedBridges[bridgeName] end
+
+    local bridge = ctx.bridges[bridgeName]
+    if not bridge then
+      -- Fallback: Create a generic proxy that delegates to host generic getters/setters
+      local genericProxy = {}
+      setmetatable(genericProxy, {
+        __index = function(_, propName)
+          return __GetResourceProperty(entityId, k, propName)
+        end,
+        __newindex = function(_, propName, propValue)
+          __SetResourceProperty(entityId, k, propName, propValue)
+        end
+      })
+      cachedBridges[bridgeName] = genericProxy
+      return genericProxy
+    end
+
+    local bridgeProxy = {}
+    for funcName, fn in pairs(bridge) do
+      if type(fn) == "function" then
+        bridgeProxy[funcName] = function(...)
+          return fn(entityId, ...)
+        end
+      end
+    end
+    cachedBridges[bridgeName] = bridgeProxy
+    return bridgeProxy
+  end
+}
+
+__EntityMT = {
+  __index = function(t, k)
+    if k == 'id' then return rawget(t, '__id') end
+    if k == 'components' then
+      local proxy = rawget(t, '__componentsProxy')
+      if not proxy then
+        proxy = {
+          __entityId = rawget(t, '__id'),
+          __slotKey = rawget(t, '__slotKey'),
+          __cachedBridges = {}
+        }
+        setmetatable(proxy, __EntityComponentsMT)
+        rawset(t, '__componentsProxy', proxy)
+      end
+      return proxy
+    end
+    return nil
+  end
+}
+
+function __WrapEntity(slotKey, entityId)
+  local e = { __id = entityId, __slotKey = slotKey }
+  setmetatable(e, __EntityMT)
+  return e
+end
+
+__ReferencesMT = {
   __index = function(t, k)
     local ctx = __Contexts[rawget(t, '__slotKey')]
     if not ctx then return nil end
+    
+    local val = rawget(ctx.properties, '__raw')[k]
+    if val == nil then return nil end
+    
+    local schemaType = ctx.schemaTypes[k]
+    if not schemaType then return val end
+    
+    if schemaType == "entityRef" or schemaType == "prefabRef" then
+      return __WrapEntity(rawget(t, '__slotKey'), val)
+    elseif schemaType == "entityRefArray" then
+      local arr = {}
+      for i, id in ipairs(val) do
+        arr[i] = __WrapEntity(rawget(t, '__slotKey'), id)
+      end
+      return arr
+    elseif schemaType == "entityComponentRef" then
+      local compType = ctx.schemaComponentTypes[k]
+      local e = __WrapEntity(rawget(t, '__slotKey'), val)
+      return e.components[compType]
+    elseif schemaType == "entityComponentRefArray" then
+      local compType = ctx.schemaComponentTypes[k]
+      local arr = {}
+      for i, id in ipairs(val) do
+         local e = __WrapEntity(rawget(t, '__slotKey'), id)
+         arr[i] = e.components[compType]
+      end
+      return arr
+    end
+    
+    return val
+  end
+}
 
-    -- Bridge shortcut: self.Transform, self.Scene, self.Input, …
+-- Self metatable: gives access to entity wrapper, references proxy, and context fields
+__SelfMT = {
+  __index = function(t, k)
+    local slotKey = rawget(t, '__slotKey')
+    local ctx = __Contexts[slotKey]
+    if not ctx then return nil end
+
+    if k == 'entity' then
+      local ent = rawget(t, '__entityProxy')
+      if not ent then
+        ent = __WrapEntity(slotKey, ctx.id)
+        rawset(t, '__entityProxy', ent)
+      end
+      return ent
+    elseif k == 'references' then
+      local refs = rawget(t, '__referencesProxy')
+      if not refs then
+        refs = { __slotKey = slotKey }
+        setmetatable(refs, __ReferencesMT)
+        rawset(t, '__referencesProxy', refs)
+      end
+      return refs
+    end
+
+    -- Support the old bridge shortcut optionally for a while or remove it?
+    -- Let's keep it for fallback if they mistakenly use global syntax still?
+    -- Wait, the task said: "eliminates global access". They must use self.entity.components.Transform
+    -- We can keep ctx object fields
     local bridge = ctx.bridges[k]
     if bridge ~= nil then return bridge end
 
-    -- Context fields: self.id, self.state, self.properties
     return ctx[k]
   end,
   __newindex = function(t, k, v)
-    -- Allow scripts to write to the self table freely (e.g. state mutation);
-    -- direct self.properties assignments are handled by the properties proxy.
     rawset(t, k, v)
   end,
 }
@@ -400,13 +553,17 @@ __SelfMT = {
 --- @param id string       Entity ID
 --- @param rawProps table  Raw properties table (values synced from ECS)
 --- @param bridges table   Bridge API table (name → api object)
+--- @param schemaTypes table?  Map of property keys to schema type strings
+--- @param schemaComponentTypes table? Map of property keys to component type strings 
 --- @return table  self proxy
-function __WrapSelf(slotKey, id, rawProps, bridges)
+function __WrapSelf(slotKey, id, rawProps, bridges, schemaTypes, schemaComponentTypes)
   local ctx = {
     id = id,
     state = {},
     properties = __MakePropertiesProxy(slotKey, rawProps),
     bridges = bridges or {},
+    schemaTypes = schemaTypes or {},
+    schemaComponentTypes = schemaComponentTypes or {},
   }
   __Contexts[slotKey] = ctx
 

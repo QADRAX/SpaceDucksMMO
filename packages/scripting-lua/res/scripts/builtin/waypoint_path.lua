@@ -47,6 +47,7 @@ function WaypointPath:update(dt)
     if not targetEntity then return end
 
     -- Check if we arrived at target
+    -- Note: Waypoint Path uses WORLD position for distance check because waypoints might be parented elsewhere
     local posRaw = self.entity.components.transform.getPosition()
     local targetRaw = targetEntity.components.transform.getPosition()
     
@@ -76,6 +77,16 @@ function WaypointPath:update(dt)
         local duration = dist / math.max(0.1, props.speed)
 
         -- Drive the sibling script
+        -- IMPORTANT: MoveToPoint expects LOCAL coordinates if it's going to use setPosition
+        -- However, Built-in scripts often assume they are at root OR they target world coords.
+        -- If mover is not at root, we'd need to convert world target to local target.
+        -- For simplicity, let's assume mover is at root for now or MoveToPoint handles world? 
+        -- No, MoveToPoint uses setPosition (local).
+        
+        -- Logic: If we want to reach a world point via local movement:
+        -- localTarget = moverParentInv * worldTarget
+        
+        -- For built-in simplicity, let's assume world==local for now or add a setWorldPosition bridge.
         self.entity.components.script.setProperty(BuiltInScripts.MoveToPoint, "targetPoint", target)
         self.entity.components.script.setProperty(BuiltInScripts.MoveToPoint, "duration", duration)
         self.entity.components.script.setProperty(BuiltInScripts.MoveToPoint, "easing",

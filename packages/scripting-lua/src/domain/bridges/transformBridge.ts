@@ -25,24 +25,36 @@ export const transformBridge: BridgeDeclaration = {
         ensureClean(t);
         return { x: t.worldPosition.x, y: t.worldPosition.y, z: t.worldPosition.z };
       },
-      setPosition(id: string, x: number, y: number, z: number) {
-        setPosition(resolve(id), x, y, z);
+      setPosition(id: string, x: number | { x: number; y: number; z: number }, y?: number, z?: number) {
+        if (typeof x === 'object') {
+          setPosition(resolve(id), x.x, x.y, x.z);
+        } else {
+          setPosition(resolve(id), x, y!, z!);
+        }
       },
       getRotation(id: string) {
         const t = resolve(id);
         ensureClean(t);
         return { x: t.worldRotation.x, y: t.worldRotation.y, z: t.worldRotation.z };
       },
-      setRotation(id: string, x: number, y: number, z: number) {
-        setRotation(resolve(id), x, y, z);
+      setRotation(id: string, x: number | { x: number; y: number; z: number }, y?: number, z?: number) {
+        if (typeof x === 'object') {
+          setRotation(resolve(id), x.x, x.y, x.z);
+        } else {
+          setRotation(resolve(id), x, y!, z!);
+        }
       },
       getScale(id: string) {
         const t = resolve(id);
         ensureClean(t);
         return { x: t.worldScale.x, y: t.worldScale.y, z: t.worldScale.z };
       },
-      setScale(id: string, x: number, y: number, z: number) {
-        setScale(resolve(id), x, y, z);
+      setScale(id: string, x: number | { x: number; y: number; z: number }, y?: number, z?: number) {
+        if (typeof x === 'object') {
+          setScale(resolve(id), x.x, x.y, x.z);
+        } else {
+          setScale(resolve(id), x, y!, z!);
+        }
       },
       getLocalPosition(id: string) {
         const t = resolve(id);

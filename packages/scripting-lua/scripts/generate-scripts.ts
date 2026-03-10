@@ -30,9 +30,7 @@ for (const file of builtinFiles) {
     .replace(/\\/g, '\\\\')
     .replace(/`/g, '\\`')
     .replace(/\$/g, '\\$');
-  const scriptId = file.replace(/\.lua$/, '');
-  output += `  "builtin://${scriptId}": \`${escaped}\`,
-`;
+  output += `  "builtin://${file}": \`${escaped}\`,\n`;
 }
 
 output += `};

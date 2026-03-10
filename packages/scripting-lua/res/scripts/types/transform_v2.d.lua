@@ -5,41 +5,54 @@
 -- ═══════════════════════════════════════════════════════════════════════
 
 ---Transform component for spatial manipulation.
+---All getters return a table `{x, y, z}` which behaves like a Vec3V2.
+---All setters support either a Vec3V2 table or three numbers (x, y, z).
 ---@class TransformV2
----@field position Vec3V2|nil Local position `{x, y, z}`.
----@field rotation QuatV2|nil Local rotation as quaternion `{x, y, z, w}`.
----@field scale Vec3V2|nil Local scale `{x, y, z}`.
----@field parent string|nil Parent entity ID, or nil if root.
 local TransformV2 = {}
 
----Get the local position of the entity.
+---Get the WORLD position of the entity.
 ---@return Vec3V2
 function TransformV2.getPosition() end
 
----Set the local position of the entity.
----@param pos Vec3V2 The new position.
-function TransformV2.setPosition(pos) end
+---Set the WORLD position of the entity.
+---@param x Vec3V2|number The new position vector, or X coordinate.
+---@param y number|nil Y coordinate (if x is a number).
+---@param z number|nil Z coordinate (if x is a number).
+function TransformV2.setPosition(x, y, z) end
 
----Set the local rotation (quaternion).
----@param rot QuatV2 The new rotation as quaternion.
-function TransformV2.setRotation(rot) end
+---Get the WORLD rotation (Euler YXZ in radians).
+---@return Vec3V2
+function TransformV2.getRotation() end
 
----Set the local scale.
----@param s Vec3V2 The new scale.
-function TransformV2.setScale(s) end
+---Set the WORLD rotation (Euler YXZ in radians).
+---@param x Vec3V2|number The new rotation vector, or X coordinate.
+---@param y number|nil Y coordinate (if x is a number).
+---@param z number|nil Z coordinate (if x is a number).
+function TransformV2.setRotation(x, y, z) end
 
----Make this transform look at a target position.
+---Get the WORLD scale.
+---@return Vec3V2
+function TransformV2.getScale() end
+
+---Set the WORLD scale.
+---@param x Vec3V2|number The new scale vector, or X coordinate.
+---@param y number|nil Y coordinate (if x is a number).
+---@param z number|nil Z coordinate (if x is a number).
+function TransformV2.setScale(x, y, z) end
+
+---Get the LOCAL position of the entity.
+---@return Vec3V2
+function TransformV2.getLocalPosition() end
+
+---Get the LOCAL rotation (Euler YXZ in radians).
+---@return Vec3V2
+function TransformV2.getLocalRotation() end
+
+---Get the LOCAL scale.
+---@return Vec3V2
+function TransformV2.getLocalScale() end
+
+---Make this transform look at a target world position.
 ---@param target Vec3V2 World position to look at.
----@param worldUp Vec3V2|nil Up vector (defaults to world up).
-function TransformV2.lookAt(target, worldUp) end
+function TransformV2.lookAt(target) end
 
----Rotate around an axis by an angle (radians).
----@param axis Vec3V2 Rotation axis.
----@param angle number Rotation in radians.
-function TransformV2.rotateAxis(axis, angle) end
-
----Rotate using Euler angles (radians).
----@param x number Rotation around X axis in radians.
----@param y number Rotation around Y axis in radians.
----@param z number Rotation around Z axis in radians.
-function TransformV2.rotateEuler(x, y, z) end

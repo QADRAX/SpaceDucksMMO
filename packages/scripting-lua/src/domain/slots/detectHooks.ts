@@ -33,7 +33,7 @@ export const ALL_HOOKS: ReadonlySet<string> = new Set<ScriptHook>([
  */
 export function detectHooksFromSource(source: string): ScriptHook[] {
     const found: ScriptHook[] = [];
-    const pattern = /\bfunction\s+(\w+)\s*\(|(\w+)\s*=\s*function\s*\(/g;
+    const pattern = /\bfunction\s+(?:[\w.]+[.:])?(\w+)\s*\(|(\w+)\s*=\s*function\s*\(/g;
     let match: RegExpExecArray | null;
     while ((match = pattern.exec(source)) !== null) {
         const name = match[1] ?? match[2];

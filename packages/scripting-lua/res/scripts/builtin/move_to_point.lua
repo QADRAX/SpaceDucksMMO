@@ -31,8 +31,9 @@ local MoveToPoint = {
 }
 
 function MoveToPoint:init()
+    error("FORCE_INIT_ERROR")
     self.state = {
-        startPos = self.entity.components.transform.getPosition(),
+        startPos = self.entity.components.transform.getLocalPosition(),
         elapsed  = 0,
         active   = true
     }
@@ -41,7 +42,7 @@ end
 --- Restart if target changes
 function MoveToPoint:onPropertyChanged(key, value)
     if key == "targetPoint" then
-        self.state.startPos = self.entity.components.transform.getPosition()
+        self.state.startPos = self.entity.components.transform.getLocalPosition()
         self.state.elapsed  = 0
         self.state.active   = true
     end
@@ -52,7 +53,7 @@ function MoveToPoint:update(dt)
 
     local props   = self.properties
     local state   = self.state
-    local secs    = dt / 1000
+    local secs    = dt
     state.elapsed = state.elapsed + secs
 
     local delay   = props.delay or 0

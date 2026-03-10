@@ -77,6 +77,7 @@ end
 math3 = {
   vec3 = setmetatable({
     -- Static constructors
+    new     = newVec3,
     zero    = function() return newVec3(0, 0, 0) end,
     one     = function() return newVec3(1, 1, 1) end,
     up      = function() return newVec3(0, 1, 0) end,
