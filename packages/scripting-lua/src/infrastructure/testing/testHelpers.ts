@@ -85,6 +85,19 @@ export function addSceneWithEntity(
 }
 
 /**
+ * Adds an entity to an existing scene.
+ * Use when adding entities at runtime (e.g. dynamic spawn scenarios).
+ */
+export function addEntityToScene(
+  api: DuckEngineAPI,
+  sceneId: SceneId,
+  entityId: EntityId,
+): void {
+  const scene = api.scene(sceneId);
+  scene.addEntity({ entity: createEntity(entityId) });
+}
+
+/**
  * Adds a script component to an entity.
  */
 export function addEntityWithScripts(

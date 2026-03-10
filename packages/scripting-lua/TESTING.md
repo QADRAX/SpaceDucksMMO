@@ -29,6 +29,9 @@ This runs typecheck (`tsc --noEmit`) followed by Jest.
 |------|----------|
 | `application/reconcileSlots.test.ts` | Slot creation, destruction, enable/disable, component accessor binding |
 | `application/runFrameHooks.test.ts` | Time state, property sync, frame hooks, dirty flush, hook failure handling |
+| `application/destroyEntitySlots.test.ts` | Entity removal, slot teardown, onDisable/onDestroy, other entities preserved |
+| `application/syncProperties.test.ts` | ECS → Lua property sync, enabled/disabled slots, multiple slots |
+| `application/teardownSession.test.ts` | Session teardown, slot lifecycle, event bus dispose |
 
 ### Infrastructure Tests
 
@@ -45,6 +48,12 @@ This runs typecheck (`tsc --noEmit`) followed by Jest.
 | `infrastructure/scriptingSubsystem.test.ts` | Full engine integration, custom ports, property sync |
 | `infrastructure/testing/componentIsolation.test.ts` | Script isolation levels 0–4 |
 
+### Test Scenarios
+
+| File | Scenario |
+|------|----------|
+| `infrastructure/testing/scenarios/dynamicEntityWithScript.scenario.test.ts` | Add entity at runtime with Lua script resolved via ResourceLoader; register script after scene setup |
+
 ## Test Helpers
 
 Located in `infrastructure/testing/testHelpers.ts`:
@@ -53,8 +62,21 @@ Located in `infrastructure/testing/testHelpers.ts`:
 - `runFrames(api, count, dt)` — Run N update frames
 - `createScene(api, sceneId)` — Create a scene
 - `addSceneWithEntity(api, sceneId, entityId)` — Add scene + entity
+- `addEntityToScene(api, sceneId, entityId)` — Add entity to existing scene (runtime spawn)
 - `addEntityWithScripts(api, sceneId, entityId, scripts)` — Add script component
 - `createScriptingTestFixtures(options?)` — Full fixtures with chained setup
+
+## Test Scenarios
+
+Scenarios live in `infrastructure/testing/scenarios/` and test end-to-end flows:
+
+- **Dynamic entity with runtime script**: Add entities at runtime; register Lua scripts via ResourceLoader; verify scripts run after reconcile and slot init.
+
+To add a scenario:
+
+1. Create `*.scenario.test.ts` in `scenarios/`.
+2. Use `setupScriptingIntegrationTest()` and `registerScript()` for runtime-resolved scripts.
+3. Use `addEntityToScene()` for entities added after initial setup.
 
 ## Co-location
 

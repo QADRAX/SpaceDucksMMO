@@ -44,3 +44,11 @@ export function componentChangedEvent(
 export function updateParams(scene: SceneState, dt: number): SubsystemUpdateParams {
   return { scene, dt };
 }
+
+/** Builds SubsystemEventParams for an entity-removed event. */
+export function entityRemovedEvent(scene: SceneState, entityId: EntityId): SubsystemEventParams {
+  return {
+    scene,
+    event: { kind: 'entity-removed', entityId },
+  };
+}
