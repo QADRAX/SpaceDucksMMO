@@ -15,6 +15,17 @@ import { findScene, isCameraEntity } from './engineValidation';
 export type EngineGuard<TState, TParams> = UseCaseGuard<EngineState, TState, TParams>;
 
 /**
+ * Engine guard: validates that setupEngine has been executed.
+ * Use on update, updateScene, registerSubsystem and any use case that depends on ports/subsystems.
+ */
+export const guardEngineSetupComplete: EngineGuard<unknown, unknown> = (engine, _state, _params) => {
+  if (!engine.setupComplete) {
+    return err('validation', 'Engine setup required. Call api.setup() before update or other setup-dependent operations.');
+  }
+  return ok(undefined);
+};
+
+/**
  * Engine guard: validates that `params.sceneId` references an existing scene.
  *
  * Generic over `TState` — works with any domain state (viewport, scene, engine)

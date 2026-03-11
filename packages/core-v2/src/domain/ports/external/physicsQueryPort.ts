@@ -1,4 +1,4 @@
-import type { PhysicsRay, PhysicsRaycastHit, PhysicsCollisionEvent } from '../physics';
+import type { PhysicsRay, PhysicsRaycastHit, PhysicsCollisionEvent } from '../../physics';
 
 /**
  * Query-only contract for physics backends.

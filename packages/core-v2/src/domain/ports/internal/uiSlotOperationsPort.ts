@@ -1,6 +1,6 @@
-import type { Result } from '../utils';
-import type { SceneId, UISlotId, ViewportId } from '../ids';
-import type { ViewportRect } from '../viewport';
+import type { Result } from '../../utils';
+import type { SceneId, UISlotId, ViewportId } from '../../ids';
+import type { ViewportRect } from '../../viewport';
 
 /** Parameters for adding a UI slot. */
 export interface AddUISlotParams {
@@ -22,7 +22,7 @@ export interface UpdateUISlotParams {
 
 /**
  * Port that wraps scene UI slot use cases for scripting bridges.
- * The client implements this by delegating to the engine API.
+ * Internal port: core implements it. Consumer can override via params.ports.
  */
 export interface UISlotOperationsPort {
   addUISlot(sceneId: SceneId, params: AddUISlotParams): Result<void>;

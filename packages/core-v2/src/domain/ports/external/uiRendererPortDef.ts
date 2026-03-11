@@ -1,4 +1,4 @@
-import { definePort } from '../subsystems/definePort';
+import { definePort } from '../../subsystems/definePort';
 import type { UIRendererPort } from './uiRendererPort';
 
 /** Port definition for UIRendererPort. */

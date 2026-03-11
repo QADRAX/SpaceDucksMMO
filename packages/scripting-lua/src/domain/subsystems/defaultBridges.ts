@@ -1,3 +1,4 @@
+import type { SceneEventBus } from '@duckengine/core-v2';
 import {
     createSceneBridgeDeclaration,
     createTimeBridgeDeclaration,
@@ -9,21 +10,18 @@ import {
     transformBridge,
     type BridgeDeclaration,
 } from '../bridges';
-import { createScriptEventBus } from '../events';
-import type { ScriptEventBus } from '../events';
 import type { TimeState } from '../bridges';
 
 export interface ScriptingBridges {
     readonly bridges: ReadonlyArray<BridgeDeclaration>;
-    readonly eventBus: ScriptEventBus;
     readonly timeState: TimeState;
 }
 
 /**
  * Returns the default set of bridges for the scripting engine.
+ * Event bus is provided by core's SceneEventBusProviderPort.
  */
-export function createDefaultScriptingBridges(): ScriptingBridges {
-    const eventBus = createScriptEventBus();
+export function createDefaultScriptingBridges(eventBus: SceneEventBus): ScriptingBridges {
     const timeState = createTimeState();
 
     const bridges = [
@@ -36,5 +34,5 @@ export function createDefaultScriptingBridges(): ScriptingBridges {
         gizmoBridge,
     ];
 
-    return { bridges, eventBus, timeState };
+    return { bridges, timeState };
 }

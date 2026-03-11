@@ -10,6 +10,8 @@ export interface EngineState {
   settings: GameSettings;
   paused: boolean;
   running: boolean;
+  /** True after setupEngine has run. Required for update, updateScene, registerSubsystem. */
+  setupComplete: boolean;
   /** Engine-level subsystems (render, audio …) in pipeline order. */
   readonly engineSubsystems: EngineSubsystem[];
   /** Shared subsystem runtime: scene factories + IO port registry + derivation hooks. */

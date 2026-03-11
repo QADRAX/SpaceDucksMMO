@@ -10,6 +10,7 @@ export function createEngine(): EngineState {
     settings: { ...DEFAULT_GAME_SETTINGS },
     paused: false,
     running: false,
+    setupComplete: false,
     engineSubsystems: [],
     subsystemRuntime: createSubsystemRuntimeState(),
   };

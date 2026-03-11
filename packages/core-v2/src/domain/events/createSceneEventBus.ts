@@ -1,9 +1,9 @@
-import type { ScriptEventBus, ScriptEventEntry, ScriptEventSubscription } from './types';
+import type { SceneEventBus, SceneEventEntry, SceneEventSubscription } from './types';
 
-/** Creates a new in-frame event bus. */
-export function createScriptEventBus(): ScriptEventBus {
-  const queue: ScriptEventEntry[] = [];
-  const subs: ScriptEventSubscription[] = [];
+/** Creates a new in-frame event bus for a scene. */
+export function createSceneEventBus(): SceneEventBus {
+  const queue: SceneEventEntry[] = [];
+  const subs: SceneEventSubscription[] = [];
 
   return {
     fire(name, data) {
@@ -11,7 +11,7 @@ export function createScriptEventBus(): ScriptEventBus {
     },
 
     on(slotId, name, cb) {
-      const sub: ScriptEventSubscription = { slotId, eventName: name, callback: cb };
+      const sub: SceneEventSubscription = { slotId, eventName: name, callback: cb };
       subs.push(sub);
       return () => {
         const idx = subs.indexOf(sub);

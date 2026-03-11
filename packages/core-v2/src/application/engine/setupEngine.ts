@@ -11,7 +11,7 @@ import {
 import { defineEngineUseCase } from '../../domain/useCases';
 import type { EnginePorts } from '../../domain/ports';
 import type { PortBinding } from '../../domain/subsystems/types';
-
+import { defaultPortDerivers } from '../../infrastructure/portDerivers';
 /** Parameters for initial engine subsystem and port setup. */
 export interface SetupEngineParams {
   /** Engine-level subsystems (render, audio, etc.) to register globally. */
@@ -53,9 +53,8 @@ export const setupEngine = defineEngineUseCase<SetupEngineParams, void>({
       }
     }
 
-    if (params.portDerivers) {
-      engine.subsystemRuntime.portDerivers.push(...params.portDerivers);
-    }
+    const allDerivers = [...defaultPortDerivers, ...(params.portDerivers ?? [])];
+    engine.subsystemRuntime.portDerivers.push(...allDerivers);
 
     runSubsystemPortDerivers(engine);
 
@@ -72,5 +71,7 @@ export const setupEngine = defineEngineUseCase<SetupEngineParams, void>({
         attachSceneSubsystems(scene, subsystems);
       }
     }
+
+    engine.setupComplete = true;
   },
 });

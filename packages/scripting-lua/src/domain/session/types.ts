@@ -1,6 +1,5 @@
-import type { ScriptSchema } from '@duckengine/core-v2';
+import type { ScriptSchema, SceneEventBus, SceneEventBusProviderPort, SceneId } from '@duckengine/core-v2';
 import type { ScriptSlotState } from '../slots';
-import type { ScriptEventBus } from '../events';
 import type { BridgeDeclaration, BridgePorts, TimeState } from '../bridges';
 import type { ScriptSandbox } from '../ports';
 
@@ -17,7 +16,11 @@ export interface ScriptingSessionState {
   /** Pending async slot initializations. */
   readonly pending: Map<string, Promise<void>>;
   /** In-frame event bus for script-to-script communication. */
-  readonly eventBus: ScriptEventBus;
+  readonly eventBus: SceneEventBus;
+  /** Scene ID for teardown (unregisterSceneBus). */
+  readonly sceneId?: SceneId;
+  /** Provider for unregistering bus on teardown. */
+  readonly sceneEventBusProvider?: SceneEventBusProviderPort;
   /** Time state updated once per frame before hook execution. */
   readonly timeState: TimeState;
   /** The sandbox runtime (wasmoon or mock). */

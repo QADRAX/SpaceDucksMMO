@@ -30,5 +30,8 @@ export const teardownSession =
 
       slots.clear();
       eventBus.dispose();
+      if (session.sceneEventBusProvider && session.sceneId) {
+        session.sceneEventBusProvider.unregisterSceneBus(session.sceneId);
+      }
     },
   });

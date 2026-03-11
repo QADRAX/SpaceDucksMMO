@@ -1,4 +1,4 @@
-import type { SceneState, EntityId, ViewportId } from '@duckengine/core-v2';
+import type { SceneState, EntityId, ViewportId, SceneEventBus } from '@duckengine/core-v2';
 import {
   buildSceneAPI,
   buildEntityAPI,
@@ -6,7 +6,6 @@ import {
   createViewportId,
 } from '@duckengine/core-v2';
 import type { BridgeDeclaration } from './types';
-import type { ScriptEventBus } from '../events';
 
 function toEventPayload(payload: unknown): Record<string, unknown> {
   if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
@@ -21,7 +20,7 @@ function toEventPayload(payload: unknown): Record<string, unknown> {
  * if schema is not available (fallback for legacy scripts).
  * Needs the event bus reference for fire/onEvent support.
  */
-export function createSceneBridgeDeclaration(eventBus: ScriptEventBus): BridgeDeclaration {
+export function createSceneBridgeDeclaration(eventBus: SceneEventBus): BridgeDeclaration {
   return {
     name: 'Scene',
     perEntity: false,

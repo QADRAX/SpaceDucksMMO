@@ -1,4 +1,4 @@
-import { definePort } from '../subsystems/definePort';
+import { definePort } from '../../subsystems/definePort';
 import type { DiagnosticPort } from './diagnosticPort';
 
 /**

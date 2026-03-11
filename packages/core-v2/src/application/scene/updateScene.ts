@@ -1,4 +1,5 @@
 import { defineSceneUseCase } from '../../domain/useCases';
+import { guardEngineSetupComplete } from '../../domain/engine/engineGuards';
 
 /** Parameters for the updateScene use case. */
 export interface UpdateSceneParams {
@@ -14,6 +15,7 @@ export interface UpdateSceneParams {
  */
 export const updateScene = defineSceneUseCase<UpdateSceneParams, void>({
   name: 'updateScene',
+  guards: [guardEngineSetupComplete],
   execute(scene, { dt }) {
     for (const subsystem of scene.subsystems) {
       if (scene.paused && !subsystem.updateWhenPaused) continue;

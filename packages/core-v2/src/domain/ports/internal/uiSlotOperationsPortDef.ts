@@ -1,4 +1,4 @@
-import { definePort } from '../subsystems/definePort';
+import { definePort } from '../../subsystems/definePort';
 import type { UISlotOperationsPort } from './uiSlotOperationsPort';
 
 /** Port definition for UISlotOperationsPort. Used by scripting-lua sceneBridge. */

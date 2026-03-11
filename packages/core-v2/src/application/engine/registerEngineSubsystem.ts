@@ -1,5 +1,6 @@
 import type { EngineSubsystem } from '../../domain/subsystems';
 import { defineEngineUseCase } from '../../domain/useCases';
+import { guardEngineSetupComplete } from '../../domain/engine/engineGuards';
 
 /** Parameters for the registerEngineSubsystem use case. */
 export interface RegisterEngineSubsystemParams {
@@ -12,6 +13,7 @@ export interface RegisterEngineSubsystemParams {
  */
 export const registerEngineSubsystem = defineEngineUseCase<RegisterEngineSubsystemParams, void>({
   name: 'registerEngineSubsystem',
+  guards: [guardEngineSetupComplete],
   execute(engine, { subsystem }) {
     engine.engineSubsystems.push(subsystem);
   },

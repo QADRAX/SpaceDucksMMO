@@ -1,4 +1,4 @@
-import { definePort } from '../subsystems/definePort';
+import { definePort } from '../../subsystems/definePort';
 import type { SceneEventBusProviderPort } from './sceneEventBusProviderPort';
 
 /** Port definition for SceneEventBusProviderPort. */
@@ -8,4 +8,5 @@ export const SceneEventBusProviderPortDef = definePort<SceneEventBusProviderPort
   .addMethod('registerSceneBus')
   .addMethod('unregisterSceneBus')
   .addMethod('getEventBus')
+  .addMethod('getOrCreateEventBus')
   .build();

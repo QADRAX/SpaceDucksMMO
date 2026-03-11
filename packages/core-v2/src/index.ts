@@ -12,6 +12,7 @@ export * from './domain/viewport';
 export * from './domain/ports';
 export * from './domain/scripting';
 export * from './domain/ids';
+export * from './domain/events';
 export * from './domain/api';
 export * from './application';
 export * from './infrastructure';

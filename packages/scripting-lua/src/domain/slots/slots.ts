@@ -1,7 +1,7 @@
 import type { SceneState, ScriptSchema, EntityId, PropertyValues } from '@duckengine/core-v2';
 import type { ScriptBridgeContext } from '../bridges';
 import type { ScriptSandbox } from '../ports';
-import type { ScriptEventBus } from '../events';
+import type { SceneEventBus } from '@duckengine/core-v2';
 import { diffProperties, applyPropertyChanges } from '../properties';
 import type { ScriptSlotState, ScriptHook } from './types';
 
@@ -92,7 +92,7 @@ export function initScriptSlot(
 export function destroyScriptSlot(
   slots: Map<string, ScriptSlotState>,
   sandbox: ScriptSandbox,
-  eventBus: ScriptEventBus,
+  eventBus: SceneEventBus,
   entityId: EntityId,
   scriptId: string,
 ): void {
@@ -111,7 +111,7 @@ export function destroyScriptSlot(
 export function destroyEntityScriptSlots(
   slots: Map<string, ScriptSlotState>,
   sandbox: ScriptSandbox,
-  eventBus: ScriptEventBus,
+  eventBus: SceneEventBus,
   entityId: EntityId,
 ): void {
   for (const [key, slot] of slots) {

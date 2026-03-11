@@ -1,5 +1,12 @@
 import type { LuaEngine } from 'wasmoon';
-import type { SubsystemPortRegistry, SubsystemRuntimeState, ScriptSchema, SceneState } from '@duckengine/core-v2';
+import type {
+  SubsystemPortRegistry,
+  SubsystemRuntimeState,
+  ScriptSchema,
+  SceneState,
+  SceneEventBus,
+  SceneEventBusProviderPort,
+} from '@duckengine/core-v2';
 import {
   resolveRuntimeBridgeTable,
   ENGINE_SYSTEM_BRIDGES,
@@ -19,6 +26,9 @@ export interface ScriptRuntimeOptions {
     readonly registry: SubsystemPortRegistry;
     readonly bridgePorts: BridgePorts;
     readonly runtimeState: SubsystemRuntimeState;
+    readonly eventBus: SceneEventBus;
+    readonly sceneId: import('@duckengine/core-v2').SceneId;
+    readonly sceneEventBusProvider?: SceneEventBusProviderPort;
     readonly onSandboxReady?: (params: { lua: LuaEngine; ports: SubsystemPortRegistry }) => void;
     readonly resolveSource?: (scriptId: string) => Promise<string | null>;
     readonly resolveScriptSchema?: (scriptId: string) => Promise<ScriptSchema | null>;
@@ -29,7 +39,17 @@ export interface ScriptRuntimeOptions {
  * Injects ports, runs developer hooks, and creates the session state.
  */
 export function initializeScriptRuntime(options: ScriptRuntimeOptions): ScriptingSessionState {
-    const { engine, runtimeState, registry, onSandboxReady, sandbox, bridgePorts } = options;
+    const {
+        engine,
+        runtimeState,
+        registry,
+        onSandboxReady,
+        sandbox,
+        bridgePorts,
+        eventBus,
+        sceneId,
+        sceneEventBusProvider,
+    } = options;
 
     // 1. Auto-bridge dynamically registered ports
     const scriptPorts = resolveRuntimeBridgeTable(runtimeState);
@@ -40,8 +60,8 @@ export function initializeScriptRuntime(options: ScriptRuntimeOptions): Scriptin
         onSandboxReady({ lua: engine, ports: registry });
     }
 
-    // 3. Create standard bridges and time/event infrastructure
-    const { bridges, eventBus, timeState } = createDefaultScriptingBridges();
+    // 3. Create standard bridges and time/event infrastructure (eventBus from provider)
+    const { bridges, timeState } = createDefaultScriptingBridges(eventBus);
 
     // 4. Inject Engine global (Input, Gizmo, Physics, Time) — system ports live here, not on self
     const Engine: Record<string, unknown> = {};
@@ -71,6 +91,8 @@ export function initializeScriptRuntime(options: ScriptRuntimeOptions): Scriptin
         ports: bridgePorts,
         eventBus,
         timeState,
+        sceneId,
+        sceneEventBusProvider,
         resolveSource: options.resolveSource,
         resolveScriptSchema: options.resolveScriptSchema,
     });

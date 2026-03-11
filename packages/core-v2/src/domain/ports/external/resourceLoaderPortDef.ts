@@ -1,4 +1,4 @@
-import { definePort } from '../subsystems/definePort';
+import { definePort } from '../../subsystems/definePort';
 import type { ResourceLoaderPort } from './resourceLoaderPort';
 
 /**
@@ -6,6 +6,6 @@ import type { ResourceLoaderPort } from './resourceLoaderPort';
  * Handles async resource resolution.
  */
 export const ResourceLoaderPortDef = definePort<ResourceLoaderPort>('resourceLoader')
-    .addMethod('resolve', { async: true })
-    .addMethod('fetchFile', { async: true })
-    .build();
+  .addMethod('resolve', { async: true })
+  .addMethod('fetchFile', { async: true })
+  .build();

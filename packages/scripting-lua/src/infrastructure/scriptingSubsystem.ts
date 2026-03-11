@@ -1,4 +1,9 @@
-import { defineSceneSubsystem, ResourceLoaderPortDef, DiagnosticPortDef } from '@duckengine/core-v2';
+import {
+  defineSceneSubsystem,
+  ResourceLoaderPortDef,
+  DiagnosticPortDef,
+  SceneEventBusProviderPortDef,
+} from '@duckengine/core-v2';
 import { resolveBridgePortsFromRegistry } from '../domain/bridges';
 import type { LuaEngine } from 'wasmoon';
 import { initializeScriptRuntime } from '../domain/session';
@@ -54,16 +59,28 @@ export async function createScriptingSubsystem(config?: ScriptingSubsystemConfig
       bridgePorts: resolveBridgePortsFromRegistry(registry),
       resourceLoader: registry.get(ResourceLoaderPortDef),
       diagnostic: registry.get(DiagnosticPortDef),
+      sceneEventBusProvider: registry.get(SceneEventBusProviderPortDef),
     }))
 
     // 2. Initialize internal state (the scripting session)
-    .withState(({ ports: { bridgePorts, registry, resourceLoader, diagnostic }, engine: engineState }) => {
+    .withState(({
+      ports: { bridgePorts, registry, resourceLoader, diagnostic, sceneEventBusProvider },
+      scene,
+      engine: engineState,
+    }) => {
       const resolver = resourceLoader
         ? createResourceScriptResolver(resourceLoader, createBuiltInScriptResolver(), diagnostic)
         : { resolveSource: createBuiltInScriptResolver() };
 
       if (sandbox.bindDiagnostic) {
         sandbox.bindDiagnostic(diagnostic);
+      }
+
+      const eventBus = sceneEventBusProvider?.getOrCreateEventBus(scene.id);
+      if (!eventBus) {
+        throw new Error(
+          'SceneEventBusProviderPort required for scripting. Ensure setupEngine runs (deriveSceneEventBusProvider is automatic).',
+        );
       }
 
       return initializeScriptRuntime({
@@ -75,6 +92,9 @@ export async function createScriptingSubsystem(config?: ScriptingSubsystemConfig
         onSandboxReady: config?.onSandboxReady,
         resolveSource: (id) => resolver.resolveSource(id),
         resolveScriptSchema: createBuiltInScriptSchemaResolver(),
+        eventBus,
+        sceneId: scene.id,
+        sceneEventBusProvider,
       });
     })
 

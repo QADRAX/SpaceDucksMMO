@@ -1,12 +1,25 @@
 import { describe, it, expect, beforeEach, jest } from '@jest/globals';
 import { setupIntegrationTest } from '../setup';
 import type { TestContext } from '../setup';
+import { createEngine } from '../../../domain/engine/createEngine';
+import { createDuckEngineAPI } from '../../../infrastructure/api/createDuckEngineAPI';
 
 describe('Integration: Engine > update', () => {
     let ctx: TestContext;
 
     beforeEach(() => {
         ctx = setupIntegrationTest();
+    });
+
+    it('should fail update when setup has not been called', () => {
+        const engine = createEngine();
+        const api = createDuckEngineAPI(engine);
+        const result = api.update({ dt: 0.16 });
+        expect(result.ok).toBe(false);
+        if (!result.ok) {
+            expect(result.error.code).toBe('validation');
+            expect(result.error.message).toContain('setup');
+        }
     });
 
     it('should update the engine state with dt', () => {

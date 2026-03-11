@@ -137,12 +137,14 @@ src/
 │   │                          # defineComponentUseCase, defineViewportUseCase
 │   ├── api/                   # composeAPI, APIComposer (fluent API builder)
 │   ├── ids/                   # createSceneId, createEntityId, createViewportId, createUISlotId
+│   ├── events/                # SceneEventBus, createSceneEventBus (internal event bus)
 │   ├── math/                  # Vec3, Quat, Euler, utils
 │   ├── ui/                    # UISlotState, UISlotView, UISlotDescriptor
 │   ├── viewport/              # ViewportState
-│   ├── ports/                 # Port interfaces (EnginePorts, ResourceLoaderPort,
-│   │                          # UIRendererPort, ViewportOverlayProviderPort,
-│   │                          # SceneEventBusProviderPort, UISlotOperationsPort)
+│   ├── ports/                 # Port interfaces
+│   │   ├── internal/          # Core implements (SceneEventBusProvider, UISlotOperations)
+│   │   ├── external/          # Client implements (Physics, Gizmo, Input, Resource, Diagnostic, UI)
+│   │   └── enginePorts.ts     # Aggregates all for setup injection
 │   ├── scripting/             # Script schema, runtime context, API builders
 │   ├── properties/            # Property validation
 │   ├── prefabs/               # Prefab types
@@ -162,7 +164,8 @@ src/
 │   └── ports/                 # fetchFile, resolveWebResource
 │
 └── infrastructure/            # Concrete API and port implementations
-    ├── api/                   # createDuckEngineAPI (wires all use cases)
+    ├── api/                   # createDuckEngineAPI (wires all use cases, injects default port derivers)
+    ├── portDerivers/          # deriveSceneEventBusProvider, deriveUISlotOperations, defaultPortDerivers
     └── ports/                 # WebResourceLoaderPort, etc.
 ```
 
@@ -282,6 +285,15 @@ This section documents **all** use cases in `src/application/`. Each use case is
 
 ---
 
+### Internal vs external ports
+
+| Port | Type | Description |
+|------|------|-------------|
+| **SceneEventBusProviderPort** | Internal | Auto-registered by `deriveSceneEventBusProvider`. Creates and stores event buses per scene. Consumer can override via `params.ports`. |
+| **UISlotOperationsPort** | Internal | Auto-registered by `deriveUISlotOperations`. Delegates to scene use cases (addUISlot, removeUISlot, updateUISlot). Consumer can override via `params.ports`. |
+| **UIRendererPort** | External | Client implements. Mounts SPAs in DOM containers. |
+| **ResourceLoaderPort** | External | Client implements. Resolves resources. |
+
 ### Port use cases (not in main API)
 
 | Use case | Used by | Description |
@@ -295,8 +307,8 @@ This section documents **all** use cases in `src/application/`. Each use case is
 |------|---------|-------------|
 | **UIRendererPort** | UISubsystem | `mount(slot, container)`, `unmount(slotId)`, `updateSlot?`. Client mounts SPAs (React, Preact, etc.) in DOM containers. |
 | **ViewportOverlayProviderPort** | UISubsystem | `getOverlayContainer(viewportId)`. Returns the DOM element where UI overlays are mounted per viewport. |
-| **SceneEventBusProviderPort** | Scripting, UI adapter | `registerSceneBus`, `unregisterSceneBus`, `getEventBus`. Bridges events between UI and scripting (ScriptEventBus). |
-| **UISlotOperationsPort** | scripting-lua sceneBridge | `addUISlot`, `removeUISlot`, `updateUISlot`. Wraps scene use cases for Lua scripts. |
+| **SceneEventBusProviderPort** | Scripting, UI adapter | `registerSceneBus`, `unregisterSceneBus`, `getEventBus`. Bridges events between UI and scripting (ScriptEventBus). Internal default. |
+| **UISlotOperationsPort** | scripting-lua sceneBridge | `addUISlot`, `removeUISlot`, `updateUISlot`. Wraps scene use cases for Lua scripts. Internal default. |
 
 ---
 
@@ -423,7 +435,7 @@ flowchart TB
 
 **Scene subsystems vs engine subsystems** — Scene subsystems are per-scene, receive scene events, and update with `(scene, dt)`. Engine subsystems are global, receive no events, and update with `(engine, dt)`. Both are registered at setup.
 
-**Port derivation** — Ports can be injected statically (`customPorts`, `ports`) or derived by `portDerivers` that run during setup. Derivers receive `{ engine, ports }` and can call `ports.register(def, impl)`.
+**Port derivation** — Ports can be injected statically (`customPorts`, `ports`) or derived by `portDerivers` that run during setup. Derivers receive `{ engine, ports }` and can call `ports.register(def, impl)`. Internal defaults: `deriveSceneEventBusProvider` (SceneEventBusProvider), `deriveUISlotOperations` (UISlotOperationsPort). Both run at setup; consumer can override via `params.ports`.
 
 **Entity observers** — Each entity has an `EntityObservers` hub. When a component is added/removed/changed or the transform changes, observers fire. `attachEntityObservers` wires these to `emitSceneChange`, so subsystems react to ECS mutations without polling.
 

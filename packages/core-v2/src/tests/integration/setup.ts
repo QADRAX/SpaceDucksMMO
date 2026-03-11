@@ -14,5 +14,6 @@ export interface TestContext {
 export function setupIntegrationTest(): TestContext {
     const engine = createEngine();
     const api = createDuckEngineAPI(engine);
+    api.setup({});
     return { engine, api };
 }

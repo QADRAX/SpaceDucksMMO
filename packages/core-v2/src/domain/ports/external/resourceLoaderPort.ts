@@ -1,5 +1,5 @@
-import type { Result } from '../utils/types';
-import type { ResourceKind, ResourceRef, ResolvedResource } from '../resources';
+import type { Result } from '../../utils/types';
+import type { ResourceKind, ResourceRef, ResolvedResource } from '../../resources';
 
 /**
  * Contract for runtime resource resolution.
@@ -24,6 +24,6 @@ export interface ResourceLoaderPort {
    */
   fetchFile<F extends 'text' | 'blob'>(
     url: string,
-    format: F
+    format: F,
   ): Promise<Result<F extends 'text' ? string : Blob>>;
 }

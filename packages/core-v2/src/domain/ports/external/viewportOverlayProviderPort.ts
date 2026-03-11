@@ -1,4 +1,4 @@
-import type { ViewportId } from '../ids';
+import type { ViewportId } from '../../ids';
 
 /**
  * Port that provides the DOM container where UI overlays are mounted per viewport.

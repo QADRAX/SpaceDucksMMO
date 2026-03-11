@@ -1,34 +1,12 @@
-export { PhysicsQueryPortDef } from './physicsQueryPortDef';
-export type { PhysicsQueryPort } from './physicsQueryPort';
-
-export { GizmoPortDef } from './gizmoPortDef';
-export type { GizmoPort } from './gizmoPort';
-
-export type { InputPort, InputMouseDelta, InputMouseButtons } from './inputPort';
-
-export { ResourceLoaderPortDef } from './resourceLoaderPortDef';
-export type { ResourceLoaderPort } from './resourceLoaderPort';
-
-export { DiagnosticPortDef } from './diagnosticPortDef';
-export type { DiagnosticPort, DiagnosticLevel, DiagnosticContext } from './diagnosticPort';
-
-export { UIRendererPortDef } from './uiRendererPortDef';
-export type { UIRendererPort } from './uiRendererPort';
-
-export { ViewportOverlayProviderPortDef } from './viewportOverlayProviderPortDef';
-export type { ViewportOverlayProviderPort } from './viewportOverlayProviderPort';
-
-export { SceneEventBusProviderPortDef } from './sceneEventBusProviderPortDef';
-export type {
-  SceneEventBusProviderPort,
-  SceneEventBus,
-} from './sceneEventBusProviderPort';
-
-export { UISlotOperationsPortDef } from './uiSlotOperationsPortDef';
-export type {
-  UISlotOperationsPort,
-  AddUISlotParams,
-  UpdateUISlotParams,
-} from './uiSlotOperationsPort';
-
+/**
+ * Domain ports — contracts for engine I/O and capabilities.
+ *
+ * Structure:
+ * - internal/  — Core implements by default (SceneEventBusProvider, UISlotOperations)
+ * - external/  — Client implements (Physics, Gizmo, Input, Resource, Diagnostic, UI)
+ * - enginePorts.ts — Aggregates all ports for setup injection
+ */
+export * from './internal';
+export * from './external';
 export type { EnginePorts } from './enginePorts';
+export type { SceneEventBus } from '../events';

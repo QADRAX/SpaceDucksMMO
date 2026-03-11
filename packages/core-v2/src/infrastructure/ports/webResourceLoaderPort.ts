@@ -1,5 +1,5 @@
 import { definePortImplementation } from '../../domain/useCases';
-import { ResourceLoaderPortDef } from '../../domain/ports/resourceLoaderPortDef';
+import { ResourceLoaderPortDef } from '../../domain/ports';
 import type { ResourceLoaderPort } from '../../domain/ports';
 import { resolveWebResourceUseCase, fetchFileUseCase } from '../../application/ports';
 import type { WebResourceLoaderState } from '../../application/ports';

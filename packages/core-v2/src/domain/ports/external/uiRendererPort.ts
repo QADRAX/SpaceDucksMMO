@@ -1,5 +1,5 @@
-import type { UISlotId } from '../ids';
-import type { UISlotView } from '../ui';
+import type { UISlotId } from '../../ids';
+import type { UISlotView } from '../../ui';
 
 /**
  * Port for mounting and unmounting UI SPAs in DOM containers.
