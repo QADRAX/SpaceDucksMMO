@@ -2,6 +2,7 @@
 -- ═══════════════════════════════════════════════════════════════════════
 -- DuckEngine Lua API v2 — Transform
 -- Transform component for position, rotation, and scale manipulation.
+-- SOURCE OF TRUTH: transformBridge.ts (createScopedBridge injects entityId).
 -- ═══════════════════════════════════════════════════════════════════════
 
 ---Transform component for spatial manipulation.
@@ -55,4 +56,12 @@ function TransformV2.getLocalScale() end
 ---Make this transform look at a target world position.
 ---@param target Vec3V2 World position to look at.
 function TransformV2.lookAt(target) end
+
+---Get the normalized forward direction (-Z rotated by world rotation).
+---@return Vec3V2
+function TransformV2.getForward() end
+
+---Get the normalized right direction (+X rotated by world rotation).
+---@return Vec3V2
+function TransformV2.getRight() end
 

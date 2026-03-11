@@ -20,7 +20,9 @@
     "scene",
     "time",
     "gizmos",
-    "events"
+    "events",
+    "Engine",
+    "BuiltInScripts"
   ],
   "runtime.version": "Lua 5.4",
   "completion.callSnippet": "Replace",

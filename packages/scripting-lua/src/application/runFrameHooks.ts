@@ -1,5 +1,5 @@
-import type { SubsystemUpdateParams, SubsystemUseCase } from '@duckengine/core-v2';
-import { defineSubsystemUseCase } from '@duckengine/core-v2';
+import type { EntityId, SubsystemUpdateParams, SubsystemUseCase } from '@duckengine/core-v2';
+import { defineSubsystemUseCase, removeEntityFromScene } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import {
   FRAME_HOOKS,
@@ -70,5 +70,14 @@ export const runFrameHooks: SubsystemUseCase<ScriptingSessionState, SubsystemUpd
         }
       }
       flushDirtySlotsToScene(slots, scene);
+
+      // 7. Process pending entity destroys (from Scene.destroy)
+      const pending = session.pendingDestroys;
+      if (pending.length > 0) {
+        for (const id of pending) {
+          removeEntityFromScene.execute(scene, { entityId: id as EntityId });
+        }
+        pending.length = 0;
+      }
     },
   });

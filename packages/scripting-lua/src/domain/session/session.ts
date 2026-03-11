@@ -29,5 +29,6 @@ export function createScriptingSession(
     ports: params.ports ?? {},
     resolveSource: params.resolveSource ?? (() => Promise.resolve(null)),
     resolveScriptSchema: params.resolveScriptSchema ?? (() => Promise.resolve(null)),
+    pendingDestroys: [],
   };
 }

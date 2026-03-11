@@ -10,6 +10,10 @@ export {
 } from './sandboxSecurity';
 
 export {
+  getBuiltinScriptsLua,
+} from './builtinScripts';
+
+export {
   getSandboxRuntimeLua,
 } from './sandboxRuntime';
 

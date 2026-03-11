@@ -20,7 +20,7 @@ export function createSceneBridgeDeclaration(eventBus: ScriptEventBus): BridgeDe
   return {
     name: 'Scene',
     perEntity: false,
-    factory(scene: SceneState, _entityId: string, _schema: unknown, ports) {
+    factory(scene: SceneState, _entityId: string, _schema: unknown, ports, session) {
       const sceneApi = buildSceneAPI(scene, {
         raycast: (query) => {
           const hit = ports.physicsQuery?.raycast(query);
@@ -87,6 +87,13 @@ export function createSceneBridgeDeclaration(eventBus: ScriptEventBus): BridgeDe
         /** Instantiates a prefab. Returns a wrapped entity (capability). */
         instantiate(prefabId: string, position?: {x: number, y: number, z: number}, rotation?: {x: number, y: number, z: number}) {
           return sceneApi.instantiate(prefabId, position, rotation);
+        },
+
+        /** Queues an entity for destruction. Processed after frame hooks. */
+        destroy(entityId: string) {
+          if (session?.pendingDestroys) {
+            session.pendingDestroys.push(entityId);
+          }
         },
       };
     },

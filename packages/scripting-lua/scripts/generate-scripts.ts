@@ -23,19 +23,43 @@ let output = `// Auto-generated file. Do not edit directly.
 
 `;
 
-// Generate BuiltInScripts
+// Generate BuiltInScripts (content map) and BuiltInScriptIds (TS schema keys only — NOT injected to Lua)
 const builtinFiles = fs.existsSync(builtinDir)
-  ? fs.readdirSync(builtinDir).filter((f: string) => f.endsWith('.lua'))
+  ? fs.readdirSync(builtinDir).filter((f: string) => f.endsWith('.lua')).sort()
   : [];
 
-output += `export const BuiltInScripts: Record<string, string> = {
-`;
+function toPascalCase(snake: string): string {
+  return snake
+    .replace(/\.lua$/, '')
+    .split('_')
+    .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+    .join('');
+}
 
+// Write builtin_scripts.lua to system/ — Lua source of truth, loaded at sandbox boot
+const builtinScriptsLua = `-- Auto-generated. Run 'npm run build:scripts' to regenerate.
+-- Built-in script ID constants. Lua source of truth (not injected from TS).
+
+BuiltInScripts = {
+${builtinFiles.map((f: string) => `    ${toPascalCase(f)} = "builtin://${f}",`).join('\n')}
+}
+`;
+fs.writeFileSync(path.join(systemDir, 'builtin_scripts.lua'), builtinScriptsLua);
+
+output += `/** Script ID constants for schema keys only. Lua uses res/scripts/system/builtin_scripts.lua */\n`;
+output += `export const BuiltInScriptIds = {\n`;
+for (const file of builtinFiles) {
+  const id = toPascalCase(file);
+  output += `  ${id}: "builtin://${file}",\n`;
+}
+output += `} as const;\n\n`;
+
+output += `/** Built-in script content map. Keys are script URIs. */\n`;
+output += `export const BuiltInScripts: Record<string, string> = {\n`;
 for (const file of builtinFiles) {
   const raw = fs.readFileSync(path.join(builtinDir, file), 'utf-8');
   output += `  "builtin://${file}": \`${escapeForTemplate(raw)}\`,\n`;
 }
-
 output += `};
 
 `;

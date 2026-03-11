@@ -132,4 +132,29 @@ describe('Built-in Script: Move To Point', () => {
             expect(view.value.transform.localPosition.x).toBeCloseTo(12.5);
         }
     });
+
+    it('should fallback to linear when easing is unknown', async () => {
+        const { api } = await setupScriptingIntegrationTest();
+        const sceneId = createSceneId('main');
+        const moverId = createEntityId('mover');
+        const scene = addSceneWithEntity(api, sceneId, moverId);
+        addEntityWithScripts(api, sceneId, moverId, [{
+            scriptId: 'builtin://move_to_point.lua',
+            properties: {
+                targetPoint: { x: 10, y: 0, z: 0 },
+                duration: 1.0,
+                easing: 'nonexistentEasing'
+            }
+        }]);
+
+        api.update({ dt: 0 });
+        await waitForSlotInit();
+
+        api.update({ dt: 0.5 });
+        const view = scene.entity(moverId).view();
+        if (view.ok) {
+            expect(view.value.transform.localPosition.x).toBeGreaterThan(0);
+            expect(view.value.transform.localPosition.x).toBeLessThanOrEqual(10);
+        }
+    });
 });

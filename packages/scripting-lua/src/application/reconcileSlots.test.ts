@@ -44,6 +44,7 @@ describe('reconcileSlots', () => {
       ports: {},
       resolveSource,
       resolveScriptSchema,
+      pendingDestroys: [],
     };
   });
 

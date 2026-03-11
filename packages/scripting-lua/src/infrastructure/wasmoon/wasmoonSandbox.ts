@@ -3,10 +3,10 @@ import type { LuaEngine } from 'wasmoon';
 import type { ScriptSandbox } from '../../domain/ports';
 import type { ScriptBridgeContext } from '../../domain/bridges';
 import type { ScriptSchema, EntityId, ComponentType, PropertyValues } from '@duckengine/core-v2';
-import { BuiltInScripts } from '@duckengine/core-v2';
 import { detectHooksFromSource } from '../../domain/slots';
 import {
   getSandboxSecurityLua,
+  getBuiltinScriptsLua,
   getSandboxMetatablesLua,
   getSandboxRuntimeLua,
   getMathExtLua,
@@ -21,12 +21,11 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
   const factory = new LuaFactory();
   const lua = await factory.createEngine();
 
-  // Inject Engine constants into global sandbox
-  lua.global.set('BuiltInScripts', BuiltInScripts);
-
   // Boot system scripts in order. Security runs first to remove dangerous globals
   // before any user-facing setup executes.
+  // BuiltInScripts is defined in builtin_scripts.lua (system), not injected from TS.
   lua.doStringSync(getSandboxSecurityLua());
+  lua.doStringSync(getBuiltinScriptsLua());
   lua.doStringSync(getSandboxMetatablesLua());
   lua.doStringSync(getSandboxRuntimeLua());
   lua.doStringSync(getMathExtLua());

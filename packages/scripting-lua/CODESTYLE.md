@@ -64,6 +64,7 @@ All rules from core-v2 apply. Key reminders:
 
 ## Imports
 
+- **No inline or dynamic imports** — Never use `as import('@duckengine/core-v2').X` or `import(...)` inside expressions. All imports must be at the top of the file.
 - **Within a domain module**: relative (`./types`, `./slots`)
 - **Between domain modules**: by barrel (`../slots`, `../bridges`, `../ports`)
 - **From core-v2**: always `import type { ... } from '@duckengine/core-v2'` for types, named import for functions

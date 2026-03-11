@@ -9,4 +9,4 @@ export { createScriptingSubsystem, type ScriptingSubsystemConfig } from './infra
 export { ENGINE_SYSTEM_BRIDGES, SCRIPTING_BRIDGE_PORT_KEYS } from './domain/bridges';
 
 // Generated assets
-export { BuiltInScripts } from './infrastructure/wasmoon/generated/ScriptAssets';
+export { BuiltInScripts, BuiltInScriptIds } from './infrastructure/wasmoon/generated/ScriptAssets';

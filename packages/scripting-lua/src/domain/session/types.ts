@@ -30,4 +30,6 @@ export interface ScriptingSessionState {
   readonly resolveSource: (scriptId: string) => Promise<string | null>;
   /** Resolves a scriptId to its schema. */
   readonly resolveScriptSchema: (scriptId: string) => Promise<ScriptSchema | null>;
+  /** Entity IDs queued for destruction (processed after frame hooks). */
+  readonly pendingDestroys: string[];
 }

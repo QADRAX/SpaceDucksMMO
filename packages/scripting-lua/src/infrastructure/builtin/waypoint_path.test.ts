@@ -105,4 +105,38 @@ describe('Built-in Script: Waypoint Path', () => {
         const props = getScriptProperties(scene.entity(moverId).component('script').snapshot(), 1);
         if (props) expect(props.targetPoint).toEqual({ x: 10, y: 0, z: 0 });
     });
+
+    it('should not crash when waypoints array is empty', async () => {
+        const { api } = await setupScriptingIntegrationTest();
+        const sceneId = createSceneId('main');
+        const moverId = createEntityId('mover');
+
+        const scene = createScene(api, sceneId);
+        scene.addEntity({ entity: createEntity(moverId) });
+
+        addEntityWithScripts(api, sceneId, moverId, [
+            {
+                scriptId: 'builtin://waypoint_path.lua',
+                properties: {
+                    speed: 10,
+                    waypoints: [],
+                    loop: false
+                }
+            },
+            {
+                scriptId: 'builtin://move_to_point.lua',
+                properties: { duration: 1.0, easing: 'linear' }
+            }
+        ]);
+
+        api.update({ dt: 0 });
+        await waitForSlotInit();
+
+        api.update({ dt: 0.016 });
+        const listResult = scene.listEntities();
+        expect(listResult.ok).toBe(true);
+        if (listResult.ok) {
+            expect(listResult.value.some((e) => e.id === moverId)).toBe(true);
+        }
+    });
 });

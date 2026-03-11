@@ -5,6 +5,8 @@ import {
   setScale,
   lookAt,
   ensureClean,
+  getForward,
+  getRight,
 } from '@duckengine/core-v2';
 import type { BridgeDeclaration } from './types';
 
@@ -70,6 +72,16 @@ export const transformBridge: BridgeDeclaration = {
       },
       lookAt(id: string, target: { x: number; y: number; z: number }) {
         lookAt(resolve(id), target);
+      },
+      getForward(id: string) {
+        const t = resolve(id);
+        const v = getForward(t);
+        return { x: v.x, y: v.y, z: v.z };
+      },
+      getRight(id: string) {
+        const t = resolve(id);
+        const v = getRight(t);
+        return { x: v.x, y: v.y, z: v.z };
       },
     };
   },

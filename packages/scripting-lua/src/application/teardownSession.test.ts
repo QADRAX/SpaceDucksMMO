@@ -37,6 +37,7 @@ describe('teardownSession', () => {
       ports: {},
       resolveSource: jest.fn<(id: string) => Promise<string | null>>().mockResolvedValue(null),
       resolveScriptSchema: jest.fn<(id: string) => Promise<ScriptSchema | null>>().mockResolvedValue(null),
+      pendingDestroys: [],
     };
   });
 
