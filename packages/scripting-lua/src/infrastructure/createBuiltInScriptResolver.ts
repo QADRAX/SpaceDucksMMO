@@ -1,4 +1,5 @@
-import { BuiltInScripts, TestScripts } from './wasmoon/generated/ScriptAssets';
+import { BuiltInScripts } from './wasmoon/generated/ScriptAssets';
+import { TestScripts } from './wasmoon/generated/TestScriptAssets';
 
 /**
  * Creates a script source resolver for bundled scripts (builtin + test).

@@ -23,6 +23,7 @@
     "events",
     "Engine",
     "BuiltInScripts",
+    "engine_ports",
     "__ReportScriptError"
   ],
   "runtime.version": "Lua 5.4",

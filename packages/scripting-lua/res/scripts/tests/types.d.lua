@@ -1,0 +1,4 @@
+---@meta
+-- Type definitions for test scripts.
+-- DuckEngine v2 types (ScriptInstanceV2, Component, etc.) are in ../types/
+-- Add ---@param self ScriptInstanceV2 to hook functions for IDE support.

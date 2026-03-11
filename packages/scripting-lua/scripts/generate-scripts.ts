@@ -64,23 +64,6 @@ output += `};
 
 `;
 
-// Generate TestScripts (for integration tests, isolated component verification)
-const testFiles = fs.existsSync(testsDir)
-  ? fs.readdirSync(testsDir).filter((f: string) => f.endsWith('.lua'))
-  : [];
-
-output += `export const TestScripts: Record<string, string> = {
-`;
-
-for (const file of testFiles) {
-  const raw = fs.readFileSync(path.join(testsDir, file), 'utf-8');
-  output += `  "test://${file}": \`${escapeForTemplate(raw)}\`,\n`;
-}
-
-output += `};
-
-`;
-
 // Generate SystemScripts
 const systemFiles = fs.existsSync(systemDir)
   ? fs.readdirSync(systemDir).filter((f: string) => f.endsWith('.lua'))
@@ -100,6 +83,31 @@ output += `};
 `;
 
 fs.writeFileSync(targetFile, output);
+
+// Generate TestScriptAssets.ts (separate from production ScriptAssets)
+const testFiles = fs.existsSync(testsDir)
+  ? fs
+      .readdirSync(testsDir)
+      .filter((f: string) => f.endsWith('.lua') && !f.endsWith('.d.lua'))
+      .sort()
+  : [];
+
+const testOutput = `// Auto-generated file. Do not edit directly.
+// Run 'npm run build:scripts' to regenerate.
+// Test scripts only — separate from production ScriptAssets.
+
+/** Integration test scripts. Keys are test:// URIs. */
+export const TestScripts: Record<string, string> = {
+${testFiles.map((file: string) => {
+  const raw = fs.readFileSync(path.join(testsDir, file), 'utf-8');
+  return `  "test://${file}": \`${escapeForTemplate(raw)}\`,`;
+}).join('\n')}
+};
+`;
+
+const testTargetFile = path.join(targetDir, 'TestScriptAssets.ts');
+fs.writeFileSync(testTargetFile, testOutput);
+
 console.log(
-  `Generated ScriptAssets.ts with ${builtinFiles.length} built-in, ${testFiles.length} test, and ${systemFiles.length} system scripts.`,
+  `Generated ScriptAssets.ts (${builtinFiles.length} built-in, ${systemFiles.length} system) and TestScriptAssets.ts (${testFiles.length} test).`,
 );
