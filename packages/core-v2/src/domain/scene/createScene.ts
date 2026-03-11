@@ -13,6 +13,7 @@ export function createScene(id: SceneId): SceneState {
     entityCleanups: new Map(),
     subsystems: [],
     prefabs: new Map(),
+    uiSlots: new Map(),
     paused: false,
   };
 }

@@ -6,7 +6,7 @@ This document describes the actual architecture of the DuckEngine core using Kru
 
 ## Role of core-v2
 
-core-v2 is the **engine kernel**: it owns the ECS (entities, components, transforms), scene lifecycle, subsystem topology, and port registry. External packages (scripting-lua, rendering, physics) depend on it; core-v2 never depends on them. Consumers use `createDuckEngineAPI(engine)` to get a typed, fluent API surface.
+core-v2 is the **engine kernel**: it owns the ECS (entities, components, transforms), scene lifecycle, subsystem topology, port registry, and UI slot declarations. External packages (scripting-lua, rendering, physics) depend on it; core-v2 never depends on them. Consumers use `createDuckEngineAPI(engine)` to get a typed, fluent API surface. UI rendering is adapter-based; see `docs/UI_COMPONENTS_DESIGN.md`.
 
 ---
 
@@ -40,6 +40,7 @@ flowchart TB
         Subsystems[subsystems]
         Listeners[changeListeners]
         Prefabs[(prefabs)]
+        UISlots[(uiSlots)]
     end
 
     subgraph Entity["EntityState"]
@@ -57,15 +58,16 @@ flowchart TB
 | Concept | Description |
 |---------|-------------|
 | **EngineState** | Root state: scenes, viewports, settings, paused, engineSubsystems, subsystemRuntime. |
-| **SceneState** | Per-scene state: entities, rootEntityIds, activeCameraId, subsystems, changeListeners, prefabs, paused. |
+| **SceneState** | Per-scene state: entities, rootEntityIds, activeCameraId, subsystems, changeListeners, prefabs, uiSlots, paused. |
 | **EntityState** | ECS entity: id, transform, components, observers, children, parent, displayName, gizmoIcon. |
 | **SubsystemRuntimeState** | Shared bag: sceneSubsystemFactories, portDerivers, ports, portDefinitions. |
 | **SceneSubsystem** | Reacts to scene events (`handleSceneEvent`) and participates in frame updates (`update`). |
-| **EngineSubsystem** | Cross-scene subsystem (e.g. render, audio); updates with full engine visibility. |
+| **EngineSubsystem** | Cross-scene subsystem (e.g. render, audio, UI); updates with full engine visibility. |
+| **UISubsystem** | EngineSubsystem that reacts to `ui-slot-*` events and delegates mount/unmount to `UIRendererPort`. |
 | **SubsystemPortRegistry** | Typed port lookup; ports are injected at setup or derived by portDerivers. |
 | **PortDefinition / PortBinding** | `definePort(id).addMethod(name).build()` + `def.bind(impl)` for registration. |
 
-**Event flow**: Entity observers (component add/remove/change, transform change) → `emitSceneChange` → `scene.changeListeners` (each subsystem is a listener) → `subsystem.handleSceneEvent`.
+**Event flow**: Entity observers (component add/remove/change, transform change) → `emitSceneChange` → `scene.changeListeners` (each subsystem is a listener) → `subsystem.handleSceneEvent`. UI slots emit `ui-slot-added`, `ui-slot-removed`, `ui-slot-updated`; the UISubsystem reacts and delegates to `UIRendererPort`.
 
 ---
 
@@ -114,7 +116,7 @@ flowchart TB
     SceneLifecycle --> Update
 ```
 
-**Event kinds**: `entity-added`, `entity-removed`, `component-changed`, `transform-changed`, `hierarchy-changed`, `active-camera-changed`, `scene-setup`, `scene-teardown`, `scene-debug-changed`, etc.
+**Event kinds**: `entity-added`, `entity-removed`, `component-changed`, `transform-changed`, `hierarchy-changed`, `active-camera-changed`, `scene-setup`, `scene-teardown`, `scene-debug-changed`, `ui-slot-added`, `ui-slot-removed`, `ui-slot-updated`, etc.
 
 ---
 
@@ -134,10 +136,13 @@ src/
 │   ├── useCases/              # defineEngineUseCase, defineSceneUseCase, defineEntityUseCase,
 │   │                          # defineComponentUseCase, defineViewportUseCase
 │   ├── api/                   # composeAPI, APIComposer (fluent API builder)
-│   ├── ids/                   # createSceneId, createEntityId, createViewportId
+│   ├── ids/                   # createSceneId, createEntityId, createViewportId, createUISlotId
 │   ├── math/                  # Vec3, Quat, Euler, utils
+│   ├── ui/                    # UISlotState, UISlotView, UISlotDescriptor
 │   ├── viewport/              # ViewportState
-│   ├── ports/                 # Port interfaces (EnginePorts, ResourceLoaderPort, etc.)
+│   ├── ports/                 # Port interfaces (EnginePorts, ResourceLoaderPort,
+│   │                          # UIRendererPort, ViewportOverlayProviderPort,
+│   │                          # SceneEventBusProviderPort, UISlotOperationsPort)
 │   ├── scripting/             # Script schema, runtime context, API builders
 │   ├── properties/            # Property validation
 │   ├── prefabs/               # Prefab types
@@ -148,7 +153,8 @@ src/
 │   ├── engine/                # setupEngine, updateEngine, addScene, removeScene,
 │   │                          # addViewport, setPaused, registerSubsystem, etc.
 │   ├── scene/                 # addEntity, removeEntity, setupScene, teardownScene,
-│   │                          # updateScene, setActiveCamera, subscribe, etc.
+│   │                          # updateScene, setActiveCamera, subscribe, addUISlot,
+│   │                          # removeUISlot, updateUISlot, etc.
 │   ├── entity/                # addComponent, removeComponent, view, setDisplayName, etc.
 │   ├── component/             # setEnabled, setField, snapshot
 │   ├── viewport/              # setEnabled, setScene, setCamera, setCanvas, resize
@@ -232,6 +238,9 @@ This section documents **all** use cases in `src/application/`. Each use case is
 | **setScenePaused** | `scene.setPaused()` | `{ paused }` | Sets `scene.paused`. |
 | **subscribeToSceneChanges** | `scene.subscribe()` | `{ listener: (ev) => void }` | Adds listener to `changeListeners`. Returns unsubscribe function. |
 | **listEntities** | `scene.listEntities()` | — | Returns `EntityView[]` for root entities only. |
+| **addUISlot** | `scene.addUISlot()` | `{ slotId, viewportId?, rect, zIndex?, descriptor }` | Adds a UI slot. Emits `ui-slot-added`. UISubsystem delegates to `UIRendererPort.mount`. See `docs/UI_COMPONENTS_DESIGN.md`. |
+| **removeUISlot** | `scene.removeUISlot()` | `{ slotId }` | Removes a UI slot. Emits `ui-slot-removed`. UISubsystem delegates to `UIRendererPort.unmount`. |
+| **updateUISlot** | `scene.updateUISlot()` | `{ slotId, rect?, zIndex?, enabled?, descriptor? }` | Updates slot params. Emits `ui-slot-updated`. |
 | **addPrefab** | *(not in API)* | `{ prefabId, entity }` | Adds entity to `scene.prefabs`. Emits `prefab-added`. Used by instantiation infra. |
 | **removePrefab** | *(not in API)* | `{ prefabId }` | Removes prefab from cache. Emits `prefab-removed` if existed. |
 
@@ -279,6 +288,15 @@ This section documents **all** use cases in `src/application/`. Each use case is
 |----------|---------|-------------|
 | **fetchFile** | `ResourceLoaderPort` impl | Fetches a file by URL. Caches by `url::format`. Used by scripting/resource loading. |
 | **resolveWebResource** | `ResourceLoaderPort` impl | Resolves a resource via EngineService API. Caches by `key@version`. |
+
+### UI ports (client-implemented)
+
+| Port | Used by | Description |
+|------|---------|-------------|
+| **UIRendererPort** | UISubsystem | `mount(slot, container)`, `unmount(slotId)`, `updateSlot?`. Client mounts SPAs (React, Preact, etc.) in DOM containers. |
+| **ViewportOverlayProviderPort** | UISubsystem | `getOverlayContainer(viewportId)`. Returns the DOM element where UI overlays are mounted per viewport. |
+| **SceneEventBusProviderPort** | Scripting, UI adapter | `registerSceneBus`, `unregisterSceneBus`, `getEventBus`. Bridges events between UI and scripting (ScriptEventBus). |
+| **UISlotOperationsPort** | scripting-lua sceneBridge | `addUISlot`, `removeUISlot`, `updateUISlot`. Wraps scene use cases for Lua scripts. |
 
 ---
 
@@ -408,3 +426,5 @@ flowchart TB
 **Port derivation** — Ports can be injected statically (`customPorts`, `ports`) or derived by `portDerivers` that run during setup. Derivers receive `{ engine, ports }` and can call `ports.register(def, impl)`.
 
 **Entity observers** — Each entity has an `EntityObservers` hub. When a component is added/removed/changed or the transform changes, observers fire. `attachEntityObservers` wires these to `emitSceneChange`, so subsystems react to ECS mutations without polling.
+
+**UI components** — UI slots live in `scene.uiSlots`. The engine does not render UI; it declares slots and delegates to `UIRendererPort`. The client implements the adapter (e.g. React.createRoot). Events flow between UI and scripting via `SceneEventBusProviderPort` (ScriptEventBus). Full design: `docs/UI_COMPONENTS_DESIGN.md`.

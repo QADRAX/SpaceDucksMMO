@@ -13,5 +13,6 @@ export * from './ports';
 export * from './scene';
 export * from './scripting';
 export * from './useCases';
+export * from './ui';
 export * from './utils';
 export * from './viewport';

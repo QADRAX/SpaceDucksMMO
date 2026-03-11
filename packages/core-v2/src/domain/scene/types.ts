@@ -1,7 +1,8 @@
 import type { EntityState, DebugKind } from '../entities';
 import type { ComponentType } from '../components';
 import type { SceneSubsystem } from '../subsystems';
-import type { EntityId, SceneId } from '../ids';
+import type { EntityId, SceneId, UISlotId } from '../ids';
+import type { UISlotState } from '../ui';
 
 /** Event emitted when an entity is added to a scene. */
 export type EntityAddedEvent = {
@@ -82,6 +83,24 @@ export type SceneTeardownEvent = {
   readonly kind: 'scene-teardown';
 };
 
+/** Event emitted when a UI slot is added to a scene. */
+export type UISlotAddedEvent = {
+  readonly kind: 'ui-slot-added';
+  readonly slotId: UISlotId;
+};
+
+/** Event emitted when a UI slot is removed from a scene. */
+export type UISlotRemovedEvent = {
+  readonly kind: 'ui-slot-removed';
+  readonly slotId: UISlotId;
+};
+
+/** Event emitted when a UI slot is updated. */
+export type UISlotUpdatedEvent = {
+  readonly kind: 'ui-slot-updated';
+  readonly slotId: UISlotId;
+};
+
 /** Event emitted when a scene operation fails. */
 export type SceneErrorEvent = {
   readonly kind: 'error';
@@ -111,7 +130,10 @@ export type SceneChangeEvent =
   | ScenePrefabAddedEvent
   | ScenePrefabRemovedEvent
   | SceneSetupEvent
-  | SceneTeardownEvent;
+  | SceneTeardownEvent
+  | UISlotAddedEvent
+  | UISlotRemovedEvent
+  | UISlotUpdatedEvent;
 
 /** Scene change event extended with error variants. */
 export type SceneChangeEventWithError = SceneChangeEvent | SceneErrorEvent | ScriptErrorEvent;
@@ -139,6 +161,8 @@ export interface SceneState {
   readonly subsystems: SceneSubsystem[];
   /** Cached prefabs (entities not in active scene graph but instantiable). */
   readonly prefabs: Map<string, EntityState>;
+  /** UI slots for this scene. Client adapter mounts SPAs per slot. */
+  readonly uiSlots: Map<UISlotId, UISlotState>;
   /** When true, only subsystems with updateWhenPaused run during update. */
   paused: boolean;
 }
@@ -151,4 +175,5 @@ export interface SceneView {
   readonly rootEntityIds: ReadonlyArray<EntityId>;
   readonly debugFlags: ReadonlyMap<DebugKind, boolean>;
   readonly prefabs: ReadonlyMap<string, EntityState>;
+  readonly uiSlots: ReadonlyMap<UISlotId, UISlotState>;
 }

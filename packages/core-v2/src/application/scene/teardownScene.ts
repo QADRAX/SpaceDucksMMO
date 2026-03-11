@@ -32,6 +32,7 @@ export const teardownScene = defineSceneUseCase({
     scene.entities.clear();
     scene.rootEntityIds.length = 0;
     scene.activeCameraId = null;
+    scene.uiSlots.clear();
     scene.changeListeners.clear();
   },
 });

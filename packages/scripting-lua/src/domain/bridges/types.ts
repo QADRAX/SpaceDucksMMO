@@ -5,6 +5,7 @@ import type {
   PhysicsQueryPort,
   SceneState,
   ScriptSchema,
+  UISlotOperationsPort,
 } from '@duckengine/core-v2';
 
 /** Factory signature for a single bridge. */
@@ -31,6 +32,7 @@ export interface BridgePorts {
   readonly physicsQuery?: PhysicsQueryPort;
   readonly gizmo?: Pick<GizmoPort, 'drawLine' | 'drawSphere' | 'drawBox' | 'drawLabel' | 'clear'>;
   readonly input?: InputPort;
+  readonly uiSlotOperations?: UISlotOperationsPort;
 }
 
 /** Bridge names exposed as Engine.Input, Engine.Gizmo, etc. (not on self). */
@@ -46,6 +48,7 @@ export const SCRIPTING_BRIDGE_PORT_KEYS: Readonly<Record<keyof BridgePorts, Subs
   physicsQuery: 'io:physics-query',
   gizmo: 'io:gizmo',
   input: 'io:input',
+  uiSlotOperations: 'uiSlotOperations',
 };
 
 /** Resolved bridge APIs keyed by bridge name. */

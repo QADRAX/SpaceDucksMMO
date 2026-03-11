@@ -13,3 +13,6 @@ export {
   type SubscribeToSceneChangesParams,
 } from './subscribeToSceneChanges';
 export { listEntities } from './listEntities';
+export { addUISlot } from './addUISlot';
+export { removeUISlot, type RemoveUISlotParams } from './removeUISlot';
+export { updateUISlot, type UpdateUISlotParamsWithId } from './updateUISlot';

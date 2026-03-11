@@ -1,5 +1,10 @@
-import type { SceneState, EntityId } from '@duckengine/core-v2';
-import { buildSceneAPI, buildEntityAPI } from '@duckengine/core-v2';
+import type { SceneState, EntityId, ViewportId } from '@duckengine/core-v2';
+import {
+  buildSceneAPI,
+  buildEntityAPI,
+  createUISlotId,
+  createViewportId,
+} from '@duckengine/core-v2';
 import type { BridgeDeclaration } from './types';
 import type { ScriptEventBus } from '../events';
 
@@ -94,6 +99,45 @@ export function createSceneBridgeDeclaration(eventBus: ScriptEventBus): BridgeDe
           if (session?.pendingDestroys) {
             session.pendingDestroys.push(entityId);
           }
+        },
+
+        /** Adds a UI slot to the scene. Delegates to uiSlotOperations port. */
+        addUISlot(params: {
+          slotId: string;
+          viewportId?: string | null;
+          rect?: { x?: number; y?: number; w?: number; h?: number };
+          zIndex?: number;
+          enabled?: boolean;
+          descriptor?: unknown;
+        }) {
+          const viewportId =
+            params.viewportId != null ? (createViewportId(params.viewportId) as ViewportId) : null;
+          return ports.uiSlotOperations?.addUISlot(scene.id, {
+            slotId: createUISlotId(params.slotId),
+            viewportId,
+            rect: params.rect,
+            zIndex: params.zIndex,
+            enabled: params.enabled,
+            descriptor: params.descriptor,
+          });
+        },
+
+        /** Removes a UI slot from the scene. */
+        removeUISlot(slotId: string) {
+          return ports.uiSlotOperations?.removeUISlot(scene.id, createUISlotId(slotId));
+        },
+
+        /** Updates a UI slot. */
+        updateUISlot(
+          slotId: string,
+          params: {
+            rect?: { x?: number; y?: number; w?: number; h?: number };
+            zIndex?: number;
+            enabled?: boolean;
+            descriptor?: unknown;
+          },
+        ) {
+          return ports.uiSlotOperations?.updateUISlot(scene.id, createUISlotId(slotId), params);
         },
       };
     },

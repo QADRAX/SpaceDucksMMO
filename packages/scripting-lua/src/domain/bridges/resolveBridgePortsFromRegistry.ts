@@ -12,5 +12,8 @@ export function resolveBridgePortsFromRegistry(
     physicsQuery: ports.getById<BridgePorts['physicsQuery']>(SCRIPTING_BRIDGE_PORT_KEYS.physicsQuery),
     gizmo: ports.getById<BridgePorts['gizmo']>(SCRIPTING_BRIDGE_PORT_KEYS.gizmo),
     input: ports.getById<BridgePorts['input']>(SCRIPTING_BRIDGE_PORT_KEYS.input),
+    uiSlotOperations: ports.getById<BridgePorts['uiSlotOperations']>(
+      SCRIPTING_BRIDGE_PORT_KEYS.uiSlotOperations,
+    ),
   };
 }
