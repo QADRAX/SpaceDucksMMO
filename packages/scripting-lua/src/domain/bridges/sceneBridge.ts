@@ -1,11 +1,19 @@
-import type { SceneState, EntityId, ViewportId, SceneEventBus } from '@duckengine/core-v2';
+import type {
+  ComponentType,
+  EntityId,
+  SceneEventBus,
+  SceneRaycastQuery,
+  SceneState,
+  ViewportId,
+} from '@duckengine/core-v2';
 import {
   buildSceneAPI,
   buildEntityAPI,
   createUISlotId,
   createViewportId,
 } from '@duckengine/core-v2';
-import type { BridgeDeclaration } from './types';
+import type { BridgeDeclaration, BridgePorts, BridgeSession } from './types';
+import { toEntityId } from './types';
 
 function toEventPayload(payload: unknown): Record<string, unknown> {
   if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
@@ -24,11 +32,11 @@ export function createSceneBridgeDeclaration(eventBus: SceneEventBus): BridgeDec
   return {
     name: 'Scene',
     perEntity: false,
-    factory(scene: SceneState, _entityId: string, _schema: unknown, ports, session) {
+    factory(scene: SceneState, _entityId, _schema: unknown, ports: BridgePorts, session?: BridgeSession) {
       const sceneApi = buildSceneAPI(scene, {
         raycast: (query) => {
           const hit = ports.physicsQuery?.raycast(query);
-          return hit ? { ...hit, entityId: hit.entityId as EntityId } : null;
+          return hit ? { ...hit, entityId: toEntityId(hit.entityId as string) } : null;
         },
         emitEvent: (eventName, payload) => {
           eventBus.fire(eventName, toEventPayload(payload));
@@ -36,16 +44,16 @@ export function createSceneBridgeDeclaration(eventBus: SceneEventBus): BridgeDec
       });
 
       return {
-        /** Get a capability-wrapped entity from the scene by ID. */
+        /** Get a capability-wrapped entity from the scene by ID. id from Lua. */
         getEntity(id: string) {
-          const e = scene.entities.get(id as EntityId);
+          const e = scene.entities.get(toEntityId(id));
           if (!e) return null;
           return buildEntityAPI(e, scene, false);
         },
 
-        /** Check if an entity exists in the scene. */
+        /** Check if an entity exists in the scene. id from Lua. */
         exists(id: string) {
-          return scene.entities.has(id as EntityId);
+          return scene.entities.has(toEntityId(id));
         },
 
         /** Find entities by tag. Returns wrapped entities (capabilities). */
@@ -53,10 +61,10 @@ export function createSceneBridgeDeclaration(eventBus: SceneEventBus): BridgeDec
           return sceneApi.findByTag(tag);
         },
 
-        /** Check if an entity has a specific component. */
-        hasComponent(targetEntityId: string, componentType: string) {
-          const e = scene.entities.get(targetEntityId as EntityId);
-          return e ? e.components.has(componentType as never) : false;
+        /** Check if an entity has a specific component. targetEntityId from Lua. */
+        hasComponent(targetEntityId: string, componentType: ComponentType) {
+          const e = scene.entities.get(toEntityId(targetEntityId));
+          return e ? e.components.has(componentType) : false;
         },
 
         /** Fire an in-frame event (delivered on flush after earlyUpdate). */
@@ -70,11 +78,7 @@ export function createSceneBridgeDeclaration(eventBus: SceneEventBus): BridgeDec
         },
 
         /** Runs a physics raycast via SceneAPI integration. */
-        raycast(query: {
-          origin: { x: number; y: number; z: number };
-          direction: { x: number; y: number; z: number };
-          maxDistance: number;
-        }) {
+        raycast(query: SceneRaycastQuery) {
           return sceneApi.raycast(query);
         },
 
@@ -84,7 +88,7 @@ export function createSceneBridgeDeclaration(eventBus: SceneEventBus): BridgeDec
         },
 
         /** Get the list of all entity IDs in the scene. */
-        getAllEntityIds(): string[] {
+        getAllEntityIds(): EntityId[] {
           return Array.from(scene.entities.keys());
         },
 
@@ -95,8 +99,9 @@ export function createSceneBridgeDeclaration(eventBus: SceneEventBus): BridgeDec
 
         /** Queues an entity for destruction. Processed after frame hooks. */
         destroy(entityId: string) {
-          if (session?.pendingDestroys) {
-            session.pendingDestroys.push(entityId);
+          const pending = (session as { pendingDestroys?: EntityId[] } | undefined)?.pendingDestroys;
+          if (pending) {
+            pending.push(toEntityId(entityId));
           }
         },
 

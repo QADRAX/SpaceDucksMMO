@@ -36,6 +36,11 @@ const COMPONENT_SPECS: {
   ...SCRIPTING_SPECS,
 };
 
+/** All creatable component types (excludes metadata). */
+export const CREATABLE_COMPONENT_TYPES = Object.keys(
+  COMPONENT_SPECS,
+) as CreatableComponentType[];
+
 /** Creates any component from its type discriminator and optional overrides. */
 export function createComponent<T extends CreatableComponentType>(
   type: T,

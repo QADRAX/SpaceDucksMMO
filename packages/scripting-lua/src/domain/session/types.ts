@@ -1,4 +1,4 @@
-import type { ScriptSchema, SceneEventBus, SceneEventBusProviderPort, SceneId } from '@duckengine/core-v2';
+import type { EntityId, ScriptSchema, SceneEventBus, SceneEventBusProviderPort, SceneId } from '@duckengine/core-v2';
 import type { ScriptSlotState } from '../slots';
 import type { BridgeDeclaration, BridgePorts, TimeState } from '../bridges';
 import type { ScriptSandbox } from '../ports';
@@ -34,5 +34,5 @@ export interface ScriptingSessionState {
   /** Resolves a scriptId to its schema. */
   readonly resolveScriptSchema: (scriptId: string) => Promise<ScriptSchema | null>;
   /** Entity IDs queued for destruction (processed after frame hooks). */
-  readonly pendingDestroys: string[];
+  readonly pendingDestroys: EntityId[];
 }

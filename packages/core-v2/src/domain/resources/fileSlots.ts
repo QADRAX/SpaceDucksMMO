@@ -21,6 +21,21 @@ export interface ResolvedFile {
 
 // ── Material file slots ───────────────────────────────────────────────────────
 
+/**
+ * Texture slot keys used by material components (ResourceRef<'texture'>).
+ * Single source of truth for albedo + PBR overrides. Used by both FileSlots
+ * (resource data) and inspector fields (component overrides).
+ */
+export const TEXTURE_SLOT_KEYS = [
+    'albedo',
+    'normalMap',
+    'aoMap',
+    'roughnessMap',
+    'metallicMap',
+    'envMap',
+] as const;
+export type TextureSlotKey = (typeof TEXTURE_SLOT_KEYS)[number];
+
 /** Texture file slots shared by all plain material resources. */
 export interface MaterialFileSlots {
     /** Primary albedo/diffuse texture (jpg, png, webp). */

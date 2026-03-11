@@ -15,6 +15,7 @@
 ---@field Transform TransformV2? Entity transform. Per-entity.
 ---@field Scene SceneV2? Scene access. Per-entity.
 ---@field Script ScriptsV2? Entity script component. Per-entity.
+---@field Component ComponentV2? Generic component field access. Per-entity.
 local ScriptInstanceV2 = {}
 
 ---Generic alias for strong typing property and state records in user scripts.

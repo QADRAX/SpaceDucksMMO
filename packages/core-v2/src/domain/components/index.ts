@@ -1,5 +1,11 @@
 export * from './types';
 export * from './constants';
+export {
+    RESOURCE_FIELD_KEYS,
+    type ResourceFieldKey,
+    inferResourceKindFromInspectorField,
+    inferResourceKindFromFieldConfig,
+} from './inspectorResourceMapping';
 export { createComponent, getComponentMetadata } from './factory';
 export { componentBase, narrowComponent } from './component';
 export {

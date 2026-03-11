@@ -5,6 +5,7 @@
 -- This file is the main reference and consolidated index for all v2 types.
 -- Individual type definitions are in separate module files:
 --   • entity_v2.d.lua
+--   • components_v2.d.lua    (self.Component: getField, setField, setResource, getData, has)
 --   • engine_v2.d.lua        (Engine.Input, Engine.Gizmo, Engine.Physics, Engine.Time)
 --   • engine_ports_v2.d.lua  (custom ports: engine_ports['port-id'])
 --   • events_v2.d.lua

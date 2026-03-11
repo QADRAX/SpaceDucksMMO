@@ -1432,6 +1432,8 @@ __SelfMT = {
 -- Defines: __WrapSelf, __CallHook, __UpdateProperty,
 --          __FlushDirtyProperties, __DestroySlot, __LoadSlot.
 -- These are the core runtime functions called from TypeScript.
+-- __ReportScriptError is injected by the TypeScript sandbox host.
+---@diagnostic disable: undefined-global
 
 --- Creates a self proxy for a script slot.
 --- @param slotKey string  Unique slot identifier (entityId::scriptId)

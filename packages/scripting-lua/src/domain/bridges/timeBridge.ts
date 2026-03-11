@@ -23,7 +23,7 @@ export function createTimeBridgeDeclaration(state: TimeState): BridgeDeclaration
   return {
     name: 'Time',
     perEntity: false,
-    factory(_scene: SceneState, _entityId: string, _schema: ScriptSchema | null) {
+    factory(_scene: SceneState, _entityId, _schema: ScriptSchema | null) {
       return {
         getDelta() {
           return readTime().delta;

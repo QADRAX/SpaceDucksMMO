@@ -4,12 +4,14 @@ export {
   type BridgePorts,
   type TimeState,
 } from './types';
-export type { BridgeDeclaration, BridgeFactory, ScriptBridgeContext } from './types';
+export type { BridgeAPI, BridgeDeclaration, BridgeFactory, BridgeSession, ScriptBridgeContext } from './types';
+export { toEntityId } from './types';
 export { transformBridge } from './transformBridge';
 export { createSceneBridgeDeclaration } from './sceneBridge';
 export { physicsBridge } from './physicsBridge';
 export { inputBridge } from './inputBridge';
 export { scriptsBridge } from './scriptsBridge';
+export { componentBridge } from './componentBridge';
 export { createTimeBridgeDeclaration, createTimeState } from './timeBridge';
 export { gizmoBridge } from './gizmoBridge';
 export { createScriptBridgeContext } from './bridgeContext';

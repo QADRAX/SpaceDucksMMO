@@ -147,7 +147,7 @@ export function syncSlotPropertiesFromScene(
   slot: ScriptSlotState,
   sandbox: ScriptSandbox,
 ): void {
-  const entity = scene.entities.get(slot.entityId as EntityId);
+  const entity = scene.entities.get(slot.entityId);
   if (!entity) return;
 
   const scriptComp = entity.components.get('script') as
@@ -178,7 +178,7 @@ export function flushDirtySlotsToScene(
   for (const slot of slots.values()) {
     if (slot.dirtyKeys.size === 0) continue;
 
-    const entity = scene.entities.get(slot.entityId as EntityId);
+    const entity = scene.entities.get(slot.entityId);
     if (!entity) continue;
 
     const scriptComp = entity.components.get('script') as

@@ -5,7 +5,7 @@ import type { BridgeDeclaration } from './types';
 export const physicsBridge: BridgeDeclaration = {
   name: 'Physics',
   perEntity: false,
-  factory(_scene: SceneState, _entityId: string, _schema: ScriptSchema | null, ports) {
+  factory(_scene: SceneState, _entityId, _schema: ScriptSchema | null, ports) {
     return {
       raycast(origin: { x: number; y: number; z: number }, direction: { x: number; y: number; z: number }, maxDistance: number) {
         if (!ports.physicsQuery) return null;

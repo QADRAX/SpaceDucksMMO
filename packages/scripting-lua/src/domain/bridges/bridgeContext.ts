@@ -1,5 +1,5 @@
-import type { SceneState, ScriptSchema } from '@duckengine/core-v2';
-import type { BridgeDeclaration, BridgePorts, ScriptBridgeContext } from './types';
+import type { SceneState, ScriptSchema, EntityId } from '@duckengine/core-v2';
+import type { BridgeDeclaration, BridgePorts, BridgeAPI, ScriptBridgeContext } from './types';
 import type { ScriptingSessionState } from '../session';
 
 /**
@@ -9,7 +9,7 @@ import type { ScriptingSessionState } from '../session';
  * Global bridges ignore the entity ID (same API for all scripts).
  *
  * @param scene    - The scene the entity belongs to.
- * @param entityId - The entity that owns the script slot.
+ * @param entityId  - The entity that owns the script slot.
  * @param schema   - The script's schema (null if not found).
  * @param bridges  - Ordered bridge declarations to install.
  * @param ports    - External ports bridges may optionally consume.
@@ -18,13 +18,13 @@ import type { ScriptingSessionState } from '../session';
  */
 export function createScriptBridgeContext(
   scene: SceneState,
-  entityId: string,
+  entityId: EntityId,
   schema: ScriptSchema | null,
   bridges: ReadonlyArray<BridgeDeclaration>,
   ports: BridgePorts,
   session?: ScriptingSessionState,
 ): ScriptBridgeContext {
-  const ctx: Record<string, Record<string, unknown>> = {};
+  const ctx: Record<string, BridgeAPI> = {};
 
   for (const bridge of bridges) {
     ctx[bridge.name] = bridge.factory(scene, entityId, schema, ports, session);

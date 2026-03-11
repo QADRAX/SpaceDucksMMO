@@ -3,6 +3,7 @@ import type { LuaEngine } from 'wasmoon';
 import type { ScriptSandbox } from '../../domain/ports';
 import type { ScriptBridgeContext } from '../../domain/bridges';
 import type { ScriptSchema, EntityId, ComponentType, PropertyValues } from '@duckengine/core-v2';
+import { toEntityId } from '../../domain/bridges';
 import type { DiagnosticPort } from '@duckengine/core-v2';
 import { detectHooksFromSource } from '../../domain/slots';
 import {
@@ -51,17 +52,18 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
     );
   }
 
-  const PER_ENTITY_BRIDGES = new Set(['Transform', 'Script']);
+  const PER_ENTITY_BRIDGES = new Set(['Transform', 'Script', 'Component']);
 
   function createScopedBridge(
     bridge: Record<string, unknown>,
     entityId: string,
   ): Record<string, (...args: unknown[]) => unknown> {
+    const eid = toEntityId(entityId); // entityId from Lua/slotKey
     const scoped: Record<string, (...args: unknown[]) => unknown> = {};
     for (const [name, fn] of Object.entries(bridge)) {
       if (typeof fn === 'function') {
         scoped[name] = (...args: unknown[]) =>
-          (fn as (id: string, ...a: unknown[]) => unknown)(entityId, ...args);
+          (fn as (id: EntityId, ...a: unknown[]) => unknown)(eid, ...args);
       }
     }
     return Object.freeze(scoped) as Record<string, (...args: unknown[]) => unknown>;

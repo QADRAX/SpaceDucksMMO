@@ -7,6 +7,7 @@ import type {
   SceneEventBus,
   SceneEventBusProviderPort,
 } from '@duckengine/core-v2';
+import { createEntityId } from '@duckengine/core-v2';
 import {
   resolveRuntimeBridgeTable,
   ENGINE_SYSTEM_BRIDGES,
@@ -75,7 +76,7 @@ export function initializeScriptRuntime(options: ScriptRuntimeOptions): Scriptin
       if (ENGINE_SYSTEM_BRIDGES.has(name)) {
         Engine[name] = decl.factory(
           null as unknown as SceneState,
-          '',
+          createEntityId(''),
           null,
           bridgePorts,
           undefined,

@@ -1,4 +1,5 @@
 import type {
+  EntityId,
   SubsystemPortKey,
   GizmoPort,
   InputPort,
@@ -8,14 +9,23 @@ import type {
   UISlotOperationsPort,
 } from '@duckengine/core-v2';
 
+/** Bridge API object exposed to Lua. Keys are method names, values are callable. */
+export type BridgeAPI = Record<string, unknown>;
+
+/**
+ * Session passed to bridge factories. Typed as unknown to avoid circular import.
+ * Callers pass ScriptingSessionState; bridges that need it cast as needed.
+ */
+export type BridgeSession = unknown;
+
 /** Factory signature for a single bridge. */
 export type BridgeFactory = (
   scene: SceneState,
-  entityId: string,
+  entityId: EntityId,
   schema: ScriptSchema | null,
   ports: BridgePorts,
-  session?: import('../session').ScriptingSessionState,
-) => Record<string, unknown>;
+  session?: BridgeSession,
+) => BridgeAPI;
 
 /** Declaration of a bridge that can be installed into the sandbox. */
 export interface BridgeDeclaration {
@@ -52,7 +62,15 @@ export const SCRIPTING_BRIDGE_PORT_KEYS: Readonly<Record<keyof BridgePorts, Subs
 };
 
 /** Resolved bridge APIs keyed by bridge name. */
-export type ScriptBridgeContext = Readonly<Record<string, Record<string, unknown>>>;
+export type ScriptBridgeContext = Readonly<Record<string, BridgeAPI>>;
+
+/**
+ * Asserts string (from Lua) as EntityId for scene.entities lookup.
+ * Use when receiving entity IDs from script calls.
+ */
+export function toEntityId(s: string): EntityId {
+  return s as EntityId;
+}
 
 /**
  * Time bridge state, updated once per frame by the adapter
