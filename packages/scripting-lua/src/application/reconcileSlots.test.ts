@@ -2,7 +2,7 @@ import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { createEntityId } from '@duckengine/core-v2';
 import type { ScriptSchema } from '@duckengine/core-v2';
 import { reconcileSlots } from './reconcileSlots';
-import { createScriptEventBus } from '../domain/events';
+import { createSceneEventBus } from '@duckengine/core-v2';
 import { createScriptSlot } from '../domain/slots';
 import type { ScriptSandbox } from '../domain/ports';
 import type { ScriptingSessionState } from '../domain/session';
@@ -37,7 +37,7 @@ describe('reconcileSlots', () => {
     session = {
       slots: new Map(),
       pending: new Map(),
-      eventBus: createScriptEventBus(),
+      eventBus: createSceneEventBus(),
       timeState: { delta: 0, elapsed: 0, frameCount: 0, scale: 1 },
       sandbox,
       bridges: [],

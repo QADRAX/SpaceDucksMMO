@@ -131,7 +131,6 @@ src/
 │   │                          # destroyScriptSlot, runHookOnAllSlots, syncSlotPropertiesFromScene,
 │   │                          # flushDirtySlotsToScene, slotKey
 │   ├── properties/            # diffProperties, applyPropertyChanges, normalizePropertyValue
-│   ├── events/                # Re-exports SceneEventBus, createSceneEventBus from core
 │   ├── bridges/               # BridgeDeclaration, factory, resolveRuntimeBridgeTable (engine_ports)
 │   │   ├── inputBridge, physicsBridge, gizmoBridge, timeBridge, transformBridge,
 │   │   ├── sceneBridge, scriptsBridge, bridgeContext

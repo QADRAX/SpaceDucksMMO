@@ -1,21 +1,21 @@
 import type { SceneEventBus } from '@duckengine/core-v2';
 import {
-    createSceneBridgeDeclaration,
-    createTimeBridgeDeclaration,
-    createTimeState,
-    componentBridge,
-    gizmoBridge,
-    inputBridge,
-    physicsBridge,
-    scriptsBridge,
-    transformBridge,
-    type BridgeDeclaration,
+  createSceneBridgeDeclaration,
+  createTimeBridgeDeclaration,
+  createTimeState,
+  componentBridge,
+  gizmoBridge,
+  inputBridge,
+  physicsBridge,
+  scriptsBridge,
+  transformBridge,
+  type BridgeDeclaration,
 } from '../bridges';
 import type { TimeState } from '../bridges';
 
 export interface ScriptingBridges {
-    readonly bridges: ReadonlyArray<BridgeDeclaration>;
-    readonly timeState: TimeState;
+  readonly bridges: ReadonlyArray<BridgeDeclaration>;
+  readonly timeState: TimeState;
 }
 
 /**
@@ -23,18 +23,18 @@ export interface ScriptingBridges {
  * Event bus is provided by core's SceneEventBusProviderPort.
  */
 export function createDefaultScriptingBridges(eventBus: SceneEventBus): ScriptingBridges {
-    const timeState = createTimeState();
+  const timeState = createTimeState();
 
-    const bridges = [
-        transformBridge,
-        createSceneBridgeDeclaration(eventBus),
-        scriptsBridge,
-        componentBridge,
-        physicsBridge,
-        inputBridge,
-        createTimeBridgeDeclaration(timeState),
-        gizmoBridge,
-    ];
+  const bridges = [
+    transformBridge,
+    createSceneBridgeDeclaration(eventBus),
+    scriptsBridge,
+    componentBridge,
+    physicsBridge,
+    inputBridge,
+    createTimeBridgeDeclaration(timeState),
+    gizmoBridge,
+  ];
 
-    return { bridges, timeState };
+  return { bridges, timeState };
 }

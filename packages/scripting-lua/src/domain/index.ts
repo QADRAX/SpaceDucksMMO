@@ -1,10 +1,18 @@
-export * from './componentAccessors';
+// Types & schemas
 export * from './schemas';
-export * from './scriptResolution';
-export * from './slots';
 export * from './properties';
-export * from './events';
-export * from './subsystems';
+export * from './componentAccessors';
+
+// Script resolution
+export * from './scriptResolution';
+
+// Slots & session
+export * from './slots';
+export * from './session';
+
+// Bridges & ports
 export * from './bridges';
 export * from './ports';
-export * from './session';
+
+// Subsystems
+export * from './subsystems';
