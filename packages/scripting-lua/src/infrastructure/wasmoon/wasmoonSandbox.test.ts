@@ -113,6 +113,21 @@ describe('createWasmoonSandbox', () => {
             expect(ok).toBe(false);
         });
 
+        it('invokes bindScriptErrorReporter callback when hook throws (no console)', () => {
+            const reporter = jest.fn();
+            sandbox.bindScriptErrorReporter!(reporter);
+            sandbox.createSlot('e1::s4', ERROR_SCRIPT, stubBridges, {}, null);
+            sandbox.callHook('e1::s4', 'update', 0.016);
+            expect(reporter).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    slotKey: 'e1::s4',
+                    phase: 'hook',
+                    hookName: 'update',
+                    message: expect.stringContaining('intentional error'),
+                })
+            );
+        });
+
         it('loads top-level function style scripts', () => {
             sandbox.createSlot('e1::s5', TOP_LEVEL_FN_SCRIPT, stubBridges, {}, null);
             const ok = sandbox.callHook('e1::s5', 'init', 0);

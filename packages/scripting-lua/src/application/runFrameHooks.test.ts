@@ -67,6 +67,21 @@ describe('runFrameHooks', () => {
     );
   });
 
+  it('binds script error reporter when sandbox supports it (errors emitted as events, not console)', () => {
+    const bindScriptErrorReporter = jest.fn();
+    const sandboxWithReporter = {
+      ...sandbox,
+      bindScriptErrorReporter,
+    };
+    const sessionWithReporter = { ...session, sandbox: sandboxWithReporter };
+    const scene = createMockScene(createEntityId('e1'), []);
+
+    runFrameHooks.execute(sessionWithReporter, updateParams(scene, 0.016));
+
+    expect(bindScriptErrorReporter).toHaveBeenCalledTimes(1);
+    expect(bindScriptErrorReporter).toHaveBeenCalledWith(expect.any(Function));
+  });
+
   it('syncs properties and runs frame hooks for enabled slots', () => {
     const entityId = createEntityId('e1');
     const slot = createScriptSlot(entityId, 'test-script', { speed: 5 }, [

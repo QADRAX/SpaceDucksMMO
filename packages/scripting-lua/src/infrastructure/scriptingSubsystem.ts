@@ -1,4 +1,4 @@
-import { defineSceneSubsystem, ResourceLoaderPortDef } from '@duckengine/core-v2';
+import { defineSceneSubsystem, ResourceLoaderPortDef, DiagnosticPortDef } from '@duckengine/core-v2';
 import { resolveBridgePortsFromRegistry } from '../domain/bridges';
 import type { LuaEngine } from 'wasmoon';
 import { initializeScriptRuntime } from '../domain/session';
@@ -11,7 +11,7 @@ import { createBuiltInScriptSchemaResolver } from './createBuiltInScriptSchemaRe
 import { createResourceScriptResolver } from './resourceScriptResolver';
 import { createWasmoonSandbox } from './wasmoon';
 
-import type { SubsystemPortRegistry } from '@duckengine/core-v2';
+import type { SubsystemPortRegistry, DiagnosticPort } from '@duckengine/core-v2';
 
 export interface ScriptingSubsystemConfig {
   /**
@@ -25,6 +25,12 @@ export interface ScriptingSubsystemConfig {
     lua: LuaEngine;
     ports: SubsystemPortRegistry;
   }) => void;
+
+  /**
+   * Optional diagnostic port for bootstrap errors (e.g. wasmoon boot failure).
+   * When not provided, bootstrap errors are rethrown without logging.
+   */
+  readonly diagnostic?: DiagnosticPort;
 }
 
 /**
@@ -37,7 +43,7 @@ export interface ScriptingSubsystemConfig {
 export async function createScriptingSubsystem(config?: ScriptingSubsystemConfig) {
   // Boot real wasmoon engine asynchronously before defining the subsystem
   const { sandbox, engine } = await createWasmoonSandbox().catch((err) => {
-    console.warn('[scripting-lua] Failed to boot wasmoon.', err);
+    config?.diagnostic?.log('warn', 'Failed to boot wasmoon', { error: String(err) });
     throw err;
   });
 
@@ -47,13 +53,18 @@ export async function createScriptingSubsystem(config?: ScriptingSubsystemConfig
       registry,
       bridgePorts: resolveBridgePortsFromRegistry(registry),
       resourceLoader: registry.get(ResourceLoaderPortDef),
+      diagnostic: registry.get(DiagnosticPortDef),
     }))
 
     // 2. Initialize internal state (the scripting session)
-    .withState(({ ports: { bridgePorts, registry, resourceLoader }, engine: engineState }) => {
+    .withState(({ ports: { bridgePorts, registry, resourceLoader, diagnostic }, engine: engineState }) => {
       const resolver = resourceLoader
-        ? createResourceScriptResolver(resourceLoader, createBuiltInScriptResolver())
+        ? createResourceScriptResolver(resourceLoader, createBuiltInScriptResolver(), diagnostic)
         : { resolveSource: createBuiltInScriptResolver() };
+
+      if (sandbox.bindDiagnostic) {
+        sandbox.bindDiagnostic(diagnostic);
+      }
 
       return initializeScriptRuntime({
         sandbox,

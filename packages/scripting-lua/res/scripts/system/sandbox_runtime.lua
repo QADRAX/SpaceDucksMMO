@@ -53,13 +53,17 @@ function __LoadSlot(slotKey, source)
 
   local fn, loadErr = load(source, "@" .. tostring(slotKey))
   if not fn then
-    print("[ScriptError] Compile error in '" .. tostring(slotKey) .. "': " .. tostring(loadErr))
+    if __ReportScriptError then
+      __ReportScriptError(tostring(slotKey), "compile", tostring(loadErr), nil)
+    end
     return false
   end
 
   local ok, result = pcall(fn)
   if not ok then
-    print("[ScriptError] Runtime error in '" .. tostring(slotKey) .. "': " .. tostring(result))
+    if __ReportScriptError then
+      __ReportScriptError(tostring(slotKey), "load", tostring(result), nil)
+    end
     return false
   end
 
@@ -104,7 +108,9 @@ function __CallHook(slotKey, hookName, dt, ...)
 
   local ok, errMsg = pcall(fn, ctx.self, dt, ...)
   if not ok then
-    print("[ScriptError] " .. tostring(slotKey) .. ":" .. hookName .. " — " .. tostring(errMsg))
+    if __ReportScriptError then
+      __ReportScriptError(tostring(slotKey), "hook", tostring(errMsg), hookName)
+    end
     return false
   end
   return true

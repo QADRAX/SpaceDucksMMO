@@ -1,5 +1,5 @@
 import type { SubsystemEventParams, PropertyValues } from '@duckengine/core-v2';
-import { defineSubsystemEventUseCase } from '@duckengine/core-v2';
+import { defineSubsystemEventUseCase, emitSceneChange } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import { slotKey, initScriptSlot, destroyScriptSlot } from '../domain/slots';
 import { createScriptBridgeContext, ENGINE_SYSTEM_BRIDGES } from '../domain/bridges';
@@ -26,6 +26,12 @@ export const reconcileSlots =
 
       const entityId = params.event.entityId;
       const { slots, pending, sandbox } = session;
+
+      if (sandbox.bindScriptErrorReporter) {
+        sandbox.bindScriptErrorReporter(({ slotKey, phase, hookName, message }) => {
+          emitSceneChange(scene, { kind: 'script-error', slotKey, phase, hookName, message });
+        });
+      }
 
       if (sandbox.bindComponentAccessors) {
         const { getter, setter } = createComponentAccessorPair(scene);

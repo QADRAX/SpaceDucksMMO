@@ -1,4 +1,5 @@
 import type { ScriptSchema, EntityId, ComponentType, PropertyValues } from '@duckengine/core-v2';
+import type { DiagnosticPort } from '@duckengine/core-v2';
 import type { ScriptHook } from '../slots';
 import type { ScriptBridgeContext } from '../bridges';
 
@@ -49,4 +50,18 @@ export interface ScriptSandbox {
     getter: <T = unknown>(entityId: EntityId, componentType: ComponentType, key: string) => T | undefined,
     setter: <T = unknown>(entityId: EntityId, componentType: ComponentType, key: string, value: T) => void
   ): void;
+
+  /**
+   * Bind a callback to receive script errors (compile, load, hook runtime).
+   * Replaces console/print output — errors are emitted as events for the host to handle.
+   */
+  bindScriptErrorReporter?(
+    reporter: (params: { slotKey: string; phase: 'compile' | 'load' | 'hook'; hookName?: string; message: string }) => void
+  ): void;
+
+  /**
+   * Bind the diagnostic port for infrastructure-level logs (e.g. sandbox catch blocks).
+   * When unbound, no diagnostic output is produced.
+   */
+  bindDiagnostic?(diagnostic: DiagnosticPort | undefined): void;
 }

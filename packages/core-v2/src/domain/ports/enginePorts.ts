@@ -1,5 +1,6 @@
 import type { PortBinding } from '../subsystems/types';
 import type { ResourceLoaderPort } from './resourceLoaderPort';
+import type { DiagnosticPort } from './diagnosticPort';
 
 /**
  * Standardized ports (external dependencies) that can be injected at engine startup.
@@ -11,4 +12,10 @@ export interface EnginePorts {
      * Responsible for resolving abstract resource references into data.
      */
     readonly resourceLoader?: PortBinding<ResourceLoaderPort>;
+
+    /**
+     * Diagnostic/logging output.
+     * Use consoleDiagnosticPort for a default console implementation.
+     */
+    readonly diagnostic?: PortBinding<DiagnosticPort>;
 }

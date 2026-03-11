@@ -1,4 +1,4 @@
-import type { ResourceLoaderPort } from '@duckengine/core-v2';
+import type { ResourceLoaderPort, DiagnosticPort } from '@duckengine/core-v2';
 import { createResourceKey } from '@duckengine/core-v2';
 import { isBuiltInOrTestScript } from '../domain/scriptResolution';
 
@@ -13,7 +13,8 @@ export interface ScriptResolver {
  */
 export function createResourceScriptResolver(
     resourceLoader: ResourceLoaderPort,
-    builtInResolver: (scriptId: string) => Promise<string | null>
+    builtInResolver: (scriptId: string) => Promise<string | null>,
+    diagnostic?: DiagnosticPort
 ): ScriptResolver {
     return {
         async resolveSource(scriptId: string): Promise<string | null> {
@@ -27,7 +28,7 @@ export function createResourceScriptResolver(
                 const resourceResult = await resourceLoader.resolve({ key, kind: 'script' });
 
                 if (resourceResult.ok === false) {
-                    console.error(`[scripting-lua] Failed to resolve script resource '${scriptId}':`, resourceResult.error);
+                    diagnostic?.log('error', `Failed to resolve script resource '${scriptId}'`, { error: resourceResult.error });
                     return null;
                 }
 
@@ -35,19 +36,19 @@ export function createResourceScriptResolver(
                 const sourceFile = resource.files.source;
 
                 if (!sourceFile) {
-                    console.error(`[scripting-lua] Script resource '${scriptId}' has no 'source' file slot.`);
+                    diagnostic?.log('error', `Script resource '${scriptId}' has no 'source' file slot.`, { scriptId });
                     return null;
                 }
 
                 const fetchResult = await resourceLoader.fetchFile(sourceFile.url, 'text');
                 if (fetchResult.ok === false) {
-                    console.error(`[scripting-lua] Failed to fetch script source from '${sourceFile.url}':`, fetchResult.error);
+                    diagnostic?.log('error', `Failed to fetch script source from '${sourceFile.url}'`, { error: fetchResult.error });
                     return null;
                 }
 
                 return fetchResult.value as string;
             } catch (err) {
-                console.error(`[scripting-lua] Error resolving script '${scriptId}':`, err);
+                diagnostic?.log('error', `Error resolving script '${scriptId}'`, { error: String(err) });
                 return null;
             }
         }

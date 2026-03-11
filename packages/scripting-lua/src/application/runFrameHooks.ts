@@ -1,5 +1,5 @@
 import type { EntityId, SubsystemUpdateParams, SubsystemUseCase } from '@duckengine/core-v2';
-import { defineSubsystemUseCase, removeEntityFromScene } from '@duckengine/core-v2';
+import { defineSubsystemUseCase, removeEntityFromScene, emitSceneChange } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import {
   FRAME_HOOKS,
@@ -29,6 +29,12 @@ export const runFrameHooks: SubsystemUseCase<ScriptingSessionState, SubsystemUpd
     execute(session: ScriptingSessionState, params: SubsystemUpdateParams): void {
       const { scene, dt } = params;
       const { slots, sandbox, eventBus, timeState } = session;
+
+      if (sandbox.bindScriptErrorReporter) {
+        sandbox.bindScriptErrorReporter(({ slotKey, phase, hookName, message }) => {
+          emitSceneChange(scene, { kind: 'script-error', slotKey, phase, hookName, message });
+        });
+      }
 
       // 1. Update time state
       timeState.delta = dt;

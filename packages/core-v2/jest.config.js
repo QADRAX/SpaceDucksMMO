@@ -9,4 +9,7 @@ module.exports = {
   moduleFileExtensions: ['ts', 'tsx', 'js', 'json'],
   testMatch: ['**/*.test.ts'],
   testTimeout: 10000,
+  moduleNameMapper: {
+    '^@duckengine/web-core-api-client$': '<rootDir>/src/__mocks__/web-core-api-client.ts',
+  },
 };

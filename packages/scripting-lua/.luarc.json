@@ -22,7 +22,8 @@
     "gizmos",
     "events",
     "Engine",
-    "BuiltInScripts"
+    "BuiltInScripts",
+    "__ReportScriptError"
   ],
   "runtime.version": "Lua 5.4",
   "completion.callSnippet": "Replace",

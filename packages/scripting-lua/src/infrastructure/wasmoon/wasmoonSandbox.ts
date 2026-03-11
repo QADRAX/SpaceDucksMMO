@@ -3,6 +3,7 @@ import type { LuaEngine } from 'wasmoon';
 import type { ScriptSandbox } from '../../domain/ports';
 import type { ScriptBridgeContext } from '../../domain/bridges';
 import type { ScriptSchema, EntityId, ComponentType, PropertyValues } from '@duckengine/core-v2';
+import type { DiagnosticPort } from '@duckengine/core-v2';
 import { detectHooksFromSource } from '../../domain/slots';
 import {
   getSandboxSecurityLua,
@@ -31,6 +32,24 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
   lua.doStringSync(getMathExtLua());
 
   const bridgesBySlot = new Map<string, ScriptBridgeContext>();
+
+  let diagnostic: DiagnosticPort | undefined;
+
+  function bindScriptErrorReporter(
+    reporter: (params: { slotKey: string; phase: 'compile' | 'load' | 'hook'; hookName?: string; message: string }) => void
+  ): void {
+    lua.global.set(
+      '__ReportScriptError',
+      (slotKey: string, phase: string, message: string, hookName?: string) => {
+        reporter({
+          slotKey,
+          phase: phase as 'compile' | 'load' | 'hook',
+          hookName: hookName ?? undefined,
+          message,
+        });
+      },
+    );
+  }
 
   const PER_ENTITY_BRIDGES = new Set(['Transform', 'Script']);
 
@@ -113,7 +132,7 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
           getScopedBridge,
         );
       } catch (err) {
-        console.error(`[scripting-lua] __WrapSelf failed for '${slotKey}':`, err);
+        diagnostic?.log('error', `__WrapSelf failed for '${slotKey}'`, { error: String(err) });
       }
     },
 
@@ -131,7 +150,7 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
         const result = callLuaGlobal(lua, '__CallHook', slotKey, hook, dt, ...args);
         return result !== false;
       } catch (err) {
-        console.error(`[scripting-lua] callHook '${hook}' on '${slotKey}' threw:`, err);
+        diagnostic?.log('error', `callHook '${hook}' on '${slotKey}' threw`, { error: String(err) });
         return false;
       }
     },
@@ -142,7 +161,7 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
           callLuaGlobal(lua, '__UpdateProperty', slotKey, key, value);
         }
       } catch (err) {
-        console.error(`[scripting-lua] syncProperties failed for '${slotKey}':`, err);
+        diagnostic?.log('error', `syncProperties failed for '${slotKey}'`, { error: String(err) });
       }
     },
 
@@ -168,7 +187,15 @@ export async function createWasmoonSandbox(): Promise<{ sandbox: ScriptSandbox; 
     ): void {
       lua.global.set('__GetResourceProperty', getter);
       lua.global.set('__SetResourceProperty', setter);
-    }
+    },
+
+    bindScriptErrorReporter(reporter) {
+      bindScriptErrorReporter(reporter);
+    },
+
+    bindDiagnostic(port) {
+      diagnostic = port;
+    },
   };
 
   return { sandbox, engine: lua };

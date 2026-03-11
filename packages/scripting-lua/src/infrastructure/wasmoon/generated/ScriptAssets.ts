@@ -214,8 +214,10 @@ function FirstPersonMove:update(dt)
     if mv:length() <= 0 then return end
     mv = mv:normalize()
 
-    local forwardRaw = self.entity.components.transform.getForward()
-    local rightRaw   = self.entity.components.transform.getRight()
+    ---@type TransformV2
+    local transform = self.entity.components.transform
+    local forwardRaw = transform.getForward()
+    local rightRaw   = transform.getRight()
     local forward = math.vec3.new(forwardRaw.x, forwardRaw.y, forwardRaw.z)
     local right   = math.vec3.new(rightRaw.x, rightRaw.y, rightRaw.z)
 
@@ -237,11 +239,11 @@ function FirstPersonMove:update(dt)
     worldMove = worldMove:normalize()
 
     local speed = self.properties.moveSpeed * (shift and self.properties.sprintMultiplier or 1)
-    local curRaw = self.entity.components.transform.getPosition()
+    local curRaw = transform.getPosition()
     local cur = math.vec3.new(curRaw.x, curRaw.y, curRaw.z)
 
     local newPos = cur + (worldMove * (speed * dt))
-    self.entity.components.transform.setPosition(newPos.x, newPos.y, newPos.z)
+    transform.setPosition(newPos.x, newPos.y, newPos.z)
 end
 
 return FirstPersonMove
@@ -1481,13 +1483,17 @@ function __LoadSlot(slotKey, source)
 
   local fn, loadErr = load(source, "@" .. tostring(slotKey))
   if not fn then
-    print("[ScriptError] Compile error in '" .. tostring(slotKey) .. "': " .. tostring(loadErr))
+    if __ReportScriptError then
+      __ReportScriptError(tostring(slotKey), "compile", tostring(loadErr), nil)
+    end
     return false
   end
 
   local ok, result = pcall(fn)
   if not ok then
-    print("[ScriptError] Runtime error in '" .. tostring(slotKey) .. "': " .. tostring(result))
+    if __ReportScriptError then
+      __ReportScriptError(tostring(slotKey), "load", tostring(result), nil)
+    end
     return false
   end
 
@@ -1532,7 +1538,9 @@ function __CallHook(slotKey, hookName, dt, ...)
 
   local ok, errMsg = pcall(fn, ctx.self, dt, ...)
   if not ok then
-    print("[ScriptError] " .. tostring(slotKey) .. ":" .. hookName .. " — " .. tostring(errMsg))
+    if __ReportScriptError then
+      __ReportScriptError(tostring(slotKey), "hook", tostring(errMsg), hookName)
+    end
     return false
   end
   return true

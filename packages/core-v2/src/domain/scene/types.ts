@@ -88,6 +88,15 @@ export type SceneErrorEvent = {
   readonly message: string;
 };
 
+/** Event emitted when a script has a compile, load, or runtime error. */
+export type ScriptErrorEvent = {
+  readonly kind: 'script-error';
+  readonly slotKey: string;
+  readonly phase: 'compile' | 'load' | 'hook';
+  readonly hookName?: string;
+  readonly message: string;
+};
+
 /** Discriminated union of all scene change events. */
 export type SceneChangeEvent =
   | EntityAddedEvent
@@ -104,8 +113,8 @@ export type SceneChangeEvent =
   | SceneSetupEvent
   | SceneTeardownEvent;
 
-/** Scene change event extended with error variant. */
-export type SceneChangeEventWithError = SceneChangeEvent | SceneErrorEvent;
+/** Scene change event extended with error variants. */
+export type SceneChangeEventWithError = SceneChangeEvent | SceneErrorEvent | ScriptErrorEvent;
 
 /**
  * Listener signature for scene change events.

@@ -2,6 +2,7 @@ import {
     createEngine,
     createDuckEngineAPI,
     ResourceLoaderPortDef,
+    DiagnosticPortDef,
     definePort,
     ok
 } from '@duckengine/core-v2';
@@ -10,6 +11,7 @@ import type {
     GizmoPort,
     PhysicsQueryPort,
     ResourceLoaderPort,
+    DiagnosticPort,
     PortBinding,
 } from '@duckengine/core-v2';
 import { createScriptingSubsystem, ScriptingSubsystemConfig } from '../scriptingSubsystem';
@@ -64,7 +66,11 @@ export function createMockPorts() {
         getCollisionEvents: jest.fn(() => []),
     };
 
-    return { mockInput, mockGizmo, mockPhysics };
+    const mockDiagnostic: DiagnosticPort = {
+        log: jest.fn(),
+    };
+
+    return { mockInput, mockGizmo, mockPhysics, mockDiagnostic };
 }
 
 /**
@@ -115,7 +121,7 @@ export async function setupScriptingIntegrationTest(params?: {
     const engine = createEngine();
     const api = createDuckEngineAPI(engine);
 
-    const { mockInput, mockGizmo, mockPhysics } = createMockPorts();
+    const { mockInput, mockGizmo, mockPhysics, mockDiagnostic } = createMockPorts();
     const { loader, registerScript } = createMockResourceLoader();
 
     const scriptingSubsystem = await createScriptingSubsystem(params?.config);
@@ -125,6 +131,7 @@ export async function setupScriptingIntegrationTest(params?: {
             InputPortDef.bind(mockInput),
             GizmoPortDef.bind(mockGizmo),
             PhysicsQueryPortDef.bind(mockPhysics),
+            DiagnosticPortDef.bind(mockDiagnostic),
             ResourceLoaderPortDef.bind(loader),
             ...(params?.customPorts ?? [])
         ],
@@ -138,6 +145,7 @@ export async function setupScriptingIntegrationTest(params?: {
             input: mockInput,
             gizmo: mockGizmo,
             physics: mockPhysics,
+            diagnostic: mockDiagnostic,
             resourceLoader: loader
         },
         registerScript
