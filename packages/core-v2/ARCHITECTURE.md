@@ -23,6 +23,7 @@ flowchart TB
         Viewports[(viewports)]
         Settings[settings]
         Paused[paused]
+        SetupComplete[setupComplete]
         EngineSubs[engineSubsystems]
         SubRuntime[subsystemRuntime]
     end
@@ -57,7 +58,7 @@ flowchart TB
 
 | Concept | Description |
 |---------|-------------|
-| **EngineState** | Root state: scenes, viewports, settings, paused, engineSubsystems, subsystemRuntime. |
+| **EngineState** | Root state: scenes, viewports, settings, paused, setupComplete, engineSubsystems, subsystemRuntime. |
 | **SceneState** | Per-scene state: entities, rootEntityIds, activeCameraId, subsystems, changeListeners, prefabs, uiSlots, paused. |
 | **EntityState** | ECS entity: id, transform, components, observers, children, parent, displayName, gizmoIcon. |
 | **SubsystemRuntimeState** | Shared bag: sceneSubsystemFactories, portDerivers, ports, portDefinitions. |
@@ -171,7 +172,7 @@ src/
 
 **Dependency rule**:
 - `domain` has zero external dependencies
-- `application` imports from `domain` only
+- `application` imports from `domain` only (exception: `setupEngine` imports `defaultPortDerivers` from infrastructure)
 - `infrastructure` imports from `domain` and `application`
 
 ---
@@ -211,14 +212,14 @@ This section documents **all** use cases in `src/application/`. Each use case is
 
 | Use case | API method | Params | Description |
 |----------|------------|--------|-------------|
-| **setupEngine** | `api.setup()` | `{ engineSubsystems?, sceneSubsystems?, ports?, customPorts?, portDerivers? }` | Composition root: registers ports, port derivers, engine subsystems, scene subsystem factories. Applies factories to existing scenes. |
+| **setupEngine** | `api.setup()` | `{ engineSubsystems?, sceneSubsystems?, ports?, customPorts?, portDerivers? }` | Composition root: adds default port derivers (SceneEventBusProvider, UISlotOperations), registers ports, runs derivers, registers subsystems and scene factories. Sets `engine.setupComplete = true`. Must run before update/registerSubsystem. |
 | **addSceneToEngine** | `api.addScene()` | `{ sceneId }` | Creates a scene, registers it, instantiates and attaches scene subsystems. Returns `Result<SceneState>`. |
 | **removeSceneFromEngine** | `api.removeScene()` | `{ sceneId }` | Removes a scene. Fails if any viewport references it. Does not call teardown. |
 | **addViewport** | `api.addViewport()` | `{ id, sceneId, cameraEntityId, canvasId, rect?, enabled? }` | Creates a viewport. Validates scene exists and camera entity has `cameraView`. Returns `Result<ViewportState>`. |
 | **removeViewport** | `api.removeViewport()` | `{ viewportId }` | Removes a viewport from the engine. |
 | **setEnginePaused** | `api.setPaused()` | `{ paused }` | Sets `engine.paused`. When true, only subsystems with `updateWhenPaused` run. |
-| **registerEngineSubsystem** | `api.registerSubsystem()` | `{ subsystem }` | Appends an engine subsystem to the update pipeline. |
-| **updateEngine** | `api.update()` | `{ dt }` | Advances one frame: updates all scenes (scene subsystems), then engine subsystems. |
+| **registerEngineSubsystem** | `api.registerSubsystem()` | `{ subsystem }` | Appends an engine subsystem to the update pipeline. Guard: requires setup. |
+| **updateEngine** | `api.update()` | `{ dt }` | Advances one frame: updates all scenes (scene subsystems), then engine subsystems. Guard: requires setup. |
 | **updateSettings** | `api.updateSettings()` | `{ patch: { graphics?, gameplay?, audio? } }` | Shallow-merges patch into `engine.settings`. Returns the resulting `GameSettings`. |
 | **getSettings** | `api.getSettings()` | — | Returns current `GameSettings`. |
 | **listScenes** | `api.listScenes()` | — | Returns `SceneView[]` (readonly snapshots). |
@@ -237,7 +238,7 @@ This section documents **all** use cases in `src/application/`. Each use case is
 | **toggleSceneDebug** | `scene.toggleDebug()` | `{ kind, enabled }` | Sets debug flag for `transform`, `mesh`, `collider`, `camera`. Emits `scene-debug-changed` etc. |
 | **setupScene** | `scene.setupScene()` | `{ subsystems? }` | Attaches optional subsystems, emits `scene-setup`. |
 | **teardownScene** | `scene.teardownScene()` | — | Emits `scene-teardown`, disposes subsystems, detaches observers, clears state. |
-| **updateScene** | `scene.updateScene()` | `{ dt }` | Runs `scene.subsystems.update(scene, dt)` in order. |
+| **updateScene** | `scene.updateScene()` | `{ dt }` | Runs `scene.subsystems.update(scene, dt)` in order. Guard: requires setup. |
 | **setScenePaused** | `scene.setPaused()` | `{ paused }` | Sets `scene.paused`. |
 | **subscribeToSceneChanges** | `scene.subscribe()` | `{ listener: (ev) => void }` | Adds listener to `changeListeners`. Returns unsubscribe function. |
 | **listEntities** | `scene.listEntities()` | — | Returns `EntityView[]` for root entities only. |
@@ -287,12 +288,19 @@ This section documents **all** use cases in `src/application/`. Each use case is
 
 ### Internal vs external ports
 
-| Port | Type | Description |
-|------|------|-------------|
-| **SceneEventBusProviderPort** | Internal | Auto-registered by `deriveSceneEventBusProvider`. Creates and stores event buses per scene. Consumer can override via `params.ports`. |
-| **UISlotOperationsPort** | Internal | Auto-registered by `deriveUISlotOperations`. Delegates to scene use cases (addUISlot, removeUISlot, updateUISlot). Consumer can override via `params.ports`. |
-| **UIRendererPort** | External | Client implements. Mounts SPAs in DOM containers. |
-| **ResourceLoaderPort** | External | Client implements. Resolves resources. |
+Ports live in `domain/ports/internal/` (core implements) and `domain/ports/external/` (client implements).
+
+| Port | Type | Location | Description |
+|------|------|----------|-------------|
+| **SceneEventBusProviderPort** | Internal | `internal/` | Auto-registered by `deriveSceneEventBusProvider`. Creates and stores event buses per scene. Default: `createDefaultSceneEventBusProvider`. |
+| **UISlotOperationsPort** | Internal | `internal/` | Auto-registered by `deriveUISlotOperations`. Delegates to scene use cases. Default in `infrastructure/portDerivers/defaults/`. |
+| **UIRendererPort** | External | `external/` | Client implements. Mounts SPAs in DOM containers. |
+| **ViewportOverlayProviderPort** | External | `external/` | Client implements. Returns DOM overlay per viewport. |
+| **ResourceLoaderPort** | External | `external/` | Client implements. Resolves resources. |
+| **DiagnosticPort** | External | `external/` | Client implements. Logging output. |
+| **PhysicsQueryPort** | External | `external/` | Client implements. Raycast, collision events. |
+| **GizmoPort** | External | `external/` | Client implements. Debug drawing. |
+| **InputPort** | External | `external/` | Client implements. Key/mouse state. |
 
 ### Port use cases (not in main API)
 
@@ -300,15 +308,6 @@ This section documents **all** use cases in `src/application/`. Each use case is
 |----------|---------|-------------|
 | **fetchFile** | `ResourceLoaderPort` impl | Fetches a file by URL. Caches by `url::format`. Used by scripting/resource loading. |
 | **resolveWebResource** | `ResourceLoaderPort` impl | Resolves a resource via EngineService API. Caches by `key@version`. |
-
-### UI ports (client-implemented)
-
-| Port | Used by | Description |
-|------|---------|-------------|
-| **UIRendererPort** | UISubsystem | `mount(slot, container)`, `unmount(slotId)`, `updateSlot?`. Client mounts SPAs (React, Preact, etc.) in DOM containers. |
-| **ViewportOverlayProviderPort** | UISubsystem | `getOverlayContainer(viewportId)`. Returns the DOM element where UI overlays are mounted per viewport. |
-| **SceneEventBusProviderPort** | Scripting, UI adapter | `registerSceneBus`, `unregisterSceneBus`, `getEventBus`. Bridges events between UI and scripting (ScriptEventBus). Internal default. |
-| **UISlotOperationsPort** | scripting-lua sceneBridge | `addUISlot`, `removeUISlot`, `updateUISlot`. Wraps scene use cases for Lua scripts. Internal default. |
 
 ---
 
@@ -326,6 +325,7 @@ sequenceDiagram
 
     User->>API: setup({ customPorts, sceneSubsystems })
     API->>Setup: execute(engine, params)
+    Setup->>Setup: defaultPortDerivers + params.portDerivers
     Setup->>Runtime: ports.set, portDefinitions.set
     Setup->>Runtime: portDerivers.push
     Setup->>Setup: runSubsystemPortDerivers
@@ -334,6 +334,7 @@ sequenceDiagram
         Setup->>Factories: instantiateSceneSubsystems
         Setup->>Runtime: attachSceneSubsystems
     end
+    Setup->>Setup: engine.setupComplete = true
 ```
 
 #### Add entity → subsystem reacts
@@ -435,7 +436,9 @@ flowchart TB
 
 **Scene subsystems vs engine subsystems** — Scene subsystems are per-scene, receive scene events, and update with `(scene, dt)`. Engine subsystems are global, receive no events, and update with `(engine, dt)`. Both are registered at setup.
 
-**Port derivation** — Ports can be injected statically (`customPorts`, `ports`) or derived by `portDerivers` that run during setup. Derivers receive `{ engine, ports }` and can call `ports.register(def, impl)`. Internal defaults: `deriveSceneEventBusProvider` (SceneEventBusProvider), `deriveUISlotOperations` (UISlotOperationsPort). Both run at setup; consumer can override via `params.ports`.
+**Port derivation** — Ports can be injected statically (`customPorts`, `ports`) or derived by `portDerivers` that run during setup. Derivers live in `infrastructure/portDerivers/`. `setupEngine` adds `defaultPortDerivers` (SceneEventBusProvider, UISlotOperations) before `params.portDerivers`. Derivers receive `{ engine, ports }` and call `ports.register(def, impl)`. Consumer can override via `params.ports`.
+
+**Setup guard** — `updateEngine`, `updateScene`, `registerEngineSubsystem` require `engine.setupComplete`. Call `api.setup()` before the game loop.
 
 **Entity observers** — Each entity has an `EntityObservers` hub. When a component is added/removed/changed or the transform changes, observers fire. `attachEntityObservers` wires these to `emitSceneChange`, so subsystems react to ECS mutations without polling.
 

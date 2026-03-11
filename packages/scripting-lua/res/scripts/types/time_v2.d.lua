@@ -11,4 +11,4 @@
 ---@field getElapsed fun(): number Total elapsed time in seconds.
 ---@field getFrameCount fun(): number Total frame count since startup.
 ---@field getScale fun(): number Time scale multiplier (1.0 = normal speed).
----@field setScale fun(scale: number): void Set time scale multiplier.
+---@field setScale fun(scale: number): nil Set time scale multiplier.

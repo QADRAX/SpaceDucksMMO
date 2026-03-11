@@ -7,7 +7,7 @@
 ---Scene system bridge for instantiation and entity management.
 ---@class SceneV2
 ---@field instantiate fun(templateId: string, worldPos?: Vec3V2, worldRot?: QuatV2): string
----@field destroy fun(entityId: string): void
+---@field destroy fun(entityId: string): nil
 ---@field exists fun(entityId: string): boolean
 scene = {}
 

@@ -8,6 +8,8 @@ This document describes the actual architecture of the Lua scripting subsystem u
 
 This package is a **scene subsystem adapter** (SceneSubsystem). It depends on `@duckengine/core-v2`; core-v2 never depends on it. It registers as a scene subsystem via `defineSceneSubsystem` and connects to the engine lifecycle through events and `onUpdate`.
 
+**Ports from core**: `SceneEventBusProviderPort` (internal, auto-registered) provides the event bus per scene via `getOrCreateEventBus(sceneId)`. `UISlotOperationsPort` (internal) enables `Scene.addUISlot`, `removeUISlot`, `updateUISlot` from Lua. Both are available after `api.setup()`.
+
 ---
 
 ## 4+1 Model: The Four Views + Scenarios
@@ -54,10 +56,12 @@ flowchart LR
 | **ScriptSandbox** | Port that abstracts Lua execution (createSlot, callHook, syncProperties, flushDirtyProperties, destroySlot). |
 | **ScriptBridgeContext** | Context injected per slot: Transform, Scene, Script, references, etc. |
 | **BridgeDeclaration** | Factory that creates a bridge from ports and state (inputBridge, physicsBridge, gizmoBridge, timeBridge, etc.). |
-| **ScriptEventBus** | In-frame event bus for script-to-script communication (fire/on, flush). |
-| **ScriptingSessionState** | Global session state: slots, pending, sandbox, bridges, ports, eventBus, timeState, resolvers. |
+| **SceneEventBus** | In-frame event bus for script-to-script communication (fire/on, flush). Provided by core's `SceneEventBusProviderPort.getOrCreateEventBus(sceneId)`. |
+| **ScriptingSessionState** | Global session state: slots, pending, sandbox, bridges, ports, eventBus, sceneId, sceneEventBusProvider, timeState, resolvers. |
 
 **Entity-scoped bridges**: Transform, Scene, Script are scoped per entityId. Input, Gizmo, Physics, Time are global and live in `Engine.*`.
+
+**BridgePorts**: Resolved from `SubsystemRuntimeState` at session init. Includes `physicsQuery`, `gizmo`, `input`, `uiSlotOperations`. `uiSlotOperations` is an internal port (core provides default); scripting gets it after `api.setup()`.
 
 **Custom ports**: `engine_ports['port-id']` is resolved from `SubsystemRuntimeState` (portDefinitions + ports). Async methods accept a callback as the last argument: `callback(err, result)`.
 
@@ -103,6 +107,7 @@ flowchart TB
         T1[onDisable → onDestroy]
         T2[slots.clear]
         T3[eventBus.dispose]
+        T4[provider.unregisterSceneBus]
     end
 
     A --> Reconcile
@@ -126,11 +131,12 @@ src/
 │   │                          # destroyScriptSlot, runHookOnAllSlots, syncSlotPropertiesFromScene,
 │   │                          # flushDirtySlotsToScene, slotKey
 │   ├── properties/            # diffProperties, applyPropertyChanges, normalizePropertyValue
-│   ├── events/                # ScriptEventBus, createScriptEventBus
+│   ├── events/                # Re-exports SceneEventBus, createSceneEventBus from core
 │   ├── bridges/               # BridgeDeclaration, factory, resolveRuntimeBridgeTable (engine_ports)
 │   │   ├── inputBridge, physicsBridge, gizmoBridge, timeBridge, transformBridge,
 │   │   ├── sceneBridge, scriptsBridge, bridgeContext
-│   ├── session/               # initializeScriptRuntime, createScriptingSession
+│   ├── session/               # initializeScriptRuntime, createScriptingSession,
+│   │                          # ScriptingSessionState (eventBus, sceneId, sceneEventBusProvider)
 │   ├── ports/                 # ScriptSandbox (interface)
 │   ├── componentAccessors/    # createComponentAccessorPair (ECS getter/setter)
 │   ├── schemas/               # builtInSchemas
@@ -296,6 +302,7 @@ sequenceDiagram
 2. `teardownSession` executes
 3. For each slot: `onDisable` → `onDestroy` → `sandbox.destroySlot`
 4. `slots.clear()`, `eventBus.dispose()`
+5. `sceneEventBusProvider.unregisterSceneBus(sceneId)` — releases the bus from the provider
 
 ---
 
@@ -349,3 +356,5 @@ flowchart TB
 **engine_ports** — Custom ports are resolved at runtime from `SubsystemRuntimeState` (portDefinitions + port implementations). There are no static types per port for clients; each game extends `engine_ports_v2.d.lua` with its own port shapes.
 
 **Lua VM** — One wasmoon (Lua 5.4) instance per session. All slots share the same VM; isolation is by `slotKey` (context tables, metatables), not by separate VMs.
+
+**Event bus** — The event bus is `SceneEventBus` from core. scripting-lua obtains it via `SceneEventBusProviderPort.getOrCreateEventBus(sceneId)` at session init. On teardown, `unregisterSceneBus(sceneId)` is called so the provider can dispose the bus.
