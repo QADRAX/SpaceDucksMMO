@@ -17,7 +17,7 @@ import {
   createTimeBridgeDeclaration,
   type BridgePorts,
 } from '../bridges';
-import { createDefaultScriptingBridges } from '../subsystems/defaultBridges';
+import { createDefaultScriptingBridges } from '../bridges';
 import { createScriptingSession, type ScriptingSessionState } from './index';
 import type { ScriptSandbox } from '../ports';
 
@@ -30,7 +30,6 @@ export interface ScriptRuntimeOptions {
     readonly eventBus: SceneEventBus;
     readonly sceneId: import('@duckengine/core-v2').SceneId;
     readonly sceneEventBusProvider?: SceneEventBusProviderPort;
-    readonly onSandboxReady?: (params: { lua: LuaEngine; ports: SubsystemPortRegistry }) => void;
     readonly resolveSource?: (scriptId: string) => Promise<string | null>;
     readonly resolveScriptSchema?: (scriptId: string) => Promise<ScriptSchema | null>;
 }
@@ -43,8 +42,6 @@ export function initializeScriptRuntime(options: ScriptRuntimeOptions): Scriptin
     const {
         engine,
         runtimeState,
-        registry,
-        onSandboxReady,
         sandbox,
         bridgePorts,
         eventBus,
@@ -56,15 +53,10 @@ export function initializeScriptRuntime(options: ScriptRuntimeOptions): Scriptin
     const scriptPorts = resolveRuntimeBridgeTable(runtimeState);
     engine.global.set('engine_ports', scriptPorts);
 
-    // 2. Notify outer layer (infrastructure/config) that sandbox is ready for manual bridge injection
-    if (onSandboxReady) {
-        onSandboxReady({ lua: engine, ports: registry });
-    }
-
-    // 3. Create standard bridges and time/event infrastructure (eventBus from provider)
+    // 2. Create standard bridges and time/event infrastructure (eventBus from provider)
     const { bridges, timeState } = createDefaultScriptingBridges(eventBus);
 
-    // 4. Inject Engine global (Input, Gizmo, Physics, Time) — system ports live here, not on self
+    // 3. Inject Engine global (Input, Gizmo, Physics, Time) — system ports live here, not on self
     const Engine: Record<string, unknown> = {};
     const engineBridges = [
       { name: 'Input', decl: inputBridge },
@@ -85,7 +77,7 @@ export function initializeScriptRuntime(options: ScriptRuntimeOptions): Scriptin
     }
     engine.global.set('Engine', Engine);
 
-    // 5. Return the fully initialized session state
+    // 4. Return the fully initialized session state
     return createScriptingSession({
         sandbox,
         bridges,

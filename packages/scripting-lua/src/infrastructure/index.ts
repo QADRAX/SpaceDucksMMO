@@ -1,1 +1,1 @@
-export { createScriptingSubsystem, type ScriptingSubsystemConfig } from './scriptingSubsystem';
+export { createScriptingSubsystem } from './scriptingSubsystem';

@@ -4,7 +4,6 @@ import type { createDuckEngineAPI } from '@duckengine/core-v2';
 
 type DuckEngineAPI = ReturnType<typeof createDuckEngineAPI>;
 import { setupScriptingIntegrationTest } from './setup';
-import type { ScriptingSubsystemConfig } from '../scriptingSubsystem';
 
 /** Script reference shape for addEntityWithScripts. */
 export interface ScriptRef {
@@ -123,13 +122,10 @@ export function addEntityWithScripts(
  * @param options - Optional config and custom scene/entity IDs.
  */
 export async function createScriptingTestFixtures(options?: {
-  config?: ScriptingSubsystemConfig;
   sceneId?: SceneId;
   entityId?: EntityId;
 }): Promise<ScriptingTestFixtures> {
-  const { api } = await setupScriptingIntegrationTest({
-    config: options?.config,
-  });
+  const { api } = await setupScriptingIntegrationTest();
 
   const sceneId = options?.sceneId ?? DEFAULT_SCENE_ID;
   const entityId = options?.entityId ?? DEFAULT_ENTITY_ID;

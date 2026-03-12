@@ -62,8 +62,8 @@ flowchart TB
 | **SceneState** | Per-scene state: entities, rootEntityIds, activeCameraId, subsystems, changeListeners, prefabs, uiSlots, paused. |
 | **EntityState** | ECS entity: id, transform, components, observers, children, parent, displayName, gizmoIcon. |
 | **SubsystemRuntimeState** | Shared bag: sceneSubsystemFactories, portDerivers, ports, portDefinitions. |
-| **SceneSubsystem** | Reacts to scene events (`handleSceneEvent`) and participates in frame updates (`update`). |
-| **EngineSubsystem** | Cross-scene subsystem (e.g. render, audio, UI); updates with full engine visibility. |
+| **SceneSubsystem** | Reacts to scene events (`handleSceneEvent`) and participates in frame updates via phase callbacks (`earlyUpdate`, `physics`, `update`, `lateUpdate`, `preRender`, `postRender`). |
+| **EngineSubsystem** | Cross-scene subsystem (e.g. render, audio, UI); phase callbacks include `render`. |
 | **UISubsystem** | EngineSubsystem that reacts to `ui-slot-*` events and delegates mount/unmount to `UIRendererPort`. |
 | **SubsystemPortRegistry** | Typed port lookup; ports are injected at setup or derived by portDerivers. |
 | **PortDefinition / PortBinding** | `definePort(id).addMethod(name).build()` + `def.bind(impl)` for registration. |
@@ -107,8 +107,9 @@ flowchart TB
 
     subgraph Update["Frame update"]
         U1[updateEngine]
-        U2[scene.subsystems.update]
-        U3[engineSubsystems.update]
+        U2[FRAME_PHASES iterate]
+        U3[scene.subsystems per phase]
+        U4[engineSubsystems per phase]
     end
 
     Setup --> SceneLifecycle
@@ -219,7 +220,7 @@ This section documents **all** use cases in `src/application/`. Each use case is
 | **removeViewport** | `api.removeViewport()` | `{ viewportId }` | Removes a viewport from the engine. |
 | **setEnginePaused** | `api.setPaused()` | `{ paused }` | Sets `engine.paused`. When true, only subsystems with `updateWhenPaused` run. |
 | **registerEngineSubsystem** | `api.registerSubsystem()` | `{ subsystem }` | Appends an engine subsystem to the update pipeline. Guard: requires setup. |
-| **updateEngine** | `api.update()` | `{ dt }` | Advances one frame: updates all scenes (scene subsystems), then engine subsystems. Guard: requires setup. |
+| **updateEngine** | `api.update()` | `{ dt }` | Advances one frame: iterates FRAME_PHASES (earlyUpdate, physics, update, lateUpdate, preRender, render, postRender), invoking each subsystem's phase callback. Guard: requires setup. |
 | **updateSettings** | `api.updateSettings()` | `{ patch: { graphics?, gameplay?, audio? } }` | Shallow-merges patch into `engine.settings`. Returns the resulting `GameSettings`. |
 | **getSettings** | `api.getSettings()` | — | Returns current `GameSettings`. |
 | **listScenes** | `api.listScenes()` | — | Returns `SceneView[]` (readonly snapshots). |
@@ -238,7 +239,7 @@ This section documents **all** use cases in `src/application/`. Each use case is
 | **toggleSceneDebug** | `scene.toggleDebug()` | `{ kind, enabled }` | Sets debug flag for `transform`, `mesh`, `collider`, `camera`. Emits `scene-debug-changed` etc. |
 | **setupScene** | `scene.setupScene()` | `{ subsystems? }` | Attaches optional subsystems, emits `scene-setup`. |
 | **teardownScene** | `scene.teardownScene()` | — | Emits `scene-teardown`, disposes subsystems, detaches observers, clears state. |
-| **updateScene** | `scene.updateScene()` | `{ dt }` | Runs `scene.subsystems.update(scene, dt)` in order. Guard: requires setup. |
+| **updateScene** | `scene.updateScene()` | `{ dt }` | Runs scene subsystems per phase (earlyUpdate through postRender). Guard: requires setup. |
 | **setScenePaused** | `scene.setPaused()` | `{ paused }` | Sets `scene.paused`. |
 | **subscribeToSceneChanges** | `scene.subscribe()` | `{ listener: (ev) => void }` | Adds listener to `changeListeners`. Returns unsubscribe function. |
 | **listEntities** | `scene.listEntities()` | — | Returns `EntityView[]` for root entities only. |
@@ -374,16 +375,22 @@ sequenceDiagram
     participant EngineSubs as engineSubsystems
 
     API->>UpdateEngine: execute(engine, { dt })
-    loop For each scene
-        UpdateEngine->>Scene: scene.subsystems
-        loop For each subsystem
-            UpdateEngine->>Subsystems: update(scene, dt)
+    loop For each phase in FRAME_PHASES
+        alt phase !== render
+            loop For each scene
+                UpdateEngine->>Scene: scene.subsystems
+                loop For each subsystem
+                    UpdateEngine->>Subsystems: phaseCallback(scene, dt)
+                end
+            end
+        end
+        loop For each engine subsystem
+            UpdateEngine->>EngineSubs: phaseCallback(engine, dt)
         end
     end
-    loop For each engine subsystem
-        UpdateEngine->>EngineSubs: update(engine, dt)
-    end
 ```
+
+**Frame phases** (fixed order): earlyUpdate, physics, update, lateUpdate, preRender, render, postRender. Scene subsystems support all except render. Engine subsystems support all including render.
 
 #### Scene teardown
 

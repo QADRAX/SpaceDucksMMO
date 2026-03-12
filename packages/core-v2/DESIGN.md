@@ -117,7 +117,11 @@ const factory = defineSceneSubsystem('scripting-lua')
   .onEvent(reconcileSlots)      // component-changed
   .onEvent(destroyEntitySlots)  // entity-removed
   .onEvent(teardownSession)     // scene-teardown
-  .onUpdate(runFrameHooks)
+  .onEarlyUpdate(runEarlyUpdate)
+  .onUpdate(runUpdate)
+  .onLateUpdate(runLateUpdate)
+  .onPreRender(runOnDrawGizmos)
+  .onPostRender(runPostRender)
   .onDispose(teardownSession)
   .build();
 ```
@@ -125,7 +129,7 @@ const factory = defineSceneSubsystem('scripting-lua')
 - **withPorts**: Resolves dependencies from the port registry. Subsystems declare what they need; the engine injects implementations at setup.
 - **withState**: Creates per-scene state. Receives `{ ports, scene, engine }`.
 - **onEvent**: Binds use cases to specific event kinds. When `emitSceneChange` fires, matching handlers run.
-- **onUpdate**: Called each frame. Order is registration order.
+- **onEarlyUpdate, onPhysics, onUpdate, onLateUpdate, onPreRender, onPostRender**: Phase callbacks called each frame in fixed order. Scene subsystems have no `render` phase.
 - **onDispose**: Called when the scene is torn down.
 
 ### 2.4 Integration flow
@@ -133,7 +137,7 @@ const factory = defineSceneSubsystem('scripting-lua')
 1. **Setup**: `api.setup({ sceneSubsystems: [factory] })` stores the factory in `subsystemRuntime.sceneSubsystemFactories`.
 2. **Scene creation**: When a scene is added, `instantiateSceneSubsystems` runs each factory with `{ engine, scene, ports }` and attaches the resulting `SceneSubsystem` to the scene.
 3. **Events**: Entity observers → `emitSceneChange` → `scene.changeListeners` (each subsystem is a listener) → `subsystem.handleSceneEvent(scene, event)`.
-4. **Update**: `updateEngine` iterates scenes, then `scene.subsystems` in order, calling `subsystem.update(scene, dt)`.
+4. **Update**: `updateEngine` iterates FRAME_PHASES (earlyUpdate, physics, update, lateUpdate, preRender, render, postRender), calling each subsystem's phase callback when present.
 5. **Teardown**: `teardownScene` emits `scene-teardown`, subsystems run `dispose`, listeners are detached.
 
 ### 2.5 Port consumption

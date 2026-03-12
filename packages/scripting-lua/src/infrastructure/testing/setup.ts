@@ -14,7 +14,7 @@ import type {
     DiagnosticPort,
     PortBinding,
 } from '@duckengine/core-v2';
-import { createScriptingSubsystem, ScriptingSubsystemConfig } from '../scriptingSubsystem';
+import { createScriptingSubsystem } from '../scriptingSubsystem';
 
 // Standard port definitions used across the engine
 const InputPortDef = definePort<InputPort>('io:input')
@@ -115,7 +115,6 @@ export function createMockResourceLoader() {
  * Helper to bootstrap a full engine integration test for scripting.
  */
 export async function setupScriptingIntegrationTest(params?: {
-    config?: ScriptingSubsystemConfig;
     customPorts?: PortBinding<any>[];
 }) {
     const engine = createEngine();
@@ -124,7 +123,7 @@ export async function setupScriptingIntegrationTest(params?: {
     const { mockInput, mockGizmo, mockPhysics, mockDiagnostic } = createMockPorts();
     const { loader, registerScript } = createMockResourceLoader();
 
-    const scriptingSubsystem = await createScriptingSubsystem(params?.config);
+    const scriptingSubsystem = await createScriptingSubsystem();
 
     api.setup({
         customPorts: [

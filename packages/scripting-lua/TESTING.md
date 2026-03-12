@@ -28,9 +28,12 @@ This runs typecheck (`tsc --noEmit`) followed by Jest.
 | File | Coverage |
 |------|----------|
 | `application/reconcileSlots.test.ts` | Slot creation, destruction, enable/disable, component accessor binding |
-| `application/runFrameHooks.test.ts` | Time state, property sync, frame hooks, dirty flush, hook failure handling |
+| `application/runEarlyUpdate.test.ts` | Time state, component accessors, script error reporter, property sync, earlyUpdate hook, event bus flush |
+| `application/runUpdate.test.ts` | Update hook, slot disable on hook failure |
+| `application/runLateUpdate.test.ts` | LateUpdate hook |
+| `application/runPreRender.test.ts` | onDrawGizmos hook |
+| `application/runPostRender.test.ts` | Dirty property flush Lua→ECS |
 | `application/destroyEntitySlots.test.ts` | Entity removal, slot teardown, onDisable/onDestroy, other entities preserved |
-| `application/syncProperties.test.ts` | ECS → Lua property sync, enabled/disabled slots, multiple slots |
 | `application/teardownSession.test.ts` | Session teardown, slot lifecycle, event bus dispose |
 
 ### Infrastructure Tests

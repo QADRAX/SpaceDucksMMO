@@ -5,7 +5,7 @@ export * from './domain';
 export * from './application';
 
 // Infrastructure
-export { createScriptingSubsystem, type ScriptingSubsystemConfig } from './infrastructure';
+export { createScriptingSubsystem } from './infrastructure';
 export { ENGINE_SYSTEM_BRIDGES, SCRIPTING_BRIDGE_PORT_KEYS } from './domain/bridges';
 
 // Generated assets

@@ -1,36 +1,61 @@
 import { defineEngineUseCase } from '../../domain/useCases';
 import { guardEngineSetupComplete } from '../../domain/engine/engineGuards';
+import { FRAME_PHASES, type FramePhase, type SceneSubsystem, type EngineSubsystem } from '../../domain/subsystems';
+import type { SceneState } from '../../domain/scene';
+import type { EngineState } from '../../domain/engine';
 
 /** Parameters for the updateEngine use case. */
 export interface UpdateEngineParams {
   readonly dt: number;
 }
 
+type ScenePhase = Exclude<FramePhase, 'render'>;
+
+function getScenePhaseFn(subsystem: SceneSubsystem, phase: ScenePhase): ((scene: SceneState, dt: number) => void) | undefined {
+  const fn = subsystem[phase];
+  return typeof fn === 'function' ? fn : undefined;
+}
+
+function getEnginePhaseFn(subsystem: EngineSubsystem, phase: FramePhase): ((engine: EngineState, dt: number) => void) | undefined {
+  const fn = subsystem[phase];
+  return typeof fn === 'function' ? fn : undefined;
+}
+
 /**
  * Advances the entire engine by one frame.
  *
- * 1. For each scene, calls scene subsystems respecting both
- *    engine-level and scene-level pause flags.
- * 2. Calls engine-level subsystems (render, audio …) respecting
- *    engine-level pause.
+ * Iterates frame phases in fixed order: earlyUpdate, physics, update,
+ * lateUpdate, preRender, render, postRender. For each phase:
+ * 1. Calls scene subsystems (all phases except render).
+ * 2. Calls engine subsystems (all phases including render).
  *
- * Subsystem order is deterministic: registration order within each level.
+ * Respects engine-level and scene-level pause flags.
  */
 export const updateEngine = defineEngineUseCase<UpdateEngineParams, void>({
   name: 'updateEngine',
   guards: [guardEngineSetupComplete],
   execute(engine, { dt }) {
-    for (const scene of engine.scenes.values()) {
-      const scenePaused = engine.paused || scene.paused;
-      for (const subsystem of scene.subsystems) {
-        if (scenePaused && !subsystem.updateWhenPaused) continue;
-        subsystem.update?.(scene, dt);
-      }
-    }
+    const enginePaused = engine.paused;
 
-    for (const subsystem of engine.engineSubsystems) {
-      if (engine.paused && !subsystem.updateWhenPaused) continue;
-      subsystem.update?.(engine, dt);
+    for (const phase of FRAME_PHASES) {
+      // Scene subsystems (no render phase)
+      if (phase !== 'render') {
+        for (const scene of engine.scenes.values()) {
+          const scenePaused = enginePaused || scene.paused;
+          for (const subsystem of scene.subsystems) {
+            if (scenePaused && !subsystem.updateWhenPaused) continue;
+            const fn = getScenePhaseFn(subsystem, phase as ScenePhase);
+            if (fn) fn(scene, dt);
+          }
+        }
+      }
+
+      // Engine subsystems
+      for (const subsystem of engine.engineSubsystems) {
+        if (enginePaused && !subsystem.updateWhenPaused) continue;
+        const fn = getEnginePhaseFn(subsystem, phase);
+        if (fn) fn(engine, dt);
+      }
     }
   },
 });

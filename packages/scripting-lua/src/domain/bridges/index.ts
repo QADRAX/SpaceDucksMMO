@@ -17,3 +17,5 @@ export { gizmoBridge } from './gizmoBridge';
 export { createScriptBridgeContext } from './bridgeContext';
 export { resolveBridgePortsFromRegistry } from './resolveBridgePortsFromRegistry';
 export { resolveRuntimeBridgeTable } from './resolveRuntimeBridgeTable';
+export { createDefaultScriptingBridges } from './defaultBridges';
+export type { ScriptingBridges } from './defaultBridges';

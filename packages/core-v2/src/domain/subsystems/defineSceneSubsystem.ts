@@ -26,7 +26,7 @@ export function defineSceneSubsystem<TState, TPorts = void>(
     let stateFactory: (ctx: { ports: TPorts; scene: SceneState; engine: EngineState }) => TState;
 
     const eventHandlers: Array<SubsystemEventUseCase<TState, unknown, void>> = [];
-    let updateUseCase: SubsystemUseCase<TState, SubsystemUpdateParams, void> | undefined;
+    const phaseUseCases: Partial<Record<'earlyUpdate' | 'physics' | 'update' | 'lateUpdate' | 'preRender' | 'postRender', SubsystemUseCase<TState, SubsystemUpdateParams, void>>> = {};
     let disposeUseCase: SubsystemUseCase<TState, void, void> | undefined;
     let shouldUpdateWhenPaused = false;
 
@@ -46,8 +46,28 @@ export function defineSceneSubsystem<TState, TPorts = void>(
             return builder;
         },
 
+        onEarlyUpdate(useCase) {
+            phaseUseCases.earlyUpdate = useCase;
+            return builder;
+        },
+        onPhysics(useCase) {
+            phaseUseCases.physics = useCase;
+            return builder;
+        },
         onUpdate(useCase) {
-            updateUseCase = useCase;
+            phaseUseCases.update = useCase;
+            return builder;
+        },
+        onLateUpdate(useCase) {
+            phaseUseCases.lateUpdate = useCase;
+            return builder;
+        },
+        onPreRender(useCase) {
+            phaseUseCases.preRender = useCase;
+            return builder;
+        },
+        onPostRender(useCase) {
+            phaseUseCases.postRender = useCase;
             return builder;
         },
 
@@ -88,9 +108,12 @@ export function defineSceneSubsystem<TState, TPorts = void>(
                     });
                 }
 
-                if (updateUseCase) {
-                    composer.onUpdate(updateUseCase);
-                }
+                if (phaseUseCases.earlyUpdate) composer.onEarlyUpdate(phaseUseCases.earlyUpdate);
+                if (phaseUseCases.physics) composer.onPhysics(phaseUseCases.physics);
+                if (phaseUseCases.update) composer.onUpdate(phaseUseCases.update);
+                if (phaseUseCases.lateUpdate) composer.onLateUpdate(phaseUseCases.lateUpdate);
+                if (phaseUseCases.preRender) composer.onPreRender(phaseUseCases.preRender);
+                if (phaseUseCases.postRender) composer.onPostRender(phaseUseCases.postRender);
 
                 if (disposeUseCase) {
                     composer.onDispose(disposeUseCase);

@@ -2,13 +2,25 @@ import type { SceneState, SceneChangeEventWithError } from '../scene';
 import type { SubsystemUseCase } from '../useCases';
 import type { SceneSubsystem, SubsystemUpdateParams, SubsystemEventParams, SubsystemComposer } from './types';
 
+type PhaseUseCase = SubsystemUseCase<unknown, SubsystemUpdateParams, void>;
+
+function makePhaseCallback(
+  useCase: PhaseUseCase | undefined,
+  state: unknown,
+): ((scene: SceneState, dt: number) => void) | undefined {
+  if (!useCase) return undefined;
+  return (scene: SceneState, dt: number) => {
+    (useCase as SubsystemUseCase<unknown, SubsystemUpdateParams, void>).execute(state, { scene, dt });
+  };
+}
+
 /** Creates a composable subsystem builder bound to a subsystem's state. */
 export function composeSceneSubsystem<TState>(state: TState): SubsystemComposer<TState> {
   const eventHandlers = new Map<
     SceneChangeEventWithError['kind'],
     Array<SubsystemUseCase<TState, SubsystemEventParams, void>>
   >();
-  let updateUseCase: SubsystemUseCase<TState, SubsystemUpdateParams, void> | undefined;
+  const phaseUseCases: Partial<Record<'earlyUpdate' | 'physics' | 'update' | 'lateUpdate' | 'preRender' | 'postRender', PhaseUseCase>> = {};
   let disposeUseCase: SubsystemUseCase<TState, void, void> | undefined;
   let shouldUpdateWhenPaused = false;
 
@@ -20,8 +32,28 @@ export function composeSceneSubsystem<TState>(state: TState): SubsystemComposer<
       return composer;
     },
 
+    onEarlyUpdate(useCase) {
+      phaseUseCases.earlyUpdate = useCase as PhaseUseCase;
+      return composer;
+    },
+    onPhysics(useCase) {
+      phaseUseCases.physics = useCase as PhaseUseCase;
+      return composer;
+    },
     onUpdate(useCase) {
-      updateUseCase = useCase;
+      phaseUseCases.update = useCase as PhaseUseCase;
+      return composer;
+    },
+    onLateUpdate(useCase) {
+      phaseUseCases.lateUpdate = useCase as PhaseUseCase;
+      return composer;
+    },
+    onPreRender(useCase) {
+      phaseUseCases.preRender = useCase as PhaseUseCase;
+      return composer;
+    },
+    onPostRender(useCase) {
+      phaseUseCases.postRender = useCase as PhaseUseCase;
       return composer;
     },
 
@@ -45,18 +77,19 @@ export function composeSceneSubsystem<TState>(state: TState): SubsystemComposer<
           }
         },
 
-        update: updateUseCase
-          ? (scene: SceneState, dt: number) => {
-            updateUseCase!.execute(state, { scene, dt });
-          }
-          : undefined,
+        earlyUpdate: makePhaseCallback(phaseUseCases.earlyUpdate, state),
+        physics: makePhaseCallback(phaseUseCases.physics, state),
+        update: makePhaseCallback(phaseUseCases.update, state),
+        lateUpdate: makePhaseCallback(phaseUseCases.lateUpdate, state),
+        preRender: makePhaseCallback(phaseUseCases.preRender, state),
+        postRender: makePhaseCallback(phaseUseCases.postRender, state),
 
         updateWhenPaused: shouldUpdateWhenPaused,
 
         dispose: disposeUseCase
           ? () => {
-            disposeUseCase!.execute(state, undefined as void);
-          }
+              disposeUseCase!.execute(state, undefined as void);
+            }
           : undefined,
       };
     },

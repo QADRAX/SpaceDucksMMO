@@ -6,7 +6,7 @@ This document describes the actual architecture of the Lua scripting subsystem u
 
 ## Relationship with core-v2
 
-This package is a **scene subsystem adapter** (SceneSubsystem). It depends on `@duckengine/core-v2`; core-v2 never depends on it. It registers as a scene subsystem via `defineSceneSubsystem` and connects to the engine lifecycle through events and `onUpdate`.
+This package is a **scene subsystem adapter** (SceneSubsystem). It depends on `@duckengine/core-v2`; core-v2 never depends on it. It registers as a scene subsystem via `defineSceneSubsystem` and connects to the engine lifecycle through events and phase callbacks (`onEarlyUpdate`, `onUpdate`, `onLateUpdate`, `onPreRender`, `onPostRender`).
 
 **Ports from core**: `SceneEventBusProviderPort` (internal, auto-registered) provides the event bus per scene via `getOrCreateEventBus(sceneId)`. `UISlotOperationsPort` (internal) enables `Scene.addUISlot`, `removeUISlot`, `updateUISlot` from Lua. Both are available after `api.setup()`.
 
@@ -116,7 +116,7 @@ flowchart TB
     D --> Teardown
 ```
 
-**Note**: `syncProperties` is an exported use case but is not wired to the subsystem lifecycle. The actual ECS → Lua sync happens inside `runFrameHooks`. `syncProperties` is useful for tests or manual invocation.
+**Note**: ECS → Lua property sync happens inside `runEarlyUpdate`.
 
 ---
 
@@ -131,21 +131,19 @@ src/
 │   │                          # destroyScriptSlot, runHookOnAllSlots, syncSlotPropertiesFromScene,
 │   │                          # flushDirtySlotsToScene, slotKey
 │   ├── properties/            # diffProperties, applyPropertyChanges, normalizePropertyValue
-│   ├── bridges/               # BridgeDeclaration, factory, resolveRuntimeBridgeTable (engine_ports)
+│   ├── bridges/               # BridgeDeclaration, factory, resolveRuntimeBridgeTable (engine_ports),
 │   │   ├── inputBridge, physicsBridge, gizmoBridge, timeBridge, transformBridge,
-│   │   ├── sceneBridge, scriptsBridge, bridgeContext
+│   │   ├── sceneBridge, scriptsBridge, bridgeContext, defaultBridges
 │   ├── session/               # initializeScriptRuntime, createScriptingSession,
 │   │                          # ScriptingSessionState (eventBus, sceneId, sceneEventBusProvider)
 │   ├── ports/                 # ScriptSandbox (interface)
 │   ├── componentAccessors/    # createComponentAccessorPair (ECS getter/setter)
-│   ├── schemas/               # builtInSchemas
-│   └── subsystems/            # defineSubsystemUseCase (local)
+│   └── schemas/               # builtInSchemas
 │
 ├── application/               # Use cases
 │   ├── reconcileSlots        # component-changed → init/destroy slots
 │   ├── destroyEntitySlots    # entity-removed → destroy slots
-│   ├── runFrameHooks          # onUpdate → hook pipeline + sync
-│   ├── syncProperties         # (standalone) ECS → Lua for all slots
+│   ├── runEarlyUpdate, runUpdate, runLateUpdate, runPreRender, runPostRender  # frame hook phases
 │   └── teardownSession        # scene-teardown / dispose → full cleanup
 │
 └── infrastructure/            # Concrete implementations
@@ -347,8 +345,6 @@ flowchart TB
 ## Notes
 
 > Caveats and implementation details that may surprise developers.
-
-**syncProperties** — The `syncProperties` use case is exported but not wired to the subsystem lifecycle. The actual ECS → Lua sync happens inside `runFrameHooks` (step 3). Use `syncProperties` for tests or when you need to sync without running the full frame pipeline.
 
 **Bridges** — Bridge declarations are pure factory functions in domain. Infrastructure calls them with the correct ports; bridges do not hold state or orchestrate workflows.
 

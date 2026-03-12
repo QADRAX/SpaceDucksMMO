@@ -2,16 +2,54 @@ import type { EngineState } from '../engine';
 import type { SceneChangeEventWithError, SceneState } from '../scene';
 import type { SubsystemUseCase, SubsystemEventUseCase } from '../useCases';
 
+/** Frame phases in execution order. */
+export type FramePhase =
+  | 'earlyUpdate'
+  | 'physics'
+  | 'update'
+  | 'lateUpdate'
+  | 'preRender'
+  | 'render'
+  | 'postRender';
+
+/** Ordered frame phases. Scene subsystems use all except 'render'. */
+export const FRAME_PHASES: readonly FramePhase[] = [
+  'earlyUpdate',
+  'physics',
+  'update',
+  'lateUpdate',
+  'preRender',
+  'render',
+  'postRender',
+] as const;
+
+/** Phases available to scene subsystems (no render). */
+export type SceneFramePhase = Exclude<FramePhase, 'render'>;
+
+export const SCENE_FRAME_PHASES: readonly SceneFramePhase[] = [
+  'earlyUpdate',
+  'physics',
+  'update',
+  'lateUpdate',
+  'preRender',
+  'postRender',
+] as const;
+
 /**
  * A scene system subsystem reacts to scene change events and
- * participates in the frame-update pipeline.
+ * participates in the frame-update pipeline via phase callbacks.
  */
 export interface SceneSubsystem {
   /** React to a scene change event (reactive channel). */
   handleSceneEvent(scene: SceneState, event: SceneChangeEventWithError): void;
-  /** Advance one frame tick (synchronous pipeline). */
+  /** Phase callbacks (optional). Called in FRAME_PHASES order. */
+  earlyUpdate?(scene: SceneState, dt: number): void;
+  physics?(scene: SceneState, dt: number): void;
   update?(scene: SceneState, dt: number): void;
-  /** If true, `update()` is called even when the scene is paused. */
+  lateUpdate?(scene: SceneState, dt: number): void;
+  preRender?(scene: SceneState, dt: number): void;
+  postRender?(scene: SceneState, dt: number): void;
+  /** If true, phase callbacks are called even when the scene is paused. */
   updateWhenPaused?: boolean;
   /** Release resources when the subsystem is detached from the scene. */
   dispose?(): void;
@@ -24,9 +62,15 @@ export interface SceneSubsystem {
  * full-engine visibility (all scenes/viewports), not a single scene.
  */
 export interface EngineSubsystem {
-  /** Advance one frame tick. */
+  /** Phase callbacks (optional). Called in FRAME_PHASES order. */
+  earlyUpdate?(engine: EngineState, dt: number): void;
+  physics?(engine: EngineState, dt: number): void;
   update?(engine: EngineState, dt: number): void;
-  /** If true, `update()` is called even when the engine is paused. */
+  lateUpdate?(engine: EngineState, dt: number): void;
+  preRender?(engine: EngineState, dt: number): void;
+  render?(engine: EngineState, dt: number): void;
+  postRender?(engine: EngineState, dt: number): void;
+  /** If true, phase callbacks are called even when the engine is paused. */
   updateWhenPaused?: boolean;
   /** Release resources. */
   dispose?(): void;
@@ -73,6 +117,29 @@ export interface SceneSubsystemFactoryContext {
  */
 export type SceneSubsystemFactory = (context: SceneSubsystemFactoryContext) => SceneSubsystem;
 
+/**
+ * Flat config for creating a SceneSubsystemFactory.
+ * Composes domain models and typed use cases without fluent builder nesting.
+ */
+export interface SceneSubsystemConfig<TState> {
+  /** Unique id for the subsystem (used in logging/debugging). */
+  readonly id: string;
+  /** Creates subsystem state from engine context. Resolve ports from ctx.ports. */
+  readonly createState: (ctx: SceneSubsystemFactoryContext) => TState;
+  /** Event handlers keyed by event kind. */
+  readonly events?: Partial<
+    Record<SceneChangeEventWithError['kind'], SubsystemUseCase<TState, SubsystemEventParams, void>>
+  >;
+  /** Phase handlers keyed by phase name. */
+  readonly phases?: Partial<
+    Record<SceneFramePhase, SubsystemUseCase<TState, SubsystemUpdateParams, void>>
+  >;
+  /** Disposal use case. */
+  readonly dispose?: SubsystemUseCase<TState, void, void>;
+  /** If true, phase callbacks run even when scene/engine is paused. */
+  readonly updateWhenPaused?: boolean;
+}
+
 /** Context passed to port derivation hooks. */
 export interface SubsystemPortDeriverContext {
   readonly engine: EngineState;
@@ -94,6 +161,12 @@ export interface SubsystemEventParams {
   readonly event: SceneChangeEventWithError;
 }
 
+/** Engine update params (engine + dt). */
+export interface EngineSubsystemUpdateParams {
+  readonly engine: EngineState;
+  readonly dt: number;
+}
+
 /** Fluent builder for creating an EngineSubsystem. */
 export interface EngineSubsystemBuilder<TState> {
   /** Initialize the subsystem's internal state. */
@@ -101,8 +174,14 @@ export interface EngineSubsystemBuilder<TState> {
     factory: (ctx: { engine: EngineState }) => TState,
   ): EngineSubsystemBuilder<TState>;
 
-  /** Register a use case for the engine frame update tick. */
-  onUpdate(useCase: SubsystemUseCase<TState, { engine: EngineState; dt: number }, void>): this;
+  /** Register use case for each frame phase. */
+  onEarlyUpdate(useCase: SubsystemUseCase<TState, EngineSubsystemUpdateParams, void>): this;
+  onPhysics(useCase: SubsystemUseCase<TState, EngineSubsystemUpdateParams, void>): this;
+  onUpdate(useCase: SubsystemUseCase<TState, EngineSubsystemUpdateParams, void>): this;
+  onLateUpdate(useCase: SubsystemUseCase<TState, EngineSubsystemUpdateParams, void>): this;
+  onPreRender(useCase: SubsystemUseCase<TState, EngineSubsystemUpdateParams, void>): this;
+  onRender(useCase: SubsystemUseCase<TState, EngineSubsystemUpdateParams, void>): this;
+  onPostRender(useCase: SubsystemUseCase<TState, EngineSubsystemUpdateParams, void>): this;
 
   /** Register a use case for subsystem disposal. */
   onDispose(useCase: SubsystemUseCase<TState, void, void>): this;
@@ -129,8 +208,13 @@ export interface SceneSubsystemBuilder<TState, TPorts = void> {
   /** Register a use case tied to a specific scene event. */
   onEvent<TParams>(useCase: SubsystemEventUseCase<TState, TParams, void>): this;
 
-  /** Register a use case for the frame update tick. */
+  /** Register use case for each frame phase (scene subsystems have no render phase). */
+  onEarlyUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
+  onPhysics(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
   onUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
+  onLateUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
+  onPreRender(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
+  onPostRender(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
 
   /** Register a use case for subsystem disposal. */
   onDispose(useCase: SubsystemUseCase<TState, void, void>): this;
@@ -148,7 +232,12 @@ export interface SubsystemComposer<TState> {
     eventKind: K,
     useCase: SubsystemUseCase<TState, SubsystemEventParams, void>,
   ): this;
+  onEarlyUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
+  onPhysics(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
   onUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
+  onLateUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
+  onPreRender(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
+  onPostRender(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
   onDispose(useCase: SubsystemUseCase<TState, void, void>): this;
   updateWhenPaused(enabled: boolean): this;
   build(): SceneSubsystem;

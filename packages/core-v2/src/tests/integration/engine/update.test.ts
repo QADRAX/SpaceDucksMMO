@@ -53,4 +53,24 @@ describe('Integration: Engine > update', () => {
 
         expect(updateSpy).not.toHaveBeenCalled();
     });
+
+    it('should run phases in fixed order', () => {
+        const order: string[] = [];
+        const mockSubsystem = {
+            earlyUpdate: jest.fn(() => order.push('earlyUpdate')),
+            physics: jest.fn(() => order.push('physics')),
+            update: jest.fn(() => order.push('update')),
+            lateUpdate: jest.fn(() => order.push('lateUpdate')),
+            preRender: jest.fn(() => order.push('preRender')),
+            render: jest.fn(() => order.push('render')),
+            postRender: jest.fn(() => order.push('postRender')),
+        };
+
+        ctx.api.registerSubsystem({ subsystem: mockSubsystem as any });
+        ctx.api.update({ dt: 0.16 });
+
+        expect(order).toEqual([
+            'earlyUpdate', 'physics', 'update', 'lateUpdate', 'preRender', 'render', 'postRender',
+        ]);
+    });
 });

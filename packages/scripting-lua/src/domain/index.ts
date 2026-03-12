@@ -13,6 +13,3 @@ export * from './session';
 // Bridges & ports
 export * from './bridges';
 export * from './ports';
-
-// Subsystems
-export * from './subsystems';
