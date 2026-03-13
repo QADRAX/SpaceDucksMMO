@@ -39,13 +39,13 @@
       "name": "🧪 Debug Core Tests",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/packages/core/node_modules/jest/bin/jest.js",
+      "program": "${workspaceFolder}/packages/v1/core/node_modules/jest/bin/jest.js",
       "args": [
         "--runInBand",
         "--no-cache",
         "--watchAll=false"
       ],
-      "cwd": "${workspaceFolder}/packages/core",
+      "cwd": "${workspaceFolder}/packages/v1/core",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
     },
@@ -53,14 +53,14 @@
       "name": "🔍 Debug Current Test File",
       "type": "node",
       "request": "launch",
-      "program": "${workspaceFolder}/packages/core/node_modules/jest/bin/jest.js",
+      "program": "${workspaceFolder}/packages/v1/core/node_modules/jest/bin/jest.js",
       "args": [
         "${fileBasename}",
         "--runInBand",
         "--no-cache",
         "--watchAll=false"
       ],
-      "cwd": "${workspaceFolder}/packages/core",
+      "cwd": "${workspaceFolder}/packages/v1/core",
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
     },

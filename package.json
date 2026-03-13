@@ -3,7 +3,8 @@
   "private": true,
   "version": "0.0.0",
   "workspaces": [
-    "packages/*"
+    "packages/v1/*",
+    "packages/v2/*"
   ],
   "devDependencies": {
     "@babel/preset-env": "^7.29.0",

@@ -10,7 +10,7 @@
 				"build"
 			],
 			"options": {
-				"cwd": "${workspaceFolder}/packages/web-core"
+				"cwd": "${workspaceFolder}/packages/v1/web-core"
 			},
 			"group": {
 				"kind": "build",
@@ -33,7 +33,7 @@
 				"build"
 			],
 			"options": {
-				"cwd": "${workspaceFolder}/packages/core"
+				"cwd": "${workspaceFolder}/packages/v1/core"
 			},
 			"group": "build",
 			"presentation": {
@@ -52,7 +52,7 @@
 				"test"
 			],
 			"options": {
-				"cwd": "${workspaceFolder}/packages/core"
+				"cwd": "${workspaceFolder}/packages/v1/core"
 			},
 			"group": "test",
 			"presentation": {
@@ -70,7 +70,7 @@
 				"dev"
 			],
 			"options": {
-				"cwd": "${workspaceFolder}/packages/web-core"
+				"cwd": "${workspaceFolder}/packages/v1/web-core"
 			},
 			"isBackground": true,
 			"presentation": {

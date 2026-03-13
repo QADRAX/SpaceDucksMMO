@@ -17,7 +17,7 @@
     "generate:component-types": "npx tsx scripts/generate-component-types.ts",
     "build": "npm run build:scripts && tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "test": "npm run typecheck && node --experimental-vm-modules ../../node_modules/jest/bin/jest.js"
+    "test": "npm run typecheck && node --experimental-vm-modules ../../../node_modules/jest/bin/jest.js"
   },
   "dependencies": {
     "@duckengine/core-v2": "^0.1.0",
