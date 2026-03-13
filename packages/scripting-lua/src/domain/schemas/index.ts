@@ -1,1 +1,1 @@
-export { BUILT_IN_SCHEMAS, getBuiltInSchema } from './builtInSchemas';
+export { getBuiltInSchema } from './builtInSchemas';
