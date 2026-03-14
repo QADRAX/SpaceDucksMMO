@@ -24,7 +24,8 @@ import type { ScriptSandbox } from '../ports';
 export interface ScriptRuntimeOptions {
     readonly sandbox: ScriptSandbox;
     readonly engine: LuaEngine;
-    readonly registry: SubsystemPortRegistry;
+    /** Scene subsystem port registry (ctx.ports). Same as physics/rendering subsystems. */
+    readonly ports: SubsystemPortRegistry;
     readonly bridgePorts: BridgePorts;
     readonly runtimeState: SubsystemRuntimeState;
     readonly eventBus: SceneEventBus;

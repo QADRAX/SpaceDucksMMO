@@ -16,7 +16,7 @@ import { createWasmoonSandbox } from './wasmoon';
  * Creates the scene subsystem factory for Lua scripting.
  *
  * Uses the flat createSceneSubsystem config to wire ports, session state,
- * and lifecycle use cases. Ports are resolved from the engine registry at setup.
+ * and lifecycle use cases. Ports are resolved from ctx.ports (same as physics/rendering).
  */
 export async function createScriptingSubsystem() {
   const { sandbox, engine } = await createWasmoonSandbox();

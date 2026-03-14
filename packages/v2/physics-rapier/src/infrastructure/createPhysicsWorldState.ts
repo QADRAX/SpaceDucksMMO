@@ -1,4 +1,4 @@
-import type { SceneState, EntityState } from '@duckengine/core-v2';
+import type { SceneState, EntityState, DiagnosticPort } from '@duckengine/core-v2';
 import type { RigidBodyComponent, GravityComponent } from '@duckengine/core-v2';
 import { getComponent, ensureClean } from '@duckengine/core-v2';
 import type { World } from '@dimforge/rapier3d-compat';
@@ -9,16 +9,26 @@ import { createRapierColliders } from './rapierColliders';
 import { createRapierCollisionEvents } from './rapierCollisionEvents';
 import type { PhysicsWorldState } from './types';
 
+export interface CreatePhysicsWorldStateOptions {
+  /** Diagnostic port from engine; use for all logging (no console.*). */
+  diagnostic?: DiagnosticPort;
+  /** Scene id for log context. */
+  sceneId?: string;
+}
+
 /**
  * Creates the physics world state for one scene (one Rapier World, one EventQueue).
  */
-export function createPhysicsWorldState(): PhysicsWorldState {
+export function createPhysicsWorldState(options?: CreatePhysicsWorldStateOptions): PhysicsWorldState {
+  const { diagnostic, sceneId } = options ?? {};
   const R = getRapier();
   const world = new R.World({ x: 0, y: 0, z: 0 });
   const eventQueue = new R.EventQueue(true);
   const bodies = createRapierBodies();
   const collisions = createRapierCollisionEvents();
   const colliders = createRapierColliders();
+
+  diagnostic?.log('debug', 'Physics world created', { subsystem: 'physics-rapier', sceneId });
 
   let accumulator = 0;
   let fixedStepSeconds = DEFAULT_FIXED_STEP;
@@ -118,6 +128,7 @@ export function createPhysicsWorldState(): PhysicsWorldState {
   function dispose(): void {
     if (disposed) return;
     disposed = true;
+    diagnostic?.log('debug', 'Physics world disposed', { subsystem: 'physics-rapier', sceneId });
     bodies.dispose();
     colliders.dispose();
     collisions.dispose();
@@ -126,13 +137,15 @@ export function createPhysicsWorldState(): PhysicsWorldState {
     }
   }
 
-  return {
+  const state: PhysicsWorldState = {
+    diagnostic,
     addEntity,
     removeEntity,
     step,
     syncEntity,
     dispose,
-    world: world,
+    world,
     collisions,
   };
+  return state;
 }

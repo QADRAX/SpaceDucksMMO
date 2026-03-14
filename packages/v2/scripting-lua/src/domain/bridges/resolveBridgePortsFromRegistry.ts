@@ -3,7 +3,7 @@ import type { BridgePorts } from './types';
 import { SCRIPTING_BRIDGE_PORT_KEYS } from './types';
 
 /**
- * Resolves scripting bridge ports from the shared engine subsystem port registry.
+ * Resolves scripting bridge ports from ctx.ports (scene subsystem port registry).
  */
 export function resolveBridgePortsFromRegistry(
   ports: SubsystemPortRegistry,

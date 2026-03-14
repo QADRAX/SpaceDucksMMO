@@ -1,8 +1,5 @@
-import type { SceneId, EntityId } from '@duckengine/core-v2';
+import type { SceneId, EntityId, DuckEngineAPI } from '@duckengine/core-v2';
 import { createEntity, createComponent, createSceneId, createEntityId } from '@duckengine/core-v2';
-import type { createDuckEngineAPI } from '@duckengine/core-v2';
-
-type DuckEngineAPI = ReturnType<typeof createDuckEngineAPI>;
 import { setupScriptingIntegrationTest } from './setup';
 
 /** Script reference shape for addEntityWithScripts. */

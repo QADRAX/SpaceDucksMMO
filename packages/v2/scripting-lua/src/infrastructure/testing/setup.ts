@@ -4,7 +4,8 @@ import {
     ResourceLoaderPortDef,
     DiagnosticPortDef,
     definePort,
-    ok
+    ok,
+    createSceneSubsystem,
 } from '@duckengine/core-v2';
 import type {
     InputPort,
@@ -36,6 +37,31 @@ const PhysicsQueryPortDef = definePort<PhysicsQueryPort>('io:physics-query')
     .addMethod('raycast')
     .addMethod('getCollisionEvents')
     .build();
+
+/**
+ * Creates a scene subsystem that registers a scene-scoped mock PhysicsQueryPort.
+ * Raycast returns a hit with entityId 'floor-' + scene.id so tests can assert
+ * that scripts only see their own scene's physics (no cross-scene raycast).
+ * Use with omitPhysicsFromCustomPorts so each scene uses this mock.
+ */
+export function createMockPhysicsPerSceneSubsystem() {
+    return createSceneSubsystem({
+        id: 'mock-physics-per-scene',
+        createState(ctx) {
+            const sceneId = ctx.scene.id;
+            ctx.ports.register(PhysicsQueryPortDef, {
+                raycast: () => ({
+                    entityId: `floor-${sceneId}`,
+                    point: { x: 0, y: 0, z: 0 },
+                    normal: { x: 0, y: 1, z: 0 },
+                    distance: 10,
+                }),
+                getCollisionEvents: () => [],
+            });
+            return {};
+        },
+    });
+}
 
 /**
  * Creates standard mock ports used in scripting tests.
@@ -113,9 +139,17 @@ export function createMockResourceLoader() {
 
 /**
  * Helper to bootstrap a full engine integration test for scripting.
+ *
+ * When omitPhysicsFromCustomPorts is true, do not bind a global PhysicsQueryPort;
+ * use a scene-scoped mock instead (e.g. pass createMockPhysicsPerSceneSubsystem()
+ * first in sceneSubsystems) so each scene gets its own physics port.
  */
 export async function setupScriptingIntegrationTest(params?: {
     customPorts?: PortBinding<any>[];
+    /** If true, physics port comes only from scene subsystems (per-scene mock). */
+    omitPhysicsFromCustomPorts?: boolean;
+    /** If set, use these scene subsystems; else [scriptingSubsystem]. */
+    sceneSubsystems?: Awaited<ReturnType<typeof createScriptingSubsystem>>[];
 }) {
     const engine = createEngine();
     const api = createDuckEngineAPI(engine);
@@ -125,16 +159,18 @@ export async function setupScriptingIntegrationTest(params?: {
 
     const scriptingSubsystem = await createScriptingSubsystem();
 
+    const customPorts: PortBinding<any>[] = [
+        InputPortDef.bind(mockInput),
+        GizmoPortDef.bind(mockGizmo),
+        ...(params?.omitPhysicsFromCustomPorts ? [] : [PhysicsQueryPortDef.bind(mockPhysics)]),
+        DiagnosticPortDef.bind(mockDiagnostic),
+        ResourceLoaderPortDef.bind(loader),
+        ...(params?.customPorts ?? []),
+    ];
+
     api.setup({
-        customPorts: [
-            InputPortDef.bind(mockInput),
-            GizmoPortDef.bind(mockGizmo),
-            PhysicsQueryPortDef.bind(mockPhysics),
-            DiagnosticPortDef.bind(mockDiagnostic),
-            ResourceLoaderPortDef.bind(loader),
-            ...(params?.customPorts ?? [])
-        ],
-        sceneSubsystems: [scriptingSubsystem]
+        customPorts,
+        sceneSubsystems: params?.sceneSubsystems ?? [scriptingSubsystem],
     });
 
     return {

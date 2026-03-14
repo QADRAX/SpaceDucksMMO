@@ -1,4 +1,4 @@
-import { createSceneSubsystem } from '@duckengine/core-v2';
+import { createSceneSubsystem, DiagnosticPortDef } from '@duckengine/core-v2';
 import { createPhysicsWorldState } from './createPhysicsWorldState';
 import { createPhysicsQueryPortImpl } from './physicsQueryPortImpl';
 import { physicsQueryPortDef } from './physicsQueryPortDef';
@@ -10,12 +10,17 @@ import type { PhysicsWorldState } from './types';
  * Register via api.setup({ sceneSubsystems: [createPhysicsSubsystem()] }).
  * Each scene gets its own Rapier World and registers the PhysicsQueryPort with id 'io:physics-query'
  * in the scene's port registry (merged with engine ports), so scripting resolves the correct scene's physics.
+ * All logging is routed through the engine's diagnostic port (no console.*).
  */
 export function createPhysicsSubsystem() {
   return createSceneSubsystem<PhysicsWorldState>({
     id: 'physics-rapier',
     createState(ctx) {
-      const state = createPhysicsWorldState();
+      const diagnostic = ctx.ports.get(DiagnosticPortDef);
+      const state = createPhysicsWorldState({
+        diagnostic: diagnostic ?? undefined,
+        sceneId: ctx.scene.id,
+      });
       const impl = createPhysicsQueryPortImpl(state);
       ctx.ports.register(physicsQueryPortDef, impl);
       return state;

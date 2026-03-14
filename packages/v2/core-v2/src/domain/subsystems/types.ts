@@ -102,7 +102,11 @@ export interface SubsystemPortRegistry {
   entries(): ReadonlyArray<readonly [PortDefinition<any>, unknown]>;
 }
 
-/** Context given to a scene subsystem factory. */
+/**
+ * Context given to a scene subsystem factory.
+ * All scene subsystems (physics, scripting, rendering, etc.) resolve ports the same way:
+ * ctx.ports.get(PortDef). Do not introduce a separate "registry" name; use ctx.ports.
+ */
 export interface SceneSubsystemFactoryContext {
   readonly engine: EngineState;
   readonly scene: SceneState;
