@@ -57,7 +57,6 @@ function Component.has(entityId, componentType) end
 ---| "cylinderGeometry"
 ---| "coneGeometry"
 ---| "torusGeometry"
----| "fullMesh"
 ---| "customGeometry"
 ---| "standardMaterial"
 ---| "basicMaterial"

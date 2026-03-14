@@ -179,7 +179,7 @@ describe('Scenario: Component bridge E2E', () => {
 
     const scene = api.scene(MAIN_SCENE);
     scene.entity(ENTITY_E4).addComponent({
-      component: createComponent('fullMesh'),
+      component: createComponent('customGeometry'),
     });
 
     addEntityWithScripts(api, MAIN_SCENE, ENTITY_E4, [
@@ -203,7 +203,7 @@ describe('Scenario: Component bridge E2E', () => {
     expect(props!.meshSetOk).toBe(true);
     expect(props!.meshKeyRead).toBe('meshes/test_cube');
 
-    const meshSnap = scene.entity(ENTITY_E4).component('fullMesh').snapshot();
+    const meshSnap = scene.entity(ENTITY_E4).component('customGeometry').snapshot();
     expect(meshSnap.ok).toBe(true);
     const mesh = (meshSnap as { ok: true; value: unknown }).value as {
       mesh?: { key: string; kind: string };

@@ -9,6 +9,10 @@ import {
  * Creates the WebGPU rendering engine subsystem. Register via
  * setupEngine({ engineSubsystems: [createRenderingSubsystem(options)] })
  * or api.registerSubsystem({ subsystem: createRenderingSubsystem(options) }).
+ *
+ * When ResourceCachePort is registered (via deriveResourceCache), mesh and skybox
+ * resolution use the cache. Add deriveResourceCache to portDerivers and
+ * createResourceCoordinatorSubsystem to sceneSubsystems for full resource loading.
  */
 export function createRenderingSubsystem(
   options: CreateRenderingStateParams = {},
@@ -16,7 +20,7 @@ export function createRenderingSubsystem(
   return defineEngineSubsystem<ReturnType<typeof createRenderingState>>(
     'rendering-three-webgpu',
   )
-    .withState(() => createRenderingState(options))
+    .withState(({ engine }) => createRenderingState({ ...options, engine }))
     .onPreRender(syncRender)
     .onRender(renderFrame)
     .onDispose(disposeRender)

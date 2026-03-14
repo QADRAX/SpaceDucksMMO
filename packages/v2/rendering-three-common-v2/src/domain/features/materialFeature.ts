@@ -28,7 +28,7 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
       if (mesh) {
         const prev = mesh.material as THREE.Material;
         if (prev) prev.dispose();
-        mesh.material = materialFromComponent(comp);
+        mesh.material = materialFromComponent(comp, context.getTexture);
         lastMaterialKeyByEntity.set(entity.id, key);
       }
     },
@@ -42,7 +42,7 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
       if (mesh) {
         const prev = mesh.material as THREE.Material;
         if (prev) prev.dispose();
-        mesh.material = materialFromComponent(comp);
+        mesh.material = materialFromComponent(comp, context.getTexture);
         lastMaterialKeyByEntity.set(entity.id, materialKey(comp));
       }
     },

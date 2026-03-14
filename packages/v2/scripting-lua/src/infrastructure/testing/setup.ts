@@ -2,6 +2,7 @@ import {
     createEngine,
     createDuckEngineAPI,
     ResourceLoaderPortDef,
+    ResourceCachePortDef,
     DiagnosticPortDef,
     definePort,
     ok,
@@ -12,9 +13,12 @@ import type {
     GizmoPort,
     PhysicsQueryPort,
     ResourceLoaderPort,
+    ResourceCachePort,
     DiagnosticPort,
     PortBinding,
 } from '@duckengine/core-v2';
+import type { ResourceRef, ResolvedResource } from '@duckengine/core-v2';
+import { createResourceCoordinatorSubsystem } from '@duckengine/core-v2';
 import { createScriptingSubsystem } from '../scriptingSubsystem';
 
 // Standard port definitions used across the engine
@@ -99,6 +103,53 @@ export function createMockPorts() {
     return { mockInput, mockGizmo, mockPhysics, mockDiagnostic };
 }
 
+function cacheKey(ref: ResourceRef<any>): string {
+    return `${ref.key}@${ref.version ?? 'active'}`;
+}
+
+/**
+ * Creates a minimal ResourceCachePort for tests: scripts only.
+ * Mesh/texture/skybox are no-ops. Used to demonstrate script coordination via cache.
+ */
+export function createScriptOnlyResourceCache(
+    resourceLoader: ResourceLoaderPort
+): ResourceCachePort {
+    const scriptCache = new Map<string, string>();
+    const inFlight = new Map<string, Promise<void>>();
+
+    return {
+        getMeshData: () => null,
+        getTexture: () => null,
+        getSkyboxTexture: () => null,
+        getScriptSource: (ref) => scriptCache.get(cacheKey(ref)) ?? null,
+        preloadMesh: async () => {},
+        preloadTexture: async () => {},
+        preloadSkybox: async () => {},
+        preloadScript: async (ref) => {
+            const key = cacheKey(ref);
+            if (scriptCache.has(key)) return;
+            const existing = inFlight.get(key);
+            if (existing) {
+                await existing;
+                return;
+            }
+            const load = (async () => {
+                const result = await resourceLoader.resolve(ref);
+                if (result.ok === false) return;
+                const resolved = result.value as ResolvedResource<'script'>;
+                const sourceFile = resolved.files.source;
+                if (!sourceFile?.url) return;
+                const fetchResult = await resourceLoader.fetchFile(sourceFile.url, 'text');
+                if (fetchResult.ok === false) return;
+                scriptCache.set(key, fetchResult.value as string);
+            })();
+            inFlight.set(key, load);
+            await load;
+            inFlight.delete(key);
+        },
+    };
+}
+
 /**
  * Creates a mock ResourceLoaderPort that allows registering test scripts.
  */
@@ -143,6 +194,9 @@ export function createMockResourceLoader() {
  * When omitPhysicsFromCustomPorts is true, do not bind a global PhysicsQueryPort;
  * use a scene-scoped mock instead (e.g. pass createMockPhysicsPerSceneSubsystem()
  * first in sceneSubsystems) so each scene gets its own physics port.
+ *
+ * When withResourceCache is true, registers ResourceCachePort and ResourceCoordinator
+ * so scripts are coordinated via cache (preload + getScriptSource) like textures/meshes.
  */
 export async function setupScriptingIntegrationTest(params?: {
     customPorts?: PortBinding<any>[];
@@ -150,6 +204,8 @@ export async function setupScriptingIntegrationTest(params?: {
     omitPhysicsFromCustomPorts?: boolean;
     /** If set, use these scene subsystems; else [scriptingSubsystem]. */
     sceneSubsystems?: Awaited<ReturnType<typeof createScriptingSubsystem>>[];
+    /** If true, add ResourceCachePort + ResourceCoordinator for script coordination. */
+    withResourceCache?: boolean;
 }) {
     const engine = createEngine();
     const api = createDuckEngineAPI(engine);
@@ -159,18 +215,28 @@ export async function setupScriptingIntegrationTest(params?: {
 
     const scriptingSubsystem = await createScriptingSubsystem();
 
+    const resourceCache = params?.withResourceCache
+        ? createScriptOnlyResourceCache(loader)
+        : null;
+
     const customPorts: PortBinding<any>[] = [
         InputPortDef.bind(mockInput),
         GizmoPortDef.bind(mockGizmo),
         ...(params?.omitPhysicsFromCustomPorts ? [] : [PhysicsQueryPortDef.bind(mockPhysics)]),
         DiagnosticPortDef.bind(mockDiagnostic),
         ResourceLoaderPortDef.bind(loader),
+        ...(resourceCache ? [ResourceCachePortDef.bind(resourceCache)] : []),
         ...(params?.customPorts ?? []),
+    ];
+
+    const sceneSubsystems = params?.sceneSubsystems ?? [
+        ...(resourceCache ? [createResourceCoordinatorSubsystem()] : []),
+        scriptingSubsystem,
     ];
 
     api.setup({
         customPorts,
-        sceneSubsystems: params?.sceneSubsystems ?? [scriptingSubsystem],
+        sceneSubsystems,
     });
 
     return {
@@ -183,6 +249,7 @@ export async function setupScriptingIntegrationTest(params?: {
             diagnostic: mockDiagnostic,
             resourceLoader: loader
         },
-        registerScript
+        registerScript,
+        resourceCache,
     };
 }

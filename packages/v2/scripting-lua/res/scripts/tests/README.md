@@ -26,5 +26,5 @@ Lua scripts for integration tests. Included in pre-build via `npm run build:scri
 | `component_bridge_properties.lua` | getField/setField for name, boxGeometry (PropertyValues) |
 | `component_bridge_has_getdata.lua` | has(), getData() for name, boxGeometry, script |
 | `component_bridge_resources.lua` | setResource for standardMaterial.material (ResourceRef) |
-| `component_bridge_resource_mesh.lua` | setResource for fullMesh.mesh (ResourceRef) |
+| `component_bridge_resource_mesh.lua` | setResource for customGeometry.mesh (ResourceRef) |
 | `component_bridge_resource_texture.lua` | setResource for standardMaterial.albedo (texture slot) |

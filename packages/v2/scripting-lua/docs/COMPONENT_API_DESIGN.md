@@ -16,7 +16,7 @@ Exponer todos los tipos de componentes de core-v2 en Lua, permitiendo:
 
 | Categoría | Tipos | Campos con ResourceRef |
 |----------|-------|------------------------|
-| **Geometry** | boxGeometry, sphereGeometry, planeGeometry, cylinderGeometry, coneGeometry, torusGeometry, fullMesh, customGeometry | fullMesh/customGeometry: `mesh` |
+| **Geometry** | boxGeometry, sphereGeometry, planeGeometry, cylinderGeometry, coneGeometry, torusGeometry, customGeometry | customGeometry: `mesh` |
 | **Material** | standardMaterial, basicMaterial, phongMaterial, lambertMaterial | `material`, `albedo`, `normalMap`, `aoMap`, `roughnessMap`, `metallicMap`, `envMap` |
 | **Camera** | cameraView, postProcess | — |
 | **Physics** | rigidBody, gravity, boxCollider, sphereCollider, capsuleCollider, cylinderCollider, coneCollider, terrainCollider | — |
@@ -43,7 +43,7 @@ Cada componente tiene `metadata.inspector.fields` con:
 - `type`: `'number' | 'boolean' | 'color' | 'enum' | 'texture' | 'resource' | 'reference' | 'object'` etc.
 - `nullable`, `min`, `max`, `options`, etc.
 
-Los campos `resource` y `texture` son ResourceRef. El tipo `reference` se usa para mesh en fullMesh/customGeometry.
+Los campos `resource` y `texture` son ResourceRef. El tipo `reference` se usa para mesh en customGeometry.
 
 ---
 

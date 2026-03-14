@@ -82,7 +82,7 @@ return {
 }
 `,
   "test://component_bridge_resource_mesh.lua": `-- E2E test: Component bridge setResource for mesh field.
--- Requires entity with: fullMesh (mesh field).
+-- Requires entity with: customGeometry (mesh field).
 -- Verification: meshSetOk, meshKeyRead.
 
 ---@class ComponentBridgeResourceMeshPropsV2
@@ -99,11 +99,11 @@ return {
 
     -- setResource(entityId, componentType, fieldKey, resourceKey)
     self.properties.meshSetOk = self.Component.setResource(
-      eid, 'fullMesh', 'mesh', 'meshes/test_cube'
+      eid, 'customGeometry', 'mesh', 'meshes/test_cube'
     )
 
     -- Read back the ResourceRef key to verify
-    local meshData = self.Component.getField(eid, 'fullMesh', 'mesh')
+    local meshData = self.Component.getField(eid, 'customGeometry', 'mesh')
     self.properties.meshKeyRead = (meshData and meshData.key) or ''
   end,
 }

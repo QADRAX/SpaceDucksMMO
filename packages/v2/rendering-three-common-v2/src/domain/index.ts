@@ -4,7 +4,7 @@ export {
   applyPerspectiveCameraParams,
   type PerspectiveCameraParams,
 } from './cameraFromParams';
-export type { RenderContextThree, RenderObjectRegistry, MeshResolver, SkyboxResolver } from './renderContextThree';
+export type { RenderContextThree, RenderObjectRegistry, MeshResolver, SkyboxResolver, TextureResolver } from './renderContextThree';
 export { createRenderObjectRegistry } from './createRenderObjectRegistry';
 export { geometryFromComponent } from './geometryFromComponent';
 export {

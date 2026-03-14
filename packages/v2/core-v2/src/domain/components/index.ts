@@ -10,6 +10,7 @@ export type {
   CustomGeometryComponent,
 } from './types/rendering/geometry';
 export type { SkyboxComponent } from './types/rendering/environment';
+export type { CameraViewComponent, CameraComponent } from './types/rendering/camera';
 export type { TextureTilingComponent } from './types/rendering/texture';
 export type {
   PlainMaterialComponentType,

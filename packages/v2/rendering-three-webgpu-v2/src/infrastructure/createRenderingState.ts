@@ -1,5 +1,6 @@
 import * as THREE from 'three/webgpu';
 import type { EngineState } from '@duckengine/core-v2';
+import { ResourceCachePortDef } from '@duckengine/core-v2';
 import type { RenderEngineState } from '@duckengine/rendering-base-v2';
 import {
   syncSceneToRenderTree,
@@ -7,6 +8,8 @@ import {
   createRenderObjectRegistry,
   type RenderContextThree,
   type MeshResolver,
+  type SkyboxResolver,
+  type TextureResolver,
 } from '@duckengine/rendering-three-common-v2';
 
 /** Resolves canvasId to the actual canvas element. Inject via options. */
@@ -14,7 +17,10 @@ export type CanvasResolver = (canvasId: string) => HTMLCanvasElement | null;
 
 export interface CreateRenderingStateParams {
   getCanvas?: CanvasResolver;
+  /** Override mesh resolver. When omitted and engine has ResourceCachePort, uses cache. */
   getMeshData?: MeshResolver;
+  /** Override skybox resolver. When omitted and engine has ResourceCachePort, uses cache. */
+  getSkyboxTexture?: SkyboxResolver;
 }
 
 interface PerSceneState {
@@ -41,10 +47,41 @@ function findCamera(root: THREE.Object3D | undefined): THREE.PerspectiveCamera |
  * - One WebGPURenderer per canvas (canvasId); each viewport renders its scene + camera
  *   into that viewport's canvas (and rect). Multiple viewports can share a canvas (split-screen)
  *   or use different canvases (editor + game view). WebGPU init is async per renderer.
+ *
+ * When engine is provided and ResourceCachePort is registered, getMeshData and getSkyboxTexture
+ * are built from the cache unless overridden in params.
  */
-export function createRenderingState(params: CreateRenderingStateParams = {}): RenderEngineState {
+export function createRenderingState(
+  params: CreateRenderingStateParams & { engine?: EngineState } = {},
+): RenderEngineState {
   const getCanvas = params.getCanvas ?? (() => null);
-  const getMeshData: MeshResolver = params.getMeshData ?? (() => null);
+
+  const cache = params.engine
+    ? (params.engine.subsystemRuntime.ports.get(ResourceCachePortDef.id) as
+        | {
+            getMeshData: MeshResolver;
+            getSkyboxTexture?: SkyboxResolver;
+            getTexture?: TextureResolver;
+          }
+        | undefined)
+    : undefined;
+
+  const getMeshData: MeshResolver =
+    params.getMeshData ??
+    (cache
+      ? (ref) => cache.getMeshData(ref) ?? null
+      : (() => null));
+
+  const getSkyboxTexture: SkyboxResolver | undefined =
+    params.getSkyboxTexture ??
+    (cache?.getSkyboxTexture
+      ? (ref) => (cache.getSkyboxTexture!(ref) as THREE.CubeTexture | null) ?? null
+      : undefined);
+
+  const getTexture: TextureResolver | undefined =
+    cache?.getTexture
+      ? (ref) => (cache.getTexture!(ref) as THREE.Texture | null) ?? null
+      : undefined;
 
   /** One renderer per canvas so we can render to different canvases (e.g. multiple viewports). */
   const renderersByCanvasId = new Map<string, THREE.WebGPURenderer>();
@@ -67,6 +104,8 @@ export function createRenderingState(params: CreateRenderingStateParams = {}): R
       threeScene,
       registry,
       getMeshData,
+      getSkyboxTexture,
+      getTexture,
     };
     const features = createDefaultRenderFeatures();
     state = { threeScene, registry, context, features };

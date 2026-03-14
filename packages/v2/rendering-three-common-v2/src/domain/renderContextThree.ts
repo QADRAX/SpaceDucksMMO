@@ -16,6 +16,12 @@ export type MeshResolver = (ref: ResourceRef<'mesh'>) => MeshGeometryFileData | 
 export type SkyboxResolver = (ref: ResourceRef<'skybox'>) => THREE.CubeTexture | null;
 
 /**
+ * Resolves a texture resource ref to a Three.js Texture.
+ * Optional; when not provided, MaterialFeature will not apply texture maps.
+ */
+export type TextureResolver = (ref: ResourceRef<'texture'>) => THREE.Texture | null;
+
+/**
  * Render context extended with Three.js objects. Used by features in common and infra.
  */
 export interface RenderContextThree extends RenderContextBase {
@@ -26,6 +32,8 @@ export interface RenderContextThree extends RenderContextBase {
   readonly getMeshData: MeshResolver;
   /** Optional: resolve skybox ref to CubeTexture for scene background. */
   readonly getSkyboxTexture?: SkyboxResolver;
+  /** Optional: resolve texture ref for material maps (albedo, normalMap, etc.). */
+  readonly getTexture?: TextureResolver;
 }
 
 /**

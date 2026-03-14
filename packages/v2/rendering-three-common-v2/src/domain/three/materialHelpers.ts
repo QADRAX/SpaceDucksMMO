@@ -17,9 +17,17 @@ export function getMaterialComponent(entity: EntityState): MaterialComponent | u
 /** Cache key so we only replace material when the component actually changed. */
 export function materialKey(comp: MaterialComponent): string {
   const base = `${comp.type}:${comp.color ?? ''}:${comp.transparent}:${comp.opacity ?? 1}:`;
-  if (comp.type === 'standardMaterial') return base + `${comp.metalness ?? 0}:${comp.roughness ?? 1}`;
-  if (comp.type === 'basicMaterial') return base + (comp.wireframe ?? false);
-  if (comp.type === 'phongMaterial') return base + `${comp.specular ?? ''}:${comp.shininess ?? 30}`;
-  if (comp.type === 'lambertMaterial') return base + (comp.emissive ?? '');
-  return base;
+  const textureRefs = [
+    (comp as { albedo?: { key?: string } }).albedo?.key,
+    (comp as { normalMap?: { key?: string } }).normalMap?.key,
+    (comp as { aoMap?: { key?: string } }).aoMap?.key,
+    (comp as { roughnessMap?: { key?: string } }).roughnessMap?.key,
+    (comp as { metallicMap?: { key?: string } }).metallicMap?.key,
+    (comp as { envMap?: { key?: string } }).envMap?.key,
+  ].join(',');
+  if (comp.type === 'standardMaterial') return base + `${comp.metalness ?? 0}:${comp.roughness ?? 1}:${textureRefs}`;
+  if (comp.type === 'basicMaterial') return base + `${comp.wireframe ?? false}:${textureRefs}`;
+  if (comp.type === 'phongMaterial') return base + `${comp.specular ?? ''}:${comp.shininess ?? 30}:${textureRefs}`;
+  if (comp.type === 'lambertMaterial') return base + `${comp.emissive ?? ''}:${textureRefs}`;
+  return base + textureRefs;
 }
