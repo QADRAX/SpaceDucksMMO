@@ -1,4 +1,5 @@
 import type { EntityId, SceneId, ViewportId, CanvasId } from '../ids';
+import type { DebugKind } from '../entities';
 
 /** Normalised rectangle (all values 0–1). */
 export interface ViewportRect {
@@ -26,6 +27,8 @@ export interface Viewport {
   readonly rect: ViewportRect;
   /** Whether this viewport is rendered. */
   readonly enabled: boolean;
+  /** Per-viewport debug visualization toggles (e.g. collider, mesh). */
+  readonly debugFlags: ReadonlyMap<DebugKind, boolean>;
 }
 
 /**
@@ -44,6 +47,8 @@ export interface ViewportState {
   rect: ViewportRect;
   /** Whether this viewport is rendered. */
   enabled: boolean;
+  /** Per-viewport debug visualization toggles (e.g. collider, mesh). */
+  debugFlags: Map<DebugKind, boolean>;
 }
 
 /** Readonly snapshot of a viewport for application/UI consumers. */
@@ -54,6 +59,7 @@ export interface ViewportView {
   readonly canvasId: CanvasId;
   readonly rect: ViewportRect;
   readonly enabled: boolean;
+  readonly debugFlags: ReadonlyMap<DebugKind, boolean>;
 }
 
 /** Parameters for creating a viewport. */

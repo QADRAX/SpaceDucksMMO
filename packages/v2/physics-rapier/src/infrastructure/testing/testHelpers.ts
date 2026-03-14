@@ -9,12 +9,10 @@ import {
   ensureClean,
   addChild,
 } from '@duckengine/core-v2';
-import type { createDuckEngineAPI } from '@duckengine/core-v2';
+import type { DuckEngineAPI } from '@duckengine/core-v2';
 import type { PhysicsQueryPort, PhysicsCollisionEvent } from '@duckengine/core-v2';
 import type { EngineState } from '@duckengine/core-v2';
 import { PHYSICS_QUERY_PORT_ID } from '../physicsQueryPortDef';
-
-type DuckEngineAPI = ReturnType<typeof createDuckEngineAPI>;
 
 const DEFAULT_SCENE_ID = createSceneId('main');
 const DEFAULT_ENTITY_ID = createEntityId('e1');
@@ -44,7 +42,7 @@ export function addSceneWithEntity(
   entityId: EntityId = DEFAULT_ENTITY_ID,
 ): ReturnType<DuckEngineAPI['scene']> {
   api.addScene({ sceneId });
-  const scene = api.scene(sceneId);
+  const scene: ReturnType<DuckEngineAPI['scene']> = api.scene(sceneId);
   scene.addEntity({ entity: createEntity(entityId) });
   return scene;
 }

@@ -10,5 +10,6 @@ export function createViewport(params: CreateViewportParams): ViewportState {
     canvasId: params.canvasId,
     rect: { ...DEFAULT_RECT, ...params.rect },
     enabled: params.enabled ?? true,
+    debugFlags: new Map(),
   };
 }

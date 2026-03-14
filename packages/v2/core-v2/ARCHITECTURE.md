@@ -280,6 +280,7 @@ This section documents **all** use cases in `src/application/`. Each use case is
 | Use case | API method | Params | Description |
 |----------|------------|--------|-------------|
 | **setViewportEnabled** | `viewport.setEnabled()` | `{ enabled: boolean }` | Enables or disables the viewport. |
+| **setViewportDebugEnabled** | `viewport.setDebug()` | `{ kind: DebugKind, enabled: boolean }` | Sets per-viewport debug visualization (e.g. collider, mesh). |
 | **setViewportScene** | `viewport.setScene()` | `{ sceneId }` | Changes which scene the viewport renders. Guard: scene must exist. |
 | **setViewportCamera** | `viewport.setCamera()` | `{ cameraEntityId }` | Sets the camera entity. Guard: camera must exist in scene. |
 | **setViewportCanvas** | `viewport.setCanvas()` | `{ canvasId }` | Sets the target canvas element ID. |

@@ -20,6 +20,7 @@ import {
   setViewportCanvas,
   setViewportScene,
   setViewportEnabled,
+  setViewportDebugEnabled,
   setupScene,
   teardownScene,
   toggleSceneDebug,
@@ -44,45 +45,13 @@ import {
   getComponentSnapshot,
 } from '../../application';
 
+import type { DuckEngineAPI } from './createDuckEngineAPI.docs';
+
 /**
  * Composes the full DuckEngine API from all registered use cases.
- *
- * This is infrastructure — the concrete wiring of every domain and
- * application use case into a single, typed API surface. The returned
- * type is inferred from the use cases, so consumers get full
- * autocompletion and type safety without maintaining a manual interface.
- *
- * Guards declared on individual use cases are executed automatically
- * by the composer.
- *
- * @example
- * ```ts
- * const api = createDuckEngineAPI(engine);
- *
- * // Engine level
- * api.addScene({ sceneId: 'main' });    // → Result<SceneState>
- * api.setPaused({ paused: true });
- * api.getSettings();                     // → Result<GameSettings>
- *
- * // Scene level
- * const scene = api.scene('main');
- * scene.addEntity({ entity });           // → Result<EntityView>
- *
- * // Entity level
- * const entity = api.scene('main').entity('player');
- * entity.addComponent({ component });    // → Result<void>
- * entity.view();                         // → Result<EntityView>
- *
- * // Component level
- * const rb = api.scene('main').entity('player').component('rigidBody');
- * rb.setEnabled({ enabled: false });
- *
- * // Viewport level
- * const vp = api.viewport('vp1');
- * vp.setEnabled({ enabled: true });
- * ```
+ * Types and TSDoc live in createDuckEngineAPI.docs.ts.
  */
-export function createDuckEngineAPI(engine: EngineState) {
+export function buildDuckEngineAPI(engine: EngineState) {
   return composeAPI(engine)
     // ── engine ─────────────────────────────────────────────────
     .add('addScene', addSceneToEngine)
@@ -126,6 +95,7 @@ export function createDuckEngineAPI(engine: EngineState) {
     .add('snapshot', getComponentSnapshot)
     // ── viewport ───────────────────────────────────────────────
     .add('setEnabled', setViewportEnabled)
+    .add('setDebug', setViewportDebugEnabled)
     .add('setScene', setViewportScene)
     .add('setCamera', setViewportCamera)
     .add('setCanvas', setViewportCanvas)
@@ -133,5 +103,6 @@ export function createDuckEngineAPI(engine: EngineState) {
     .build();
 }
 
-/** The fully-typed DuckEngine API surface. */
-export type DuckEngineAPI = ReturnType<typeof createDuckEngineAPI>;
+export function createDuckEngineAPI(engine: EngineState): DuckEngineAPI {
+  return buildDuckEngineAPI(engine) as DuckEngineAPI;
+}
