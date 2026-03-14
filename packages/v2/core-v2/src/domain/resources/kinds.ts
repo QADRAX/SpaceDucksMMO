@@ -13,8 +13,8 @@ export type ResourceKind =
     | 'basicShaderMaterial'
     | 'standardShaderMaterial'
     | 'physicalShaderMaterial'
-    // ── Geometry ─────────────────────────────────────────────────
-    | 'mesh'         // Used by FullMeshComponent and CustomGeometryComponent
+    // ── Geometry (mesh-only: vertices, indices; for customGeometry + trimeshCollider) ─
+    | 'mesh'
     // ── Environment ──────────────────────────────────────────────
     | 'skybox'       // Used by SkyboxComponent
     // ── Scripting ────────────────────────────────────────────────

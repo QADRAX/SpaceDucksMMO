@@ -69,8 +69,33 @@ export interface PhysicalShaderMaterialData extends ShaderMaterialDataBase {
     readonly thickness: number;
 }
 
-/** Scalar data for a mesh resource (no data — file only). */
+/** Scalar data for a mesh resource (no scalar attributes; geometry is in the geometry file). */
 export type MeshData = Record<string, never>;
+
+/**
+ * JSON schema for the mesh resource's geometry file.
+ * When the `geometry` file slot is served as JSON, the parsed content must match this shape.
+ * Used by customGeometry (render) and trimeshCollider (physics); same file for both.
+ */
+export interface MeshGeometryFileData {
+    /** Vertex positions: flat [x, y, z, x, y, z, ...], length = vertexCount * 3 */
+    readonly positions: number[];
+    /** Triangle indices: flat [i0, j0, k0, i1, j1, k1, ...], length multiple of 3 */
+    readonly indices: number[];
+    /** Optional normals: flat [x, y, z, ...], length = vertexCount * 3 */
+    readonly normals?: number[];
+    /** Optional UVs: flat [u, v, u, v, ...], length = vertexCount * 2 */
+    readonly uvs?: number[];
+    /** Optional axis-aligned bounding box for culling/LOD */
+    readonly bounds?: {
+        readonly minX: number;
+        readonly minY: number;
+        readonly minZ: number;
+        readonly maxX: number;
+        readonly maxY: number;
+        readonly maxZ: number;
+    };
+}
 
 /** Scalar data for a skybox resource (no data — files only). */
 export type SkyboxData = Record<string, never>;

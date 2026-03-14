@@ -168,7 +168,7 @@ Each `ResourceKind` maps to a component type that can be persisted as a resource
 | `standardMaterial` | standardMaterial | color, metalness, roughness, ... | albedo, normalMap, aoMap, ... |
 | `basicMaterial`, `phongMaterial`, `lambertMaterial` | (same) | color, opacity, ... | albedo |
 | `basicShaderMaterial`, `standardShaderMaterial`, `physicalShaderMaterial` | (same) | uniforms, blending, ... | vertexSource, fragmentSource |
-| `mesh` | fullMesh, customGeometry | — | model, thumbnail |
+| `mesh` | customGeometry, trimeshCollider | — | geometry, thumbnail |
 | `skybox` | skybox | — | px, nx, py, ny, pz |
 | `script` | script | — | source |
 | `texture` | (standalone) | — | image |

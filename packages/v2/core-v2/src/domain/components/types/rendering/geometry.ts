@@ -3,7 +3,7 @@ import type { ResourceRef } from '../../../resources';
 
 /** Shared fields for all geometry components. */
 export interface GeometryComponentBase<
-  TType extends 'boxGeometry' | 'sphereGeometry' | 'planeGeometry' | 'cylinderGeometry' | 'coneGeometry' | 'torusGeometry' | 'customGeometry' | 'fullMesh' = 'boxGeometry' | 'sphereGeometry' | 'planeGeometry' | 'cylinderGeometry' | 'coneGeometry' | 'torusGeometry' | 'customGeometry' | 'fullMesh',
+  TType extends 'boxGeometry' | 'sphereGeometry' | 'planeGeometry' | 'cylinderGeometry' | 'coneGeometry' | 'torusGeometry' | 'customGeometry' = 'boxGeometry' | 'sphereGeometry' | 'planeGeometry' | 'cylinderGeometry' | 'coneGeometry' | 'torusGeometry' | 'customGeometry',
   TSelf = unknown,
 > extends ComponentBase<TType, TSelf> {
   castShadow: boolean;
@@ -53,15 +53,13 @@ export interface TorusGeometryComponent extends GeometryComponentBase<'torusGeom
   tubularSegments: number;
 }
 
-/** External mesh geometry resource (GLB/GLTF). */
-export interface FullMeshComponent extends GeometryComponentBase<'fullMesh', FullMeshComponent> {
-  /** Reference to the mesh resource. */
-  mesh: ResourceRef<'mesh'>;
-}
-
-/** External custom geometry resource. */
+/**
+ * Custom geometry from a mesh resource.
+ * The mesh resource holds mesh-only data (vertices, indices, optional normals/UVs)
+ * for use by rendering and by trimesh colliders. Same resource kind for both.
+ */
 export interface CustomGeometryComponent extends GeometryComponentBase<'customGeometry', CustomGeometryComponent> {
-  /** Reference to the custom geometry resource. */
+  /** Reference to the mesh resource (geometry-only data). */
   mesh: ResourceRef<'mesh'>;
 }
 
@@ -73,5 +71,4 @@ export type GeometryComponent =
   | CylinderGeometryComponent
   | ConeGeometryComponent
   | TorusGeometryComponent
-  | FullMeshComponent
   | CustomGeometryComponent;

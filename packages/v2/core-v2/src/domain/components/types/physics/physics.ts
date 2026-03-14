@@ -3,9 +3,18 @@ import type { ComponentBase, ComponentType } from '../core';
 /** Supported rigid body types. */
 export type RigidBodyType = 'static' | 'dynamic' | 'kinematic';
 
+/**
+ * Joint type linking this rigid body to its parent's rigid body in the hierarchy.
+ * When null, the joint is fixed (no relative motion). Used for chains, ropes, suspension bridges.
+ * In the inspector, "Fixed" is stored as null; 'fixed' is also treated as fixed when present.
+ */
+export type RigidBodyJointType = 'fixed' | 'revolute' | 'spherical';
+
 /** Rigid body dynamics configuration. */
 export interface RigidBodyComponent extends ComponentBase<'rigidBody', RigidBodyComponent> {
   bodyType: RigidBodyType;
+  /** If set, type of joint to parent's rigid body; null = fixed (default). */
+  jointToParent: RigidBodyJointType | null;
   mass: number;
   linearDamping: number;
   angularDamping: number;
@@ -71,13 +80,17 @@ export interface TerrainColliderComponent extends ColliderBaseComponent<'terrain
   heightfield: TerrainHeightfield;
 }
 
-/** Union of currently supported physics components. */
-export type PhysicsComponent =
-  | RigidBodyComponent
-  | GravityComponent
+/** Union of all collider component types (for APIs that accept any collider shape). */
+export type ColliderComponent =
   | BoxColliderComponent
   | SphereColliderComponent
   | CapsuleColliderComponent
   | CylinderColliderComponent
   | ConeColliderComponent
   | TerrainColliderComponent;
+
+/** Union of currently supported physics components. */
+export type PhysicsComponent =
+  | RigidBodyComponent
+  | GravityComponent
+  | ColliderComponent;

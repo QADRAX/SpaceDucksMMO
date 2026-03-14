@@ -9,7 +9,6 @@ import type {
   CustomGeometryComponent,
   CylinderGeometryComponent,
   DirectionalLightComponent,
-  FullMeshComponent,
   LambertMaterialComponent,
   LensFlareComponent,
   PhongMaterialComponent,
@@ -49,7 +48,6 @@ export interface ComponentByType {
   coneGeometry: ConeGeometryComponent;
   torusGeometry: TorusGeometryComponent;
   customGeometry: CustomGeometryComponent;
-  fullMesh: FullMeshComponent;
   standardMaterial: StandardMaterialComponent;
   basicMaterial: BasicMaterialComponent;
   phongMaterial: PhongMaterialComponent;

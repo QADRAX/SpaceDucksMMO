@@ -59,7 +59,7 @@ describe('Integration: Entity > addComponent (Bulk)', () => {
                 if (!comps) return false;
                 for (const c of comps.values()) {
                     const cType = (c.metadata as any).type;
-                    if (cType && (cType.toLowerCase().includes('geometry') || cType === 'fullMesh')) return true;
+                    if (cType && cType.toLowerCase().includes('geometry')) return true;
                 }
                 return false;
             };

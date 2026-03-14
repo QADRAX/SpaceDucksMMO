@@ -1,4 +1,4 @@
-import type { ComponentSpec } from '../../types/core';
+import type { ComponentSpec, ComponentType } from '../../types/core';
 import type {
   RigidBodyComponent,
   GravityComponent,
@@ -9,6 +9,17 @@ import type {
   ConeColliderComponent,
   TerrainColliderComponent,
 } from '../../types/physics/physics';
+
+/** Component types that affect physics (rigid body + all colliders). Used e.g. to re-sync on component change. */
+export const PHYSICS_RELATED_COMPONENT_TYPES: readonly ComponentType[] = [
+  'rigidBody',
+  'boxCollider',
+  'sphereCollider',
+  'capsuleCollider',
+  'cylinderCollider',
+  'coneCollider',
+  'terrainCollider',
+];
 
 const COLLIDER_TYPES = [
   'boxCollider',
@@ -55,6 +66,16 @@ export const RIGID_BODY_SPEC: ComponentSpec<RigidBodyComponent> = {
             { value: 'kinematic', label: 'Kinematic' },
           ],
         },
+        {
+          key: 'jointToParent',
+          label: 'Joint to Parent',
+          type: 'enum',
+          options: [
+            { value: 'fixed', label: 'Fixed' },
+            { value: 'revolute', label: 'Revolute' },
+            { value: 'spherical', label: 'Spherical' },
+          ],
+        },
         { key: 'mass', label: 'Mass', type: 'number', min: 0, step: 0.01 },
         { key: 'linearDamping', label: 'Linear Damping', type: 'number', min: 0, step: 0.01 },
         { key: 'angularDamping', label: 'Angular Damping', type: 'number', min: 0, step: 0.01 },
@@ -65,6 +86,7 @@ export const RIGID_BODY_SPEC: ComponentSpec<RigidBodyComponent> = {
   },
   defaults: {
     bodyType: 'dynamic',
+    jointToParent: null,
     mass: 1,
     linearDamping: 0,
     angularDamping: 0,

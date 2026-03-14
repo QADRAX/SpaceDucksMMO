@@ -21,11 +21,12 @@
   "scripts": {
     "build": "npm run build:all",
     "build:workspaces": "npm --workspaces run build",
-    "build:all": "npm run build:duckengine:web-core && npm run build:duckengine:web-core-api-client && npm run build:duckengine:core && npm run build:duckengine:physics-rapier && npm run build:duckengine:rendering-three && npm run build:client",
+    "build:all": "npm run build:duckengine:web-core && npm run build:duckengine:web-core-api-client && npm run build:duckengine:core && npm run build:duckengine:physics-rapier && npm run build:duckengine:physics-rapier-v2 && npm run build:duckengine:rendering-three && npm run build:client",
     "build:duckengine:web-core": "npm --workspace @duckengine/web-core run build",
     "build:duckengine:web-core-api-client": "npm --workspace @duckengine/web-core-api-client run build",
     "build:duckengine:core": "npm --workspace @duckengine/core run build",
     "build:duckengine:physics-rapier": "npm --workspace @duckengine/physics-rapier run build",
+    "build:duckengine:physics-rapier-v2": "npm --workspace @duckengine/physics-rapier-v2 run build",
     "build:duckengine:rendering-three": "npm --workspace @duckengine/rendering-three run build",
     "build:client": "npm --workspace @spaceducks/client run build",
     "generate:duckengine:web-core-api-client": "npm --workspace @duckengine/web-core-api-client run generate",

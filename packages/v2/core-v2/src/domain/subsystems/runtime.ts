@@ -46,6 +46,42 @@ export function createSubsystemPortRegistry(
   };
 }
 
+/**
+ * Creates a merged port registry: reads from scene first, then engine; writes to scene only.
+ * Used so scene subsystems (e.g. physics) register ports per scene and consumers (e.g. scripting)
+ * resolve the port for their scene without passing sceneId.
+ */
+export function createMergedPortRegistry(
+  sceneRegistry: SubsystemPortRegistry,
+  engineRegistry: SubsystemPortRegistry
+): SubsystemPortRegistry {
+  return {
+    get<T>(def: PortDefinition<T>): T | undefined {
+      const fromScene = sceneRegistry.get(def);
+      if (fromScene !== undefined) return fromScene;
+      return engineRegistry.get(def);
+    },
+    getById<T = unknown>(id: string): T | undefined {
+      const fromScene = sceneRegistry.getById<T>(id);
+      if (fromScene !== undefined) return fromScene;
+      return engineRegistry.getById<T>(id);
+    },
+    register<T>(def: PortDefinition<T>, implementation: T): void {
+      sceneRegistry.register(def, implementation);
+    },
+    has<T>(def: PortDefinition<T>): boolean {
+      return sceneRegistry.has(def) || engineRegistry.has(def);
+    },
+    entries(): ReadonlyArray<readonly [PortDefinition<any>, unknown]> {
+      const sceneEntries = sceneRegistry.entries();
+      const engineEntries = engineRegistry.entries();
+      const sceneIds = new Set(sceneEntries.map(([def]) => def.id));
+      const engineOnly = engineEntries.filter(([def]) => !sceneIds.has(def.id));
+      return [...sceneEntries, ...engineOnly];
+    },
+  };
+}
+
 /** Runs all registered port derivation hooks in registration order. */
 export function runSubsystemPortDerivers(engine: EngineState): void {
   const registry = createSubsystemPortRegistry(
@@ -63,11 +99,16 @@ export function instantiateSceneSubsystems(
   scene: SceneState,
   factories: ReadonlyArray<SceneSubsystemFactory>,
 ): SceneSubsystem[] {
-  const registry = createSubsystemPortRegistry(
+  const sceneRegistry = createSubsystemPortRegistry(
+    scene.scenePorts,
+    scene.scenePortDefinitions as Map<string, PortDefinition<any>>
+  );
+  const engineRegistry = createSubsystemPortRegistry(
     engine.subsystemRuntime.ports,
     engine.subsystemRuntime.portDefinitions
   );
-  return factories.map((factory) => factory({ engine, scene, ports: registry }));
+  const ports = createMergedPortRegistry(sceneRegistry, engineRegistry);
+  return factories.map((factory) => factory({ engine, scene, ports }));
 }
 
 /** Attaches one scene subsystem to update and event channels. */

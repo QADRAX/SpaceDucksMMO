@@ -68,10 +68,15 @@ export interface ShaderMaterialFileSlots {
 
 // ── Geometry file slots ───────────────────────────────────────────────────────
 
-/** File slots for a mesh resource. */
+/**
+ * File slots for a mesh resource.
+ * Mesh resources hold geometry-only data (vertices, indices, optional normals/UVs),
+ * not full scenes. Used by customGeometry (render) and trimeshCollider (physics).
+ * The geometry file format is server-defined (e.g. custom binary, or extracted single-mesh).
+ */
 export interface MeshFileSlots {
-    /** GLB/GLTF model file. */
-    readonly model: ResolvedFile;
+    /** Mesh-only geometry file (positions, indices; optional normals/UVs). */
+    readonly geometry: ResolvedFile;
     /** Optional thumbnail for editor UI. */
     readonly thumbnail?: ResolvedFile;
 }

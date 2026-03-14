@@ -6,7 +6,6 @@ import type {
   CylinderGeometryComponent,
   ConeGeometryComponent,
   TorusGeometryComponent,
-  FullMeshComponent,
   CustomGeometryComponent,
 } from '../../types/rendering/geometry';
 
@@ -142,19 +141,6 @@ export const TORUS_GEOMETRY_SPEC: ComponentSpec<TorusGeometryComponent> = {
   },
 };
 
-export const FULL_MESH_SPEC: ComponentSpec<FullMeshComponent> = {
-  metadata: {
-    ...GEO_BASE,
-    type: 'fullMesh',
-    label: 'Full Mesh',
-    icon: 'FileBox',
-    inspector: {
-      fields: [{ key: 'mesh', label: 'Mesh Resource', type: 'reference' }, ...shadowFields],
-    },
-  },
-  defaults: { ...SHADOW_DEFAULTS, mesh: undefined as any },
-};
-
 export const CUSTOM_GEOMETRY_SPEC: ComponentSpec<CustomGeometryComponent> = {
   metadata: {
     ...GEO_BASE,
@@ -176,6 +162,5 @@ export const GEOMETRY_SPECS = {
   cylinderGeometry: CYLINDER_GEOMETRY_SPEC,
   coneGeometry: CONE_GEOMETRY_SPEC,
   torusGeometry: TORUS_GEOMETRY_SPEC,
-  fullMesh: FULL_MESH_SPEC,
   customGeometry: CUSTOM_GEOMETRY_SPEC,
 };

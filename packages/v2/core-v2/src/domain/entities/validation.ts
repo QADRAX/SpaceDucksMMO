@@ -74,7 +74,6 @@ export const GEOMETRY_TYPES: ReadonlySet<string> = new Set([
   'coneGeometry',
   'torusGeometry',
   'customGeometry',
-  'fullMesh',
 ]);
 
 /**

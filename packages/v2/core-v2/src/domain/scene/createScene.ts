@@ -15,5 +15,7 @@ export function createScene(id: SceneId): SceneState {
     prefabs: new Map(),
     uiSlots: new Map(),
     paused: false,
+    scenePorts: new Map(),
+    scenePortDefinitions: new Map(),
   };
 }

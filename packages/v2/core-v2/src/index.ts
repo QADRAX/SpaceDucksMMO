@@ -1,6 +1,12 @@
 export * from './domain/assets';
 export * from './domain/subsystems';
 export * from './domain/components';
+export { PHYSICS_RELATED_COMPONENT_TYPES } from './domain/components/constants/physics';
+export type {
+  RigidBodyComponent,
+  GravityComponent,
+  ColliderComponent,
+} from './domain/components/types/physics/physics';
 export * from './domain/entities';
 export * from './domain/engine';
 export * from './domain/math';

@@ -21,7 +21,6 @@ export type ComponentType =
     | 'coneGeometry'
     | 'torusGeometry'
     | 'customGeometry'
-    | 'fullMesh'
     | 'standardMaterial'
     | 'basicMaterial'
     | 'phongMaterial'

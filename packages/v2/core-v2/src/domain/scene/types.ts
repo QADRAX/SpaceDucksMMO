@@ -1,6 +1,6 @@
 import type { EntityState, DebugKind } from '../entities';
 import type { ComponentType } from '../components';
-import type { SceneSubsystem } from '../subsystems';
+import type { SceneSubsystem, PortDefinition } from '../subsystems';
 import type { EntityId, SceneId, UISlotId } from '../ids';
 import type { UISlotState } from '../ui';
 
@@ -165,6 +165,10 @@ export interface SceneState {
   readonly uiSlots: Map<UISlotId, UISlotState>;
   /** When true, only subsystems with updateWhenPaused run during update. */
   paused: boolean;
+  /** Per-scene port implementations, keyed by port id. Scene subsystems register here. */
+  readonly scenePorts: Map<string, unknown>;
+  /** Per-scene port definitions, keyed by port id. */
+  readonly scenePortDefinitions: Map<string, PortDefinition<unknown>>;
 }
 
 /** Readonly snapshot of a scene for application/UI consumers. */
