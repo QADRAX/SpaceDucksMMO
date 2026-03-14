@@ -1,0 +1,27 @@
+{
+  "name": "@duckengine/rendering-three-webgpu-v2",
+  "version": "0.1.0",
+  "private": false,
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@duckengine/core-v2": "^0.1.0",
+    "@duckengine/rendering-base-v2": "^0.1.0",
+    "@duckengine/rendering-three-common-v2": "^0.1.0",
+    "three": "^0.183.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.183.0"
+  }
+}

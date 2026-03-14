@@ -1,5 +1,6 @@
 import type { ComponentSpec } from '../../types/core';
 import type {
+  GeometryComponentType,
   BoxGeometryComponent,
   SphereGeometryComponent,
   PlaneGeometryComponent,
@@ -164,3 +165,19 @@ export const GEOMETRY_SPECS = {
   torusGeometry: TORUS_GEOMETRY_SPEC,
   customGeometry: CUSTOM_GEOMETRY_SPEC,
 };
+
+/** Ordered list of all geometry component types (single source of truth). */
+export const GEOMETRY_COMPONENT_TYPES: GeometryComponentType[] = [
+  'boxGeometry',
+  'sphereGeometry',
+  'planeGeometry',
+  'cylinderGeometry',
+  'coneGeometry',
+  'torusGeometry',
+  'customGeometry',
+];
+
+/** Type guard: true if `t` is a geometry component type. */
+export function isGeometryComponentType(t: string): t is GeometryComponentType {
+  return (GEOMETRY_COMPONENT_TYPES as readonly string[]).includes(t);
+}

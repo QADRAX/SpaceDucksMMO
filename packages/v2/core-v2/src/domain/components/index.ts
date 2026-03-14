@@ -1,4 +1,14 @@
 export * from './types';
+export type {
+  GeometryComponent,
+  BoxGeometryComponent,
+  SphereGeometryComponent,
+  PlaneGeometryComponent,
+  CylinderGeometryComponent,
+  ConeGeometryComponent,
+  TorusGeometryComponent,
+  CustomGeometryComponent,
+} from './types/rendering/geometry';
 export * from './constants';
 export {
     RESOURCE_FIELD_KEYS,

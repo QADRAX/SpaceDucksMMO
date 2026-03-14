@@ -1,11 +1,19 @@
 import type { ComponentBase } from '../core';
 import type { ResourceRef } from '../../../resources';
 
+/** Literal union of all geometry component type strings. */
+export type GeometryComponentType =
+  | 'boxGeometry'
+  | 'sphereGeometry'
+  | 'planeGeometry'
+  | 'cylinderGeometry'
+  | 'coneGeometry'
+  | 'torusGeometry'
+  | 'customGeometry';
+
 /** Shared fields for all geometry components. */
-export interface GeometryComponentBase<
-  TType extends 'boxGeometry' | 'sphereGeometry' | 'planeGeometry' | 'cylinderGeometry' | 'coneGeometry' | 'torusGeometry' | 'customGeometry' = 'boxGeometry' | 'sphereGeometry' | 'planeGeometry' | 'cylinderGeometry' | 'coneGeometry' | 'torusGeometry' | 'customGeometry',
-  TSelf = unknown,
-> extends ComponentBase<TType, TSelf> {
+export interface GeometryComponentBase<TType extends GeometryComponentType = GeometryComponentType, TSelf = unknown>
+  extends ComponentBase<TType, TSelf> {
   castShadow: boolean;
   receiveShadow: boolean;
 }
