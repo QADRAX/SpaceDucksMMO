@@ -64,6 +64,8 @@ export interface EntityState {
   readonly id: EntityId;
   readonly transform: TransformState;
   readonly components: Map<ComponentType, ComponentBase>;
+  /** Set of component types present on this entity. Kept in sync with components for O(1) "has any of these types" checks. */
+  readonly componentTypes: Set<ComponentType>;
   readonly observers: EntityObservers;
   readonly debugFlags: Map<DebugKind, boolean>;
   readonly children: EntityState[];

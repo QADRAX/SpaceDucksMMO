@@ -2,6 +2,9 @@ import type { SceneState } from '@duckengine/core-v2';
 import type { RenderFeature } from '@duckengine/rendering-base-v2';
 import type { RenderContextThree } from '../domain';
 
+/** Reused each frame to avoid allocation in syncSceneToRenderTree. */
+const attachedIds = new Set<string>();
+
 /**
  * Syncs a scene's ECS entities to the Three.js render tree using the given features.
  * Call each frame from preRender. Each feature is called once per entity (syncEntity);
@@ -12,7 +15,7 @@ export function syncSceneToRenderTree(
   context: RenderContextThree,
   features: ReadonlyArray<RenderFeature<RenderContextThree>>,
 ): void {
-  const attachedIds = new Set<string>();
+  attachedIds.clear();
 
   for (const [entityId, entity] of scene.entities) {
     attachedIds.add(entityId);

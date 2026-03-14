@@ -15,6 +15,7 @@ export function createEntity(id: EntityId, displayName?: string): EntityState {
     id,
     transform: createTransform(),
     components: new Map(),
+    componentTypes: new Set(),
     observers: createEntityObservers(),
     debugFlags: new Map(),
     children: [],
@@ -30,6 +31,7 @@ export function addComponent(entity: EntityState, comp: ComponentBase): Result<v
   if (!v.ok) return v;
 
   entity.components.set(comp.type, comp);
+  entity.componentTypes.add(comp.type);
   entity.observers.fireComponentAdded(entity.id, comp);
   return ok(undefined);
 }
@@ -43,6 +45,7 @@ export function removeComponent(entity: EntityState, type: ComponentType): Resul
   if (!v.ok) return v;
 
   entity.components.delete(type);
+  entity.componentTypes.delete(type);
   entity.observers.fireComponentRemoved(entity.id, comp);
   return ok(undefined);
 }
@@ -58,6 +61,17 @@ export function getComponent<T extends ComponentBase>(
 /** Checks whether the entity owns a component of the given type. */
 export function hasComponent(entity: EntityState, type: ComponentType): boolean {
   return entity.components.has(type);
+}
+
+/** Returns true if the entity has at least one component whose type is in the given list. O(1) per type when entity.componentTypes is used. */
+export function hasAnyComponent(
+  entity: EntityState,
+  types: readonly ComponentType[],
+): boolean {
+  for (const t of types) {
+    if (entity.componentTypes.has(t)) return true;
+  }
+  return false;
 }
 
 /** Returns a snapshot array of all components currently on the entity. */

@@ -41,6 +41,7 @@ export {
   removeComponent,
   getComponent,
   hasComponent,
+  hasAnyComponent,
   getAllComponents,
   updateComponent,
   setComponentEnabled,
