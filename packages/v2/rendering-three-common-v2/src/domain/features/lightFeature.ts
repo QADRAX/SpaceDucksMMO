@@ -4,113 +4,78 @@ import type { RenderFeature } from '@duckengine/rendering-base-v2';
 import type { EntityState } from '@duckengine/core-v2';
 import type { RenderContextThree } from '../renderContextThree';
 import { parseColor } from '../parseColor';
+import { lightFromParams, type LightParams } from '../lightFromParams';
 import { syncTransformToObject3D } from '../syncTransformToObject3D';
+import { removeFromRegistryAndDispose } from '../removeFromRegistry';
 
-function createLight(entity: EntityState): THREE.Light | null {
+const LIGHT_TYPES = ['ambientLight', 'directionalLight', 'pointLight', 'spotLight'] as const;
+
+function getLightParamsFromEntity(entity: EntityState): LightParams | null {
   const ambient = getComponent(entity, 'ambientLight') as { color: string; intensity: number } | undefined;
-  if (ambient) {
-    const light = new THREE.AmbientLight(parseColor(ambient.color), ambient.intensity);
-    return light;
-  }
+  if (ambient) return { type: 'ambientLight', color: parseColor(ambient.color), intensity: ambient.intensity };
 
   const dir = getComponent(entity, 'directionalLight') as { color: string; intensity: number; castShadow: boolean } | undefined;
-  if (dir) {
-    const light = new THREE.DirectionalLight(parseColor(dir.color), dir.intensity);
-    light.castShadow = dir.castShadow ?? false;
-    return light;
-  }
+  if (dir) return { type: 'directionalLight', color: parseColor(dir.color), intensity: dir.intensity, castShadow: dir.castShadow ?? false };
 
   const point = getComponent(entity, 'pointLight') as { color: string; intensity: number; distance: number; decay: number; castShadow: boolean } | undefined;
-  if (point) {
-    const light = new THREE.PointLight(parseColor(point.color), point.intensity, point.distance ?? 0, point.decay ?? 2);
-    light.castShadow = point.castShadow ?? false;
-    return light;
-  }
+  if (point) return { type: 'pointLight', color: parseColor(point.color), intensity: point.intensity, distance: point.distance ?? 0, decay: point.decay ?? 2, castShadow: point.castShadow ?? false };
 
   const spot = getComponent(entity, 'spotLight') as { color: string; intensity: number; distance: number; angle: number; penumbra: number; castShadow: boolean } | undefined;
-  if (spot) {
-    const light = new THREE.SpotLight(
-      parseColor(spot.color),
-      spot.intensity,
-      spot.distance ?? 0,
-      spot.angle ?? Math.PI / 3,
-      spot.penumbra ?? 0,
-    );
-    light.castShadow = spot.castShadow ?? false;
-    return light;
-  }
+  if (spot) return { type: 'spotLight', color: parseColor(spot.color), intensity: spot.intensity, distance: spot.distance ?? 0, angle: spot.angle ?? Math.PI / 3, penumbra: spot.penumbra ?? 0, castShadow: spot.castShadow ?? false };
 
   return null;
 }
 
-const LIGHT_TYPES = ['ambientLight', 'directionalLight', 'pointLight', 'spotLight'] as const;
-
 /**
  * Feature: sync light components to Three.js lights.
  */
-export function createLightFeature(): RenderFeature {
+export function createLightFeature(): RenderFeature<RenderContextThree> {
   const lightsByEntity = new Map<string, THREE.Light>();
 
   return {
     name: 'LightFeature',
 
-    isEligible(entity, _scene) {
-      return (
-        getComponent(entity, 'ambientLight') !== undefined ||
-        getComponent(entity, 'directionalLight') !== undefined ||
-        getComponent(entity, 'pointLight') !== undefined ||
-        getComponent(entity, 'spotLight') !== undefined
-      );
-    },
+    syncEntity(entity, context) {
+      const params = getLightParamsFromEntity(entity);
+      const had = lightsByEntity.has(entity.id);
 
-    onAttach(entity, context) {
-      const ctx = context as RenderContextThree;
-      const light = createLight(entity);
-      if (!light) return;
-      syncTransformToObject3D(entity, light);
-      ctx.registry.add(entity.id, light, ctx.threeScene);
-      lightsByEntity.set(entity.id, light);
+      if (params && !had) {
+        const light = lightFromParams(params);
+        syncTransformToObject3D(entity, light);
+        context.registry.add(entity.id, light, context.threeScene);
+        lightsByEntity.set(entity.id, light);
+      } else if (params && had) {
+        const prev = lightsByEntity.get(entity.id)!;
+        removeFromRegistryAndDispose(context.registry, context.threeScene, entity.id, prev, (l) => l.dispose?.());
+        const light = lightFromParams(params);
+        syncTransformToObject3D(entity, light);
+        context.registry.add(entity.id, light, context.threeScene);
+        lightsByEntity.set(entity.id, light);
+      } else if (!params && had) {
+        const light = lightsByEntity.get(entity.id);
+        removeFromRegistryAndDispose(context.registry, context.threeScene, entity.id, light, (l) => l.dispose?.());
+        lightsByEntity.delete(entity.id);
+      }
     },
 
     onUpdate(entity, componentType, context) {
       if (!LIGHT_TYPES.includes(componentType as (typeof LIGHT_TYPES)[number])) return;
-      const ctx = context as RenderContextThree;
       const prev = lightsByEntity.get(entity.id);
-      const light = createLight(entity);
-      if (!light) return;
+      const params = getLightParamsFromEntity(entity);
+      if (!params) return;
       if (prev) {
-        ctx.registry.remove(entity.id, prev, ctx.threeScene);
-        prev.dispose?.();
+        removeFromRegistryAndDispose(context.registry, context.threeScene, entity.id, prev, (l) => l.dispose?.());
       }
+      const light = lightFromParams(params);
       syncTransformToObject3D(entity, light);
-      ctx.registry.add(entity.id, light, ctx.threeScene);
+      context.registry.add(entity.id, light, context.threeScene);
       lightsByEntity.set(entity.id, light);
     },
 
-    onDetach(entity, ctx) {
-      detachById(entity.id, ctx as RenderContextThree, lightsByEntity);
-    },
-
-    onDetachById(entityId, ctx) {
-      detachById(entityId, ctx as RenderContextThree, lightsByEntity);
-    },
-
-    onTransformChanged(entity, _context) {
-      const light = lightsByEntity.get(entity.id);
-      if (light) syncTransformToObject3D(entity, light);
+    onDetachById(entityId, context) {
+      const light = lightsByEntity.get(entityId);
+      removeFromRegistryAndDispose(context.registry, context.threeScene, entityId, light, (l) => l.dispose?.());
+      lightsByEntity.delete(entityId);
     },
   };
-}
-
-function detachById(
-  entityId: string,
-  ctx: RenderContextThree,
-  lightsByEntity: Map<string, THREE.Light>,
-): void {
-  const light = lightsByEntity.get(entityId);
-  if (light) {
-    ctx.registry.remove(entityId, light, ctx.threeScene);
-    light.dispose?.();
-    lightsByEntity.delete(entityId);
-  }
 }

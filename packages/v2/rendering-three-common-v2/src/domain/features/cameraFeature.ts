@@ -2,83 +2,81 @@ import * as THREE from 'three';
 import { getComponent } from '@duckengine/core-v2';
 import type { RenderFeature } from '@duckengine/rendering-base-v2';
 import type { RenderContextThree } from '../renderContextThree';
+import { createPerspectiveCameraFromParams, applyPerspectiveCameraParams } from '../cameraFromParams';
 import { syncTransformToObject3D } from '../syncTransformToObject3D';
+import { removeFromRegistryAndDispose } from '../removeFromRegistry';
+
+type CameraParams = { fov: number; near: number; far: number; aspect: number };
 
 /**
  * Feature: sync cameraView component to Three.js PerspectiveCamera.
  */
-export function createCameraFeature(): RenderFeature {
+export function createCameraFeature(): RenderFeature<RenderContextThree> {
   const camerasByEntity = new Map<string, THREE.PerspectiveCamera>();
 
   return {
     name: 'CameraFeature',
 
-    isEligible(entity, _scene) {
-      return getComponent(entity, 'cameraView') !== undefined;
-    },
+    syncEntity(entity, context) {
+      const cam = getComponent(entity, 'cameraView') as CameraParams | undefined;
+      const had = camerasByEntity.has(entity.id);
 
-    onAttach(entity, context) {
-      const ctx = context as RenderContextThree;
-      const cam = getComponent(entity, 'cameraView') as {
-        fov: number;
-        near: number;
-        far: number;
-        aspect: number;
-      } | undefined;
-      if (!cam) return;
-
-      const threeCam = new THREE.PerspectiveCamera(
-        cam.fov,
-        cam.aspect || 1,
-        cam.near,
-        cam.far,
-      );
-      syncTransformToObject3D(entity, threeCam);
-      ctx.registry.add(entity.id, threeCam, ctx.threeScene);
-      camerasByEntity.set(entity.id, threeCam);
+      if (cam && !had) {
+        const threeCam = createPerspectiveCameraFromParams({
+          fov: cam.fov,
+          aspect: cam.aspect ?? 1,
+          near: cam.near,
+          far: cam.far,
+        });
+        syncTransformToObject3D(entity, threeCam);
+        context.registry.add(entity.id, threeCam, context.threeScene);
+        camerasByEntity.set(entity.id, threeCam);
+      } else if (cam && had) {
+        const threeCam = camerasByEntity.get(entity.id)!;
+        applyPerspectiveCameraParams(threeCam, {
+          fov: cam.fov,
+          aspect: cam.aspect ?? 1,
+          near: cam.near,
+          far: cam.far,
+        });
+        syncTransformToObject3D(entity, threeCam);
+      } else if (!cam && had) {
+        const threeCam = camerasByEntity.get(entity.id);
+        removeFromRegistryAndDispose(
+          context.registry,
+          context.threeScene,
+          entity.id,
+          threeCam,
+          () => {},
+        );
+        camerasByEntity.delete(entity.id);
+      }
     },
 
     onUpdate(entity, componentType, _context) {
       if (componentType !== 'cameraView') return;
-      const cam = getComponent(entity, 'cameraView') as {
-        fov: number;
-        near: number;
-        far: number;
-        aspect: number;
-      } | undefined;
+      const cam = getComponent(entity, 'cameraView') as CameraParams | undefined;
       const threeCam = camerasByEntity.get(entity.id);
       if (threeCam && cam) {
-        threeCam.fov = cam.fov;
-        threeCam.near = cam.near;
-        threeCam.far = cam.far;
-        threeCam.aspect = cam.aspect || 1;
-        threeCam.updateProjectionMatrix();
+        applyPerspectiveCameraParams(threeCam, {
+          fov: cam.fov,
+          aspect: cam.aspect ?? 1,
+          near: cam.near,
+          far: cam.far,
+        });
       }
     },
 
-    onDetach(entity, ctx) {
-      detachById(entity.id, ctx as RenderContextThree, camerasByEntity);
-    },
-
-    onDetachById(entityId, ctx) {
-      detachById(entityId, ctx as RenderContextThree, camerasByEntity);
-    },
-
-    onTransformChanged(entity, _context) {
-      const threeCam = camerasByEntity.get(entity.id);
-      if (threeCam) syncTransformToObject3D(entity, threeCam);
+    onDetachById(entityId, context) {
+      const threeCam = camerasByEntity.get(entityId);
+      removeFromRegistryAndDispose(
+        context.registry,
+        context.threeScene,
+        entityId,
+        threeCam,
+        () => {},
+      );
+      camerasByEntity.delete(entityId);
     },
   };
-}
-
-function detachById(
-  entityId: string,
-  ctx: RenderContextThree,
-  camerasByEntity: Map<string, THREE.PerspectiveCamera>,
-): void {
-  const threeCam = camerasByEntity.get(entityId);
-  if (threeCam) {
-    ctx.registry.remove(entityId, threeCam, ctx.threeScene);
-    camerasByEntity.delete(entityId);
-  }
 }

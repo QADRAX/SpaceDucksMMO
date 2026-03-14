@@ -10,6 +10,8 @@ import type { RenderFeature } from '@duckengine/rendering-base-v2';
 import type { RenderContextThree } from '../renderContextThree';
 import { geometryFromComponent } from '../geometryFromComponent';
 import { syncTransformToObject3D } from '../syncTransformToObject3D';
+import { applyShadow, disposeMesh } from '../three';
+import { removeFromRegistryAndDispose } from '../removeFromRegistry';
 
 function getGeometryComponent(entity: EntityState): GeometryComponent | undefined {
   for (const t of GEOMETRY_COMPONENT_TYPES) {
@@ -17,11 +19,6 @@ function getGeometryComponent(entity: EntityState): GeometryComponent | undefine
     if (c && c.type === t) return c as GeometryComponent;
   }
   return undefined;
-}
-
-function applyShadow(mesh: THREE.Mesh, cast: boolean, receive: boolean): void {
-  mesh.castShadow = cast;
-  mesh.receiveShadow = receive;
 }
 
 function getMeshDataForCustom(
@@ -33,74 +30,71 @@ function getMeshDataForCustom(
   return ctx.getMeshData(custom.mesh);
 }
 
-function detachById(
-  entityId: string,
-  ctx: RenderContextThree,
-  meshesByEntity: Map<string, THREE.Mesh>,
-): void {
-  const mesh = meshesByEntity.get(entityId);
-  if (mesh) {
-    ctx.registry.remove(entityId, mesh, ctx.threeScene);
-    mesh.geometry.dispose();
-    (mesh.material as THREE.Material).dispose();
-    meshesByEntity.delete(entityId);
-  }
-}
-
 /**
  * Feature: sync geometry component to Three.js Mesh (primitives + customGeometry).
  */
-export function createGeometryFeature(): RenderFeature {
+export function createGeometryFeature(): RenderFeature<RenderContextThree> {
   const meshesByEntity = new Map<string, THREE.Mesh>();
 
   return {
     name: 'GeometryFeature',
 
-    isEligible(entity, _scene) {
-      return getGeometryComponent(entity) !== undefined;
-    },
-
-    onAttach(entity, context) {
-      const ctx = context as RenderContextThree;
+    syncEntity(entity, context) {
       const comp = getGeometryComponent(entity);
-      if (!comp) return;
+      const had = meshesByEntity.has(entity.id);
 
-      const meshData = comp.type === 'customGeometry' ? getMeshDataForCustom(entity, ctx) : null;
-      const geom = geometryFromComponent(comp, meshData);
-      const material = new THREE.MeshStandardMaterial({ color: 0xcccccc });
-      const mesh = new THREE.Mesh(geom, material);
-      applyShadow(mesh, comp.castShadow, comp.receiveShadow);
-      syncTransformToObject3D(entity, mesh);
-      ctx.registry.add(entity.id, mesh, ctx.threeScene);
-      meshesByEntity.set(entity.id, mesh);
-    },
-
-    onUpdate(entity, componentType, context) {
-      const ctx = context as RenderContextThree;
-      if (!isGeometryComponentType(componentType)) return;
-      const comp = getGeometryComponent(entity);
-      if (!comp) return;
-      const meshData = comp.type === 'customGeometry' ? getMeshDataForCustom(entity, ctx) : null;
-      const geom = geometryFromComponent(comp, meshData);
-      const mesh = meshesByEntity.get(entity.id);
-      if (mesh) {
+      if (comp && !had) {
+        const meshData = comp.type === 'customGeometry' ? getMeshDataForCustom(entity, context) : null;
+        const geom = geometryFromComponent(comp, meshData);
+        const material = new THREE.MeshStandardMaterial({ color: 0xcccccc });
+        const mesh = new THREE.Mesh(geom, material);
+        applyShadow(mesh, comp.castShadow, comp.receiveShadow);
+        syncTransformToObject3D(entity, mesh);
+        context.registry.add(entity.id, mesh, context.threeScene);
+        meshesByEntity.set(entity.id, mesh);
+      } else if (comp && had) {
+        const mesh = meshesByEntity.get(entity.id)!;
+        const meshData = comp.type === 'customGeometry' ? getMeshDataForCustom(entity, context) : null;
+        const geom = geometryFromComponent(comp, meshData);
         mesh.geometry.dispose();
         mesh.geometry = geom;
         applyShadow(mesh, comp.castShadow, comp.receiveShadow);
+        syncTransformToObject3D(entity, mesh);
+      } else if (!comp && had) {
+        const mesh = meshesByEntity.get(entity.id);
+        removeFromRegistryAndDispose(
+          context.registry,
+          context.threeScene,
+          entity.id,
+          mesh,
+          disposeMesh,
+        );
+        meshesByEntity.delete(entity.id);
       }
     },
 
-    onDetach(entity, context) {
-      detachById(entity.id, context as RenderContextThree, meshesByEntity);
+    onUpdate(entity, componentType, context) {
+      if (!isGeometryComponentType(componentType)) return;
+      const comp = getGeometryComponent(entity);
+      const mesh = comp ? meshesByEntity.get(entity.id) : undefined;
+      if (!mesh || !comp) return;
+      const meshData = comp.type === 'customGeometry' ? getMeshDataForCustom(entity, context) : null;
+      const geom = geometryFromComponent(comp, meshData);
+      mesh.geometry.dispose();
+      mesh.geometry = geom;
+      applyShadow(mesh, comp.castShadow, comp.receiveShadow);
     },
 
-    onDetachById(entityId, _context) {
-      detachById(entityId, _context as RenderContextThree, meshesByEntity);
-    },
-
-    onTransformChanged(entity, _context) {
-      const mesh = meshesByEntity.get(entity.id);
-      if (mesh) syncTransformToObject3D(entity, mesh);
+    onDetachById(entityId, context) {
+      const mesh = meshesByEntity.get(entityId);
+      removeFromRegistryAndDispose(
+        context.registry,
+        context.threeScene,
+        entityId,
+        mesh,
+        disposeMesh,
+      );
+      meshesByEntity.delete(entityId);
     },
   };
 }

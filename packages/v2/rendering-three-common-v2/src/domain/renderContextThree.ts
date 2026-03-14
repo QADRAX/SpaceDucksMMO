@@ -10,6 +10,12 @@ import type { MeshGeometryFileData } from '@duckengine/core-v2';
 export type MeshResolver = (ref: ResourceRef<'mesh'>) => MeshGeometryFileData | null;
 
 /**
+ * Resolves a skybox resource ref to a Three.js cube texture (e.g. for scene.background).
+ * Optional; when not provided, SkyboxFeature will not set the scene background.
+ */
+export type SkyboxResolver = (ref: ResourceRef<'skybox'>) => THREE.CubeTexture | null;
+
+/**
  * Render context extended with Three.js objects. Used by features in common and infra.
  */
 export interface RenderContextThree extends RenderContextBase {
@@ -18,6 +24,8 @@ export interface RenderContextThree extends RenderContextBase {
   readonly registry: RenderObjectRegistry;
   /** Resolve mesh ref to geometry data for customGeometry. */
   readonly getMeshData: MeshResolver;
+  /** Optional: resolve skybox ref to CubeTexture for scene background. */
+  readonly getSkyboxTexture?: SkyboxResolver;
 }
 
 /**

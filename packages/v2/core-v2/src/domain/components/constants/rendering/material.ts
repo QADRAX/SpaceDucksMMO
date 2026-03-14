@@ -1,5 +1,6 @@
 import type { ComponentSpec } from '../../types/core';
 import type {
+  PlainMaterialComponentType,
   BasicMaterialComponent,
   LambertMaterialComponent,
   PhongMaterialComponent,
@@ -132,3 +133,16 @@ export const MATERIAL_SPECS = {
   phongMaterial: PHONG_MATERIAL_SPEC,
   lambertMaterial: LAMBERT_MATERIAL_SPEC,
 };
+
+/** Ordered list of plain (built-in) material component types (single source of truth). */
+export const PLAIN_MATERIAL_COMPONENT_TYPES: PlainMaterialComponentType[] = [
+  'standardMaterial',
+  'basicMaterial',
+  'phongMaterial',
+  'lambertMaterial',
+];
+
+/** Type guard: true if `t` is a plain material component type. */
+export function isPlainMaterialComponentType(t: string): t is PlainMaterialComponentType {
+  return (PLAIN_MATERIAL_COMPONENT_TYPES as readonly string[]).includes(t);
+}

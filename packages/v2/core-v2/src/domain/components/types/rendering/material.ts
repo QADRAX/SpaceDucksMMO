@@ -1,11 +1,18 @@
 import type { ComponentBase } from '../core';
 import type { ResourceRef } from '../../../resources';
 
+/** Literal union of plain (built-in) material component type strings. */
+export type PlainMaterialComponentType =
+  | 'standardMaterial'
+  | 'basicMaterial'
+  | 'phongMaterial'
+  | 'lambertMaterial';
+
 /** Shared fields for all material components. */
 export interface MaterialComponentBase<
-    TType extends 'standardMaterial' | 'basicMaterial' | 'phongMaterial' | 'lambertMaterial' = 'standardMaterial' | 'basicMaterial' | 'phongMaterial' | 'lambertMaterial',
-    TResourceKind extends TType = TType,
-    TSelf = unknown,
+  TType extends PlainMaterialComponentType = PlainMaterialComponentType,
+  TResourceKind extends TType = TType,
+  TSelf = unknown,
 > extends ComponentBase<TType, TSelf> {
     /** 
      * Blueprint material resource.

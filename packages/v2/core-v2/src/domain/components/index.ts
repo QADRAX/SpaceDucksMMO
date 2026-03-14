@@ -9,6 +9,12 @@ export type {
   TorusGeometryComponent,
   CustomGeometryComponent,
 } from './types/rendering/geometry';
+export type { SkyboxComponent } from './types/rendering/environment';
+export type { TextureTilingComponent } from './types/rendering/texture';
+export type {
+  PlainMaterialComponentType,
+  MaterialComponent,
+} from './types/rendering/material';
 export * from './constants';
 export {
     RESOURCE_FIELD_KEYS,

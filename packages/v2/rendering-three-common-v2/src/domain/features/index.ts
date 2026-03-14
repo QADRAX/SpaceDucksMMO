@@ -1,13 +1,24 @@
 /**
  * Render features (v2). Each syncs ECS components to Three.js objects.
  *
- * Implemented: Camera (cameraView → PerspectiveCamera), Light (ambient/directional/point/spot),
- * Geometry (primitives + customGeometry from MeshGeometryFileData), Material (standard/basic/phong/lambert).
+ * Implemented:
+ * - CameraFeature: cameraView → PerspectiveCamera
+ * - LightFeature: ambientLight, directionalLight, pointLight, spotLight → Three.js lights
+ * - GeometryFeature: box/sphere/plane/cylinder/cone/torus + customGeometry (mesh resource) → Mesh
+ * - MaterialFeature: standardMaterial, basicMaterial, phongMaterial, lambertMaterial → Mesh*Material
+ * - SkyboxFeature: skybox → scene.background (CubeTexture; requires getSkyboxTexture in context)
+ * - TextureTilingFeature: textureTiling → UV repeat/offset on mesh materials
  *
- * v1 had additionally: FullMesh (GLB), ShaderFeature, SkyboxFeature, DebugFeature (gizmos),
- * LensFlareFeature, AnimationFeature. These can be added as new features when needed.
+ * Missing (core-v2 has the component; exclude debug visuals):
+ * - ShaderMaterialFeature (or extend MaterialFeature): basicShaderMaterial, standardShaderMaterial, physicalShaderMaterial → ShaderMaterial from shader resource
+ * - LensFlareFeature: lensFlare → lens flare effect
+ * - PostProcessFeature: postProcess → post-process chain on camera
+ *
+ * Out of scope here: FullMesh/GLB, AnimationFeature, DebugFeature (gizmos).
  */
 export { createCameraFeature } from './cameraFeature';
 export { createLightFeature } from './lightFeature';
 export { createGeometryFeature } from './geometryFeature';
 export { createMaterialFeature } from './materialFeature';
+export { createSkyboxFeature } from './skyboxFeature';
+export { createTextureTilingFeature } from './textureTilingFeature';

@@ -14,24 +14,30 @@ export interface RenderContextBase {
 /**
  * A pluggable feature that handles rendering sync for a specific aspect of an entity.
  * Implementations live in rendering-three-common-v2 (Camera, Light, Geometry, Material).
+ *
+ * Sync contract: the orchestrator calls syncEntity(entity, context) once per entity per frame.
+ * The feature resolves the component once and branches internally (attach / update transform / detach).
+ * onDetachById is for entities that left the scene (no entity state). onUpdate is for incremental
+ * component updates when the sync is driven by component change events.
+ *
+ * @template TContext - Render context type (default RenderContextBase). Use RenderContextThree for Three.js features.
  */
-export interface RenderFeature {
+export interface RenderFeature<TContext extends RenderContextBase = RenderContextBase> {
   readonly name: string;
 
-  isEligible(entity: EntityState, scene: SceneState): boolean;
+  /**
+   * Sync this entity: resolve component once, then attach (create + register), update (sync transform/props), or detach (unregister + dispose).
+   * The feature uses its own state (e.g. a map) to know if it had previously attached this entity.
+   */
+  syncEntity(entity: EntityState, context: TContext): void;
 
-  onAttach(entity: EntityState, context: RenderContextBase): void;
+  /** Called when a component of this entity changed (optional; e.g. for incremental updates). */
+  onUpdate?(entity: EntityState, componentType: ComponentType, context: TContext): void;
 
-  onUpdate(entity: EntityState, componentType: ComponentType, context: RenderContextBase): void;
+  /** Called when entity was removed from scene (no entity state). Optional. */
+  onDetachById?(entityId: string, context: TContext): void;
 
-  onDetach(entity: EntityState, context: RenderContextBase): void;
-
-  /** Called when entity is removed from scene (no entity state available). Optional. */
-  onDetachById?(entityId: string, context: RenderContextBase): void;
-
-  onTransformChanged?(entity: EntityState, context: RenderContextBase): void;
-
-  onFrame?(dt: number, context: RenderContextBase): void;
+  onFrame?(dt: number, context: TContext): void;
 
   dispose?(): void;
 }
