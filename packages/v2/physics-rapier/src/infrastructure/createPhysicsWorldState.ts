@@ -97,9 +97,19 @@ export function createPhysicsWorldState(): PhysicsWorldState {
     colliders.removeEntityCollider(world, entityId, collisions);
     const rb = getComponent(entity, 'rigidBody') as RigidBodyComponent | undefined;
     if (rb) {
+      // Recreate body so rigidBody changes (bodyType, mass, gravityScale, etc.) are applied.
+      colliders.removeCollidersInSubtree(
+        world,
+        scene,
+        entity,
+        bodies,
+        collisions
+      );
+      bodies.removeEntityBody(world, entityId);
       bodies.ensureRigidBody(R, world, entity, rb);
       colliders.ensureCollidersInSubtree(R, world, entity, bodies, collisions);
     } else {
+      bodies.removeEntityBody(world, entityId);
       const col = colliders.getColliderComponent(entity);
       if (col) colliders.ensureCollider(R, world, entity, col, bodies, collisions);
     }

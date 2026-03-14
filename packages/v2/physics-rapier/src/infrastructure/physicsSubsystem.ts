@@ -2,7 +2,7 @@ import { createSceneSubsystem } from '@duckengine/core-v2';
 import { createPhysicsWorldState } from './createPhysicsWorldState';
 import { createPhysicsQueryPortImpl } from './physicsQueryPortImpl';
 import { physicsQueryPortDef } from './physicsQueryPortDef';
-import { addEntityToPhysics, removeEntityFromPhysics, onComponentChangedPhysics, stepPhysics, disposePhysics } from '../application';
+import { addEntityToPhysics, removeEntityFromPhysics, onComponentChangedPhysics, onHierarchyChangedPhysics, stepPhysics, disposePhysics } from '../application';
 import type { PhysicsWorldState } from './types';
 
 /**
@@ -24,6 +24,7 @@ export function createPhysicsSubsystem() {
       'entity-added': addEntityToPhysics,
       'entity-removed': removeEntityFromPhysics,
       'component-changed': onComponentChangedPhysics,
+      'hierarchy-changed': onHierarchyChangedPhysics,
     },
     phases: {
       physics: stepPhysics,

@@ -15,6 +15,7 @@ export function createPhysicsQueryPortImpl(state: PhysicsWorldState): PhysicsQue
       const dy = ray.direction.y;
       const dz = ray.direction.z;
       const len = norm(dx, dy, dz);
+      if (!Number.isFinite(len) || len <= 0) return null;
       const maxToi = ray.maxDistance ?? 1000;
       const rayObj = new R.Ray(
         { x: ray.origin.x, y: ray.origin.y, z: ray.origin.z },
