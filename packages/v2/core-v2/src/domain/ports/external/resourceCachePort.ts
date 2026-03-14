@@ -1,34 +1,40 @@
 import type { ResourceRef, MeshGeometryFileData } from '../../resources';
 
 /**
- * Sync cache for resolved resources, populated by async preload.
- * Converts ResourceLoaderPort (async) into sync lookups for rendering and physics.
+ * Sync cache for resolved resources. Populated by ResourceCoordinator (the only
+ * subsystem that calls the loader). Other subsystems read sync via get*.
  *
- * Core defines getMeshData only (no Three.js coupling). Rendering implementation
- * adds getTexture and getSkyboxTexture (return unknown; impl returns THREE types).
+ * Coordinator stores raw data: getTexture returns Blob | null, getSkyboxTexture returns string[] | null.
+ * Rendering subsystem adapts Blob/string[] to THREE.Texture/CubeTexture.
  */
 export interface ResourceCachePort {
   /** Sync lookup for mesh geometry. Returns null if not yet loaded. */
   getMeshData(ref: ResourceRef<'mesh'>): MeshGeometryFileData | null;
 
-  /** Sync lookup for texture. Returns null if not yet loaded. (Rendering impl returns THREE.Texture) */
+  /** Sync lookup for texture. Raw cache returns Blob | null. Rendering adapts to THREE.Texture. */
   getTexture?(ref: ResourceRef<'texture'>): unknown | null;
 
-  /** Sync lookup for skybox. Returns null if not yet loaded. (Rendering impl returns THREE.CubeTexture) */
+  /** Sync lookup for skybox. Raw cache returns string[] | null (URLs). Rendering adapts to THREE.CubeTexture. */
   getSkyboxTexture?(ref: ResourceRef<'skybox'>): unknown | null;
-
-  /** Preload mesh resource into cache. */
-  preloadMesh(ref: ResourceRef<'mesh'>): Promise<void>;
-
-  /** Preload texture resource into cache. */
-  preloadTexture(ref: ResourceRef<'texture'>): Promise<void>;
-
-  /** Preload skybox resource into cache. */
-  preloadSkybox(ref: ResourceRef<'skybox'>): Promise<void>;
-
-  /** Preload script resource into cache (Lua source). */
-  preloadScript(ref: ResourceRef<'script'>): Promise<void>;
 
   /** Sync lookup for script source. Returns null if not yet loaded. */
   getScriptSource(ref: ResourceRef<'script'>): string | null;
+
+  /** When not in cache but load in progress, wait and return. For script resolver. */
+  getScriptSourceOrWait?(ref: ResourceRef<'script'>): Promise<string | null>;
+
+  /** Coordinator-only: register in-flight load so getScriptSourceOrWait can await. */
+  registerLoadInProgress?(ref: ResourceRef<'script'>, promise: Promise<void>): void;
+
+  /** Coordinator-only: store mesh data. Called after loader.resolve + fetchFile. */
+  storeMeshData?(ref: ResourceRef<'mesh'>, data: MeshGeometryFileData): void;
+
+  /** Coordinator-only: store texture blob (raw image data). Rendering parses to THREE.Texture. */
+  storeTextureFromBlob?(ref: ResourceRef<'texture'>, blob: Blob): Promise<void>;
+
+  /** Coordinator-only: store skybox URLs (6 face URLs). Rendering parses to THREE.CubeTexture. */
+  storeSkyboxFromUrls?(ref: ResourceRef<'skybox'>, urls: string[]): Promise<void>;
+
+  /** Coordinator-only: store script source. */
+  storeScriptSource?(ref: ResourceRef<'script'>, source: string): void;
 }

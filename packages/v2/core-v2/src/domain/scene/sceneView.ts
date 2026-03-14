@@ -1,3 +1,5 @@
+import type { PrefabId } from '../ids';
+import type { EntityState } from '../entities';
 import type { SceneState, SceneView } from './types';
 
 /**
@@ -12,7 +14,7 @@ export function createSceneView(scene: SceneState): SceneView {
         activeCameraId: scene.activeCameraId,
         rootEntityIds: [...scene.rootEntityIds],
         debugFlags: new Map(scene.debugFlags),
-        prefabs: new Map(scene.prefabs),
+        prefabs: new Map(scene.prefabs) as unknown as ReadonlyMap<PrefabId, EntityState>,
         uiSlots: new Map(scene.uiSlots),
     };
 }

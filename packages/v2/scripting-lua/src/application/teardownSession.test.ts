@@ -30,6 +30,7 @@ describe('teardownSession', () => {
     session = {
       slots: new Map(),
       pending: new Map(),
+      pendingScripts: [],
       eventBus: createSceneEventBus(),
       timeState: { delta: 0, elapsed: 0, frameCount: 0, scale: 1 },
       sandbox,

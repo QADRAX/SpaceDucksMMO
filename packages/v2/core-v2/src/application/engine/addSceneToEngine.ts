@@ -6,7 +6,7 @@ import { defineEngineUseCase } from '../../domain/useCases';
 import {
   attachSceneSubsystems,
   instantiateSceneSubsystems,
-  runSubsystemPortDerivers,
+  runSubsystemPortProviders,
 } from '../../domain/subsystems';
 
 import type { SceneId } from '../../domain/ids';
@@ -29,16 +29,17 @@ export const addSceneToEngine = defineEngineUseCase<AddSceneParams, Result<Scene
     }
 
     const scene = createScene(sceneId);
+    (scene as { engine?: typeof engine }).engine = engine;
     engine.scenes.set(sceneId, scene);
 
     // Engine-level scene subsystem factories are applied automatically to each new scene.
-    runSubsystemPortDerivers(engine);
+    runSubsystemPortProviders(engine);
     const defaultSubsystems = instantiateSceneSubsystems(
       engine,
       scene,
       engine.subsystemRuntime.sceneSubsystemFactories,
     );
-    attachSceneSubsystems(scene, defaultSubsystems);
+    attachSceneSubsystems(engine, scene, defaultSubsystems);
 
     return ok(scene);
   },

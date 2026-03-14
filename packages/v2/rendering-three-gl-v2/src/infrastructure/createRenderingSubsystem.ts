@@ -4,15 +4,16 @@ import {
   createRenderingState,
   type CreateRenderingStateParams,
 } from './createRenderingState';
+import { reconcilePendingRenderablesForKey } from '../application/reconcilePendingRenderablesForKey';
 
 /**
  * Creates the WebGL rendering engine subsystem. Register via
  * setupEngine({ engineSubsystems: [createRenderingSubsystem(options)] })
  * or api.registerSubsystem({ subsystem: createRenderingSubsystem(options) }).
  *
- * When ResourceCachePort is registered (via deriveResourceCache), mesh and skybox
- * resolution use the cache. Add deriveResourceCache to portDerivers and
- * createResourceCoordinatorSubsystem to sceneSubsystems for full resource loading.
+ * When ResourceCachePort is registered (via createResourceCoordinatorSubsystem with createResourceCache),
+ * mesh and skybox resolution use the cache. Add createResourceCoordinatorSubsystem({ resourceLoader }) — cache is internal to coordinator.
+ * to engineSubsystems for full resource loading.
  */
 export function createRenderingSubsystem(
   options: CreateRenderingStateParams = {},
@@ -21,6 +22,7 @@ export function createRenderingSubsystem(
     'rendering-three-gl',
   )
     .withState(({ engine }) => createRenderingState({ ...options, engine }))
+    .onEngineEvent('resource-loaded', reconcilePendingRenderablesForKey)
     .onPreRender(syncRender)
     .onRender(renderFrame)
     .onDispose(disposeRender)

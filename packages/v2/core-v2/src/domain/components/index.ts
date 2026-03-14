@@ -24,6 +24,7 @@ export {
     inferResourceKindFromFieldConfig,
 } from './inspectorResourceMapping';
 export { createComponent, getComponentMetadata } from './factory';
+export { extractComponentData, cloneComponent } from './cloneComponent';
 export { componentBase, narrowComponent } from './component';
 export {
     type ComponentView,

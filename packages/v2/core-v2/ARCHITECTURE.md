@@ -163,12 +163,12 @@ src/
 │   ├── component/             # setEnabled, setField, snapshot
 │   ├── viewport/              # setEnabled, setScene, setCamera, setCanvas, resize
 │   ├── prefabs/               # addPrefab, removePrefab
-│   └── ports/                 # fetchFile, resolveWebResource
+│   └── ports/                 # (loader use cases moved to resource-coordinator-v2)
 │
 └── infrastructure/            # Concrete API and port implementations
     ├── api/                   # createDuckEngineAPI (wires all use cases, injects default port derivers)
     ├── portDerivers/          # deriveSceneEventBusProvider, deriveUISlotOperations, defaultPortDerivers
-    └── ports/                 # WebResourceLoaderPort, etc.
+    └── ports/                 # consoleDiagnosticPort, etc.
 ```
 
 **Dependency rule**:
@@ -298,18 +298,15 @@ Ports live in `domain/ports/internal/` (core implements) and `domain/ports/exter
 | **UISlotOperationsPort** | Internal | `internal/` | Auto-registered by `deriveUISlotOperations`. Delegates to scene use cases. Default in `infrastructure/portDerivers/defaults/`. |
 | **UIRendererPort** | External | `external/` | Client implements. Mounts SPAs in DOM containers. |
 | **ViewportOverlayProviderPort** | External | `external/` | Client implements. Returns DOM overlay per viewport. |
-| **ResourceLoaderPort** | External | `external/` | Client implements. Resolves resources. |
+| **ResourceCachePort** | External | `external/` | Sync cache for resolved resources. Populated by resource-coordinator-v2. |
 | **DiagnosticPort** | External | `external/` | Client implements. Logging output. |
 | **PhysicsQueryPort** | External | `external/` | Client implements. Raycast, collision events. |
 | **GizmoPort** | External | `external/` | Client implements. Debug drawing. |
 | **InputPort** | External | `external/` | Client implements. Key/mouse state. |
 
-### Port use cases (not in main API)
+### Resource loading (resource-coordinator-v2)
 
-| Use case | Used by | Description |
-|----------|---------|-------------|
-| **fetchFile** | `ResourceLoaderPort` impl | Fetches a file by URL. Caches by `url::format`. Used by scripting/resource loading. |
-| **resolveWebResource** | `ResourceLoaderPort` impl | Resolves a resource via EngineService API. Caches by `key@version`. |
+The loader lives exclusively in resource-coordinator-v2. Core-v2 exposes only **ResourceCachePort**; subsystems (scripting, physics, rendering) read from the cache. The coordinator receives a `ResourceLoader` via `createResourceCoordinatorSubsystem({ resourceLoader })` and populates the cache. Event-driven reconciliation: when a resource is not in cache, subsystems add to pending; on `resource-loaded` they reconcile.
 
 ---
 
@@ -409,7 +406,7 @@ sequenceDiagram
 flowchart TB
     subgraph Infra["infrastructure"]
         I1[createDuckEngineAPI]
-        I2[WebResourceLoaderPort]
+        I2[consoleDiagnosticPort]
     end
 
     subgraph App["application"]

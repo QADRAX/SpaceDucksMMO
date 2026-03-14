@@ -61,7 +61,9 @@ describe('Integration: Engine > setupEngine', () => {
     const factory: SceneSubsystemFactory = factorySpy;
 
     ctx.api.setup({
-      portDerivers: [({ ports }: any) => ports.register(derivedPortDef, derivedPort)],
+      portProviders: [
+        ({ ports }) => ports.register(derivedPortDef, derivedPort),
+      ],
       sceneSubsystems: [factory],
     });
 

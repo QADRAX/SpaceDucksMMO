@@ -16,10 +16,3 @@ export { listEntities } from './listEntities';
 export { addUISlot } from './addUISlot';
 export { removeUISlot, type RemoveUISlotParams } from './removeUISlot';
 export { updateUISlot, type UpdateUISlotParamsWithId } from './updateUISlot';
-export { createResourceCoordinatorSubsystem } from './resourceCoordinatorSubsystem';
-export {
-  collectRefsFromEntity,
-  collectRefsFromSubtree,
-  collectRefsFromScene,
-  type CollectedRefs,
-} from './collectResourceRefs';

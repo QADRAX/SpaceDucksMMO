@@ -1,5 +1,4 @@
 import type { PortBinding } from '../subsystems/types';
-import type { ResourceLoaderPort } from './external/resourceLoaderPort';
 import type { DiagnosticPort } from './external/diagnosticPort';
 import type { UIRendererPort } from './external/uiRendererPort';
 import type { ViewportOverlayProviderPort } from './external/viewportOverlayProviderPort';
@@ -11,12 +10,6 @@ import type { UISlotOperationsPort } from './internal/uiSlotOperationsPort';
  * Subsystems can safely assume these contracts if requested from the registry.
  */
 export interface EnginePorts {
-  /**
-   * The global resource loader.
-   * Responsible for resolving abstract resource references into data.
-   */
-  readonly resourceLoader?: PortBinding<ResourceLoaderPort>;
-
   /**
    * Diagnostic/logging output.
    * Use consoleDiagnosticPort for a default console implementation.

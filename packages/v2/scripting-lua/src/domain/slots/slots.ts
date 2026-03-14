@@ -4,6 +4,7 @@ import type { ScriptSandbox } from '../ports';
 import type { SceneEventBus } from '@duckengine/core-v2';
 import { diffProperties, applyPropertyChanges } from '../properties';
 import type { ScriptSlotState, ScriptHook } from './types';
+import { isBuiltInOrTestScript } from '../scriptResolution';
 
 /**
  * Creates a new script slot state for a given entity + script pair.
@@ -42,7 +43,8 @@ export function slotKey(entityId: EntityId, scriptId: string): string {
  * Asynchronously initializes a script slot and registers it in the slot map.
  *
  * Source and schema resolution failures are ignored by caller policy; missing source exits
- * early without slot registration.
+ * early without slot registration. For resource scripts (non-builtin/test), adds to
+ * pendingScripts when source is null so reconcilePendingScriptsForKey can retry on resource-loaded.
  */
 export function initScriptSlot(
   slots: Map<string, ScriptSlotState>,
@@ -55,6 +57,7 @@ export function initScriptSlot(
   entityId: EntityId,
   scriptId: string,
   properties: PropertyValues,
+  pendingScripts?: { push: (entry: { entityId: EntityId; scriptId: string; properties: PropertyValues }) => void },
 ): void {
   const key = slotKey(entityId, scriptId);
   if (slots.has(key) || pending.has(key)) return;
@@ -64,7 +67,12 @@ export function initScriptSlot(
       resolveSource(scriptId),
       resolveScriptSchema(scriptId),
     ]);
-    if (!source) return;
+    if (!source) {
+      if (pendingScripts && !isBuiltInOrTestScript(scriptId)) {
+        pendingScripts.push({ entityId, scriptId, properties });
+      }
+      return;
+    }
 
     const declaredHooks = sandbox.detectHooks(source);
     const slot = createScriptSlot(entityId, scriptId, properties, declaredHooks);

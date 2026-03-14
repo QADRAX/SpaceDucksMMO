@@ -35,6 +35,8 @@ export {
   GEOMETRY_TYPES,
 } from './validation';
 
+export { cloneEntitySubtree } from './cloneEntity';
+
 export {
   createEntity,
   addComponent,

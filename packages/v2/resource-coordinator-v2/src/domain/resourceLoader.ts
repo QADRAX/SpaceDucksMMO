@@ -1,15 +1,15 @@
-import type { Result } from '../../utils/types';
-import type { ResourceKind, ResourceRef, ResolvedResource } from '../../resources';
+import type { Result } from '@duckengine/core-v2';
+import type { ResourceKind, ResourceRef, ResolvedResource } from '@duckengine/core-v2';
 
 /**
  * Contract for runtime resource resolution.
+ * Injected by consumer when creating the coordinator.
  * Implementations resolve from web-core, local files, bundled assets, etc.
  */
-export interface ResourceLoaderPort {
+export interface ResourceLoader {
   /**
    * Resolve a resource by its reference.
    *
-   * @template K The kind of the resource.
    * @param ref The resource reference (key + kind + optional version).
    * @returns A Result containing the resolved resource or an engine error.
    */

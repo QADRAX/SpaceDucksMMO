@@ -1,5 +1,5 @@
 import type { SubsystemEventParams } from '@duckengine/core-v2';
-import { defineSubsystemEventUseCase, PHYSICS_RELATED_COMPONENT_TYPES } from '@duckengine/core-v2';
+import { defineSubsystemEventUseCase, isPhysicsRelatedComponentType } from '@duckengine/core-v2';
 import type { PhysicsWorldHandle } from '../domain';
 
 /**
@@ -15,7 +15,7 @@ export const onComponentChangedPhysics = defineSubsystemEventUseCase<
 
   execute(state, params) {
     if (params.event.kind !== 'component-changed') return;
-    if (!PHYSICS_RELATED_COMPONENT_TYPES.includes(params.event.componentType)) return;
+    if (!isPhysicsRelatedComponentType(params.event.componentType)) return;
     state.syncEntity(params.scene, params.event.entityId);
   },
 });

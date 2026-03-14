@@ -1,7 +1,21 @@
-import type { EntityId, ScriptSchema, SceneEventBus, SceneEventBusProviderPort, SceneId } from '@duckengine/core-v2';
+import type {
+  EntityId,
+  PropertyValues,
+  ScriptSchema,
+  SceneEventBus,
+  SceneEventBusProviderPort,
+  SceneId,
+} from '@duckengine/core-v2';
 import type { ScriptSlotState } from '../slots';
 import type { BridgeDeclaration, BridgePorts, TimeState } from '../bridges';
 import type { ScriptSandbox } from '../ports';
+
+/** Entry for a script slot waiting for its resource to load. */
+export interface PendingScriptEntry {
+  readonly entityId: EntityId;
+  readonly scriptId: string;
+  readonly properties: PropertyValues;
+}
 
 /**
  * Aggregate root for a scripting session.
@@ -15,6 +29,8 @@ export interface ScriptingSessionState {
   readonly slots: Map<string, ScriptSlotState>;
   /** Pending async slot initializations. */
   readonly pending: Map<string, Promise<void>>;
+  /** Scripts waiting for resource-loaded (resolveSource returned null). */
+  readonly pendingScripts: PendingScriptEntry[];
   /** In-frame event bus for script-to-script communication. */
   readonly eventBus: SceneEventBus;
   /** Scene ID for teardown (unregisterSceneBus). */

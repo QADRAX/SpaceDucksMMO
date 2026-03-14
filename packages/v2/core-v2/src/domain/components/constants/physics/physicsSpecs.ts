@@ -21,6 +21,11 @@ export const PHYSICS_RELATED_COMPONENT_TYPES: readonly ComponentType[] = [
   'terrainCollider',
 ];
 
+/** Type guard: true if `t` is a physics-related component type (rigid body or collider). */
+export function isPhysicsRelatedComponentType(t: string): t is ComponentType {
+  return (PHYSICS_RELATED_COMPONENT_TYPES as readonly string[]).includes(t);
+}
+
 const COLLIDER_TYPES = [
   'boxCollider',
   'sphereCollider',

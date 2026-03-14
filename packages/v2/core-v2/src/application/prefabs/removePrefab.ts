@@ -1,9 +1,10 @@
+import type { PrefabId } from '../../domain/ids';
 import { removePrefabFromState } from '../../domain/prefabs';
 import { emitSceneChange } from '../../domain/scene';
 import { defineSceneUseCase } from '../../domain/useCases';
 
 export interface RemovePrefabParams {
-  readonly prefabId: string;
+  readonly prefabId: PrefabId;
 }
 
 /**

@@ -23,6 +23,7 @@ export function createScriptingSession(
   return {
     slots: new Map(),
     pending: new Map(),
+    pendingScripts: [],
     eventBus: params.eventBus,
     timeState: params.timeState,
     sandbox: params.sandbox,

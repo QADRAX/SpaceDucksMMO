@@ -1,6 +1,7 @@
 import { createSceneSubsystem } from '@duckengine/core-v2';
 import { createScriptingSessionState } from './createScriptingSessionState';
 import { reconcileSlots } from '../application/reconcileSlots';
+import { reconcilePendingScriptsForKey } from '../application/reconcilePendingScriptsForKey';
 import { destroyEntitySlots } from '../application/destroyEntitySlots';
 import {
   runEarlyUpdate,
@@ -28,6 +29,9 @@ export async function createScriptingSubsystem() {
       'component-changed': reconcileSlots,
       'entity-removed': destroyEntitySlots,
       'scene-teardown': teardownSession,
+    },
+    engineEvents: {
+      'resource-loaded': reconcilePendingScriptsForKey,
     },
     phases: {
       earlyUpdate: runEarlyUpdate,

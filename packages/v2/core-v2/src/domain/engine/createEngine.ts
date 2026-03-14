@@ -13,5 +13,6 @@ export function createEngine(): EngineState {
     setupComplete: false,
     engineSubsystems: [],
     subsystemRuntime: createSubsystemRuntimeState(),
+    engineChangeListeners: new Set(),
   };
 }

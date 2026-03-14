@@ -1,7 +1,10 @@
 export * from './domain/assets';
 export * from './domain/subsystems';
 export * from './domain/components';
-export { PHYSICS_RELATED_COMPONENT_TYPES } from './domain/components/constants/physics';
+export {
+  PHYSICS_RELATED_COMPONENT_TYPES,
+  isPhysicsRelatedComponentType,
+} from './domain/components/constants/physics';
 export type {
   RigidBodyComponent,
   GravityComponent,

@@ -1,3 +1,4 @@
+import type { PrefabId } from '../ids';
 import type { EntityState } from '../entities';
 import type { SceneState } from '../scene';
 
@@ -11,7 +12,7 @@ import type { SceneState } from '../scene';
  */
 export function addPrefabToState(
   scene: SceneState,
-  prefabId: string,
+  prefabId: PrefabId,
   entity: EntityState,
 ): void {
   scene.prefabs.set(prefabId, entity);
@@ -26,7 +27,7 @@ export function addPrefabToState(
  */
 export function removePrefabFromState(
   scene: SceneState,
-  prefabId: string,
+  prefabId: PrefabId,
 ): boolean {
   return scene.prefabs.delete(prefabId);
 }

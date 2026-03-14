@@ -1,11 +1,15 @@
-import { getComponent } from '../../domain/entities';
-import { isResourceRef, createResourceRef, type ResourceRef } from '../../domain/resources';
-import { createResourceKey } from '../../domain/ids';
-import type { EntityState } from '../../domain/entities';
-import type { SceneState } from '../../domain/scene';
-import { PLAIN_MATERIAL_COMPONENT_TYPES } from '../../domain/components';
+import { getComponent } from '@duckengine/core-v2';
+import {
+  isResourceRef,
+  createResourceRef,
+  type ResourceRef,
+} from '@duckengine/core-v2';
+import { createResourceKey } from '@duckengine/core-v2';
+import type { EntityState } from '@duckengine/core-v2';
+import type { EngineState, SceneState } from '@duckengine/core-v2';
+import { PLAIN_MATERIAL_COMPONENT_TYPES } from '@duckengine/core-v2';
 
-/** Script IDs that are resolved locally, not via ResourceLoaderPort. */
+/** Script IDs that are resolved locally, not via the loader. */
 function isBuiltInOrTestScript(scriptId: string): boolean {
   return scriptId.startsWith('builtin://') || scriptId.startsWith('test://');
 }
@@ -87,11 +91,42 @@ export function collectRefsFromSubtree(entity: EntityState): CollectedRefs {
   return acc;
 }
 
-/** Collects resource refs from all entities in a scene. */
+/** Collects resource refs from all prefabs in a scene. */
+export function collectRefsFromPrefabs(scene: SceneState): CollectedRefs {
+  const acc: CollectedRefs = { meshes: [], textures: [], skyboxes: [], scripts: [] };
+  for (const prefabEntity of scene.prefabs.values()) {
+    const refs = collectRefsFromSubtree(prefabEntity);
+    acc.meshes.push(...refs.meshes);
+    acc.textures.push(...refs.textures);
+    acc.skyboxes.push(...refs.skyboxes);
+    acc.scripts.push(...refs.scripts);
+  }
+  return acc;
+}
+
+/** Collects resource refs from all entities and prefabs in a scene. */
 export function collectRefsFromScene(scene: SceneState): CollectedRefs {
   const acc: CollectedRefs = { meshes: [], textures: [], skyboxes: [], scripts: [] };
   for (const entity of scene.entities.values()) {
     const refs = collectRefsFromEntity(entity);
+    acc.meshes.push(...refs.meshes);
+    acc.textures.push(...refs.textures);
+    acc.skyboxes.push(...refs.skyboxes);
+    acc.scripts.push(...refs.scripts);
+  }
+  const prefabRefs = collectRefsFromPrefabs(scene);
+  acc.meshes.push(...prefabRefs.meshes);
+  acc.textures.push(...prefabRefs.textures);
+  acc.skyboxes.push(...prefabRefs.skyboxes);
+  acc.scripts.push(...prefabRefs.scripts);
+  return acc;
+}
+
+/** Collects resource refs from all scenes in the engine. */
+export function collectRefsFromAllScenes(engine: EngineState): CollectedRefs {
+  const acc: CollectedRefs = { meshes: [], textures: [], skyboxes: [], scripts: [] };
+  for (const scene of engine.scenes.values()) {
+    const refs = collectRefsFromScene(scene);
     acc.meshes.push(...refs.meshes);
     acc.textures.push(...refs.textures);
     acc.skyboxes.push(...refs.skyboxes);

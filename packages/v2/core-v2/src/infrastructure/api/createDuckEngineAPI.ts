@@ -2,6 +2,8 @@ import type { EngineState } from '../../domain';
 import { composeAPI } from '../../domain/api';
 import {
   addEntityToScene,
+  addPrefab,
+  instantiatePrefab,
   addSceneToEngine,
   addViewport,
   addUISlot,
@@ -68,6 +70,8 @@ export function buildDuckEngineAPI(engine: EngineState) {
     .add('listViewports', listViewports)
     // ── scene ──────────────────────────────────────────────────
     .add('addEntity', addEntityToScene)
+    .add('addPrefab', addPrefab)
+    .add('instantiatePrefab', instantiatePrefab)
     .add('removeEntity', removeEntityFromScene)
     .add('reparentEntity', reparentEntityInScene)
     .add('setActiveCamera', setActiveCamera)

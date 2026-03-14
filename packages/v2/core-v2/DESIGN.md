@@ -111,7 +111,7 @@ Use `defineSceneSubsystem` to declare a subsystem factory:
 const factory = defineSceneSubsystem('scripting-lua')
   .withPorts((registry) => ({
     bridgePorts: resolveBridgePortsFromRegistry(registry),
-    resourceLoader: registry.get(ResourceLoaderPortDef),
+    resourceCache: registry.get(ResourceCachePortDef),
   }))
   .withState(({ ports, scene, engine }) => initializeScriptRuntime({ ... }))
   .onEvent(reconcileSlots)      // component-changed
@@ -146,7 +146,7 @@ Subsystems receive a `SubsystemPortRegistry` that provides typed access to ports
 
 ```ts
 const physicsQuery = registry.get(PhysicsQueryPortDef);
-const resourceLoader = registry.get(ResourceLoaderPortDef);
+const resourceCache = registry.get(ResourceCachePortDef);
 ```
 
 Ports are registered at setup via `customPorts` or `portDerivers`. Port derivers can derive ports from engine state or other ports (e.g. create a derived input port from raw input + settings).
@@ -187,7 +187,7 @@ Components that reference resources (e.g. `scriptId` in a script reference, `alb
 
 ### 3.4 Resolved resource
 
-The `ResourceLoaderPort.resolve(ref)` returns a `ResolvedResource<K>`:
+The resource coordinator's loader `resolve(ref)` returns a `ResolvedResource<K>`:
 
 ```ts
 interface ResolvedResource<K> {
@@ -203,24 +203,11 @@ interface ResolvedResource<K> {
 - **componentData**: Strongly-typed scalar attributes for that kind (e.g. `StandardMaterialData`).
 - **files**: Named slots (e.g. `albedo`, `model`, `source`) with `ResolvedFile` (url, contentType, etc.).
 
-### 3.5 ResourceLoaderPort
+### 3.5 Resource loading (loader exclusive to coordinator)
 
-The engine defines the contract; infrastructure implements it:
+The **loader** lives exclusively in resource-coordinator-v2. Core-v2 exposes only **ResourceCachePort**; subsystems (scripting, physics, rendering) read from the cache. The coordinator receives a `ResourceLoader` via `createResourceCoordinatorSubsystem({ resourceLoader, createResourceCache })` and populates the cache. Event-driven reconciliation: when a resource is not in cache, subsystems add to pending; on `resource-loaded` they reconcile.
 
-```ts
-interface ResourceLoaderPort {
-  resolve<K>(ref: ResourceRef<K>): Promise<Result<ResolvedResource<K>>>;
-  fetchFile(url: string, format: 'text' | 'blob'): Promise<Result<string | Blob>>;
-}
-```
-
-Implementations can resolve from:
-- Web-core API (remote assets)
-- Local filesystem
-- Bundled assets
-- CDN URLs
-
-The scripting subsystem uses `resolve` for script sources and `fetchFile` for loading Lua files. Other subsystems (rendering, etc.) use the same port for materials, meshes, textures.
+The `ResourceLoader` interface (in resource-coordinator-v2) has `resolve` and `fetchFile`. Implementations can resolve from web-core API, local filesystem, bundled assets, or CDN. The scripting subsystem reads from `ResourceCachePort.getScriptSource` only; no loader access.
 
 ### 3.6 Centralization benefits
 
@@ -256,7 +243,7 @@ api.setup({ customPorts: [MyPortDef.bind(myImpl)] });
 At setup, ports are stored in `subsystemRuntime.ports` and `portDefinitions`. Scene subsystem factories receive a `SubsystemPortRegistry` and resolve ports by definition:
 
 ```ts
-registry.get(ResourceLoaderPortDef)  // → ResourceLoaderPort | undefined
+registry.get(ResourceCachePortDef)  // → ResourceCachePort | undefined
 registry.getById('game:analytics')   // → unknown (dynamic lookup)
 ```
 
@@ -287,5 +274,5 @@ Useful for creating derived ports (e.g. sensitivity-adjusted input) or ports tha
 | **Scene subsystems** | Per-scene, event-driven + update pipeline. Declare ports, react to ECS changes. |
 | **Engine subsystems** | Global, update-only. For cross-scene systems (render, audio). |
 | **Resources** | Abstract refs (key + kind + version) → resolved data + files. Central kinds and shapes. |
-| **ResourceLoaderPort** | Single contract for resolution. Pluggable impl (web, local, bundled). |
+| **ResourceCachePort** | Sync cache for resolved resources. Populated by resource-coordinator-v2. |
 | **Ports** | definePort + bind. Registry injects into subsystems. Derivers for dynamic ports. |

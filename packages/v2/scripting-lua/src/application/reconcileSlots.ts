@@ -53,7 +53,11 @@ export const reconcileSlots =
           desired.add(key);
 
           if (!slots.has(key) && !pending.has(key)) {
-            initScriptSlot(
+            const isPending = session.pendingScripts.some(
+              (e) => e.entityId === entityId && e.scriptId === ref.scriptId
+            );
+            if (!isPending) {
+              initScriptSlot(
               slots,
               pending,
               sandbox,
@@ -76,7 +80,9 @@ export const reconcileSlots =
               entityId,
               ref.scriptId,
               ref.properties,
+              session.pendingScripts,
             );
+            }
           }
 
           const slot = slots.get(key);

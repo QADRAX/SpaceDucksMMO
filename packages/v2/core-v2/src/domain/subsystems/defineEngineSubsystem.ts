@@ -1,6 +1,13 @@
 import type { EngineState } from '../engine';
 import type { SubsystemUseCase } from '../useCases';
-import type { EngineSubsystem, EngineSubsystemBuilder, EngineSubsystemUpdateParams } from './types';
+import type {
+  EngineSubsystem,
+  EngineSubsystemBuilder,
+  EngineSubsystemUpdateParams,
+  SubsystemEngineEventParams,
+} from './types';
+import type { EngineChangeEvent } from '../engine/engineEvents';
+import { createSubsystemPortRegistry } from './runtime';
 
 type PhaseUseCase = SubsystemUseCase<unknown, EngineSubsystemUpdateParams, void>;
 
@@ -12,7 +19,11 @@ function makeEnginePhaseCallback<TState>(
   if (!useCase) return undefined;
   return (engine: EngineState, dt: number) => {
     if (!stateRef.current) stateRef.current = stateFactory({ engine });
-    (useCase as PhaseUseCase).execute(stateRef.current, { engine, dt });
+    const ports = createSubsystemPortRegistry(
+      engine.subsystemRuntime.ports,
+      engine.subsystemRuntime.portDefinitions
+    );
+    (useCase as PhaseUseCase).execute(stateRef.current, { engine, dt, ports });
   };
 }
 
@@ -27,12 +38,21 @@ export function defineEngineSubsystem<TState>(
 ): EngineSubsystemBuilder<TState> {
     let stateFactory: (ctx: { engine: EngineState }) => TState;
     const phaseUseCases: Partial<Record<'earlyUpdate' | 'physics' | 'update' | 'lateUpdate' | 'preRender' | 'render' | 'postRender', PhaseUseCase>> = {};
+    const engineEventUseCases = new Map<
+        EngineChangeEvent['kind'],
+        SubsystemUseCase<TState, SubsystemEngineEventParams, void>
+    >();
     let disposeUseCase: SubsystemUseCase<TState, void, void> | undefined;
     let shouldUpdateWhenPaused = false;
 
     const builder: EngineSubsystemBuilder<TState> = {
         withState(factory) {
             stateFactory = factory;
+            return builder;
+        },
+
+        onEngineEvent(eventKind, useCase) {
+            engineEventUseCases.set(eventKind, useCase);
             return builder;
         },
 
@@ -82,7 +102,24 @@ export function defineEngineSubsystem<TState>(
 
             const stateRef: { current: TState | undefined } = { current: undefined };
 
+            const engineEventHandlers: EngineSubsystem['engineEventHandlers'] =
+                engineEventUseCases.size > 0
+                    ? (Object.fromEntries(
+                        Array.from(engineEventUseCases.entries()).map(([kind, useCase]) => [
+                            kind,
+                            (engine: EngineState, event: EngineChangeEvent) => {
+                                if (!stateRef.current) stateRef.current = stateFactory({ engine });
+                                (useCase as SubsystemUseCase<TState, SubsystemEngineEventParams, void>).execute(
+                                    stateRef.current,
+                                    { engine, event }
+                                );
+                            },
+                        ])
+                    ) as EngineSubsystem['engineEventHandlers'])
+                    : undefined;
+
             return {
+                engineEventHandlers,
                 earlyUpdate: makeEnginePhaseCallback(phaseUseCases.earlyUpdate, stateRef, stateFactory),
                 physics: makeEnginePhaseCallback(phaseUseCases.physics, stateRef, stateFactory),
                 update: makeEnginePhaseCallback(phaseUseCases.update, stateRef, stateFactory),

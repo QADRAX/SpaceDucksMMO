@@ -18,7 +18,5 @@
     "format:check": "npx prettier --check \"src/**/*.ts\"",
     "clean-imports": "node consolidateImports.mjs"
   },
-  "dependencies": {
-    "@duckengine/web-core-api-client": "^0.1.0"
-  }
+  "dependencies": {}
 }

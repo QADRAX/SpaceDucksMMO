@@ -2,6 +2,10 @@ import type { SceneState } from '../scene';
 import type { ViewportState } from '../viewport';
 import type { SubsystemRuntimeState, EngineSubsystem } from '../subsystems';
 import type { SceneId, ViewportId } from '../ids';
+import type { EngineChangeEvent } from './engineEvents';
+
+/** Listener signature for engine change events. */
+export type EngineChangeListener = (engine: EngineState, event: EngineChangeEvent) => void;
 
 /** Mutable engine state operated on by application-layer engine use cases. */
 export interface EngineState {
@@ -16,6 +20,8 @@ export interface EngineState {
   readonly engineSubsystems: EngineSubsystem[];
   /** Shared subsystem runtime: scene factories + IO port registry + derivation hooks. */
   readonly subsystemRuntime: SubsystemRuntimeState;
+  /** Listeners for engine-level change events (e.g. resource-loaded). */
+  readonly engineChangeListeners: Set<EngineChangeListener>;
 }
 
 /** Graphics quality and rendering settings. */

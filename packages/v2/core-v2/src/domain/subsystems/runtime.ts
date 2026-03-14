@@ -7,6 +7,7 @@ import type {
   SubsystemRuntimeState,
   PortDefinition,
 } from './types';
+import { subscribeToEngineChanges } from '../engine/emitEngineChange';
 
 /** Name of the subsystem runtime bag on EngineState. */
 export const SUBSYSTEM_RUNTIME_KEY = 'subsystemRuntime';
@@ -15,7 +16,7 @@ export const SUBSYSTEM_RUNTIME_KEY = 'subsystemRuntime';
 export function createSubsystemRuntimeState(): SubsystemRuntimeState {
   return {
     sceneSubsystemFactories: [],
-    portDerivers: [],
+    portProviders: [],
     ports: new Map(),
     portDefinitions: new Map(),
   };
@@ -82,14 +83,14 @@ export function createMergedPortRegistry(
   };
 }
 
-/** Runs all registered port derivation hooks in registration order. */
-export function runSubsystemPortDerivers(engine: EngineState): void {
+/** Runs all registered port provider hooks in registration order. */
+export function runSubsystemPortProviders(engine: EngineState): void {
   const registry = createSubsystemPortRegistry(
     engine.subsystemRuntime.ports,
     engine.subsystemRuntime.portDefinitions
   );
-  for (const deriver of engine.subsystemRuntime.portDerivers) {
-    deriver({ engine, ports: registry });
+  for (const provider of engine.subsystemRuntime.portProviders) {
+    provider({ engine, ports: registry });
   }
 }
 
@@ -112,18 +113,42 @@ export function instantiateSceneSubsystems(
 }
 
 /** Attaches one scene subsystem to update and event channels. */
-export function attachSceneSubsystem(scene: SceneState, subsystem: SceneSubsystem): void {
+export function attachSceneSubsystem(
+  engine: EngineState,
+  scene: SceneState,
+  subsystem: SceneSubsystem
+): void {
   scene.subsystems.push(subsystem);
+
   const listener: SceneChangeListener = (s, ev) => subsystem.handleSceneEvent(s, ev);
   scene.changeListeners.add(listener);
+
+  const unsubscribes: Array<() => void> = [];
+  if (subsystem.engineEventHandlers) {
+    for (const [kind, handler] of Object.entries(subsystem.engineEventHandlers)) {
+      if (handler) {
+        const unsubscribe = subscribeToEngineChanges(engine, (eng, ev) => {
+          if (ev.kind === kind) handler(eng, ev, scene);
+        });
+        unsubscribes.push(unsubscribe);
+      }
+    }
+  }
+
+  const originalDispose = subsystem.dispose;
+  subsystem.dispose = () => {
+    for (const unsub of unsubscribes) unsub();
+    originalDispose?.();
+  };
 }
 
 /** Attaches many scene subsystems in-order. */
 export function attachSceneSubsystems(
+  engine: EngineState,
   scene: SceneState,
   subsystems: ReadonlyArray<SceneSubsystem>,
 ): void {
   for (const subsystem of subsystems) {
-    attachSceneSubsystem(scene, subsystem);
+    attachSceneSubsystem(engine, scene, subsystem);
   }
 }

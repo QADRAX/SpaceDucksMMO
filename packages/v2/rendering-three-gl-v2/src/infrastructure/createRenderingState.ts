@@ -6,6 +6,7 @@ import {
   syncSceneToRenderTree,
   createDefaultRenderFeatures,
   createRenderObjectRegistry,
+  createTextureResolversFromRawCache,
   type RenderContextThree,
   type MeshResolver,
   type SkyboxResolver,
@@ -60,11 +61,13 @@ export function createRenderingState(
     ? (params.engine.subsystemRuntime.ports.get(ResourceCachePortDef.id) as
         | {
             getMeshData: MeshResolver;
-            getSkyboxTexture?: SkyboxResolver;
-            getTexture?: TextureResolver;
+            getTexture?(ref: import('@duckengine/core-v2').ResourceRef<'texture'>): unknown;
+            getSkyboxTexture?(ref: import('@duckengine/core-v2').ResourceRef<'skybox'>): unknown;
           }
         | undefined)
     : undefined;
+
+  const rawResolvers = cache ? createTextureResolversFromRawCache(cache) : undefined;
 
   const getMeshData: MeshResolver =
     params.getMeshData ??
@@ -73,15 +76,9 @@ export function createRenderingState(
       : (() => null));
 
   const getSkyboxTexture: SkyboxResolver | undefined =
-    params.getSkyboxTexture ??
-    (cache?.getSkyboxTexture
-      ? (ref) => (cache.getSkyboxTexture!(ref) as THREE.CubeTexture | null) ?? null
-      : undefined);
+    params.getSkyboxTexture ?? rawResolvers?.getSkyboxTexture;
 
-  const getTexture: TextureResolver | undefined =
-    cache?.getTexture
-      ? (ref) => (cache.getTexture!(ref) as THREE.Texture | null) ?? null
-      : undefined;
+  const getTexture: TextureResolver | undefined = rawResolvers?.getTexture;
 
   /** One renderer per canvas so we can render to different canvases (e.g. multiple viewports). */
   const renderersByCanvasId = new Map<string, THREE.WebGLRenderer>();

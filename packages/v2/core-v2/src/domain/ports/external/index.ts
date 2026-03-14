@@ -10,9 +10,6 @@ export type { GizmoPort } from './gizmoPort';
 
 export type { InputPort, InputMouseDelta, InputMouseButtons } from './inputPort';
 
-export { ResourceLoaderPortDef } from './resourceLoaderPortDef';
-export type { ResourceLoaderPort } from './resourceLoaderPort';
-
 export { ResourceCachePortDef } from './resourceCachePortDef';
 export type { ResourceCachePort } from './resourceCachePort';
 

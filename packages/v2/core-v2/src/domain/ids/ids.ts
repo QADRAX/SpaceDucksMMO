@@ -19,6 +19,9 @@ export type ResourceKey = string & { readonly __brand: 'ResourceKey' };
 /** Branded type for UI slot identifiers. */
 export type UISlotId = string & { readonly __brand: 'UISlotId' };
 
+/** Branded type for Prefab identifiers. */
+export type PrefabId = string & { readonly __brand: 'PrefabId' };
+
 /** Factory to create a branded EntityId. */
 export function createEntityId(id: string): EntityId {
     return id as EntityId;
@@ -52,4 +55,9 @@ export function createResourceKey(key: string): ResourceKey {
 /** Factory to create a branded UISlotId. */
 export function createUISlotId(id: string): UISlotId {
     return id as UISlotId;
+}
+
+/** Factory to create a branded PrefabId. */
+export function createPrefabId(id: string): PrefabId {
+    return id as PrefabId;
 }

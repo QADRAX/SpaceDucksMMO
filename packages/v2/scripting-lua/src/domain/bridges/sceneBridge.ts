@@ -9,8 +9,10 @@ import type {
 import {
   buildSceneAPI,
   buildEntityAPI,
+  createPrefabId,
   createUISlotId,
   createViewportId,
+  instantiatePrefab,
 } from '@duckengine/core-v2';
 import type { BridgeDeclaration, BridgePorts, BridgeSession } from './types';
 import { toEntityId } from './types';
@@ -34,6 +36,14 @@ export function createSceneBridgeDeclaration(eventBus: SceneEventBus): BridgeDec
     perEntity: false,
     factory(scene: SceneState, _entityId, _schema: unknown, ports: BridgePorts, session?: BridgeSession) {
       const sceneApi = buildSceneAPI(scene, {
+        instantiatePrefab: (_s, prefabId, position, rotation) => {
+          const result = instantiatePrefab.execute(scene, {
+            prefabId: createPrefabId(prefabId),
+            position,
+            rotation,
+          });
+          return result.ok ? result.value : null;
+        },
         raycast: (query) => {
           const hit = ports.physicsQuery?.raycast(query);
           return hit ? { ...hit, entityId: toEntityId(hit.entityId as string) } : null;

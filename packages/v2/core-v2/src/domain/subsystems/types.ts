@@ -42,6 +42,13 @@ export const SCENE_FRAME_PHASES: readonly SceneFramePhase[] = [
 export interface SceneSubsystem {
   /** React to a scene change event (reactive channel). */
   handleSceneEvent(scene: SceneState, event: SceneChangeEventWithError): void;
+  /** Engine-level event handlers. Used by attachSceneSubsystem to register listeners. */
+  engineEventHandlers?: Partial<
+    Record<
+      import('../engine/engineEvents').EngineChangeEvent['kind'],
+      (engine: EngineState, event: import('../engine/engineEvents').EngineChangeEvent, scene: SceneState) => void
+    >
+  >;
   /** Phase callbacks (optional). Called in FRAME_PHASES order. */
   earlyUpdate?(scene: SceneState, dt: number): void;
   physics?(scene: SceneState, dt: number): void;
@@ -62,6 +69,15 @@ export interface SceneSubsystem {
  * full-engine visibility (all scenes/viewports), not a single scene.
  */
 export interface EngineSubsystem {
+  /** Port providers run during setup before scene subsystems are instantiated. */
+  readonly portProviders?: ReadonlyArray<SubsystemPortProvider>;
+  /** Engine-level event handlers (e.g. resource-loaded). Params omit scene. Used by setupEngine to register. */
+  readonly engineEventHandlers?: Partial<
+    Record<
+      import('../engine/engineEvents').EngineChangeEvent['kind'],
+      (engine: EngineState, event: import('../engine/engineEvents').EngineChangeEvent) => void
+    >
+  >;
   /** Phase callbacks (optional). Called in FRAME_PHASES order. */
   earlyUpdate?(engine: EngineState, dt: number): void;
   physics?(engine: EngineState, dt: number): void;
@@ -134,6 +150,13 @@ export interface SceneSubsystemConfig<TState> {
   readonly events?: Partial<
     Record<SceneChangeEventWithError['kind'], SubsystemUseCase<TState, SubsystemEventParams, void>>
   >;
+  /** Engine-level event handlers (e.g. resource-loaded). Scene subsystems receive scene in params. */
+  readonly engineEvents?: Partial<
+    Record<
+      import('../engine/engineEvents').EngineChangeEvent['kind'],
+      SubsystemUseCase<TState, SubsystemEngineEventParams, void>
+    >
+  >;
   /** Phase handlers keyed by phase name. */
   readonly phases?: Partial<
     Record<SceneFramePhase, SubsystemUseCase<TState, SubsystemUpdateParams, void>>
@@ -144,14 +167,20 @@ export interface SceneSubsystemConfig<TState> {
   readonly updateWhenPaused?: boolean;
 }
 
-/** Context passed to port derivation hooks. */
-export interface SubsystemPortDeriverContext {
+/** Context passed to port provider hooks. */
+export interface SubsystemPortProviderContext {
   readonly engine: EngineState;
   readonly ports: SubsystemPortRegistry;
 }
 
-/** Hook that can derive or override ports during engine setup. */
-export type SubsystemPortDeriver = (context: SubsystemPortDeriverContext) => void;
+/** Hook that can provide or override ports during engine setup. */
+export type SubsystemPortProvider = (context: SubsystemPortProviderContext) => void;
+
+/** @deprecated Use SubsystemPortProvider instead. */
+export type SubsystemPortDeriver = SubsystemPortProvider;
+
+/** @deprecated Use SubsystemPortProviderContext instead. */
+export type SubsystemPortDeriverContext = SubsystemPortProviderContext;
 
 /** Parameters for the subsystem update tick. */
 export interface SubsystemUpdateParams {
@@ -165,10 +194,18 @@ export interface SubsystemEventParams {
   readonly event: SceneChangeEventWithError;
 }
 
-/** Engine update params (engine + dt). */
+/** Params passed to subsystem use cases for engine-level events (e.g. resource-loaded). */
+export interface SubsystemEngineEventParams {
+  readonly engine: EngineState;
+  readonly event: import('../engine/engineEvents').EngineChangeEvent;
+  readonly scene?: SceneState;
+}
+
+/** Engine update params (engine + dt + ports). */
 export interface EngineSubsystemUpdateParams {
   readonly engine: EngineState;
   readonly dt: number;
+  readonly ports: SubsystemPortRegistry;
 }
 
 /** Fluent builder for creating an EngineSubsystem. */
@@ -177,6 +214,12 @@ export interface EngineSubsystemBuilder<TState> {
   withState(
     factory: (ctx: { engine: EngineState }) => TState,
   ): EngineSubsystemBuilder<TState>;
+
+  /** Register use case for an engine-level event (e.g. resource-loaded). Params omit scene. */
+  onEngineEvent<K extends import('../engine/engineEvents').EngineChangeEvent['kind']>(
+    eventKind: K,
+    useCase: SubsystemUseCase<TState, SubsystemEngineEventParams, void>,
+  ): this;
 
   /** Register use case for each frame phase. */
   onEarlyUpdate(useCase: SubsystemUseCase<TState, EngineSubsystemUpdateParams, void>): this;
@@ -236,6 +279,10 @@ export interface SubsystemComposer<TState> {
     eventKind: K,
     useCase: SubsystemUseCase<TState, SubsystemEventParams, void>,
   ): this;
+  onEngineEvent<K extends import('../engine/engineEvents').EngineChangeEvent['kind']>(
+    eventKind: K,
+    useCase: SubsystemUseCase<TState, SubsystemEngineEventParams, void>,
+  ): this;
   onEarlyUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
   onPhysics(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
   onUpdate(useCase: SubsystemUseCase<TState, SubsystemUpdateParams, void>): this;
@@ -292,7 +339,7 @@ export interface PortBinding<T> {
 /** Internal mutable subsystem runtime bag stored on EngineState. */
 export interface SubsystemRuntimeState {
   readonly sceneSubsystemFactories: SceneSubsystemFactory[];
-  readonly portDerivers: SubsystemPortDeriver[];
+  readonly portProviders: SubsystemPortProvider[];
   readonly ports: Map<string, unknown>;
   readonly portDefinitions: Map<string, PortDefinition<any>>;
 }

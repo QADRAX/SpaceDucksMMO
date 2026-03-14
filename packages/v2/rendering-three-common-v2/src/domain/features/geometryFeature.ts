@@ -30,15 +30,15 @@ export function createGeometryFeature(): RenderFeature<RenderContextThree> {
         syncTransformToObject3D(entity, mesh);
         context.registry.add(entity.id, mesh, context.threeScene);
         meshesByEntity.set(entity.id, mesh);
-        lastGeometryKeyByEntity.set(entity.id, geometryKey(comp));
+        lastGeometryKeyByEntity.set(entity.id, geometryKey(comp, meshData));
       } else if (comp && had) {
-        const key = geometryKey(comp);
+        const meshData = comp.type === 'customGeometry' ? getMeshDataForCustom(entity, context) : null;
+        const key = geometryKey(comp, meshData);
         const lastKey = lastGeometryKeyByEntity.get(entity.id);
         const mesh = meshesByEntity.get(entity.id)!;
         if (key === lastKey) {
           syncTransformToObject3D(entity, mesh);
         } else {
-          const meshData = comp.type === 'customGeometry' ? getMeshDataForCustom(entity, context) : null;
           const geom = geometryFromComponent(comp, meshData);
           mesh.geometry.dispose();
           mesh.geometry = geom;

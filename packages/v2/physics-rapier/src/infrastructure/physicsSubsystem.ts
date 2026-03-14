@@ -3,6 +3,7 @@ import { createPhysicsWorldState } from './createPhysicsWorldState';
 import { createPhysicsQueryPortImpl } from './physicsQueryPortImpl';
 import { physicsQueryPortDef } from './physicsQueryPortDef';
 import { addEntityToPhysics, removeEntityFromPhysics, onComponentChangedPhysics, onHierarchyChangedPhysics, stepPhysics, disposePhysics } from '../application';
+import { reconcilePendingPhysicsForKey } from '../application/reconcilePendingPhysicsForKey';
 import type { PhysicsWorldState } from './types';
 
 /**
@@ -30,6 +31,9 @@ export function createPhysicsSubsystem() {
       'entity-removed': removeEntityFromPhysics,
       'component-changed': onComponentChangedPhysics,
       'hierarchy-changed': onHierarchyChangedPhysics,
+    },
+    engineEvents: {
+      'resource-loaded': reconcilePendingPhysicsForKey,
     },
     phases: {
       physics: stepPhysics,

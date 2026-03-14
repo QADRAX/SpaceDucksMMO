@@ -29,8 +29,14 @@ export function getMeshDataForCustom(
   return ctx.getMeshData(custom.mesh);
 }
 
-/** Builds a cache key so we only rebuild geometry when the component actually changed. */
-export function geometryKey(comp: GeometryComponent): string {
+/**
+ * Builds a cache key so we only rebuild geometry when the component actually changed.
+ * For customGeometry, include meshDataLoaded so we rebuild when resource loads.
+ */
+export function geometryKey(
+  comp: GeometryComponent,
+  meshData: MeshGeometryFileData | null | undefined = undefined,
+): string {
   const base = `${comp.type}:${comp.castShadow}:${comp.receiveShadow}:`;
   switch (comp.type) {
     case 'boxGeometry':
@@ -46,7 +52,7 @@ export function geometryKey(comp: GeometryComponent): string {
     case 'torusGeometry':
       return base + `${comp.radius}:${comp.tube}:${comp.radialSegments}:${comp.tubularSegments}`;
     case 'customGeometry':
-      return base + (comp.mesh?.key ?? '');
+      return base + (comp.mesh?.key ?? '') + (meshData ? ':loaded' : ':pending');
     default:
       return base;
   }

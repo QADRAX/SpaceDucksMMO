@@ -10,9 +10,9 @@ import {
  * setupEngine({ engineSubsystems: [createRenderingSubsystem(options)] })
  * or api.registerSubsystem({ subsystem: createRenderingSubsystem(options) }).
  *
- * When ResourceCachePort is registered (via deriveResourceCache), mesh and skybox
- * resolution use the cache. Add deriveResourceCache to portDerivers and
- * createResourceCoordinatorSubsystem to sceneSubsystems for full resource loading.
+ * When ResourceCachePort is registered (via createResourceCoordinatorSubsystem with createResourceCache),
+ * mesh and skybox resolution use the cache. Add createResourceCoordinatorSubsystem({ resourceLoader }) — cache is internal to coordinator.
+ * to engineSubsystems for full resource loading.
  */
 export function createRenderingSubsystem(
   options: CreateRenderingStateParams = {},

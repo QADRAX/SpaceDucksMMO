@@ -1,17 +1,19 @@
 import type {
-  SubsystemPortDeriver,
+  SubsystemPortProvider,
   EngineSubsystem,
   SceneSubsystemFactory,
 } from '../../domain/subsystems';
 import {
   attachSceneSubsystems,
   instantiateSceneSubsystems,
-  runSubsystemPortDerivers,
+  runSubsystemPortProviders,
 } from '../../domain/subsystems';
+import { subscribeToEngineChanges } from '../../domain/engine/emitEngineChange';
 import { defineEngineUseCase } from '../../domain/useCases';
 import type { EnginePorts } from '../../domain/ports';
 import type { PortBinding } from '../../domain/subsystems/types';
-import { defaultPortDerivers } from '../../infrastructure/portDerivers';
+import { defaultPortProviders } from '../../infrastructure/portProviders';
+
 /** Parameters for initial engine subsystem and port setup. */
 export interface SetupEngineParams {
   /** Engine-level subsystems (render, audio, etc.) to register globally. */
@@ -22,8 +24,8 @@ export interface SetupEngineParams {
   readonly ports?: EnginePorts;
   /** Custom engine ports to explicitly bind. */
   readonly customPorts?: ReadonlyArray<PortBinding<any>>;
-  /** Hooks that can derive ports from engine state or other ports. */
-  readonly portDerivers?: ReadonlyArray<SubsystemPortDeriver>;
+  /** Hooks that can provide ports from engine state or other ports. */
+  readonly portProviders?: ReadonlyArray<SubsystemPortProvider>;
 }
 
 /**
@@ -53,13 +55,39 @@ export const setupEngine = defineEngineUseCase<SetupEngineParams, void>({
       }
     }
 
-    const allDerivers = [...defaultPortDerivers, ...(params.portDerivers ?? [])];
-    engine.subsystemRuntime.portDerivers.push(...allDerivers);
+    const subsystemProviders =
+      params.engineSubsystems?.flatMap((s) => s.portProviders ?? []) ?? [];
+    const allProviders = [
+      ...defaultPortProviders,
+      ...(params.portProviders ?? []),
+      ...subsystemProviders,
+    ];
+    engine.subsystemRuntime.portProviders.push(...allProviders);
 
-    runSubsystemPortDerivers(engine);
+    runSubsystemPortProviders(engine);
 
     if (params.engineSubsystems) {
-      engine.engineSubsystems.push(...params.engineSubsystems);
+      for (const subsystem of params.engineSubsystems) {
+        engine.engineSubsystems.push(subsystem);
+
+        if (subsystem.engineEventHandlers) {
+          const unsubscribes: Array<() => void> = [];
+          for (const [kind, handler] of Object.entries(subsystem.engineEventHandlers)) {
+            if (handler) {
+              unsubscribes.push(
+                subscribeToEngineChanges(engine, (eng, ev) => {
+                  if (ev.kind === kind) handler(eng, ev);
+                })
+              );
+            }
+          }
+          const originalDispose = subsystem.dispose;
+          (subsystem as { dispose?: () => void }).dispose = () => {
+            for (const unsub of unsubscribes) unsub();
+            originalDispose?.();
+          };
+        }
+      }
     }
 
     if (params.sceneSubsystems && params.sceneSubsystems.length > 0) {
@@ -68,7 +96,7 @@ export const setupEngine = defineEngineUseCase<SetupEngineParams, void>({
       // Apply newly configured scene subsystems to already-existing scenes.
       for (const scene of engine.scenes.values()) {
         const subsystems = instantiateSceneSubsystems(engine, scene, params.sceneSubsystems);
-        attachSceneSubsystems(scene, subsystems);
+        attachSceneSubsystems(engine, scene, subsystems);
       }
     }
 

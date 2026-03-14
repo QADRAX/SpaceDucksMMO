@@ -24,6 +24,7 @@ export interface DuckEngineViewportScope extends ReturnType<InferredDuckEngineAP
 export interface DuckEngineAPI extends InferredDuckEngineAPI {}
 
 import type { Result } from '../../domain/utils';
+import type { EntityId } from '../../domain/ids';
 import type { SceneState, ViewportState } from '../../domain';
 import type { SceneView } from '../../domain/scene';
 import type { ViewportView } from '../../domain/viewport';
@@ -39,6 +40,8 @@ import type { SetupEngineParams } from '../../application/engine/setupEngine';
 import type { RegisterEngineSubsystemParams } from '../../application/engine/registerEngineSubsystem';
 import type { UpdateSettingsParams } from '../../application/engine/updateSettings';
 import type { AddEntityParams } from '../../application/scene/addEntityToScene';
+import type { AddPrefabParams } from '../../application/prefabs/addPrefab';
+import type { InstantiatePrefabParams } from '../../application/prefabs/instantiatePrefab';
 import type { RemoveEntityParams } from '../../application/scene/removeEntityFromScene';
 import type { ReparentEntityParams } from '../../application/scene/reparentEntityInScene';
 import type { SetActiveCameraParams } from '../../application/scene/setActiveCamera';
@@ -102,6 +105,10 @@ declare module './createDuckEngineAPI' {
   export interface DuckEngineSceneScope {
     /** Adds an entity (and its subtree) to the scene. Validates uniqueInScene and hierarchy. */
     addEntity(params: AddEntityParams): Result<EntityView>;
+    /** Registers an entity as a prefab. Resources are preloaded on prefab-added. */
+    addPrefab(params: AddPrefabParams): Result<void>;
+    /** Instantiates a prefab by cloning and adding to the scene. Returns the new entity ID. */
+    instantiatePrefab(params: InstantiatePrefabParams): Result<EntityId>;
     /** Removes an entity from the scene. Fails if not found. */
     removeEntity(params: RemoveEntityParams): Result<void>;
     /** Moves an entity to a new parent. Pass null to promote to root. */

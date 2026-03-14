@@ -1,8 +1,9 @@
 import type { EntityState, DebugKind } from '../entities';
 import type { ComponentType } from '../components';
 import type { SceneSubsystem, PortDefinition } from '../subsystems';
-import type { EntityId, SceneId, UISlotId } from '../ids';
+import type { EntityId, PrefabId, SceneId, UISlotId } from '../ids';
 import type { UISlotState } from '../ui';
+import type { EngineState } from '../engine';
 
 /** Event emitted when an entity is added to a scene. */
 export type EntityAddedEvent = {
@@ -19,13 +20,13 @@ export type EntityRemovedEvent = {
 /** Event emitted when a prefab is added to the scene's prefab cache. */
 export type ScenePrefabAddedEvent = {
   readonly kind: 'prefab-added';
-  readonly prefabId: string;
+  readonly prefabId: PrefabId;
 };
 
 /** Event emitted when a prefab is removed from the scene's prefab cache. */
 export type ScenePrefabRemovedEvent = {
   readonly kind: 'prefab-removed';
-  readonly prefabId: string;
+  readonly prefabId: PrefabId;
 };
 
 /** Event emitted when an entity is reparented in the hierarchy. */
@@ -147,9 +148,12 @@ export type SceneChangeListener = (scene: SceneState, event: SceneChangeEventWit
 /**
  * Mutable scene state operated on by application-layer use cases.
  * Created by `createScene`, mutated by use-case functions.
+ * `engine` is set when the scene is added to the engine via addSceneToEngine.
  */
 export interface SceneState {
   readonly id: SceneId;
+  /** Set when scene is added to engine. Used for engine-level event subscription. */
+  engine?: EngineState;
   readonly entities: Map<EntityId, EntityState>;
   readonly rootEntityIds: EntityId[];
   activeCameraId: EntityId | null;
@@ -178,6 +182,6 @@ export interface SceneView {
   readonly activeCameraId: EntityId | null;
   readonly rootEntityIds: ReadonlyArray<EntityId>;
   readonly debugFlags: ReadonlyMap<DebugKind, boolean>;
-  readonly prefabs: ReadonlyMap<string, EntityState>;
+  readonly prefabs: ReadonlyMap<PrefabId, EntityState>;
   readonly uiSlots: ReadonlyMap<UISlotId, UISlotState>;
 }

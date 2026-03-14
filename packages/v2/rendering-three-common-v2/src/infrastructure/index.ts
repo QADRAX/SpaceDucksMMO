@@ -1,2 +1,2 @@
-export { createResourceRuntimeCache } from './resourceRuntimeCache';
-export { deriveResourceCache } from './deriveResourceCache';
+export { createTextureResolversFromRawCache } from './createTextureResolversFromRawCache';
+export type { RawResourceCache } from './createTextureResolversFromRawCache';

@@ -19,7 +19,11 @@ export const setupScene = defineSceneUseCase<SetupSceneParams, void>({
   name: 'setupScene',
   execute(scene, { subsystems }) {
     if (subsystems) {
-      attachSceneSubsystems(scene, subsystems);
+      const engine = scene.engine;
+      if (!engine) {
+        throw new Error('Scene must be added to engine before setupScene. Call addScene first.');
+      }
+      attachSceneSubsystems(engine, scene, subsystems);
     }
 
     emitSceneChange(scene, { kind: 'scene-setup' });

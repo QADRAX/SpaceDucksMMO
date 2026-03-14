@@ -1,24 +1,23 @@
 import {
     createEngine,
     createDuckEngineAPI,
-    ResourceLoaderPortDef,
     ResourceCachePortDef,
     DiagnosticPortDef,
     definePort,
-    ok,
     createSceneSubsystem,
+    createResourceKey,
+    createResourceRef,
 } from '@duckengine/core-v2';
 import type {
     InputPort,
     GizmoPort,
     PhysicsQueryPort,
-    ResourceLoaderPort,
     ResourceCachePort,
     DiagnosticPort,
     PortBinding,
 } from '@duckengine/core-v2';
-import type { ResourceRef, ResolvedResource } from '@duckengine/core-v2';
-import { createResourceCoordinatorSubsystem } from '@duckengine/core-v2';
+import type { ResourceRef } from '@duckengine/core-v2';
+import type { EngineSubsystem } from '@duckengine/core-v2';
 import { createScriptingSubsystem } from '../scriptingSubsystem';
 
 // Standard port definitions used across the engine
@@ -109,82 +108,56 @@ function cacheKey(ref: ResourceRef<any>): string {
 
 /**
  * Creates a minimal ResourceCachePort for tests: scripts only.
- * Mesh/texture/skybox are no-ops. Used to demonstrate script coordination via cache.
+ * Mesh/texture/skybox are no-ops. Coordinator populates via store*.
  */
-export function createScriptOnlyResourceCache(
-    resourceLoader: ResourceLoaderPort
-): ResourceCachePort {
+export function createScriptOnlyResourceCache(): ResourceCachePort {
     const scriptCache = new Map<string, string>();
-    const inFlight = new Map<string, Promise<void>>();
+    const loadInProgress = new Map<string, Promise<void>>();
 
     return {
         getMeshData: () => null,
         getTexture: () => null,
         getSkyboxTexture: () => null,
         getScriptSource: (ref) => scriptCache.get(cacheKey(ref)) ?? null,
-        preloadMesh: async () => {},
-        preloadTexture: async () => {},
-        preloadSkybox: async () => {},
-        preloadScript: async (ref) => {
+        getScriptSourceOrWait: async (ref) => {
             const key = cacheKey(ref);
-            if (scriptCache.has(key)) return;
-            const existing = inFlight.get(key);
-            if (existing) {
-                await existing;
-                return;
+            const cached = scriptCache.get(key);
+            if (cached !== undefined) return cached;
+            const pending = loadInProgress.get(key);
+            if (pending) {
+                await pending;
+                return scriptCache.get(key) ?? null;
             }
-            const load = (async () => {
-                const result = await resourceLoader.resolve(ref);
-                if (result.ok === false) return;
-                const resolved = result.value as ResolvedResource<'script'>;
-                const sourceFile = resolved.files.source;
-                if (!sourceFile?.url) return;
-                const fetchResult = await resourceLoader.fetchFile(sourceFile.url, 'text');
-                if (fetchResult.ok === false) return;
-                scriptCache.set(key, fetchResult.value as string);
-            })();
-            inFlight.set(key, load);
-            await load;
-            inFlight.delete(key);
+            return null;
+        },
+        registerLoadInProgress: (ref, promise) => {
+            loadInProgress.set(cacheKey(ref), promise);
+            promise.finally(() => loadInProgress.delete(cacheKey(ref)));
+        },
+        storeMeshData: () => {},
+        storeTextureFromBlob: async () => {},
+        storeSkyboxFromUrls: async () => {},
+        storeScriptSource: (ref, source) => {
+            scriptCache.set(cacheKey(ref), source);
         },
     };
 }
 
 /**
- * Creates a mock ResourceLoaderPort that allows registering test scripts.
+ * Creates a test cache with registerScript for tests that need resource scripts
+ * without ResourceCoordinator. Scripting reads from cache only.
  */
-export function createMockResourceLoader() {
-    const scripts = new Map<string, { source: string; key: string }>();
-
-    const loader: ResourceLoaderPort = {
-        resolve: jest.fn(async (ref) => {
-            const script = Array.from(scripts.values()).find(s => s.key === ref.key);
-            if (script) {
-                return ok({
-                    key: script.key as any,
-                    resourceId: `res-${script.key}`,
-                    version: 1,
-                    componentType: 'script' as any,
-                    componentData: {},
-                    files: { source: { url: `http://test-cdn/${script.key}.lua` } }
-                } as any);
-            }
-            return { ok: false, error: { kind: 'not-found', message: `Script ${ref.key} not found` } } as any;
-        }),
-        fetchFile: jest.fn(async (url) => {
-            const script = Array.from(scripts.values()).find(s => `http://test-cdn/${s.key}.lua` === url);
-            if (script) {
-                return ok(script.source as any);
-            }
-            return { ok: false, error: { kind: 'not-found', message: `File at ${url} not found` } } as any;
-        })
-    };
-
+export function createTestScriptCache(): {
+    cache: ResourceCachePort;
+    registerScript: (key: string, source: string) => void;
+} {
+    const cache = createScriptOnlyResourceCache();
     return {
-        loader,
+        cache,
         registerScript: (key: string, source: string) => {
-            scripts.set(key, { key, source });
-        }
+            const ref = createResourceRef(createResourceKey(key), 'script');
+            cache.storeScriptSource?.(ref, source);
+        },
     };
 }
 
@@ -195,8 +168,8 @@ export function createMockResourceLoader() {
  * use a scene-scoped mock instead (e.g. pass createMockPhysicsPerSceneSubsystem()
  * first in sceneSubsystems) so each scene gets its own physics port.
  *
- * When withResourceCache is true, registers ResourceCachePort and ResourceCoordinator
- * so scripts are coordinated via cache (preload + getScriptSource) like textures/meshes.
+ * Pass engineSubsystems when you need ResourceCachePort (e.g. ResourceCoordinator).
+ * Subsystems should not depend on each other; composition belongs in a facade package.
  */
 export async function setupScriptingIntegrationTest(params?: {
     customPorts?: PortBinding<any>[];
@@ -204,39 +177,35 @@ export async function setupScriptingIntegrationTest(params?: {
     omitPhysicsFromCustomPorts?: boolean;
     /** If set, use these scene subsystems; else [scriptingSubsystem]. */
     sceneSubsystems?: Awaited<ReturnType<typeof createScriptingSubsystem>>[];
-    /** If true, add ResourceCachePort + ResourceCoordinator for script coordination. */
-    withResourceCache?: boolean;
+    /** Engine subsystems (e.g. ResourceCoordinator). Pass from facade when needed. */
+    engineSubsystems?: EngineSubsystem[];
+    /** ResourceCachePort when using ResourceCoordinator (e.g. createScriptOnlyResourceCache()). */
+    resourceCache?: ResourceCachePort;
 }) {
     const engine = createEngine();
     const api = createDuckEngineAPI(engine);
 
     const { mockInput, mockGizmo, mockPhysics, mockDiagnostic } = createMockPorts();
-    const { loader, registerScript } = createMockResourceLoader();
+    const { cache, registerScript } = createTestScriptCache();
 
     const scriptingSubsystem = await createScriptingSubsystem();
 
-    const resourceCache = params?.withResourceCache
-        ? createScriptOnlyResourceCache(loader)
-        : null;
-
-    const customPorts: PortBinding<any>[] = [
+    const customPorts: PortBinding<unknown>[] = [
         InputPortDef.bind(mockInput),
         GizmoPortDef.bind(mockGizmo),
         ...(params?.omitPhysicsFromCustomPorts ? [] : [PhysicsQueryPortDef.bind(mockPhysics)]),
         DiagnosticPortDef.bind(mockDiagnostic),
-        ResourceLoaderPortDef.bind(loader),
-        ...(resourceCache ? [ResourceCachePortDef.bind(resourceCache)] : []),
+        ResourceCachePortDef.bind(params?.resourceCache ?? cache),
         ...(params?.customPorts ?? []),
     ];
 
-    const sceneSubsystems = params?.sceneSubsystems ?? [
-        ...(resourceCache ? [createResourceCoordinatorSubsystem()] : []),
-        scriptingSubsystem,
-    ];
+    const sceneSubsystems = params?.sceneSubsystems ?? [scriptingSubsystem];
+    const engineSubsystems = params?.engineSubsystems ?? [];
 
     api.setup({
         customPorts,
         sceneSubsystems,
+        engineSubsystems,
     });
 
     return {
@@ -247,9 +216,7 @@ export async function setupScriptingIntegrationTest(params?: {
             gizmo: mockGizmo,
             physics: mockPhysics,
             diagnostic: mockDiagnostic,
-            resourceLoader: loader
         },
         registerScript,
-        resourceCache,
     };
 }

@@ -8,7 +8,7 @@ import { composeSceneSubsystem } from './composeSceneSubsystem';
  * Use this instead of defineSceneSubsystem for simpler, declarative subsystem definition.
  */
 export function createSceneSubsystem<TState>(config: SceneSubsystemConfig<TState>): SceneSubsystemFactory {
-  const { createState, events = {}, phases = {}, dispose, updateWhenPaused = false } = config;
+  const { createState, events = {}, engineEvents = {}, phases = {}, dispose, updateWhenPaused = false } = config;
 
   return (context: SceneSubsystemFactoryContext): SceneSubsystem => {
     const state = createState(context);
@@ -17,6 +17,12 @@ export function createSceneSubsystem<TState>(config: SceneSubsystemConfig<TState
     for (const [eventKind, useCase] of Object.entries(events)) {
       if (useCase) {
         composer.on(eventKind as keyof typeof events, useCase);
+      }
+    }
+
+    for (const [eventKind, useCase] of Object.entries(engineEvents)) {
+      if (useCase) {
+        composer.onEngineEvent(eventKind as keyof typeof engineEvents, useCase);
       }
     }
 

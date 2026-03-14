@@ -1,10 +1,11 @@
+import type { PrefabId } from '../../domain/ids';
 import type { EntityState } from '../../domain/entities';
 import { addPrefabToState } from '../../domain/prefabs';
 import { emitSceneChange } from '../../domain/scene';
 import { defineSceneUseCase } from '../../domain/useCases';
 
 export interface AddPrefabParams {
-  readonly prefabId: string;
+  readonly prefabId: PrefabId;
   readonly entity: EntityState;
 }
 
