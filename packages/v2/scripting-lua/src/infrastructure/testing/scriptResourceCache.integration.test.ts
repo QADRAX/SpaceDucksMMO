@@ -1,8 +1,8 @@
 /**
  * Integration tests for script resource caching.
  *
- * Requires ResourceCoordinator (engineSubsystems). These tests will move to the
- * facade package when it exists; scripting-lua does not depend on resource-coordinator.
+ * Mocks ResourceCachePort via createScriptOnlyResourceCache. Pre-populate with
+ * registerScript before adding entities. No dependency on resource-coordinator.
  */
 /** @jest-environment node */
 jest.unmock('wasmoon');
@@ -18,11 +18,9 @@ import {
 } from './testHelpers';
 import { getScriptProperties } from './testUtils';
 
-describe.skip('Script resource cache integration (moves to facade package)', () => {
-  it('scripts go through cache when engineSubsystems includes ResourceCoordinator', async () => {
-    const { api, registerScript } = await setupScriptingIntegrationTest({
-      engineSubsystems: [], // TODO: facade passes [createResourceCoordinatorSubsystem({ createResourceCache: createScriptOnlyResourceCache })]
-    });
+describe('Script resource cache integration', () => {
+  it('scripts go through cache when ResourceCachePort is pre-populated', async () => {
+    const { api, registerScript } = await setupScriptingIntegrationTest();
 
     registerScript('scripts/cached-demo', `
       return {
@@ -53,10 +51,8 @@ describe.skip('Script resource cache integration (moves to facade package)', () 
     expect(props?.source).toBe('cached-demo');
   });
 
-  it('multiple entities with same script hit cache (loader called once)', async () => {
-    const { api, registerScript } = await setupScriptingIntegrationTest({
-      engineSubsystems: [],
-    });
+  it('multiple entities with same script hit cache', async () => {
+    const { api, registerScript } = await setupScriptingIntegrationTest();
 
     registerScript('scripts/shared', `
       return {
@@ -97,9 +93,7 @@ describe.skip('Script resource cache integration (moves to facade package)', () 
   });
 
   it('test:// scripts bypass cache (built-in resolver)', async () => {
-    const { api } = await setupScriptingIntegrationTest({
-      engineSubsystems: [],
-    });
+    const { api } = await setupScriptingIntegrationTest();
 
     const sceneId = createSceneId('main');
     const entityId = createEntityId('e1');

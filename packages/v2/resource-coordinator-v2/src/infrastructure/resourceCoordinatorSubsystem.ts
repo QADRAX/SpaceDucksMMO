@@ -2,6 +2,7 @@ import { defineEngineSubsystem, type EngineSubsystem } from '@duckengine/core-v2
 import {
   loadRefsOnEntityAdded,
   loadRefsOnComponentChanged,
+  loadRefsOnPrefabAdded,
 } from '../application';
 import { provideResourceCoordinatorPorts } from '../domain';
 import type { ResourceLoader, ResourceCoordinatorState } from '../domain';
@@ -26,6 +27,7 @@ export function createResourceCoordinatorSubsystem(
     .withState(() => ({ resourceLoader }))
     .onSceneEvent('entity-added', loadRefsOnEntityAdded)
     .onSceneEvent('component-changed', loadRefsOnComponentChanged)
+    .onSceneEvent('prefab-added', loadRefsOnPrefabAdded)
     .build();
 
   return {

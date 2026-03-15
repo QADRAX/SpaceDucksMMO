@@ -1,6 +1,9 @@
 import * as THREE from 'three';
 import type { EngineState, SceneId } from '@duckengine/core-v2';
-import { ResourceCachePortDef } from '@duckengine/core-v2';
+import {
+  ResourceCachePortDef,
+  createSubsystemPortRegistry,
+} from '@duckengine/core-v2';
 import {
   createDefaultRenderFeatures,
   createRenderObjectRegistry,
@@ -14,7 +17,11 @@ import { createResolversFromResourceCache } from './createResolversFromResourceC
  * Shared by GL and WebGPU createRenderingState.
  */
 export function createPerSceneStateManager(engine: EngineState) {
-  const cache = engine.subsystemRuntime.ports.get(ResourceCachePortDef.id);
+  const registry = createSubsystemPortRegistry(
+    engine.subsystemRuntime.ports,
+    engine.subsystemRuntime.portDefinitions,
+  );
+  const cache = registry.get(ResourceCachePortDef);
   const { getMeshData, getSkyboxTexture, getTexture } =
     createResolversFromResourceCache(cache);
 

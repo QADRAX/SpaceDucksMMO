@@ -144,8 +144,8 @@ export function createScriptOnlyResourceCache(): ResourceCachePort {
 }
 
 /**
- * Creates a test cache with registerScript for tests that need resource scripts
- * without ResourceCoordinator. Scripting reads from cache only.
+ * Creates a test cache with registerScript for tests that need resource scripts.
+ * Pre-populate with registerScript before adding entities.
  */
 export function createTestScriptCache(): {
     cache: ResourceCachePort;
@@ -177,9 +177,9 @@ export async function setupScriptingIntegrationTest(params?: {
     omitPhysicsFromCustomPorts?: boolean;
     /** If set, use these scene subsystems; else [scriptingSubsystem]. */
     sceneSubsystems?: Awaited<ReturnType<typeof createScriptingSubsystem>>[];
-    /** Engine subsystems (e.g. ResourceCoordinator). Pass from facade when needed. */
+    /** Engine subsystems. Pass from facade when needed. */
     engineSubsystems?: EngineSubsystem[];
-    /** ResourceCachePort when using ResourceCoordinator (e.g. createScriptOnlyResourceCache()). */
+    /** ResourceCachePort. Default: createScriptOnlyResourceCache. Pre-populate with registerScript for resource scripts. */
     resourceCache?: ResourceCachePort;
 }) {
     const engine = createEngine();
