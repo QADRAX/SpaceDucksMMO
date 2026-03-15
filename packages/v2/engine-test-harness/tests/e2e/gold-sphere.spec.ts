@@ -3,7 +3,7 @@ import { loadSceneYamlFixture } from './fixtures/loadSceneYaml';
 
 test('gold-sphere: loads scene, checks logs, takes screenshot', async ({ page }) => {
   test.setTimeout(60000);
-  await page.goto('/?mode=test&freeze=1');
+  await page.goto('/test.html?freeze=1');
 
   const ready = await page.waitForFunction(
     () => (window as any).__harnessReady === true || (window as any).__harnessError,
@@ -15,9 +15,10 @@ test('gold-sphere: loads scene, checks logs, takes screenshot', async ({ page })
     throw new Error(`Harness init failed: ${harnessError}`);
   }
 
-  const loadResult = await page.evaluate((yaml: string) => {
-    return (window as any).loadSceneYaml(yaml);
-  }, loadSceneYamlFixture('gold-sphere'));
+  const yaml = await loadSceneYamlFixture(page, 'gold-sphere');
+  const loadResult = await page.evaluate((y: string) => {
+    return (window as any).loadSceneYaml(y);
+  }, yaml);
 
   if (!loadResult.ok) {
     const logs = await page.evaluate(() => (window as any).getLogs?.() ?? []);

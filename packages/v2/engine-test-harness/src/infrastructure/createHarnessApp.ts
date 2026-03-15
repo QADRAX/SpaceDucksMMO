@@ -34,6 +34,7 @@ export interface HarnessAppState {
   logStack: LogStack;
   frozen: boolean;
   frameId: number | null;
+  performanceReport?: PerformanceReportStorage;
 }
 
 function createDefaultCameraEntity() {

@@ -1,16 +1,16 @@
-import { readFileSync } from 'fs';
-import { join } from 'path';
-import { fileURLToPath } from 'url';
-
-const __dirname = fileURLToPath(new URL('.', import.meta.url));
-
-/** fixtures/scenes at package root (tests/e2e/fixtures -> ../../fixtures/scenes) */
-const SCENES_DIR = join(__dirname, '..', '..', '..', 'fixtures', 'scenes');
+import type { Page } from '@playwright/test';
 
 /**
- * Loads scene YAML from fixtures/scenes/.
- * @param sceneName - Filename without extension (e.g. 'simple-floor')
+ * Loads scene YAML from public/scenes/ via the served app URL.
+ * Single source of truth: public/scenes/*.yaml
+ *
+ * @param page - Playwright page (must have navigated so request context is ready)
+ * @param sceneName - Filename without extension (e.g. 'orbit-sphere')
  */
-export function loadSceneYamlFixture(sceneName: string): string {
-  return readFileSync(join(SCENES_DIR, `${sceneName}.yaml`), 'utf-8');
+export async function loadSceneYamlFixture(page: Page, sceneName: string): Promise<string> {
+  const response = await page.request.get(`/scenes/${sceneName}.yaml`);
+  if (!response.ok()) {
+    throw new Error(`Failed to fetch /scenes/${sceneName}.yaml: ${response.status()} ${response.statusText()}`);
+  }
+  return response.text();
 }

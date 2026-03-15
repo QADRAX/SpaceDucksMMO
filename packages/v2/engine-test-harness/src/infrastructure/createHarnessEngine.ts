@@ -55,6 +55,7 @@ export interface HarnessEngineResult {
   api: DuckEngineAPI;
   logStack: LogStack;
   viewportRectProvider: ViewportRectProviderPort;
+  performanceReport: PerformanceReportStorage;
   disposeInput?: () => void;
 }
 

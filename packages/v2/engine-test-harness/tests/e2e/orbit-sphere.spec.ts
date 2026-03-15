@@ -5,7 +5,7 @@ test.use({ video: 'on' });
 
 test('orbit-sphere: loads scene with orbit camera script, runs animation, takes screenshot', async ({ page }) => {
   test.setTimeout(60000);
-  await page.goto('/?mode=test&freeze=0');
+  await page.goto('/test.html?freeze=0');
 
   const ready = await page.waitForFunction(
     () => (window as any).__harnessReady === true || (window as any).__harnessError,
@@ -17,9 +17,10 @@ test('orbit-sphere: loads scene with orbit camera script, runs animation, takes 
     throw new Error(`Harness init failed: ${harnessError}`);
   }
 
-  const loadResult = await page.evaluate((yaml: string) => {
-    return (window as any).loadSceneYaml(yaml);
-  }, loadSceneYamlFixture('orbit-sphere'));
+  const yaml = await loadSceneYamlFixture(page, 'orbit-sphere');
+  const loadResult = await page.evaluate((y: string) => {
+    return (window as any).loadSceneYaml(y);
+  }, yaml);
 
   if (!loadResult.ok) {
     const logs = await page.evaluate(() => (window as any).getLogs?.() ?? []);
