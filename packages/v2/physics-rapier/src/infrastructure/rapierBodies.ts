@@ -35,7 +35,10 @@ export interface RapierBodiesHandle {
     rb: RigidBodyComponent
   ): void;
   removeEntityBody(world: World, entityId: string): void;
+  /** Sync kinematic bodies from ECS transform (before step). */
   syncKinematicBodiesFromEcs(getEntity: (id: string) => EntityState | null): void;
+  /** Sync static bodies from ECS transform. Needed when parent (e.g. moving platform) rotates. */
+  syncStaticBodiesFromEcs(getEntity: (id: string) => EntityState | null): void;
   teleportBody(getEntity: (id: string) => EntityState | null, entityId: string, worldPos: { x: number; y: number; z: number }): void;
   writeBackDynamicBodiesToEcs(getEntity: (id: string) => EntityState | null): void;
   dispose(): void;
@@ -147,6 +150,21 @@ export function createRapierBodies(): RapierBodiesHandle {
     }
   }
 
+  function syncStaticBodiesFromEcs(getEntity: (id: string) => EntityState | null): void {
+    for (const [entityId, body] of bodyByEntity.entries()) {
+      const ent = getEntity(entityId);
+      if (!ent) continue;
+      const rb = getComponent<RigidBodyComponent>(ent, 'rigidBody');
+      if (!rb || rb.bodyType !== 'static') continue;
+      ensureClean(ent.transform);
+      const wp = ent.transform.worldPosition;
+      const wr = ent.transform.worldRotation;
+      callOpt(body, 'setTranslation', { x: wp.x, y: wp.y, z: wp.z }, true);
+      const q = quatNormalize(quatFromEulerYXZ(wr));
+      callOpt(body, 'setRotation', q, true);
+    }
+  }
+
   function teleportBody(
     getEntity: (id: string) => EntityState | null,
     entityId: string,
@@ -239,6 +257,7 @@ export function createRapierBodies(): RapierBodiesHandle {
     ensureRigidBody,
     removeEntityBody,
     syncKinematicBodiesFromEcs,
+    syncStaticBodiesFromEcs,
     teleportBody,
     writeBackDynamicBodiesToEcs,
     dispose,

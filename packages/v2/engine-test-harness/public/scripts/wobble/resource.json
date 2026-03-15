@@ -1,0 +1,7 @@
+{
+  "componentType": "script",
+  "componentData": {},
+  "files": {
+    "source": { "url": "wobble.lua" }
+  }
+}

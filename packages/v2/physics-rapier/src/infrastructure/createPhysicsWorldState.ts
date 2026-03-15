@@ -98,6 +98,7 @@ export function createPhysicsWorldState(options?: CreatePhysicsWorldStateOptions
         (world as World & { integrationParameters: { dt: number } }).integrationParameters.dt =
           fixedStepSeconds;
       }
+      bodies.syncStaticBodiesFromEcs(getEnt);
       bodies.syncKinematicBodiesFromEcs(getEnt);
       world.step(eventQueue);
       collisions.drain(eventQueue as unknown as { drainCollisionEvents?(cb: (h1: number, h2: number, started: boolean) => void): void });

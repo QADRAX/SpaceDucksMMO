@@ -5,103 +5,287 @@ entities:
     components:
       gravity: { x: 0, y: -9.81, z: 0 }
 
-  # --- Floor (concrete-muddy, static) ---
-  - id: floor
+  # --- Arena container (floor + walls as children, wobble keeps balls moving) ---
+  - id: arena
     transform:
-      position: { x: 0, y: -0.25, z: 0 }
+      position: { x: 0, y: 0, z: 0 }
     components:
-      boxGeometry: { width: 12, height: 0.5, depth: 12, castShadow: true, receiveShadow: true }
-      standardMaterial: textures/concrete-muddy
-      rigidBody: { bodyType: static }
-      boxCollider: { halfExtents: { x: 6, y: 0.25, z: 6 } }
+      script:
+        scripts:
+          - scriptId: scripts/wobble
+            enabled: true
+            properties:
+              axis: both
+              maxAngle: 4
+              changeInterval: 5
+              smoothSpeed: 1.2
+    children:
+      - id: floor
+        transform:
+          position: { x: 0, y: -0.25, z: 0 }
+        components:
+          boxGeometry: { width: 12, height: 0.5, depth: 12, castShadow: true, receiveShadow: true }
+          standardMaterial: textures/concrete-muddy
+          rigidBody: { bodyType: static }
+          boxCollider: { halfExtents: { x: 6, y: 0.25, z: 6 }, restitution: 0.6 }
 
-  # --- Walls (static, contain balls) ---
-  - id: wall-north
-    transform:
-      position: { x: 0, y: 1.5, z: 6 }
-    components:
-      boxGeometry: { width: 12, height: 3, depth: 0.5, castShadow: true }
-      standardMaterial: textures/concrete-muddy
-      rigidBody: { bodyType: static }
-      boxCollider: { halfExtents: { x: 6, y: 1.5, z: 0.25 } }
+      - id: wall-north
+        transform:
+          position: { x: 0, y: 1.5, z: 6 }
+        components:
+          boxGeometry: { width: 12, height: 3, depth: 0.5, castShadow: true }
+          standardMaterial: textures/concrete-muddy
+          rigidBody: { bodyType: static }
+          boxCollider: { halfExtents: { x: 6, y: 1.5, z: 0.25 } }
 
-  - id: wall-south
-    transform:
-      position: { x: 0, y: 1.5, z: -6 }
-    components:
-      boxGeometry: { width: 12, height: 3, depth: 0.5, castShadow: true }
-      standardMaterial: textures/concrete-muddy
-      rigidBody: { bodyType: static }
-      boxCollider: { halfExtents: { x: 6, y: 1.5, z: 0.25 } }
+      - id: wall-south
+        transform:
+          position: { x: 0, y: 1.5, z: -6 }
+        components:
+          boxGeometry: { width: 12, height: 3, depth: 0.5, castShadow: true }
+          standardMaterial: textures/concrete-muddy
+          rigidBody: { bodyType: static }
+          boxCollider: { halfExtents: { x: 6, y: 1.5, z: 0.25 }, restitution: 0.6 }
 
-  - id: wall-east
-    transform:
-      position: { x: 6, y: 1.5, z: 0 }
-    components:
-      boxGeometry: { width: 0.5, height: 3, depth: 12, castShadow: true }
-      standardMaterial: textures/concrete-muddy
-      rigidBody: { bodyType: static }
-      boxCollider: { halfExtents: { x: 0.25, y: 1.5, z: 6 } }
+      - id: wall-east
+        transform:
+          position: { x: 6, y: 1.5, z: 0 }
+        components:
+          boxGeometry: { width: 0.5, height: 3, depth: 12, castShadow: true }
+          standardMaterial: textures/concrete-muddy
+          rigidBody: { bodyType: static }
+          boxCollider: { halfExtents: { x: 0.25, y: 1.5, z: 6 }, restitution: 0.6 }
 
-  - id: wall-west
-    transform:
-      position: { x: -6, y: 1.5, z: 0 }
-    components:
-      boxGeometry: { width: 0.5, height: 3, depth: 12, castShadow: true }
-      standardMaterial: textures/concrete-muddy
-      rigidBody: { bodyType: static }
-      boxCollider: { halfExtents: { x: 0.25, y: 1.5, z: 6 } }
+      - id: wall-west
+        transform:
+          position: { x: -6, y: 1.5, z: 0 }
+        components:
+          boxGeometry: { width: 0.5, height: 3, depth: 12, castShadow: true }
+          standardMaterial: textures/concrete-muddy
+          rigidBody: { bodyType: static }
+          boxCollider: { halfExtents: { x: 0.25, y: 1.5, z: 6 }, restitution: 0.6 }
 
   # --- Center target (empty entity for camera to look at) ---
   - id: center-target
     transform:
       position: { x: 0, y: 1, z: 0 }
 
-  # --- Balls (gold, dynamic, sphere collider, different heights to fall in sequence) ---
+  # --- Balls (gold, dynamic, high restitution, spread to collide) ---
   - id: ball-1
     transform:
-      position: { x: -2, y: 8, z: -2 }
+      position: { x: -2.5, y: 18, z: -2 }
     components:
       sphereGeometry: { radius: 0.3, castShadow: true }
       standardMaterial: textures/MetalGoldFoil001
       rigidBody: { bodyType: dynamic }
-      sphereCollider: { radius: 0.3 }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
 
   - id: ball-2
     transform:
-      position: { x: 1, y: 7, z: 1 }
+      position: { x: 1, y: 16, z: 1 }
     components:
       sphereGeometry: { radius: 0.3, castShadow: true }
       standardMaterial: textures/MetalGoldFoil001
       rigidBody: { bodyType: dynamic }
-      sphereCollider: { radius: 0.3 }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
 
   - id: ball-3
     transform:
-      position: { x: 2, y: 9, z: -1 }
+      position: { x: 2, y: 20, z: -1 }
     components:
       sphereGeometry: { radius: 0.3, castShadow: true }
       standardMaterial: textures/MetalGoldFoil001
       rigidBody: { bodyType: dynamic }
-      sphereCollider: { radius: 0.3 }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
 
   - id: ball-4
     transform:
-      position: { x: -1, y: 6, z: 2 }
+      position: { x: -1, y: 14, z: 2 }
     components:
       sphereGeometry: { radius: 0.3, castShadow: true }
       standardMaterial: textures/MetalGoldFoil001
       rigidBody: { bodyType: dynamic }
-      sphereCollider: { radius: 0.3 }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
 
   - id: ball-5
     transform:
-      position: { x: 0, y: 10, z: 0 }
+      position: { x: 0, y: 22, z: 0 }
     components:
       sphereGeometry: { radius: 0.3, castShadow: true }
       standardMaterial: textures/MetalGoldFoil001
       rigidBody: { bodyType: dynamic }
-      sphereCollider: { radius: 0.3 }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-6
+    transform:
+      position: { x: -1.5, y: 19, z: -1.5 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-7
+    transform:
+      position: { x: 2.5, y: 17, z: 1.5 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-8
+    transform:
+      position: { x: -2, y: 21, z: 1 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-9
+    transform:
+      position: { x: 1.5, y: 15, z: -2 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-10
+    transform:
+      position: { x: -0.5, y: 23, z: -0.5 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-11
+    transform:
+      position: { x: 3, y: 18, z: -2 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-12
+    transform:
+      position: { x: -3, y: 16, z: 2 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-13
+    transform:
+      position: { x: 0.5, y: 19, z: -0.8 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-14
+    transform:
+      position: { x: -2, y: 17, z: -2.5 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-15
+    transform:
+      position: { x: 2.2, y: 21, z: 0.5 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-16
+    transform:
+      position: { x: -1.2, y: 15, z: 1.5 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-17
+    transform:
+      position: { x: 1.8, y: 20, z: -1.8 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-18
+    transform:
+      position: { x: -0.8, y: 18, z: 2.2 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-19
+    transform:
+      position: { x: 2.8, y: 14, z: -2.2 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-20
+    transform:
+      position: { x: -2.8, y: 22, z: -0.5 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-21
+    transform:
+      position: { x: 0.3, y: 16, z: -2.8 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-22
+    transform:
+      position: { x: -2.2, y: 20, z: 2.5 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-23
+    transform:
+      position: { x: 1.2, y: 24, z: 1.2 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
+
+  - id: ball-24
+    transform:
+      position: { x: -1.5, y: 13, z: -1.2 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3, restitution: 0.85 }
 
   # --- Waypoints (empty, for camera path around arena, above walls) ---
   - id: wp-1
@@ -117,7 +301,7 @@ entities:
     transform:
       position: { x: -5, y: 4, z: 5 }
 
-  # --- Camera (waypoint path + look at center) ---
+  # --- Camera (slower waypoint path + look at center) ---
   - id: main-camera
     transform:
       position: { x: -5, y: 4, z: -5 }
@@ -129,13 +313,13 @@ entities:
             enabled: true
             properties:
               waypoints: [wp-1, wp-2, wp-3, wp-4]
-              speed: 3
+              speed: 1.5
               loop: true
               arrivalThreshold: 0.2
           - scriptId: builtin://move_to_point.lua
             enabled: true
             properties:
-              duration: 2
+              duration: 3
               easing: "linear"
           - scriptId: builtin://look_at_entity.lua
             enabled: true
@@ -150,4 +334,4 @@ entities:
       directionalLight:
         intensity: 1
         shadowBias: 0
-        shadowNormalBias: 0
+        shadowNormalBias: 0.01
