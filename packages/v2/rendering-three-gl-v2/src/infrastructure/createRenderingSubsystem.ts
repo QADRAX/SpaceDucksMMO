@@ -1,10 +1,15 @@
 import { defineEngineSubsystem, type EngineSubsystem } from '@duckengine/core-v2';
-import { syncRender, renderFrame, disposeRender } from '@duckengine/rendering-base-v2';
+import {
+  syncRender,
+  renderFrame,
+  disposeRender,
+  reconcilePendingRenderablesForKey,
+  type RenderEngineState,
+} from '@duckengine/rendering-base-v2';
 import {
   createRenderingState,
   type CreateRenderingStateParams,
 } from './createRenderingState';
-import { reconcilePendingRenderablesForKey } from '../application/reconcilePendingRenderablesForKey';
 
 /**
  * Creates the WebGL rendering engine subsystem. Register via
@@ -18,7 +23,7 @@ import { reconcilePendingRenderablesForKey } from '../application/reconcilePendi
 export function createRenderingSubsystem(
   options: CreateRenderingStateParams = {},
 ): EngineSubsystem {
-  return defineEngineSubsystem<ReturnType<typeof createRenderingState>>(
+  return defineEngineSubsystem<RenderEngineState>(
     'rendering-three-gl',
   )
     .withState(({ engine }) => createRenderingState({ ...options, engine }))

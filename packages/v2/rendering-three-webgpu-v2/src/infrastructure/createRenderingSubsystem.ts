@@ -1,5 +1,11 @@
 import { defineEngineSubsystem, type EngineSubsystem } from '@duckengine/core-v2';
-import { syncRender, renderFrame, disposeRender } from '@duckengine/rendering-base-v2';
+import {
+  syncRender,
+  renderFrame,
+  disposeRender,
+  reconcilePendingRenderablesForKey,
+  type RenderEngineState,
+} from '@duckengine/rendering-base-v2';
 import {
   createRenderingState,
   type CreateRenderingStateParams,
@@ -17,10 +23,11 @@ import {
 export function createRenderingSubsystem(
   options: CreateRenderingStateParams = {},
 ): EngineSubsystem {
-  return defineEngineSubsystem<ReturnType<typeof createRenderingState>>(
+  return defineEngineSubsystem<RenderEngineState>(
     'rendering-three-webgpu',
   )
     .withState(({ engine }) => createRenderingState({ ...options, engine }))
+    .onEngineEvent('resource-loaded', reconcilePendingRenderablesForKey)
     .onPreRender(syncRender)
     .onRender(renderFrame)
     .onDispose(disposeRender)

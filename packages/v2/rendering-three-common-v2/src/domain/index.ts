@@ -1,4 +1,6 @@
 export { buildBufferGeometryFromMeshData } from './buildBufferGeometryFromMeshData';
+export { syncSceneToRenderTree } from './syncSceneToRenderTree';
+export { createDefaultRenderFeatures } from './defaultFeatures';
 export {
   createPerspectiveCameraFromParams,
   applyPerspectiveCameraParams,

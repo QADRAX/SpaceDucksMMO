@@ -5,9 +5,9 @@ import {
   createMaterialFeature,
   createSkyboxFeature,
   createTextureTilingFeature,
-} from '../domain';
+} from './features';
 import type { RenderFeature } from '@duckengine/rendering-base-v2';
-import type { RenderContextThree } from '../domain';
+import type { RenderContextThree } from './renderContextThree';
 
 /**
  * Default feature set for Three.js rendering (camera, light, geometry, material, skybox, texture tiling).

@@ -1,6 +1,6 @@
 import type { SceneState } from '@duckengine/core-v2';
 import type { RenderFeature } from '@duckengine/rendering-base-v2';
-import type { RenderContextThree } from '../domain';
+import type { RenderContextThree } from './renderContextThree';
 
 /** Reused each frame to avoid allocation in syncSceneToRenderTree. */
 const attachedIds = new Set<string>();
