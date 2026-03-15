@@ -2,6 +2,10 @@ export {
   createLocalResourceLoader,
   type ResourceJson,
 } from './infrastructure/createLocalResourceLoader';
+export {
+  createWorkerBackedResourceLoader,
+  type CreateWorkerBackedResourceLoaderOptions,
+} from './infrastructure/createWorkerBackedResourceLoader';
 export { createHarnessEngine } from './infrastructure/createHarnessEngine';
 export {
   initHarnessScene,

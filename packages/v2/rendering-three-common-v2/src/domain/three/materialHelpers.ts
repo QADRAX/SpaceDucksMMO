@@ -15,6 +15,23 @@ export function getMaterialComponent(entity: EntityState): MaterialComponent | u
   return undefined;
 }
 
+/** True if material has texture refs that are not yet loaded. */
+export function hasUnresolvedTextures(
+  comp: MaterialComponent,
+  getTexture?: TextureResolver,
+): boolean {
+  if (!getTexture) return false;
+  const refs = [
+    (comp as { albedo?: { key?: string; kind?: string } }).albedo,
+    (comp as { normalMap?: { key?: string; kind?: string } }).normalMap,
+    (comp as { aoMap?: { key?: string; kind?: string } }).aoMap,
+    (comp as { roughnessMap?: { key?: string; kind?: string } }).roughnessMap,
+    (comp as { metallicMap?: { key?: string; kind?: string } }).metallicMap,
+    (comp as { envMap?: { key?: string; kind?: string } }).envMap,
+  ].filter(Boolean) as Array<{ key?: string; kind?: string }>;
+  return refs.some((r) => !getTexture(r as any));
+}
+
 /** Append texture resolution state so key changes when textures load (resource-loaded). */
 function textureResolvedSuffix(
   comp: MaterialComponent,

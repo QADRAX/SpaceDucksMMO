@@ -11,7 +11,7 @@ function cacheKey(ref: ResourceRef<any>): string {
  */
 export function createResourceRuntimeCache(): ResourceCachePort {
   const meshCache = new Map<string, MeshGeometryFileData>();
-  const textureCache = new Map<string, Blob>();
+  const textureCache = new Map<string, Blob | ImageBitmap>();
   const skyboxCache = new Map<string, string[]>();
   const scriptCache = new Map<string, string>();
 
@@ -20,7 +20,7 @@ export function createResourceRuntimeCache(): ResourceCachePort {
       return meshCache.get(cacheKey(ref)) ?? null;
     },
 
-    getTexture(ref: ResourceRef<'texture'>): Blob | null {
+    getTexture(ref: ResourceRef<'texture'>): Blob | ImageBitmap | null {
       return textureCache.get(cacheKey(ref)) ?? null;
     },
 
@@ -38,6 +38,10 @@ export function createResourceRuntimeCache(): ResourceCachePort {
 
     async storeTextureFromBlob(ref: ResourceRef<'texture'>, blob: Blob): Promise<void> {
       textureCache.set(cacheKey(ref), blob);
+    },
+
+    storeTextureFromImageBitmap(ref: ResourceRef<'texture'>, bitmap: ImageBitmap): void {
+      textureCache.set(cacheKey(ref), bitmap);
     },
 
     async storeSkyboxFromUrls(ref: ResourceRef<'skybox'>, urls: string[]): Promise<void> {

@@ -11,8 +11,8 @@ export interface ResourceCachePort {
   /** Sync lookup for mesh geometry. Returns null if not yet loaded. */
   getMeshData(ref: ResourceRef<'mesh'>): MeshGeometryFileData | null;
 
-  /** Sync lookup for texture. Returns Blob | null. Rendering adapts to THREE.Texture. */
-  getTexture?(ref: ResourceRef<'texture'>): Blob | null;
+  /** Sync lookup for texture. Returns Blob | ImageBitmap | null. Rendering adapts to THREE.Texture. */
+  getTexture?(ref: ResourceRef<'texture'>): Blob | ImageBitmap | null;
 
   /** Sync lookup for skybox. Returns string[] | null (6 face URLs). Rendering adapts to THREE.CubeTexture. */
   getSkyboxTexture?(ref: ResourceRef<'skybox'>): string[] | null;
@@ -25,6 +25,9 @@ export interface ResourceCachePort {
 
   /** Coordinator-only: store texture blob (raw image data). Rendering parses to THREE.Texture. */
   storeTextureFromBlob?(ref: ResourceRef<'texture'>, blob: Blob): Promise<void>;
+
+  /** Coordinator-only: store decoded ImageBitmap (browser, when loader provides fetchTextureDecoded). */
+  storeTextureFromImageBitmap?(ref: ResourceRef<'texture'>, bitmap: ImageBitmap): void;
 
   /** Coordinator-only: store skybox URLs (6 face URLs). Rendering parses to THREE.CubeTexture. */
   storeSkyboxFromUrls?(ref: ResourceRef<'skybox'>, urls: string[]): Promise<void>;

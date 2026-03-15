@@ -26,4 +26,10 @@ export interface ResourceLoader {
     url: string,
     format: F,
   ): Promise<Result<F extends 'text' ? string : Blob>>;
+
+  /**
+   * Optional: fetch and decode texture as ImageBitmap (off main thread when using workers).
+   * When present, coordinator uses this for textures instead of fetchFile(..., 'blob').
+   */
+  fetchTextureDecoded?(url: string): Promise<Result<ImageBitmap>>;
 }

@@ -3,7 +3,7 @@ import { isPlainMaterialComponentType } from '@duckengine/core-v2';
 import type { RenderFeature } from '@duckengine/rendering-base-v2';
 import type { RenderContextThree } from '../renderContextThree';
 import { materialFromComponent } from '../materialFromComponent';
-import { findMesh, getMaterialComponent, materialKey } from '../three';
+import { findMesh, getMaterialComponent, materialKey, hasUnresolvedTextures } from '../three';
 
 /**
  * Feature: sync material component to mesh material. Requires entity to already have a mesh (GeometryFeature).
@@ -18,6 +18,9 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
       const comp = getMaterialComponent(entity);
       if (!comp) {
         lastMaterialKeyByEntity.delete(entity.id);
+        const root = context.registry.get(entity.id);
+        const mesh = root ? findMesh(root) : null;
+        if (mesh) mesh.visible = true;
         return;
       }
       const key = materialKey(comp, context.getTexture);
@@ -29,6 +32,7 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
         const prev = mesh.material as THREE.Material;
         if (prev) prev.dispose();
         mesh.material = materialFromComponent(comp, context.getTexture);
+        mesh.visible = !hasUnresolvedTextures(comp, context.getTexture);
         lastMaterialKeyByEntity.set(entity.id, key);
         context.diagnostic?.log('debug', 'Material synced', {
           subsystem: 'rendering-three',
@@ -48,6 +52,7 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
         const prev = mesh.material as THREE.Material;
         if (prev) prev.dispose();
         mesh.material = materialFromComponent(comp, context.getTexture);
+        mesh.visible = !hasUnresolvedTextures(comp, context.getTexture);
         lastMaterialKeyByEntity.set(entity.id, materialKey(comp, context.getTexture));
         context.diagnostic?.log('debug', 'Material synced', {
           subsystem: 'rendering-three',

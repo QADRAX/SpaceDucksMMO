@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { createLocalResourceLoader } from '../infrastructure/createLocalResourceLoader';
+import { createWorkerBackedResourceLoader } from '../infrastructure/createWorkerBackedResourceLoader';
 import { createHarnessEngine } from '../infrastructure/createHarnessEngine';
 import {
   initHarnessScene,
@@ -41,7 +41,7 @@ export function PlaygroundApp() {
         if (!canvas) return;
 
         const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : '/';
-        const resourceLoader = createLocalResourceLoader({ baseUrl });
+        const resourceLoader = createWorkerBackedResourceLoader({ baseUrl });
         const { api, viewportRectProvider, logStack, performanceReport, disposeInput: di } =
           await createHarnessEngine({
             resourceLoader,

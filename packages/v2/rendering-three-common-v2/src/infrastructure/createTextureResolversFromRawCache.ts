@@ -4,10 +4,10 @@ import type { SkyboxResolver, TextureResolver } from '../domain/renderContextThr
 
 /**
  * Input shape for texture/skybox resolution.
- * Matches ResourceCachePort: getTexture → Blob | null, getSkyboxTexture → string[] | null.
+ * Matches ResourceCachePort: getTexture → Blob | ImageBitmap | null, getSkyboxTexture → string[] | null.
  */
 export interface RawResourceCacheInput {
-  getTexture?(ref: ResourceRef<'texture'>): Blob | null;
+  getTexture?(ref: ResourceRef<'texture'>): Blob | ImageBitmap | null;
   getSkyboxTexture?(ref: ResourceRef<'skybox'>): string[] | null;
 }
 
@@ -33,10 +33,17 @@ export function createTextureResolversFromRawCache(
         const cached = textureCache.get(key);
         if (cached) return cached;
 
-        const blob = rawCache.getTexture!(ref);
-        if (!blob) return null;
+        const data = rawCache.getTexture!(ref);
+        if (!data) return null;
 
-        const url = URL.createObjectURL(blob);
+        if (data instanceof ImageBitmap) {
+          const texture = new THREE.Texture(data);
+          texture.needsUpdate = true;
+          texture.colorSpace = THREE.SRGBColorSpace;
+          textureCache.set(key, texture);
+          return texture;
+        }
+        const url = URL.createObjectURL(data);
         const texture = textureLoader.load(
           url,
           () => URL.revokeObjectURL(url),

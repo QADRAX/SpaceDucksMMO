@@ -23,9 +23,13 @@ export function createGeometryFeature(): RenderFeature<RenderContextThree> {
 
       if (comp && !had) {
         const meshData = comp.type === 'customGeometry' ? getMeshDataForCustom(entity, context) : null;
+        if (comp.type === 'customGeometry' && !meshData) {
+          return;
+        }
         const geom = geometryFromComponent(comp, meshData);
         const material = new THREE.MeshStandardMaterial({ color: 0xcccccc });
         const mesh = new THREE.Mesh(geom, material);
+        mesh.visible = false;
         applyShadow(mesh, comp.castShadow, comp.receiveShadow);
         syncTransformToObject3D(entity, mesh);
         context.registry.add(entity.id, mesh, context.threeScene);

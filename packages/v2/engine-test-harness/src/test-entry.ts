@@ -2,7 +2,7 @@
  * Isolated test entry: canvas + engine only. No React.
  * Used by Playwright for screenshots and video — pure engine output.
  */
-import { createLocalResourceLoader } from './infrastructure/createLocalResourceLoader';
+import { createWorkerBackedResourceLoader } from './infrastructure/createWorkerBackedResourceLoader';
 import { createHarnessEngine } from './infrastructure/createHarnessEngine';
 import {
   initHarnessScene,
@@ -25,7 +25,7 @@ if (!canvas) throw new Error('Canvas not found');
 (async () => {
   try {
     const baseUrl = `${window.location.origin}/`;
-    const resourceLoader = createLocalResourceLoader({ baseUrl });
+    const resourceLoader = createWorkerBackedResourceLoader({ baseUrl });
     const { api, viewportRectProvider, logStack, performanceReport, disposeInput } =
       await createHarnessEngine({
         resourceLoader,

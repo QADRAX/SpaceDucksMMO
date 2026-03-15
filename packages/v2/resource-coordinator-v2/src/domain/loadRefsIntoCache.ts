@@ -62,6 +62,15 @@ async function loadTexture(
   }
 
   diag?.log('debug', 'Fetching texture', { ref: ref.key, url: imageFile.url });
+  if (loader.fetchTextureDecoded && cache.storeTextureFromImageBitmap) {
+    const fetchResult = await loader.fetchTextureDecoded(imageFile.url);
+    if (fetchResult.ok) {
+      cache.storeTextureFromImageBitmap(ref, fetchResult.value);
+      diag?.log('debug', 'Texture loaded (decoded)', { ref: ref.key, url: imageFile.url });
+      emitEngineChange(engine, { kind: 'resource-loaded', ref });
+      return;
+    }
+  }
   const fetchResult = await loader.fetchFile(imageFile.url, 'blob');
   if (fetchResult.ok === false) {
     diag?.log('warn', 'Texture fetch failed', { ref: ref.key, url: imageFile.url, error: (fetchResult as { error?: unknown }).error });
