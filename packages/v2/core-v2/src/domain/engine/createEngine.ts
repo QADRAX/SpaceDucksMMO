@@ -7,6 +7,7 @@ export function createEngine(): EngineState {
   return {
     scenes: new Map(),
     viewports: new Map(),
+    canvases: new Map(),
     settings: { ...DEFAULT_GAME_SETTINGS },
     paused: false,
     running: false,

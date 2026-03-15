@@ -46,7 +46,7 @@ Engine subsystem. Export principal: `createRenderingSubsystem`.
 | **application** | — (use cases en base) |
 | **infra** | `createRenderingSubsystem`, `createRenderingState` |
 
-**Exports:** `createRenderingSubsystem`, `CreateRenderingStateParams`, `CanvasResolver`
+**Exports:** `createRenderingSubsystem`, `createRenderingState`
 
 ---
 

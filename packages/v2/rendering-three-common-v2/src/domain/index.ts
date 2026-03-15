@@ -6,7 +6,15 @@ export {
   applyPerspectiveCameraParams,
   type PerspectiveCameraParams,
 } from './cameraFromParams';
-export type { RenderContextThree, RenderObjectRegistry, MeshResolver, SkyboxResolver, TextureResolver } from './renderContextThree';
+export type {
+  RenderContextThree,
+  RenderObjectRegistry,
+  PerSceneState,
+  MeshResolver,
+  SkyboxResolver,
+  TextureResolver,
+} from './renderContextThree';
+export type { RendererLike, RendererFactory } from './rendererLike';
 export { createRenderObjectRegistry } from './createRenderObjectRegistry';
 export { geometryFromComponent } from './geometryFromComponent';
 export {
@@ -22,5 +30,6 @@ export { materialFromComponent } from './materialFromComponent';
 export { parseColor } from './parseColor';
 export { removeFromRegistryAndDispose } from './removeFromRegistry';
 export { syncTransformToObject3D } from './syncTransformToObject3D';
-export { findMesh, applyShadow, applyTilingToMaterial, disposeMesh } from './three';
+export { findMesh, findCamera, applyShadow, applyTilingToMaterial, disposeMesh } from './three';
+export { computeViewportScissor } from './viewportScissor';
 export * from './features';

@@ -6,6 +6,8 @@ import {
   instantiatePrefab,
   addSceneToEngine,
   addViewport,
+  registerCanvas,
+  unregisterCanvas,
   addUISlot,
   removeUISlot,
   updateUISlot,
@@ -60,6 +62,8 @@ export function buildDuckEngineAPI(engine: EngineState) {
     .add('removeScene', removeSceneFromEngine)
     .add('addViewport', addViewport)
     .add('removeViewport', removeViewport)
+    .add('registerCanvas', registerCanvas)
+    .add('unregisterCanvas', unregisterCanvas)
     .add('setPaused', setEnginePaused)
     .add('setup', setupEngine)
     .add('registerSubsystem', registerEngineSubsystem)

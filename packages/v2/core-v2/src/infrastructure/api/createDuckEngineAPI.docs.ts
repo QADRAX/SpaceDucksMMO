@@ -35,6 +35,8 @@ import type { AddSceneParams } from '../../application/engine/addSceneToEngine';
 import type { RemoveSceneParams } from '../../application/engine/removeSceneFromEngine';
 import type { AddViewportParams } from '../../application/engine/addViewport';
 import type { RemoveViewportParams } from '../../application/engine/removeViewport';
+import type { RegisterCanvasParams } from '../../application/engine/registerCanvas';
+import type { UnregisterCanvasParams } from '../../application/engine/unregisterCanvas';
 import type { SetEnginePausedParams } from '../../application/engine/setEnginePaused';
 import type { SetupEngineParams } from '../../application/engine/setupEngine';
 import type { RegisterEngineSubsystemParams } from '../../application/engine/registerEngineSubsystem';
@@ -80,6 +82,10 @@ declare module './createDuckEngineAPI' {
     addViewport(params: AddViewportParams): Result<ViewportState>;
     /** Removes a viewport from the engine. */
     removeViewport(params: RemoveViewportParams): Result<void>;
+    /** Registers a canvas with the engine. Subsystems (e.g. rendering) resolve via engine.canvases.get(canvasId). */
+    registerCanvas(params: RegisterCanvasParams): Result<void>;
+    /** Removes a canvas from the engine registry. */
+    unregisterCanvas(params: UnregisterCanvasParams): Result<void>;
     /** Pauses or resumes the engine (all scenes). */
     setPaused(params: SetEnginePausedParams): Result<void>;
     /** Runs engine setup (subsystems, port derivers). Call once before using scenes. */

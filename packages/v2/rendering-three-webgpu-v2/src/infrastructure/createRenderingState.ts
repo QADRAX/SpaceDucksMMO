@@ -1,45 +1,12 @@
 import * as THREE from 'three/webgpu';
 import type { EngineState } from '@duckengine/core-v2';
-import { ResourceCachePortDef } from '@duckengine/core-v2';
 import type { RenderEngineState } from '@duckengine/rendering-base-v2';
+import type { RendererFactory } from '@duckengine/rendering-three-common-v2';
 import {
   syncSceneToRenderTree,
-  createDefaultRenderFeatures,
-  createRenderObjectRegistry,
-  createTextureResolversFromRawCache,
-  type RenderContextThree,
-  type MeshResolver,
-  type SkyboxResolver,
-  type TextureResolver,
+  createPerSceneStateManager,
+  renderViewports,
 } from '@duckengine/rendering-three-common-v2';
-
-/** Resolves canvasId to the actual canvas element. Inject via options. */
-export type CanvasResolver = (canvasId: string) => HTMLCanvasElement | null;
-
-export interface CreateRenderingStateParams {
-  getCanvas?: CanvasResolver;
-  /** Override mesh resolver. When omitted and engine has ResourceCachePort, uses cache. */
-  getMeshData?: MeshResolver;
-  /** Override skybox resolver. When omitted and engine has ResourceCachePort, uses cache. */
-  getSkyboxTexture?: SkyboxResolver;
-}
-
-interface PerSceneState {
-  threeScene: THREE.Scene;
-  registry: ReturnType<typeof createRenderObjectRegistry>;
-  context: RenderContextThree;
-  features: ReturnType<typeof createDefaultRenderFeatures>;
-}
-
-function findCamera(root: THREE.Object3D | undefined): THREE.PerspectiveCamera | undefined {
-  if (!root) return undefined;
-  if (root instanceof THREE.PerspectiveCamera) return root;
-  for (const child of root.children) {
-    const c = findCamera(child);
-    if (c) return c;
-  }
-  return undefined;
-}
 
 /**
  * Creates the rendering engine state for WebGPU.
@@ -49,66 +16,35 @@ function findCamera(root: THREE.Object3D | undefined): THREE.PerspectiveCamera |
  *   into that viewport's canvas (and rect). Multiple viewports can share a canvas (split-screen)
  *   or use different canvases (editor + game view). WebGPU init is async per renderer.
  *
- * When engine is provided and ResourceCachePort is registered, getMeshData and getSkyboxTexture
- * are built from the cache unless overridden in params.
+ * Canvas: resolved from engine.canvases.get(viewport.canvasId). Register via api.registerCanvas().
+ * Resources: from ResourceCachePort when registered (resource coordinator).
  */
-export function createRenderingState(
-  params: CreateRenderingStateParams & { engine?: EngineState } = {},
-): RenderEngineState {
-  const getCanvas = params.getCanvas ?? (() => null);
+export function createRenderingState(params: { engine: EngineState }): RenderEngineState {
+  const engine = params.engine;
+  const { perScene, getOrCreateSceneState } = createPerSceneStateManager(engine);
 
-  const cache = params.engine
-    ? (params.engine.subsystemRuntime.ports.get(ResourceCachePortDef.id) as
-        | {
-            getMeshData: MeshResolver;
-            getTexture?(ref: import('@duckengine/core-v2').ResourceRef<'texture'>): unknown;
-            getSkyboxTexture?(ref: import('@duckengine/core-v2').ResourceRef<'skybox'>): unknown;
-          }
-        | undefined)
-    : undefined;
-
-  const rawResolvers = cache ? createTextureResolversFromRawCache(cache) : undefined;
-
-  const getMeshData: MeshResolver =
-    params.getMeshData ??
-    (cache
-      ? (ref) => cache.getMeshData(ref) ?? null
-      : (() => null));
-
-  const getSkyboxTexture: SkyboxResolver | undefined =
-    params.getSkyboxTexture ?? rawResolvers?.getSkyboxTexture;
-
-  const getTexture: TextureResolver | undefined = rawResolvers?.getTexture;
-
-  /** One renderer per canvas so we can render to different canvases (e.g. multiple viewports). */
   const renderersByCanvasId = new Map<string, THREE.WebGPURenderer>();
-  /** WebGPU init is async; we only draw in a viewport once its canvas's renderer has finished init. */
   const initCompleteByCanvasId = new Set<string>();
-  const perScene = new Map<string, PerSceneState>();
 
-  function getOrCreateSceneState(engine: EngineState, sceneId: string): PerSceneState | undefined {
-    let state = perScene.get(sceneId);
-    if (state) return state;
-
-    const scene = engine.scenes.get(sceneId as import('@duckengine/core-v2').SceneId);
-    if (!scene) return undefined;
-
-    const threeScene = new THREE.Scene();
-    const registry = createRenderObjectRegistry();
-    const context: RenderContextThree = {
-      sceneId,
-      scene,
-      threeScene,
-      registry,
-      getMeshData,
-      getSkyboxTexture,
-      getTexture,
-    };
-    const features = createDefaultRenderFeatures();
-    state = { threeScene, registry, context, features };
-    perScene.set(sceneId, state);
-    return state;
-  }
+  const rendererFactory: RendererFactory = {
+    getOrCreateRenderer(canvasId, canvas) {
+      let r = renderersByCanvasId.get(canvasId);
+      if (!r) {
+        r = new THREE.WebGPURenderer({ canvas, antialias: true });
+        renderersByCanvasId.set(canvasId, r);
+        r.init().then(() => initCompleteByCanvasId.add(canvasId));
+        return undefined;
+      }
+      if (!initCompleteByCanvasId.has(canvasId)) return undefined;
+      return r;
+    },
+    getRenderers: () => renderersByCanvasId.values(),
+    dispose() {
+      for (const r of renderersByCanvasId.values()) r.dispose();
+      renderersByCanvasId.clear();
+      initCompleteByCanvasId.clear();
+    },
+  };
 
   return {
     sync(engine: EngineState, _dt: number) {
@@ -121,60 +57,11 @@ export function createRenderingState(
     },
 
     render(engine: EngineState, _dt: number) {
-      for (const viewport of engine.viewports.values()) {
-        if (!viewport.enabled) continue;
-
-        const canvas = getCanvas(viewport.canvasId);
-        if (!canvas) continue;
-
-        let renderer = renderersByCanvasId.get(viewport.canvasId);
-        if (!renderer) {
-          renderer = new THREE.WebGPURenderer({ canvas, antialias: true });
-          renderersByCanvasId.set(viewport.canvasId, renderer);
-          renderer.init().then(() => {
-            initCompleteByCanvasId.add(viewport.canvasId);
-          });
-          continue;
-        }
-
-        if (!initCompleteByCanvasId.has(viewport.canvasId)) continue;
-
-        const state = perScene.get(viewport.sceneId);
-        if (!state) continue;
-
-        const cameraObj = state.registry.get(viewport.cameraEntityId);
-        const camera = findCamera(cameraObj);
-        if (!camera) continue;
-
-        renderer.setRenderTarget(null);
-        const w = canvas.width;
-        const h = canvas.height;
-        renderer.setViewport(
-          Math.floor(viewport.rect.x * w),
-          Math.floor(viewport.rect.y * h),
-          Math.floor(viewport.rect.w * w),
-          Math.floor(viewport.rect.h * h),
-        );
-        renderer.setScissor(
-          Math.floor(viewport.rect.x * w),
-          Math.floor(viewport.rect.y * h),
-          Math.floor(viewport.rect.w * w),
-          Math.floor(viewport.rect.h * h),
-        );
-        renderer.setScissorTest(true);
-        renderer.render(state.threeScene, camera);
-      }
-      for (const renderer of renderersByCanvasId.values()) {
-        renderer.setScissorTest(false);
-      }
+      renderViewports(engine, perScene, rendererFactory);
     },
 
     dispose() {
-      for (const renderer of renderersByCanvasId.values()) {
-        renderer.dispose();
-      }
-      renderersByCanvasId.clear();
-      initCompleteByCanvasId.clear();
+      rendererFactory.dispose();
       perScene.clear();
     },
   };

@@ -6,27 +6,22 @@ import {
   reconcilePendingRenderablesForKey,
   type RenderEngineState,
 } from '@duckengine/rendering-base-v2';
-import {
-  createRenderingState,
-  type CreateRenderingStateParams,
-} from './createRenderingState';
+import { createRenderingState } from './createRenderingState';
 
 /**
  * Creates the WebGL rendering engine subsystem. Register via
- * setupEngine({ engineSubsystems: [createRenderingSubsystem(options)] })
- * or api.registerSubsystem({ subsystem: createRenderingSubsystem(options) }).
+ * setupEngine({ engineSubsystems: [createRenderingSubsystem()] })
+ * or api.registerSubsystem({ subsystem: createRenderingSubsystem() }).
  *
  * When ResourceCachePort is registered (via createResourceCoordinatorSubsystem with createResourceCache),
  * mesh and skybox resolution use the cache. Add createResourceCoordinatorSubsystem({ resourceLoader }) — cache is internal to coordinator.
  * to engineSubsystems for full resource loading.
  */
-export function createRenderingSubsystem(
-  options: CreateRenderingStateParams = {},
-): EngineSubsystem {
+export function createRenderingSubsystem(): EngineSubsystem {
   return defineEngineSubsystem<RenderEngineState>(
     'rendering-three-gl',
   )
-    .withState(({ engine }) => createRenderingState({ ...options, engine }))
+    .withState(({ engine }) => createRenderingState({ engine }))
     .onEngineEvent('resource-loaded', reconcilePendingRenderablesForKey)
     .onPreRender(syncRender)
     .onRender(renderFrame)

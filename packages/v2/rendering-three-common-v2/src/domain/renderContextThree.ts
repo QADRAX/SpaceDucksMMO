@@ -1,5 +1,5 @@
 import type * as THREE from 'three';
-import type { RenderContextBase } from '@duckengine/rendering-base-v2';
+import type { RenderContextBase, RenderFeature } from '@duckengine/rendering-base-v2';
 import type { ResourceRef } from '@duckengine/core-v2';
 import type { MeshGeometryFileData } from '@duckengine/core-v2';
 
@@ -46,4 +46,12 @@ export interface RenderObjectRegistry {
   add(entityId: string, object3D: THREE.Object3D, scene: THREE.Scene): void;
   remove(entityId: string, object3D: THREE.Object3D, scene: THREE.Scene): void;
   keys(): Iterable<string>;
+}
+
+/** Per-scene Three.js state: scene, registry, context, and features. Shared by GL and WebGPU infra. */
+export interface PerSceneState {
+  threeScene: THREE.Scene;
+  registry: RenderObjectRegistry;
+  context: RenderContextThree;
+  features: RenderFeature<RenderContextThree>[];
 }

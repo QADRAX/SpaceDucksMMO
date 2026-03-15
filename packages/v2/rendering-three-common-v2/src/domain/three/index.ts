@@ -1,4 +1,5 @@
 export { findMesh } from './findMesh';
+export { findCamera } from './findCamera';
 export { applyShadow, applyTilingToMaterial, disposeMesh } from './meshUtils';
 
 export { cameraKey } from './cameraHelpers';

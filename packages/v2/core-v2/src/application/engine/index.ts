@@ -3,6 +3,8 @@ export { addSceneToEngine, type AddSceneParams } from './addSceneToEngine';
 export { removeSceneFromEngine, type RemoveSceneParams } from './removeSceneFromEngine';
 export { addViewport, type AddViewportParams } from './addViewport';
 export { removeViewport, type RemoveViewportParams } from './removeViewport';
+export { registerCanvas, type RegisterCanvasParams } from './registerCanvas';
+export { unregisterCanvas, type UnregisterCanvasParams } from './unregisterCanvas';
 export { setEnginePaused, type SetEnginePausedParams } from './setEnginePaused';
 export { setupEngine, type SetupEngineParams } from './setupEngine';
 export { registerEngineSubsystem, type RegisterEngineSubsystemParams } from './registerEngineSubsystem';

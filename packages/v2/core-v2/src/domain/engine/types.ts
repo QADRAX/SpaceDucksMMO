@@ -1,8 +1,11 @@
 import type { SceneState } from '../scene';
 import type { ViewportState } from '../viewport';
 import type { SubsystemRuntimeState, EngineSubsystem } from '../subsystems';
-import type { SceneId, ViewportId } from '../ids';
+import type { SceneId, ViewportId, CanvasId } from '../ids';
 import type { EngineChangeEvent } from './engineEvents';
+
+/** Opaque handle. Actual type known by consumer (HTMLCanvasElement, OffscreenCanvas, etc.) */
+export type CanvasHandle = unknown;
 
 /** Listener signature for engine change events. */
 export type EngineChangeListener = (engine: EngineState, event: EngineChangeEvent) => void;
@@ -11,6 +14,8 @@ export type EngineChangeListener = (engine: EngineState, event: EngineChangeEven
 export interface EngineState {
   readonly scenes: Map<SceneId, SceneState>;
   readonly viewports: Map<ViewportId, ViewportState>;
+  /** Canvas registry. Client registers via registerCanvas; subsystems read via engine.canvases.get(canvasId). */
+  readonly canvases: Map<CanvasId, CanvasHandle>;
   settings: GameSettings;
   paused: boolean;
   running: boolean;
