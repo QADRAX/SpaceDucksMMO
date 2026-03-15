@@ -2,6 +2,7 @@ import { createEntity, addComponent, addChild, getComponent, hasComponent, getCh
 import { cloneEntitySubtree } from './cloneEntity';
 import { createEntityId } from '../ids';
 import { createComponent } from '../components';
+import type { NameComponent, BoxGeometryComponent } from '../components';
 
 describe('cloneEntitySubtree', () => {
   it('clones a single entity with components', () => {
@@ -21,8 +22,8 @@ describe('cloneEntitySubtree', () => {
     expect(hasComponent(clone, 'name')).toBe(true);
     expect(hasComponent(clone, 'boxGeometry')).toBe(true);
 
-    const nameComp = getComponent(clone, 'name') as { value?: string };
-    const boxComp = getComponent(clone, 'boxGeometry') as { width?: number; height?: number; depth?: number };
+    const nameComp = getComponent<NameComponent>(clone, 'name');
+    const boxComp = getComponent<BoxGeometryComponent>(clone, 'boxGeometry');
     expect(nameComp?.value).toBe('TestName');
     expect(boxComp?.width).toBe(2);
     expect(boxComp?.height).toBe(3);
@@ -48,8 +49,8 @@ describe('cloneEntitySubtree', () => {
     expect(cloneChild.id).toBe(createEntityId('c-2'));
     expect(cloneChild.parent).toBe(clone);
 
-    const pName = getComponent(clone, 'name') as { value?: string };
-    const cName = getComponent(cloneChild, 'name') as { value?: string };
+    const pName = getComponent<NameComponent>(clone, 'name');
+    const cName = getComponent<NameComponent>(cloneChild, 'name');
     expect(pName?.value).toBe('P');
     expect(cName?.value).toBe('C');
   });
@@ -61,10 +62,10 @@ describe('cloneEntitySubtree', () => {
     const gen = () => createEntityId('clone-1');
     const clone = cloneEntitySubtree(template, gen);
 
-    const cloneName = getComponent(clone, 'name') as { value?: string };
+    const cloneName = getComponent<NameComponent>(clone, 'name');
     cloneName!.value = 'Modified';
 
-    const templateName = getComponent(template, 'name') as { value?: string };
+    const templateName = getComponent<NameComponent>(template, 'name');
     expect(templateName?.value).toBe('Original');
     expect(cloneName?.value).toBe('Modified');
   });
@@ -78,7 +79,7 @@ describe('cloneEntitySubtree', () => {
     const gen = () => createEntityId('clone-1');
     const clone = cloneEntitySubtree(template, gen);
 
-    const cloneComp = getComponent(clone, 'name') as { enabled?: boolean };
+    const cloneComp = getComponent<NameComponent>(clone, 'name');
     expect(cloneComp?.enabled).toBe(false);
   });
 });

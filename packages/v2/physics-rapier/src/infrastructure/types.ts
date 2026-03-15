@@ -16,6 +16,7 @@ export interface PhysicsWorldState extends PhysicsWorldHandle {
   removeEntity(scene: SceneState, entityId: string): void;
   step(scene: SceneState, dt: number): void;
   syncEntity(scene: SceneState, entityId: string): void;
+  teleportBody(entityId: string, worldPos: { x: number; y: number; z: number }): void;
   dispose(): void;
   /** Rapier world (for raycast, etc.). */
   world: World;

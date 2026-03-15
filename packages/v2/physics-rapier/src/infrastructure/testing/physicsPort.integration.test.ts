@@ -87,8 +87,8 @@ describe('Physics port integration (raycast and collision events)', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 2, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
 
     runFrames(api, 80);
 

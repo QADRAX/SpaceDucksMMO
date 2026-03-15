@@ -154,8 +154,8 @@ describe('Physics integration edge cases', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 2, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     runFrames(api, 30);
 
     const yDynamic = getEntityWorldPosition(engine, sceneId, boxId)!.y;
@@ -183,8 +183,8 @@ describe('Physics integration edge cases', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 1, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     runFrames(api, 5);
 
     api.scene(sceneId).entity(boxId).component('rigidBody').setField({
@@ -208,8 +208,8 @@ describe('Physics integration edge cases', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 4, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     runFrames(api, 2);
 
     const res = api.scene(sceneId).entity(boxId).component('rigidBody').setField({
@@ -231,8 +231,8 @@ describe('Physics integration edge cases', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 2, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     runFrames(api, 2);
 
     const res = api.scene(sceneId).entity(boxId).component('rigidBody').setField({
@@ -259,8 +259,8 @@ describe('Physics integration edge cases', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 3, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     runFrames(api, 5);
 
     const yBeforePause = getEntityWorldPosition(engine, sceneId, boxId)!.y;
@@ -279,8 +279,8 @@ describe('Physics integration edge cases', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 4, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     runFrames(api, 2);
 
     const yBefore = getEntityWorldPosition(engine, sceneId, boxId)!.y;
@@ -308,8 +308,8 @@ describe('Physics integration edge cases', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 2, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
 
     runFrames(api, 80);
 
@@ -394,10 +394,10 @@ describe('Physics integration edge cases', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     addSceneWithParentChild(api, sceneId, parentId, childId);
-    addRigidBodyToEntity(api, sceneId, parentId, { bodyType: 'static' });
-    addRigidBodyToEntity(api, sceneId, childId, { bodyType: 'static', withBoxCollider: true });
     setEntityPosition(engine, sceneId, parentId, 0, 2, 0);
     setEntityPosition(engine, sceneId, childId, 0.5, 0, 0);
+    addRigidBodyToEntity(api, sceneId, parentId, { bodyType: 'static' });
+    addRigidBodyToEntity(api, sceneId, childId, { bodyType: 'static', withBoxCollider: true });
     runFrames(api, 2);
 
     expect(engine.scenes.get(sceneId)?.entities.has(parentId)).toBe(true);
@@ -590,8 +590,8 @@ describe('Physics collider and rigidBody options', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 2, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     runFrames(api, 2);
 
     const scene = api.scene(sceneId);
@@ -632,8 +632,8 @@ describe('Physics collider and rigidBody options', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 2, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     runFrames(api, 2);
 
     const scene = api.scene(sceneId);
@@ -658,8 +658,8 @@ describe('Physics collider and rigidBody options', () => {
       component: createComponent('gravity', { x: 0, y: -5, z: 0 }),
     });
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 4, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
 
     runFrames(api, 60);
     const pos = getEntityWorldPosition(engine, sceneId, boxId);

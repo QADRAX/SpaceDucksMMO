@@ -1,7 +1,11 @@
-import { createSceneSubsystem, DiagnosticPortDef } from '@duckengine/core-v2';
+import {
+  createSceneSubsystem,
+  DiagnosticPortDef,
+  ResourceCachePortDef,
+  PhysicsQueryPortDef,
+} from '@duckengine/core-v2';
 import { createPhysicsWorldState } from './createPhysicsWorldState';
 import { createPhysicsQueryPortImpl } from './physicsQueryPortImpl';
-import { physicsQueryPortDef } from './physicsQueryPortDef';
 import { addEntityToPhysics, removeEntityFromPhysics, onComponentChangedPhysics, onHierarchyChangedPhysics, stepPhysics, disposePhysics } from '../application';
 import { reconcilePendingPhysicsForKey } from '../application/reconcilePendingPhysicsForKey';
 import type { PhysicsWorldState } from './types';
@@ -18,12 +22,16 @@ export function createPhysicsSubsystem() {
     id: 'physics-rapier',
     createState(ctx) {
       const diagnostic = ctx.ports.get(DiagnosticPortDef);
+      const cache = ctx.ports.get(ResourceCachePortDef);
+      const getMeshData = cache?.getMeshData?.bind(cache);
       const state = createPhysicsWorldState({
         diagnostic: diagnostic ?? undefined,
         sceneId: ctx.scene.id,
+        scene: ctx.scene,
+        getMeshData: getMeshData ?? undefined,
       });
       const impl = createPhysicsQueryPortImpl(state);
-      ctx.ports.register(physicsQueryPortDef, impl);
+      ctx.ports.register(PhysicsQueryPortDef, impl);
       return state;
     },
     events: {

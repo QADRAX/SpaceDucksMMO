@@ -12,7 +12,7 @@ import {
 import type { DuckEngineAPI } from '@duckengine/core-v2';
 import type { PhysicsQueryPort, PhysicsCollisionEvent } from '@duckengine/core-v2';
 import type { EngineState } from '@duckengine/core-v2';
-import { PHYSICS_QUERY_PORT_ID } from '../physicsQueryPortDef';
+import { PHYSICS_QUERY_PORT_ID } from '@duckengine/core-v2';
 
 const DEFAULT_SCENE_ID = createSceneId('main');
 const DEFAULT_ENTITY_ID = createEntityId('e1');
@@ -204,9 +204,9 @@ export function addEntityWithCompoundColliders(
 }
 
 /**
- * Adds a compound collider entity (root + children with colliders) to an existing scene.
+ * Adds compound structure (root + children) to scene. Call setEntityPosition before addCompoundPhysicsToScene.
  */
-export function addCompoundCollidersToScene(
+export function addCompoundStructureToScene(
   api: DuckEngineAPI,
   sceneId: SceneId,
   rootId: EntityId,
@@ -218,7 +218,17 @@ export function addCompoundCollidersToScene(
     addChild(root, child);
   }
   api.scene(sceneId).addEntity({ entity: root });
+}
 
+/**
+ * Adds rigidBody and colliders to an existing compound structure. Set positions first via setEntityPosition.
+ */
+export function addCompoundPhysicsToScene(
+  api: DuckEngineAPI,
+  sceneId: SceneId,
+  rootId: EntityId,
+  children: CompoundColliderSpec[],
+): void {
   const scene = api.scene(sceneId);
   scene.entity(rootId).addComponent({
     component: createComponent('rigidBody', { bodyType: 'dynamic' }),
@@ -243,6 +253,17 @@ export function addCompoundCollidersToScene(
       });
     }
   }
+}
+
+/** Adds compound structure + physics in one call. Use addCompoundStructureToScene + setEntityPosition + addCompoundPhysicsToScene for position-before-physics. */
+export function addCompoundCollidersToScene(
+  api: DuckEngineAPI,
+  sceneId: SceneId,
+  rootId: EntityId,
+  children: CompoundColliderSpec[],
+): void {
+  addCompoundStructureToScene(api, sceneId, rootId, children);
+  addCompoundPhysicsToScene(api, sceneId, rootId, children);
 }
 
 /**

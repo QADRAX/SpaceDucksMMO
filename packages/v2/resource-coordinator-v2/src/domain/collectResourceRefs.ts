@@ -1,27 +1,25 @@
-import { getComponent } from '@duckengine/core-v2';
 import {
+  getComponent,
   isResourceRef,
   createResourceRef,
+  createResourceKey,
+  PLAIN_MATERIAL_COMPONENT_TYPES,
+  getMaterialTextureRefs,
   type ResourceRef,
+  type EntityState,
+  type EngineState,
+  type SceneState,
+  type TrimeshColliderComponent,
+  type CustomGeometryComponent,
+  type SkyboxComponent,
+  type ScriptComponent,
+  type MaterialComponent,
 } from '@duckengine/core-v2';
-import { createResourceKey } from '@duckengine/core-v2';
-import type { EntityState, TrimeshColliderComponent } from '@duckengine/core-v2';
-import type { EngineState, SceneState } from '@duckengine/core-v2';
-import { PLAIN_MATERIAL_COMPONENT_TYPES } from '@duckengine/core-v2';
 
 /** Script IDs that are resolved locally, not via the loader. */
 function isBuiltInOrTestScript(scriptId: string): boolean {
   return scriptId.startsWith('builtin://') || scriptId.startsWith('test://');
 }
-
-const TEXTURE_SLOT_KEYS = [
-  'albedo',
-  'normalMap',
-  'aoMap',
-  'roughnessMap',
-  'metallicMap',
-  'envMap',
-] as const;
 
 export interface CollectedRefs {
   meshes: ResourceRef<'mesh'>[];
@@ -37,33 +35,30 @@ export function collectRefsFromEntity(entity: EntityState): CollectedRefs {
   const skyboxes: ResourceRef<'skybox'>[] = [];
   const scripts: ResourceRef<'script'>[] = [];
 
-  const customGeom = getComponent(entity, 'customGeometry') as { mesh?: ResourceRef<'mesh'> } | undefined;
+  const customGeom = getComponent<CustomGeometryComponent>(entity, 'customGeometry');
   if (customGeom?.mesh && isResourceRef(customGeom.mesh)) {
-    meshes.push(customGeom.mesh as ResourceRef<'mesh'>);
+    meshes.push(customGeom.mesh);
   }
 
-  const trimeshCol = getComponent(entity, 'trimeshCollider') as TrimeshColliderComponent | undefined;
+  const trimeshCol = getComponent<TrimeshColliderComponent>(entity, 'trimeshCollider');
   if (trimeshCol?.mesh && isResourceRef(trimeshCol.mesh)) {
     meshes.push(trimeshCol.mesh);
   }
 
   for (const matType of PLAIN_MATERIAL_COMPONENT_TYPES) {
-    const mat = getComponent(entity, matType) as Record<string, unknown> | undefined;
+    const mat = getComponent<MaterialComponent>(entity, matType);
     if (!mat) continue;
-    for (const key of TEXTURE_SLOT_KEYS) {
-      const val = mat[key];
-      if (val && isResourceRef(val)) {
-        textures.push(val as ResourceRef<'texture'>);
-      }
+    for (const ref of getMaterialTextureRefs(mat)) {
+      if (isResourceRef(ref)) textures.push(ref);
     }
   }
 
-  const skybox = getComponent(entity, 'skybox') as { skybox?: ResourceRef<'skybox'> } | undefined;
+  const skybox = getComponent<SkyboxComponent>(entity, 'skybox');
   if (skybox?.skybox && isResourceRef(skybox.skybox)) {
-    skyboxes.push(skybox.skybox as ResourceRef<'skybox'>);
+    skyboxes.push(skybox.skybox);
   }
 
-  const scriptComp = getComponent(entity, 'script') as { scripts?: Array<{ scriptId: string }> } | undefined;
+  const scriptComp = getComponent<ScriptComponent>(entity, 'script');
   if (scriptComp?.scripts) {
     for (const s of scriptComp.scripts) {
       if (s.scriptId && !isBuiltInOrTestScript(s.scriptId)) {

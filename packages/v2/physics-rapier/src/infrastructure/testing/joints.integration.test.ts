@@ -26,14 +26,14 @@ describe('Physics joints integration (rigid body composition)', () => {
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     setEntityPosition(engine, sceneId, floorId, 0, 0, 0);
 
+    setEntityPosition(engine, sceneId, parentId, 0, 2, 0);
+    setEntityPosition(engine, sceneId, childId, 1, 0, 0);
     addRigidBodyToEntity(api, sceneId, parentId, { bodyType: 'static' });
     addRigidBodyToEntity(api, sceneId, childId, {
       bodyType: 'dynamic',
       jointToParent: 'fixed',
       withBoxCollider: true,
     });
-    setEntityPosition(engine, sceneId, parentId, 0, 2, 0);
-    setEntityPosition(engine, sceneId, childId, 1, 0, 0);
 
     runFrames(api, 60);
 
@@ -59,14 +59,14 @@ describe('Physics joints integration (rigid body composition)', () => {
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     setEntityPosition(engine, sceneId, floorId, 0, 0, 0);
 
+    setEntityPosition(engine, sceneId, parentId, 0, 4, 0);
+    setEntityPosition(engine, sceneId, childId, 0.5, 0, 0);
     addRigidBodyToEntity(api, sceneId, parentId, { bodyType: 'dynamic', withBoxCollider: true });
     addRigidBodyToEntity(api, sceneId, childId, {
       bodyType: 'dynamic',
       jointToParent: 'revolute',
       withBoxCollider: true,
     });
-    setEntityPosition(engine, sceneId, parentId, 0, 4, 0);
-    setEntityPosition(engine, sceneId, childId, 0.5, 0, 0);
 
     runFrames(api, 20);
 
@@ -88,14 +88,14 @@ describe('Physics joints integration (rigid body composition)', () => {
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     setEntityPosition(engine, sceneId, floorId, 0, 0, 0);
 
+    setEntityPosition(engine, sceneId, parentId, 0, 3, 0);
+    setEntityPosition(engine, sceneId, childId, 0, -0.5, 0);
     addRigidBodyToEntity(api, sceneId, parentId, { bodyType: 'static' });
     addRigidBodyToEntity(api, sceneId, childId, {
       bodyType: 'dynamic',
       jointToParent: 'spherical',
       withBoxCollider: true,
     });
-    setEntityPosition(engine, sceneId, parentId, 0, 3, 0);
-    setEntityPosition(engine, sceneId, childId, 0, -0.5, 0);
 
     runFrames(api, 40);
 

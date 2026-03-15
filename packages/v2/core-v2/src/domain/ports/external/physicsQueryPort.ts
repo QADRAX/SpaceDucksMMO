@@ -1,3 +1,4 @@
+import type { Vec3Like } from '../../math';
 import type { PhysicsRay, PhysicsRaycastHit, PhysicsCollisionEvent } from '../../physics';
 
 /**
@@ -13,4 +14,6 @@ export interface PhysicsQueryPort {
   raycast(ray: PhysicsRay): PhysicsRaycastHit | null;
   /** Drain collision events accumulated during the last step. */
   getCollisionEvents(): PhysicsCollisionEvent[];
+  /** Teleport a rigid body to the given world position. Use for script-driven teleports (respawn, etc.). */
+  teleportBody?(entityId: string, position: Vec3Like): void;
 }

@@ -75,3 +75,18 @@ export type MaterialComponent =
     | BasicMaterialComponent
     | PhongMaterialComponent
     | LambertMaterialComponent;
+
+/**
+ * Returns all texture refs from a material component.
+ * Each material type has a different set of slots; this collects them in a type-safe way.
+ */
+export function getMaterialTextureRefs(mat: MaterialComponent): ResourceRef<'texture'>[] {
+    const refs: ResourceRef<'texture'>[] = [];
+    if (mat.albedo) refs.push(mat.albedo);
+    if ('normalMap' in mat && mat.normalMap) refs.push(mat.normalMap);
+    if ('aoMap' in mat && mat.aoMap) refs.push(mat.aoMap);
+    if ('roughnessMap' in mat && mat.roughnessMap) refs.push(mat.roughnessMap);
+    if ('metallicMap' in mat && mat.metallicMap) refs.push(mat.metallicMap);
+    if ('envMap' in mat && mat.envMap) refs.push(mat.envMap);
+    return refs;
+}

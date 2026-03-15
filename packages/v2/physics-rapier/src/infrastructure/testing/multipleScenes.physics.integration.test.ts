@@ -65,14 +65,14 @@ describe('Physics multiple scenes integration', () => {
     addSceneWithEntity(api, sceneA, floorA);
     addEntityWithStaticFloor(api, sceneA, floorA, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneA, boxA);
-    addEntityWithRigidBody(api, sceneA, boxA, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneA, boxA, 0, 3, 0);
+    addEntityWithRigidBody(api, sceneA, boxA, { bodyType: 'dynamic', withBoxCollider: true });
 
     addSceneWithEntity(api, sceneB, floorB);
     addEntityWithStaticFloor(api, sceneB, floorB, { x: 5, y: 0.5, z: 5 });
     addSceneWithEntity(api, sceneB, boxB);
-    addEntityWithRigidBody(api, sceneB, boxB, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneB, boxB, 0, 5, 0);
+    addEntityWithRigidBody(api, sceneB, boxB, { bodyType: 'dynamic', withBoxCollider: true });
 
     runFrames(api, 60);
 

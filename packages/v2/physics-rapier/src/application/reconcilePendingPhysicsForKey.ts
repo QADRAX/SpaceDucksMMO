@@ -20,7 +20,7 @@ export const reconcilePendingPhysicsForKey = {
 
     const loadedMeshRef = params.event.ref as ResourceRef<'mesh'>;
     for (const entity of params.scene.entities.values()) {
-      const tc = getComponent(entity, 'trimeshCollider') as TrimeshColliderComponent | undefined;
+      const tc = getComponent<TrimeshColliderComponent>(entity, 'trimeshCollider');
       if (tc?.mesh && isResourceRef(tc.mesh) && tc.mesh.key === loadedMeshRef.key) {
         state.syncEntity(params.scene, entity.id);
       }

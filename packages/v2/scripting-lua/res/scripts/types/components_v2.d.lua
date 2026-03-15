@@ -82,6 +82,7 @@ function Component.has(entityId, componentType) end
 ---| "cylinderCollider"
 ---| "coneCollider"
 ---| "terrainCollider"
+---| "trimeshCollider"
 ---| "script"
 
 ---@alias ResourceKindV2

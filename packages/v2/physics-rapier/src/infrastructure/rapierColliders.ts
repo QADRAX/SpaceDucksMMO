@@ -1,5 +1,5 @@
-import type { EntityState } from '@duckengine/core-v2';
-import type { ColliderComponent, RigidBodyComponent } from '@duckengine/core-v2';
+import type { EntityState, ResourceRef, MeshGeometryFileData } from '@duckengine/core-v2';
+import type { ColliderComponent, RigidBodyComponent, TrimeshColliderComponent } from '@duckengine/core-v2';
 import { getComponent, ensureClean, createComponent } from '@duckengine/core-v2';
 import type { World, Collider, ColliderDesc } from '@dimforge/rapier3d-compat';
 import { getColliderComponent, getLocalPoseRelativeTo } from '../domain';
@@ -49,10 +49,15 @@ export interface RapierCollidersHandle {
 
 const EPS = 0.000001;
 
+export interface CreateRapierCollidersOptions {
+  getMeshData?: (ref: ResourceRef<'mesh'>) => MeshGeometryFileData | null;
+}
+
 function createColliderDesc(
   R: RapierModule,
   col: ColliderComponent,
-  scale: { x: number; y: number; z: number }
+  scale: { x: number; y: number; z: number },
+  getMeshData?: (ref: ResourceRef<'mesh'>) => MeshGeometryFileData | null
 ): { desc: ColliderDesc; localCenterShift: { x: number; y: number; z: number } } {
   const absScale = { x: Math.abs(scale.x), y: Math.abs(scale.y), z: Math.abs(scale.z) };
   let desc: ColliderDesc;
@@ -98,10 +103,25 @@ function createColliderDesc(
       };
       break;
     }
-    case 'trimeshCollider':
-      // Placeholder until mesh data is resolved from cache; reconcilePendingPhysicsForKey syncs when mesh loads.
-      desc = R.ColliderDesc.ball(0.5);
+    case 'trimeshCollider': {
+      const tc = col as TrimeshColliderComponent;
+      const meshData = tc.mesh && getMeshData ? getMeshData(tc.mesh) : null;
+      if (meshData && meshData.positions.length >= 3 && meshData.indices.length >= 3) {
+        const positions = meshData.positions;
+        const indices = meshData.indices;
+        const vertices = new Float32Array(positions.length);
+        for (let i = 0; i < positions.length; i += 3) {
+          vertices[i] = positions[i] * absScale.x;
+          vertices[i + 1] = positions[i + 1] * absScale.y;
+          vertices[i + 2] = positions[i + 2] * absScale.z;
+        }
+        const indices32 = new Uint32Array(indices);
+        desc = R.ColliderDesc.trimesh(vertices, indices32);
+      } else {
+        desc = R.ColliderDesc.ball(0.5);
+      }
       break;
+    }
     default:
       desc = R.ColliderDesc.ball(0.5);
   }
@@ -112,7 +132,8 @@ function createColliderDesc(
   return { desc, localCenterShift };
 }
 
-export function createRapierColliders(): RapierCollidersHandle {
+export function createRapierColliders(options?: CreateRapierCollidersOptions): RapierCollidersHandle {
+  const getMeshData = options?.getMeshData;
   const colliderByEntity = new Map<string, Collider>();
 
   function ensureCollider(
@@ -136,7 +157,7 @@ export function createRapierColliders(): RapierCollidersHandle {
     ensureClean(entity.transform);
     ensureClean(bodyOwner.transform);
     const local = getLocalPoseRelativeTo(bodyOwner, entity);
-    const { desc, localCenterShift } = createColliderDesc(R, col, local.scale);
+    const { desc, localCenterShift } = createColliderDesc(R, col, local.scale, getMeshData);
     callOpt(desc, 'setTranslation', local.pos.x + localCenterShift.x, local.pos.y + localCenterShift.y, local.pos.z + localCenterShift.z);
     callOpt(desc, 'setRotation', local.rot);
     const collider = world.createCollider(desc, body);
@@ -168,7 +189,7 @@ export function createRapierColliders(): RapierCollidersHandle {
   ): EntityState | null {
     let cur: EntityState | undefined = entity;
     while (cur) {
-      const rb = getComponent(cur, 'rigidBody') as RigidBodyComponent | undefined;
+      const rb = getComponent<RigidBodyComponent>(cur, 'rigidBody');
       if (rb) {
         bodies.ensureRigidBody(R, world, cur, rb);
         return cur;

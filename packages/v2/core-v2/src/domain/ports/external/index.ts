@@ -2,7 +2,7 @@
  * External ports — client implements.
  * Inject via params.ports or customPorts at setup.
  */
-export { PhysicsQueryPortDef } from './physicsQueryPortDef';
+export { PhysicsQueryPortDef, PHYSICS_QUERY_PORT_ID } from './physicsQueryPortDef';
 export type { PhysicsQueryPort } from './physicsQueryPort';
 
 export { GizmoPortDef } from './gizmoPortDef';

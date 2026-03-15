@@ -1,8 +1,21 @@
-import type { SceneState, EntityState, DiagnosticPort } from '@duckengine/core-v2';
-import type { RigidBodyComponent, GravityComponent } from '@duckengine/core-v2';
-import { getComponent, ensureClean } from '@duckengine/core-v2';
+import type {
+  SceneState,
+  EntityState,
+  DiagnosticPort,
+  ResourceRef,
+  MeshGeometryFileData,
+} from '@duckengine/core-v2';
+import type { RigidBodyComponent } from '@duckengine/core-v2';
+import {
+  getComponent,
+  ensureClean,
+  resolveSceneGravity,
+  DEFAULT_FIXED_STEP,
+  DEFAULT_MAX_SUBSTEPS,
+  MAX_ACCUMULATOR_DT,
+} from '@duckengine/core-v2';
 import type { World } from '@dimforge/rapier3d-compat';
-import { getEntity, DEFAULT_FIXED_STEP, DEFAULT_MAX_SUBSTEPS } from '../domain';
+import { getEntity } from '../domain';
 import { getRapier } from './rapier';
 import { createRapierBodies } from './rapierBodies';
 import { createRapierColliders } from './rapierColliders';
@@ -14,19 +27,23 @@ export interface CreatePhysicsWorldStateOptions {
   diagnostic?: DiagnosticPort;
   /** Scene id for log context. */
   sceneId?: string;
+  /** Scene reference for teleportBody (port needs to resolve entities). */
+  scene?: SceneState;
+  /** Resolver for mesh geometry (trimesh colliders). From ResourceCachePort when resource-coordinator is used. */
+  getMeshData?: (ref: ResourceRef<'mesh'>) => MeshGeometryFileData | null;
 }
 
 /**
  * Creates the physics world state for one scene (one Rapier World, one EventQueue).
  */
 export function createPhysicsWorldState(options?: CreatePhysicsWorldStateOptions): PhysicsWorldState {
-  const { diagnostic, sceneId } = options ?? {};
+  const { diagnostic, sceneId, scene, getMeshData } = options ?? {};
   const R = getRapier();
   const world = new R.World({ x: 0, y: 0, z: 0 });
   const eventQueue = new R.EventQueue(true);
   const bodies = createRapierBodies();
   const collisions = createRapierCollisionEvents();
-  const colliders = createRapierColliders();
+  const colliders = createRapierColliders({ getMeshData });
 
   diagnostic?.log('debug', 'Physics world created', { subsystem: 'physics-rapier', sceneId });
 
@@ -38,7 +55,7 @@ export function createPhysicsWorldState(options?: CreatePhysicsWorldStateOptions
   function addEntity(scene: SceneState, entity: EntityState): void {
     if (disposed) return;
     ensureClean(entity.transform);
-    const rb = getComponent(entity, 'rigidBody') as RigidBodyComponent | undefined;
+    const rb = getComponent<RigidBodyComponent>(entity, 'rigidBody');
     if (rb) {
       bodies.ensureRigidBody(R, world, entity, rb);
       colliders.removeCollidersInSubtree(
@@ -69,21 +86,10 @@ export function createPhysicsWorldState(options?: CreatePhysicsWorldStateOptions
     if (disposed) return;
     collisions.clearAccumulatedEvents();
     const dt = Math.max(0, dtMs) / 1000;
-    accumulator += Math.min(dt, 0.25);
+    accumulator += Math.min(dt, MAX_ACCUMULATOR_DT);
 
-    let gx = 0,
-      gy = 0,
-      gz = 0;
-    for (const entity of scene.entities.values()) {
-      const g = getComponent(entity, 'gravity') as (GravityComponent & { enabled?: boolean }) | undefined;
-      if (g && g.enabled !== false) {
-        gx = g.x;
-        gy = g.y;
-        gz = g.z;
-        break;
-      }
-    }
-    world.gravity = { x: gx, y: gy, z: gz };
+    const gravity = resolveSceneGravity(scene);
+    world.gravity = { x: gravity.x, y: gravity.y, z: gravity.z };
 
     const getEnt = (id: string) => getEntity(scene, id);
     let subSteps = 0;
@@ -105,7 +111,7 @@ export function createPhysicsWorldState(options?: CreatePhysicsWorldStateOptions
     const entity = getEntity(scene, entityId);
     if (!entity || disposed) return;
     colliders.removeEntityCollider(world, entityId, collisions);
-    const rb = getComponent(entity, 'rigidBody') as RigidBodyComponent | undefined;
+    const rb = getComponent<RigidBodyComponent>(entity, 'rigidBody');
     if (rb) {
       // Recreate body so rigidBody changes (bodyType, mass, gravityScale, etc.) are applied.
       colliders.removeCollidersInSubtree(
@@ -137,12 +143,19 @@ export function createPhysicsWorldState(options?: CreatePhysicsWorldStateOptions
     }
   }
 
+  function teleportBody(entityId: string, worldPos: { x: number; y: number; z: number }): void {
+    if (!scene || disposed) return;
+    const getEnt = (id: string) => getEntity(scene, id);
+    bodies.teleportBody(getEnt, entityId, worldPos);
+  }
+
   const state: PhysicsWorldState = {
     diagnostic,
     addEntity,
     removeEntity,
     step,
     syncEntity,
+    teleportBody,
     dispose,
     world,
     collisions,

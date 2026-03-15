@@ -44,5 +44,9 @@ export function createPhysicsQueryPortImpl(state: PhysicsWorldState): PhysicsQue
     getCollisionEvents(): import('@duckengine/core-v2').PhysicsCollisionEvent[] {
       return state.collisions.getAccumulatedEvents();
     },
+
+    teleportBody(entityId: string, position: { x: number; y: number; z: number }): void {
+      state.teleportBody?.(entityId, position);
+    },
   };
 }

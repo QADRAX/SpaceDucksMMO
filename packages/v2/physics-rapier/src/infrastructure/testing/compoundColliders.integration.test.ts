@@ -8,7 +8,8 @@ import { setupPhysicsIntegrationTest } from './setup';
 import {
   addSceneWithEntity,
   addEntityWithStaticFloor,
-  addCompoundCollidersToScene,
+  addCompoundStructureToScene,
+  addCompoundPhysicsToScene,
   runFrames,
   getPhysicsPort,
   setEntityPosition,
@@ -26,7 +27,7 @@ describe('Physics compound colliders integration', () => {
 
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
-    addCompoundCollidersToScene(api, sceneId, rootId, [
+    addCompoundStructureToScene(api, sceneId, rootId, [
       { entityId: boxChildId, type: 'boxCollider', halfExtents: { x: 0.3, y: 0.3, z: 0.3 } },
       { entityId: sphereChildId, type: 'sphereCollider', radius: 0.4 },
     ]);
@@ -34,6 +35,10 @@ describe('Physics compound colliders integration', () => {
     setEntityPosition(engine, sceneId, rootId, 0, 4, 0);
     setEntityPosition(engine, sceneId, boxChildId, -0.5, 0, 0);
     setEntityPosition(engine, sceneId, sphereChildId, 0.5, 0, 0);
+    addCompoundPhysicsToScene(api, sceneId, rootId, [
+      { entityId: boxChildId, type: 'boxCollider', halfExtents: { x: 0.3, y: 0.3, z: 0.3 } },
+      { entityId: sphereChildId, type: 'sphereCollider', radius: 0.4 },
+    ]);
 
     runFrames(api, 60);
 
@@ -63,11 +68,15 @@ describe('Physics compound colliders integration', () => {
 
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
-    addCompoundCollidersToScene(api, sceneId, rootId, [
+    addCompoundStructureToScene(api, sceneId, rootId, [
       { entityId: boxId, type: 'boxCollider', halfExtents: { x: 0.25, y: 0.25, z: 0.25 } },
       { entityId: capsuleId, type: 'capsuleCollider', radius: 0.2, halfHeight: 0.3 },
     ]);
     setEntityPosition(engine, sceneId, rootId, 0, 3, 0);
+    addCompoundPhysicsToScene(api, sceneId, rootId, [
+      { entityId: boxId, type: 'boxCollider', halfExtents: { x: 0.25, y: 0.25, z: 0.25 } },
+      { entityId: capsuleId, type: 'capsuleCollider', radius: 0.2, halfHeight: 0.3 },
+    ]);
 
     runFrames(api, 50);
 
@@ -87,13 +96,17 @@ describe('Physics compound colliders integration', () => {
 
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
-    addCompoundCollidersToScene(api, sceneId, rootId, [
+    addCompoundStructureToScene(api, sceneId, rootId, [
       { entityId: s1Id, type: 'sphereCollider', radius: 0.3 },
       { entityId: s2Id, type: 'sphereCollider', radius: 0.3 },
     ]);
     setEntityPosition(engine, sceneId, rootId, 0, 5, 0);
     setEntityPosition(engine, sceneId, s1Id, -0.4, 0, 0);
     setEntityPosition(engine, sceneId, s2Id, 0.4, 0, 0);
+    addCompoundPhysicsToScene(api, sceneId, rootId, [
+      { entityId: s1Id, type: 'sphereCollider', radius: 0.3 },
+      { entityId: s2Id, type: 'sphereCollider', radius: 0.3 },
+    ]);
 
     runFrames(api, 80);
 

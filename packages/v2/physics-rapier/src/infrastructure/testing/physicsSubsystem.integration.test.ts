@@ -56,8 +56,8 @@ describe('Physics subsystem integration', () => {
     setEntityPosition(engine, sceneId, floorId, 0, 0, 0);
 
     addSceneWithEntity(api, sceneId, boxId);
-    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
     setEntityPosition(engine, sceneId, boxId, 0, 5, 0);
+    addEntityWithRigidBody(api, sceneId, boxId, { bodyType: 'dynamic', withBoxCollider: true });
 
     runFrames(api, 1);
     const posBefore = getEntityWorldPosition(engine, sceneId, boxId);

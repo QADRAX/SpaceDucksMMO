@@ -1,6 +1,16 @@
 import type { EntityState } from '@duckengine/core-v2';
 import type { RigidBodyComponent } from '@duckengine/core-v2';
-import { getComponent, ensureClean, setPosition, setRotationFromQuaternion, quatFromEulerYXZ, quatNormalize } from '@duckengine/core-v2';
+import {
+  getComponent,
+  ensureClean,
+  setPosition,
+  setRotationFromQuaternion,
+  quatFromEulerYXZ,
+  quatNormalize,
+  quatInvert,
+  quatMul,
+  applyQuatToVec,
+} from '@duckengine/core-v2';
 import type { World, RigidBody } from '@dimforge/rapier3d-compat';
 import { getLocalPoseRelativeTo } from '../domain';
 import type { RapierModule } from './rapier';
@@ -26,6 +36,7 @@ export interface RapierBodiesHandle {
   ): void;
   removeEntityBody(world: World, entityId: string): void;
   syncKinematicBodiesFromEcs(getEntity: (id: string) => EntityState | null): void;
+  teleportBody(getEntity: (id: string) => EntityState | null, entityId: string, worldPos: { x: number; y: number; z: number }): void;
   writeBackDynamicBodiesToEcs(getEntity: (id: string) => EntityState | null): void;
   dispose(): void;
 }
@@ -42,7 +53,7 @@ export function createRapierBodies(): RapierBodiesHandle {
     if (bodyByEntity.has(entity.id)) return;
     const parent = entity.parent;
     if (parent) {
-      const parentRb = getComponent(parent, 'rigidBody') as RigidBodyComponent | undefined;
+      const parentRb = getComponent<RigidBodyComponent>(parent, 'rigidBody');
       if (parentRb) ensureRigidBody(R, world, parent, parentRb);
     }
     ensureClean(entity.transform);
@@ -121,7 +132,7 @@ export function createRapierBodies(): RapierBodiesHandle {
     for (const [entityId, body] of bodyByEntity.entries()) {
       const ent = getEntity(entityId);
       if (!ent) continue;
-      const rb = getComponent(ent, 'rigidBody') as RigidBodyComponent | undefined;
+      const rb = getComponent<RigidBodyComponent>(ent, 'rigidBody');
       if (!rb || rb.bodyType !== 'kinematic') continue;
       ensureClean(ent.transform);
       const wp = ent.transform.worldPosition;
@@ -136,21 +147,86 @@ export function createRapierBodies(): RapierBodiesHandle {
     }
   }
 
+  function teleportBody(
+    getEntity: (id: string) => EntityState | null,
+    entityId: string,
+    worldPos: { x: number; y: number; z: number },
+  ): void {
+    const body = bodyByEntity.get(entityId);
+    if (!body) return;
+    const ent = getEntity(entityId);
+    if (!ent) return;
+    const rb = getComponent<RigidBodyComponent>(ent, 'rigidBody');
+    if (!rb) return;
+    callOpt(body, 'setTranslation', { x: worldPos.x, y: worldPos.y, z: worldPos.z }, true);
+    const parent = ent.parent;
+    let localX: number, localY: number, localZ: number;
+    if (parent) {
+      ensureClean(parent.transform);
+      const pw = parent.transform.worldPosition;
+      const pr = parent.transform.worldRotation;
+      const ps = parent.transform.worldScale;
+      const delta = {
+        x: (worldPos.x - pw.x) / (ps.x || 1),
+        y: (worldPos.y - pw.y) / (ps.y || 1),
+        z: (worldPos.z - pw.z) / (ps.z || 1),
+      };
+      const pq = quatNormalize(quatFromEulerYXZ(pr));
+      const localVec = applyQuatToVec(delta, quatInvert(pq));
+      localX = localVec.x;
+      localY = localVec.y;
+      localZ = localVec.z;
+    } else {
+      localX = worldPos.x;
+      localY = worldPos.y;
+      localZ = worldPos.z;
+    }
+    setPosition(ent.transform, localX, localY, localZ);
+  }
+
   function writeBackDynamicBodiesToEcs(getEntity: (id: string) => EntityState | null): void {
     for (const [entityId, body] of bodyByEntity.entries()) {
       const ent = getEntity(entityId);
       if (!ent) continue;
-      const rb = getComponent(ent, 'rigidBody') as RigidBodyComponent | undefined;
+      const rb = getComponent<RigidBodyComponent>(ent, 'rigidBody');
       if (!rb || rb.bodyType !== 'dynamic') continue;
       callReq(body, 'translation', 'translation');
-      const t = (body as { translation(): { x: number; y: number; z: number } }).translation();
-      setPosition(ent.transform, t.x, t.y, t.z);
+      const worldPos = (body as { translation(): { x: number; y: number; z: number } }).translation();
+      const parent = ent.parent;
+      let localX: number, localY: number, localZ: number;
+      if (parent) {
+        ensureClean(parent.transform);
+        const pw = parent.transform.worldPosition;
+        const pr = parent.transform.worldRotation;
+        const ps = parent.transform.worldScale;
+        const delta = {
+          x: (worldPos.x - pw.x) / (ps.x || 1),
+          y: (worldPos.y - pw.y) / (ps.y || 1),
+          z: (worldPos.z - pw.z) / (ps.z || 1),
+        };
+        const pq = quatNormalize(quatFromEulerYXZ(pr));
+        const localVec = applyQuatToVec(delta, quatInvert(pq));
+        localX = localVec.x;
+        localY = localVec.y;
+        localZ = localVec.z;
+      } else {
+        localX = worldPos.x;
+        localY = worldPos.y;
+        localZ = worldPos.z;
+      }
+      setPosition(ent.transform, localX, localY, localZ);
       const r =
         typeof (body as { rotation?: () => { x: number; y: number; z: number; w: number } })
           .rotation === 'function'
           ? (body as { rotation(): { x: number; y: number; z: number; w: number } }).rotation()
           : undefined;
-      if (r) setRotationFromQuaternion(ent.transform, r);
+      if (r) {
+        const worldQuat = quatNormalize(r);
+        const localQuat = parent
+          ? quatNormalize(quatMul(quatInvert(quatNormalize(quatFromEulerYXZ(parent.transform.worldRotation))), worldQuat))
+          : worldQuat;
+        setRotationFromQuaternion(ent.transform, localQuat);
+      }
     }
   }
 
@@ -163,6 +239,7 @@ export function createRapierBodies(): RapierBodiesHandle {
     ensureRigidBody,
     removeEntityBody,
     syncKinematicBodiesFromEcs,
+    teleportBody,
     writeBackDynamicBodiesToEcs,
     dispose,
   };
