@@ -1,5 +1,5 @@
 {
-  "name": "@duckengine/engine-v2",
+  "name": "@duckengine/rendering-three-v2",
   "version": "0.1.0",
   "private": false,
   "main": "dist/index.js",
@@ -17,11 +17,7 @@
   },
   "dependencies": {
     "@duckengine/core-v2": "^0.1.0",
-    "@duckengine/diagnostic-v2": "^0.1.0",
-    "@duckengine/input-node-v2": "^0.1.0",
-    "@duckengine/physics-rapier-v2": "^0.1.0",
-    "@duckengine/rendering-three-v2": "^0.1.0",
-    "@duckengine/resource-coordinator-v2": "^0.1.0",
-    "@duckengine/scripting-lua": "^0.1.0"
+    "@duckengine/rendering-three-gl-v2": "^0.1.0",
+    "@duckengine/rendering-three-webgpu-v2": "^0.1.0"
   }
 }
