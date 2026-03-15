@@ -1,14 +1,14 @@
 export {
   createResourceCoordinatorSubsystem,
   type CreateResourceCoordinatorSubsystemOptions,
-} from './infrastructure/resourceCoordinatorSubsystem';
-export type { ResourceLoader } from './domain/resourceLoader';
-export type { ResourceCoordinatorState } from './domain/types';
+} from './infrastructure';
 export {
+  type ResourceLoader,
+  type ResourceCoordinatorState,
   collectRefsFromEntity,
   collectRefsFromSubtree,
   collectRefsFromPrefabs,
   collectRefsFromScene,
   collectRefsFromAllScenes,
   type CollectedRefs,
-} from './domain/collectResourceRefs';
+} from './domain';

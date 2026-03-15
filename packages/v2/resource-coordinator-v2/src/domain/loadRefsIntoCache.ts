@@ -5,9 +5,9 @@ import type {
   MeshGeometryFileData,
   ResolvedResource,
 } from '@duckengine/core-v2';
-import type { ResourceLoader } from '../domain/resourceLoader';
+import type { ResourceLoader } from './resourceLoader';
 import { emitEngineChange } from '@duckengine/core-v2';
-import type { CollectedRefs } from '../domain/collectResourceRefs';
+import type { CollectedRefs } from './collectResourceRefs';
 
 async function loadMesh(
   engine: EngineState,

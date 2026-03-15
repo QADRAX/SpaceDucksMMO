@@ -1,2 +1,3 @@
-export { loadRefsIntoCache } from './loadRefsIntoCache';
-export { preloadAllScenesRefs } from './preloadAllScenesRefs';
+/** Use cases only. Composed with defineSubsystemUseCase. */
+export { loadRefsOnEntityAdded } from './loadRefsOnEntityAdded';
+export { loadRefsOnComponentChanged } from './loadRefsOnComponentChanged';

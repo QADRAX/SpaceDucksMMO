@@ -1,8 +1,10 @@
 import { defineEngineSubsystem, type EngineSubsystem } from '@duckengine/core-v2';
-import { preloadAllScenesRefs } from '../application';
-import { provideResourceCoordinatorPorts } from './provideResourceCoordinatorPorts';
-import type { ResourceLoader } from '../domain/resourceLoader';
-import type { ResourceCoordinatorState } from '../domain/types';
+import {
+  loadRefsOnEntityAdded,
+  loadRefsOnComponentChanged,
+} from '../application';
+import { provideResourceCoordinatorPorts } from '../domain';
+import type { ResourceLoader, ResourceCoordinatorState } from '../domain';
 
 /** Options for the resource coordinator subsystem. */
 export interface CreateResourceCoordinatorSubsystemOptions {
@@ -13,7 +15,7 @@ export interface CreateResourceCoordinatorSubsystemOptions {
 /**
  * Creates the ResourceCoordinator engine subsystem.
  * Registers ResourceCachePort via port providers (internal implementation).
- * Loader is closed over in state. Calls loader to load assets and stores in cache.
+ * Loader is closed over in state. Triggers fetches on entity-added and component-changed.
  */
 export function createResourceCoordinatorSubsystem(
   options: CreateResourceCoordinatorSubsystemOptions
@@ -22,8 +24,8 @@ export function createResourceCoordinatorSubsystem(
   const provider = provideResourceCoordinatorPorts();
   const base = defineEngineSubsystem<ResourceCoordinatorState>('resource-coordinator')
     .withState(() => ({ resourceLoader }))
-    .onEarlyUpdate(preloadAllScenesRefs)
-    .updateWhenPaused(true)
+    .onSceneEvent('entity-added', loadRefsOnEntityAdded)
+    .onSceneEvent('component-changed', loadRefsOnComponentChanged)
     .build();
 
   return {

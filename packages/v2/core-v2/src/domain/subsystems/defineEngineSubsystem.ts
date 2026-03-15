@@ -5,8 +5,10 @@ import type {
   EngineSubsystemBuilder,
   EngineSubsystemUpdateParams,
   SubsystemEngineEventParams,
+  EngineSubsystemSceneEventParams,
 } from './types';
 import type { EngineChangeEvent } from '../engine/engineEvents';
+import type { SceneChangeEventWithError, SceneState } from '../scene';
 import { createSubsystemPortRegistry } from './runtime';
 
 type PhaseUseCase = SubsystemUseCase<unknown, EngineSubsystemUpdateParams, void>;
@@ -42,6 +44,10 @@ export function defineEngineSubsystem<TState>(
         EngineChangeEvent['kind'],
         SubsystemUseCase<TState, SubsystemEngineEventParams, void>
     >();
+    const sceneEventUseCases = new Map<
+        SceneChangeEventWithError['kind'],
+        SubsystemUseCase<TState, EngineSubsystemSceneEventParams, void>
+    >();
     let disposeUseCase: SubsystemUseCase<TState, void, void> | undefined;
     let shouldUpdateWhenPaused = false;
 
@@ -53,6 +59,11 @@ export function defineEngineSubsystem<TState>(
 
         onEngineEvent(eventKind, useCase) {
             engineEventUseCases.set(eventKind, useCase);
+            return builder;
+        },
+
+        onSceneEvent(eventKind, useCase) {
+            sceneEventUseCases.set(eventKind, useCase);
             return builder;
         },
 
@@ -118,8 +129,25 @@ export function defineEngineSubsystem<TState>(
                     ) as EngineSubsystem['engineEventHandlers'])
                     : undefined;
 
+            const sceneEventHandlers: EngineSubsystem['sceneEventHandlers'] =
+                sceneEventUseCases.size > 0
+                    ? (Object.fromEntries(
+                        Array.from(sceneEventUseCases.entries()).map(([kind, useCase]) => [
+                            kind,
+                            (engine: EngineState, scene: SceneState, event: SceneChangeEventWithError) => {
+                                if (!stateRef.current) stateRef.current = stateFactory({ engine });
+                                (useCase as SubsystemUseCase<TState, EngineSubsystemSceneEventParams, void>).execute(
+                                    stateRef.current,
+                                    { engine, scene, event }
+                                );
+                            },
+                        ])
+                    ) as EngineSubsystem['sceneEventHandlers'])
+                    : undefined;
+
             return {
                 engineEventHandlers,
+                sceneEventHandlers,
                 earlyUpdate: makeEnginePhaseCallback(phaseUseCases.earlyUpdate, stateRef, stateFactory),
                 physics: makeEnginePhaseCallback(phaseUseCases.physics, stateRef, stateFactory),
                 update: makeEnginePhaseCallback(phaseUseCases.update, stateRef, stateFactory),

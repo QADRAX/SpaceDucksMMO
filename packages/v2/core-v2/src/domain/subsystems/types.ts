@@ -1,4 +1,5 @@
 import type { EngineState } from '../engine';
+import type { EngineChangeEvent } from '../engine/engineEvents';
 import type { SceneChangeEventWithError, SceneState } from '../scene';
 import type { SubsystemUseCase, SubsystemEventUseCase } from '../useCases';
 
@@ -44,10 +45,7 @@ export interface SceneSubsystem {
   handleSceneEvent(scene: SceneState, event: SceneChangeEventWithError): void;
   /** Engine-level event handlers. Used by attachSceneSubsystem to register listeners. */
   engineEventHandlers?: Partial<
-    Record<
-      import('../engine/engineEvents').EngineChangeEvent['kind'],
-      (engine: EngineState, event: import('../engine/engineEvents').EngineChangeEvent, scene: SceneState) => void
-    >
+    Record<EngineChangeEvent['kind'], (engine: EngineState, event: EngineChangeEvent, scene: SceneState) => void>
   >;
   /** Phase callbacks (optional). Called in FRAME_PHASES order. */
   earlyUpdate?(scene: SceneState, dt: number): void;
@@ -73,9 +71,13 @@ export interface EngineSubsystem {
   readonly portProviders?: ReadonlyArray<SubsystemPortProvider>;
   /** Engine-level event handlers (e.g. resource-loaded). Params omit scene. Used by setupEngine to register. */
   readonly engineEventHandlers?: Partial<
+    Record<EngineChangeEvent['kind'], (engine: EngineState, event: EngineChangeEvent) => void>
+  >;
+  /** Scene event handlers. Receives events from ALL scenes (entity-added, component-changed, etc.). */
+  readonly sceneEventHandlers?: Partial<
     Record<
-      import('../engine/engineEvents').EngineChangeEvent['kind'],
-      (engine: EngineState, event: import('../engine/engineEvents').EngineChangeEvent) => void
+      SceneChangeEventWithError['kind'],
+      (engine: EngineState, scene: SceneState, event: SceneChangeEventWithError) => void
     >
   >;
   /** Phase callbacks (optional). Called in FRAME_PHASES order. */
@@ -152,10 +154,7 @@ export interface SceneSubsystemConfig<TState> {
   >;
   /** Engine-level event handlers (e.g. resource-loaded). Scene subsystems receive scene in params. */
   readonly engineEvents?: Partial<
-    Record<
-      import('../engine/engineEvents').EngineChangeEvent['kind'],
-      SubsystemUseCase<TState, SubsystemEngineEventParams, void>
-    >
+    Record<EngineChangeEvent['kind'], SubsystemUseCase<TState, SubsystemEngineEventParams, void>>
   >;
   /** Phase handlers keyed by phase name. */
   readonly phases?: Partial<
@@ -197,8 +196,15 @@ export interface SubsystemEventParams {
 /** Params passed to subsystem use cases for engine-level events (e.g. resource-loaded). */
 export interface SubsystemEngineEventParams {
   readonly engine: EngineState;
-  readonly event: import('../engine/engineEvents').EngineChangeEvent;
+  readonly event: EngineChangeEvent;
   readonly scene?: SceneState;
+}
+
+/** Params passed to engine subsystem use cases for scene events (from any scene). */
+export interface EngineSubsystemSceneEventParams {
+  readonly engine: EngineState;
+  readonly scene: SceneState;
+  readonly event: SceneChangeEventWithError;
 }
 
 /** Engine update params (engine + dt + ports). */
@@ -216,9 +222,15 @@ export interface EngineSubsystemBuilder<TState> {
   ): EngineSubsystemBuilder<TState>;
 
   /** Register use case for an engine-level event (e.g. resource-loaded). Params omit scene. */
-  onEngineEvent<K extends import('../engine/engineEvents').EngineChangeEvent['kind']>(
+  onEngineEvent<K extends EngineChangeEvent['kind']>(
     eventKind: K,
     useCase: SubsystemUseCase<TState, SubsystemEngineEventParams, void>,
+  ): this;
+
+  /** Register use case for a scene event. Receives events from ALL scenes (entity-added, component-changed, etc.). */
+  onSceneEvent<K extends SceneChangeEventWithError['kind']>(
+    eventKind: K,
+    useCase: SubsystemUseCase<TState, EngineSubsystemSceneEventParams, void>,
   ): this;
 
   /** Register use case for each frame phase. */
@@ -279,7 +291,7 @@ export interface SubsystemComposer<TState> {
     eventKind: K,
     useCase: SubsystemUseCase<TState, SubsystemEventParams, void>,
   ): this;
-  onEngineEvent<K extends import('../engine/engineEvents').EngineChangeEvent['kind']>(
+  onEngineEvent<K extends EngineChangeEvent['kind']>(
     eventKind: K,
     useCase: SubsystemUseCase<TState, SubsystemEngineEventParams, void>,
   ): this;
