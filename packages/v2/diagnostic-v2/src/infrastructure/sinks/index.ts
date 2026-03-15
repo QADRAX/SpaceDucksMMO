@@ -1,0 +1,1 @@
+export { createConsoleSink } from './consoleSink';

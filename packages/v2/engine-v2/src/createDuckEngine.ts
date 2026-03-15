@@ -5,6 +5,10 @@ import {
   InputPortDef,
   createDefaultViewportRectProvider,
 } from '@duckengine/core-v2';
+import {
+  createLogStackDiagnosticPort,
+  createConsoleSink,
+} from '@duckengine/diagnostic-v2';
 import type {
   DuckEngineAPI,
   InputPort,
@@ -27,7 +31,7 @@ export interface CreateDuckEngineOptions {
   readonly viewportRectProvider?: ViewportRectProviderPort;
   /** Input port for scripting (keyboard, mouse). Default: no-op. */
   readonly input?: InputPort;
-  /** Diagnostic port for logging. Default: no-op. */
+  /** Diagnostic port for logging. Default: log stack + console (see @duckengine/diagnostic-v2). */
   readonly diagnostic?: DiagnosticPort;
   /** Custom port bindings merged with defaults. */
   readonly customPorts?: PortBinding<unknown>[];
@@ -40,9 +44,10 @@ export interface CreateDuckEngineOptions {
   };
 }
 
-const noopDiagnostic: DiagnosticPort = {
-  log: () => {},
-};
+/** Default diagnostic: log stack + console sink. Use logStack for file export, UI, etc. */
+const defaultDiagnostic = createLogStackDiagnosticPort({
+  sinks: [createConsoleSink()],
+});
 
 const noopInput: InputPort = {
   isKeyPressed: () => false,
@@ -54,7 +59,14 @@ const noopInput: InputPort = {
  * Creates a fully configured DuckEngine with core + physics + rendering + scripting + resource coordinator.
  *
  * The consumer provides ResourceLoader and optionally ViewportRectProvider.
- * Other ports (Input, Gizmo, Diagnostic) default to no-ops.
+ * Other ports (Input, Gizmo) default to no-ops. Diagnostic defaults to log stack + console.
+ *
+ * For log stack access (file export, UI console), use createLogStackDiagnosticPort:
+ * ```ts
+ * const { port, logStack } = createLogStackDiagnosticPort({ sinks: [createConsoleSink()] });
+ * const api = await createDuckEngine({ diagnostic: port, resourceLoader, ... });
+ * // logStack.getEntries() for export/UI
+ * ```
  *
  * @example
  * ```ts
@@ -74,7 +86,7 @@ export async function createDuckEngine(
     resourceLoader,
     viewportRectProvider = createDefaultViewportRectProvider(),
     input = noopInput,
-    diagnostic = noopDiagnostic,
+    diagnostic = defaultDiagnostic.port,
     customPorts = [],
     subsystems = {},
   } = options;
