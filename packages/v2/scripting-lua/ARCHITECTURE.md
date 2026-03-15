@@ -138,24 +138,24 @@ src/
 │   │                          # ScriptingSessionState (eventBus, sceneId, sceneEventBusProvider)
 │   ├── ports/                 # ScriptSandbox (interface)
 │   ├── componentAccessors/    # createComponentAccessorPair (ECS getter/setter)
-│   └── schemas/               # builtInSchemas
+│   ├── schemas/               # builtInSchemas, createBuiltInScriptSchemaResolver
+│   └── scriptResolution/     # scriptIdPredicates, resourceScriptResolver
 │
-├── application/               # Use cases
+├── application/               # Use cases only
 │   ├── reconcileSlots        # component-changed → init/destroy slots
 │   ├── destroyEntitySlots    # entity-removed → destroy slots
 │   ├── runEarlyUpdate, runUpdate, runLateUpdate, runPreRender, runPostRender  # frame hook phases
 │   └── teardownSession        # scene-teardown / dispose → full cleanup
 │
-└── infrastructure/            # Concrete implementations
+└── infrastructure/            # Root: createScriptingSubsystem + wasmoon scripts
     ├── scriptingSubsystem.ts  # createScriptingSubsystem → defineSceneSubsystem
-    ├── wasmoon/               # createWasmoonSandbox (Lua 5.4 via WASM)
-    │   ├── wasmoonSandbox.ts  # Implements ScriptSandbox
-    │   ├── modules/           # sandboxSecurity, sandboxMetatables, sandboxRuntime, mathExt
-    │   └── luaUtils.ts        # callLuaGlobal
-    ├── resourceScriptResolver.ts
+    ├── createScriptingSessionState.ts
     ├── createBuiltInScriptResolver.ts
-    ├── createBuiltInScriptSchemaResolver.ts
-    └── builtin/               # move_to_point, waypoint_path
+    └── wasmoon/               # createWasmoonSandbox (Lua 5.4 via WASM)
+        ├── wasmoonSandbox.ts  # Implements ScriptSandbox
+        ├── modules/           # sandboxSecurity, sandboxMetatables, sandboxRuntime, mathExt
+        ├── luaUtils.ts        # callLuaGlobal
+        └── generated/         # ScriptAssets, TestScriptAssets
 ```
 
 **Dependency rule**:

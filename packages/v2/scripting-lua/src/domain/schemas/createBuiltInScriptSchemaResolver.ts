@@ -1,5 +1,5 @@
 import type { ScriptSchema } from '@duckengine/core-v2';
-import { getBuiltInSchema } from '../domain/schemas';
+import { getBuiltInSchema } from './builtInSchemas';
 
 /**
  * Creates a script schema resolver for built-in scripts.

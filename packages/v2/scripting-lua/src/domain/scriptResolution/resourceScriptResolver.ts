@@ -1,6 +1,6 @@
 import type { ResourceCachePort } from '@duckengine/core-v2';
 import { createResourceKey, createResourceRef } from '@duckengine/core-v2';
-import { isBuiltInOrTestScript } from '../domain/scriptResolution';
+import { isBuiltInOrTestScript } from './scriptIdPredicates';
 
 export interface ScriptResolver {
   resolveSource(scriptId: string): Promise<string | null>;

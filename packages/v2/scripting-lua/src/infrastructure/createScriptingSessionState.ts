@@ -2,9 +2,11 @@ import type { LuaEngine } from 'wasmoon';
 import type { SceneSubsystemFactoryContext } from '@duckengine/core-v2';
 import { ResourceCachePortDef, DiagnosticPortDef } from '@duckengine/core-v2';
 import { createScriptRuntimeFromContext } from '../domain/session';
+import {
+  createResourceScriptResolver,
+  createBuiltInScriptSchemaResolver,
+} from '../domain';
 import { createBuiltInScriptResolver } from './createBuiltInScriptResolver';
-import { createBuiltInScriptSchemaResolver } from './createBuiltInScriptSchemaResolver';
-import { createResourceScriptResolver } from './resourceScriptResolver';
 import type { ScriptingSessionState } from '../domain/session';
 import type { ScriptSandbox } from '../domain/ports';
 
