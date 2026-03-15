@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import type * as THREE from 'three';
 import type { ResourceRef } from '@duckengine/core-v2';
 import type { SkyboxResolver, TextureResolver } from '../domain/renderContextThree';
 
@@ -18,14 +18,16 @@ function cacheKey(ref: ResourceRef<'texture' | 'skybox'>): string {
 /**
  * Creates THREE.Texture/CubeTexture resolvers from a raw cache (Blob, string[]).
  * Parses on demand and caches parsed THREE objects.
+ * @param three - Injected THREE module from backend (three or three/webgpu).
  */
 export function createTextureResolversFromRawCache(
   rawCache: RawResourceCacheInput,
+  three: typeof import('three'),
 ): { getTexture?: TextureResolver; getSkyboxTexture?: SkyboxResolver } {
   const textureCache = new Map<string, THREE.Texture>();
   const skyboxCache = new Map<string, THREE.CubeTexture>();
-  const textureLoader = new THREE.TextureLoader();
-  const cubeTextureLoader = new THREE.CubeTextureLoader();
+  const textureLoader = new three.TextureLoader();
+  const cubeTextureLoader = new three.CubeTextureLoader();
 
   const getTexture: TextureResolver | undefined = rawCache.getTexture
     ? (ref) => {
@@ -37,9 +39,9 @@ export function createTextureResolversFromRawCache(
         if (!data) return null;
 
         if (data instanceof ImageBitmap) {
-          const texture = new THREE.Texture(data);
+          const texture = new three.Texture(data);
           texture.needsUpdate = true;
-          texture.colorSpace = THREE.SRGBColorSpace;
+          texture.colorSpace = three.SRGBColorSpace;
           textureCache.set(key, texture);
           return texture;
         }

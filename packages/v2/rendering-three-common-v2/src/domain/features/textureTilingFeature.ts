@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import type * as THREE from 'three';
 import { getComponent } from '@duckengine/core-v2';
 import type { RenderFeature } from '@duckengine/rendering-base-v2';
 import type { TextureTilingComponent } from '@duckengine/core-v2';

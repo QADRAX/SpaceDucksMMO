@@ -26,6 +26,7 @@ export function createRenderingState(params: { engine: EngineState }): RenderEng
   const engine = params.engine;
   const { onSceneStateCreated, clearAll } = createGizmoScenePortRegistration();
   const { perScene, getOrCreateSceneState } = createPerSceneStateManager(engine, {
+    three: THREE,
     onSceneStateCreated,
   });
 
@@ -36,6 +37,8 @@ export function createRenderingState(params: { engine: EngineState }): RenderEng
       let r = renderersByCanvasId.get(canvasId);
       if (!r) {
         r = new THREE.WebGLRenderer({ canvas, antialias: true });
+        r.shadowMap.enabled = true;
+        r.shadowMap.type = THREE.PCFSoftShadowMap;
         renderersByCanvasId.set(canvasId, r);
       }
       return r;

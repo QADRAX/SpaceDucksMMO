@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import type { PerspectiveCamera } from 'three';
 import { getComponent } from '@duckengine/core-v2';
 import type { CameraViewComponent } from '@duckengine/core-v2';
 import type { RenderFeature } from '@duckengine/rendering-base-v2';
@@ -12,7 +12,7 @@ import { cameraKey } from '../three';
  * Feature: sync cameraView component to Three.js PerspectiveCamera.
  */
 export function createCameraFeature(): RenderFeature<RenderContextThree> {
-  const camerasByEntity = new Map<string, THREE.PerspectiveCamera>();
+  const camerasByEntity = new Map<string, PerspectiveCamera>();
   const lastCameraKeyByEntity = new Map<string, string>();
 
   return {
@@ -23,12 +23,15 @@ export function createCameraFeature(): RenderFeature<RenderContextThree> {
       const had = camerasByEntity.has(entity.id);
 
       if (cam && !had) {
-        const threeCam = createPerspectiveCameraFromParams({
-          fov: cam.fov,
-          aspect: cam.aspect ?? 1,
-          near: cam.near,
-          far: cam.far,
-        });
+        const threeCam = createPerspectiveCameraFromParams(
+          {
+            fov: cam.fov,
+            aspect: cam.aspect ?? 1,
+            near: cam.near,
+            far: cam.far,
+          },
+          context.three,
+        );
         syncTransformToObject3D(entity, threeCam);
         context.registry.add(entity.id, threeCam, context.threeScene);
         camerasByEntity.set(entity.id, threeCam);

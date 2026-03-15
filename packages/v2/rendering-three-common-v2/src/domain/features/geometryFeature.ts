@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import type { Mesh } from 'three';
 import { isGeometryComponentType } from '@duckengine/core-v2';
 import type { RenderFeature } from '@duckengine/rendering-base-v2';
 import type { RenderContextThree } from '../renderContextThree';
@@ -11,7 +11,7 @@ import { removeFromRegistryAndDispose } from '../removeFromRegistry';
  * Feature: sync geometry component to Three.js Mesh (primitives + customGeometry).
  */
 export function createGeometryFeature(): RenderFeature<RenderContextThree> {
-  const meshesByEntity = new Map<string, THREE.Mesh>();
+  const meshesByEntity = new Map<string, Mesh>();
   const lastGeometryKeyByEntity = new Map<string, string>();
 
   return {
@@ -26,9 +26,9 @@ export function createGeometryFeature(): RenderFeature<RenderContextThree> {
         if (comp.type === 'customGeometry' && !meshData) {
           return;
         }
-        const geom = geometryFromComponent(comp, meshData);
-        const material = new THREE.MeshStandardMaterial({ color: 0xcccccc });
-        const mesh = new THREE.Mesh(geom, material);
+        const geom = geometryFromComponent(comp, meshData, context.three);
+        const material = new context.three.MeshStandardMaterial({ color: 0xcccccc });
+        const mesh = new context.three.Mesh(geom, material);
         mesh.visible = false;
         applyShadow(mesh, comp.castShadow, comp.receiveShadow);
         syncTransformToObject3D(entity, mesh);
@@ -43,7 +43,7 @@ export function createGeometryFeature(): RenderFeature<RenderContextThree> {
         if (key === lastKey) {
           syncTransformToObject3D(entity, mesh);
         } else {
-          const geom = geometryFromComponent(comp, meshData);
+          const geom = geometryFromComponent(comp, meshData, context.three);
           mesh.geometry.dispose();
           mesh.geometry = geom;
           applyShadow(mesh, comp.castShadow, comp.receiveShadow);
@@ -70,7 +70,7 @@ export function createGeometryFeature(): RenderFeature<RenderContextThree> {
       const mesh = comp ? meshesByEntity.get(entity.id) : undefined;
       if (!mesh || !comp) return;
       const meshData = comp.type === 'customGeometry' ? getMeshDataForCustom(entity, context) : null;
-      const geom = geometryFromComponent(comp, meshData);
+      const geom = geometryFromComponent(comp, meshData, context.three);
       mesh.geometry.dispose();
       mesh.geometry = geom;
       applyShadow(mesh, comp.castShadow, comp.receiveShadow);

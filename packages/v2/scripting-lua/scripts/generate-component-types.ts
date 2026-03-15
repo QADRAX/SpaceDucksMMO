@@ -39,6 +39,28 @@ const RESOURCE_KINDS_ARR = [...RESOURCE_KINDS];
 const componentTypeAlias = COMPONENT_TYPES.map((t) => `---| "${t}"`).join('\n');
 const resourceKindAlias = RESOURCE_KINDS_ARR.map((k) => `---| "${k}"`).join('\n');
 
+function toFieldKeyAliasName(componentType: string): string {
+  const pascal = componentType
+    .replace(/(?:^|_)([a-z])/g, (_, c) => c.toUpperCase())
+    .replace(/_/g, '');
+  return `${pascal}FieldV2`;
+}
+
+function buildFieldKeyAliases(): string {
+  const lines: string[] = [];
+  for (const [type, spec] of Object.entries(ALL_SPECS)) {
+    const meta = (spec as { metadata?: { inspector?: { fields?: { key: string }[] } } }).metadata;
+    const fields = meta?.inspector?.fields ?? [];
+    if (fields.length === 0) continue;
+    const aliasName = toFieldKeyAliasName(type);
+    const fieldLines = fields.map((f) => `---| "${f.key}"`).join('\n');
+    lines.push(`---@alias ${aliasName}\n${fieldLines}`);
+  }
+  return lines.join('\n\n');
+}
+
+const fieldKeyAliases = buildFieldKeyAliases();
+
 const output = `---@meta
 -- ═══════════════════════════════════════════════════════════════════════
 -- DuckEngine Lua API v2 — Component Bridge
@@ -95,6 +117,9 @@ ${componentTypeAlias}
 
 ---@alias ResourceKindV2
 ${resourceKindAlias}
+
+-- Field key aliases per component (for Component.getField/setField autocomplete)
+${fieldKeyAliases}
 `;
 
 const targetPath = path.join(

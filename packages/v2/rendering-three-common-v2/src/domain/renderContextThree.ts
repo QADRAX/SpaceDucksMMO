@@ -24,8 +24,12 @@ export type TextureResolver = (ref: ResourceRef<'texture'>) => THREE.Texture | n
 
 /**
  * Render context extended with Three.js objects. Used by features in common and infra.
+ * The `three` module is injected by the backend (GL or WebGPU) so features create
+ * objects from the same namespace as the renderer.
  */
 export interface RenderContextThree extends RenderContextBase {
+  /** Injected THREE module from backend (three or three/webgpu). Use this for all object creation. */
+  readonly three: typeof import('three');
   readonly threeScene: THREE.Scene;
   /** Entity id -> Object3D (Mesh, Light, Camera, etc.). */
   readonly registry: RenderObjectRegistry;

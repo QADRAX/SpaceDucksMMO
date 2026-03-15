@@ -23,6 +23,7 @@ const ENTITY_E2 = createEntityId('e2');
 const ENTITY_E3 = createEntityId('e3');
 const ENTITY_E4 = createEntityId('e4');
 const ENTITY_E5 = createEntityId('e5');
+const ENTITY_E6 = createEntityId('e6');
 
 describe('Scenario: Component bridge E2E', () => {
   it('component_bridge_properties: getField/setField for name and boxGeometry', async () => {
@@ -253,5 +254,56 @@ describe('Scenario: Component bridge E2E', () => {
     };
     expect(mat.albedo?.key).toBe('textures/concrete-muddy_diffuse');
     expect(mat.albedo?.kind).toBe('texture');
+  });
+
+  it('component_bridge_light_fields: getField/setField for directionalLight shadow', async () => {
+    const { api } = await setupScriptingIntegrationTest();
+
+    addSceneWithEntity(api, MAIN_SCENE, ENTITY_E6);
+
+    const scene = api.scene(MAIN_SCENE);
+    scene.entity(ENTITY_E6).addComponent({
+      component: createComponent('directionalLight', {
+        castShadow: true,
+        shadowBias: 0,
+        shadowNormalBias: 0.01,
+      }),
+    });
+
+    addEntityWithScripts(api, MAIN_SCENE, ENTITY_E6, [
+      {
+        scriptId: 'test://component_bridge_light_fields.lua',
+        properties: {
+          biasSetOk: false,
+          normalBiasSetOk: false,
+          biasReadBack: 0,
+          normalBiasReadBack: 0,
+          intensityReadBack: 0,
+        },
+      },
+    ]);
+
+    api.update({ dt: 0 });
+    await waitForSlotInit(100);
+    runFrames(api, 1);
+
+    const props = getScriptProperties(
+      scene.entity(ENTITY_E6).component('script').snapshot(),
+    );
+    expect(props).not.toBeNull();
+    expect(props!.biasSetOk).toBe(true);
+    expect(props!.normalBiasSetOk).toBe(true);
+    expect(props!.biasReadBack).toBe(0.002);
+    expect(props!.normalBiasReadBack).toBe(0.02);
+    expect(props!.intensityReadBack).toBe(1);
+
+    const lightSnap = scene.entity(ENTITY_E6).component('directionalLight').snapshot();
+    expect(lightSnap.ok).toBe(true);
+    const light = (lightSnap as { ok: true; value: unknown }).value as {
+      shadowBias?: number;
+      shadowNormalBias?: number;
+    };
+    expect(light.shadowBias).toBe(0.002);
+    expect(light.shadowNormalBias).toBe(0.02);
   });
 });

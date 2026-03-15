@@ -5,9 +5,11 @@ import { createTextureResolversFromRawCache } from './createTextureResolversFrom
 /**
  * Assembles mesh, texture, and skybox resolvers from a resource cache port.
  * When cache is absent, returns no-op getMeshData and undefined texture/skybox resolvers.
+ * @param three - Injected THREE module from backend (three or three/webgpu).
  */
 export function createResolversFromResourceCache(
   cache: ResourceCachePort | null | undefined,
+  three: typeof import('three'),
 ): {
   getMeshData: MeshResolver;
   getSkyboxTexture?: SkyboxResolver;
@@ -18,7 +20,7 @@ export function createResolversFromResourceCache(
   }
 
   const c = cache;
-  const rawResolvers = createTextureResolversFromRawCache(c);
+  const rawResolvers = createTextureResolversFromRawCache(c, three);
 
   const getMeshData: MeshResolver = c.getMeshData
     ? (ref) => (c.getMeshData!(ref) ?? null) as MeshGeometryFileData | null

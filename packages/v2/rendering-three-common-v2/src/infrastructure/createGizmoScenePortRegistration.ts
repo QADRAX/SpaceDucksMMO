@@ -15,7 +15,7 @@ export function createGizmoScenePortRegistration() {
   const drawerCache = new Map<string, GizmoPort>();
 
   const onSceneStateCreated = (scene: SceneState, state: PerSceneState): void => {
-    const drawer = createGizmoDrawer(state.threeScene);
+    const drawer = createGizmoDrawer(state.threeScene, state.context.three);
     (scene.scenePorts as Map<string, unknown>).set(GizmoPortDef.id, drawer);
     (scene.scenePortDefinitions as Map<string, unknown>).set(GizmoPortDef.id, GizmoPortDef);
     drawerCache.set(scene.id, drawer);

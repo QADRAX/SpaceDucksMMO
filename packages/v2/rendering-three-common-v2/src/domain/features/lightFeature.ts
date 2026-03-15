@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import type { Light } from 'three';
 import type { RenderFeature } from '@duckengine/rendering-base-v2';
 import type { RenderContextThree } from '../renderContextThree';
 import { lightFromParams } from '../lightFromParams';
@@ -12,7 +12,7 @@ const LIGHT_TYPES = ['ambientLight', 'directionalLight', 'pointLight', 'spotLigh
  * Feature: sync light components to Three.js lights.
  */
 export function createLightFeature(): RenderFeature<RenderContextThree> {
-  const lightsByEntity = new Map<string, THREE.Light>();
+  const lightsByEntity = new Map<string, Light>();
   const lastLightKeyByEntity = new Map<string, string>();
 
   return {
@@ -23,7 +23,7 @@ export function createLightFeature(): RenderFeature<RenderContextThree> {
       const had = lightsByEntity.has(entity.id);
 
       if (params && !had) {
-        const light = lightFromParams(params);
+        const light = lightFromParams(params, context.three);
         syncTransformToObject3D(entity, light);
         context.registry.add(entity.id, light, context.threeScene);
         lightsByEntity.set(entity.id, light);
@@ -36,7 +36,7 @@ export function createLightFeature(): RenderFeature<RenderContextThree> {
           syncTransformToObject3D(entity, light);
         } else {
           removeFromRegistryAndDispose(context.registry, context.threeScene, entity.id, light, (l) => l.dispose?.());
-          const newLight = lightFromParams(params);
+          const newLight = lightFromParams(params, context.three);
           syncTransformToObject3D(entity, newLight);
           context.registry.add(entity.id, newLight, context.threeScene);
           lightsByEntity.set(entity.id, newLight);
@@ -58,7 +58,7 @@ export function createLightFeature(): RenderFeature<RenderContextThree> {
       if (prev) {
         removeFromRegistryAndDispose(context.registry, context.threeScene, entity.id, prev, (l) => l.dispose?.());
       }
-      const light = lightFromParams(params);
+      const light = lightFromParams(params, context.three);
       syncTransformToObject3D(entity, light);
       context.registry.add(entity.id, light, context.threeScene);
       lightsByEntity.set(entity.id, light);

@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import type * as THREE from 'three';
 
 export interface PerspectiveCameraParams {
   fov: number;
@@ -9,9 +9,13 @@ export interface PerspectiveCameraParams {
 
 /**
  * Creates a Three.js PerspectiveCamera from projection params.
+ * @param three - Injected THREE module from backend (three or three/webgpu).
  */
-export function createPerspectiveCameraFromParams(params: PerspectiveCameraParams): THREE.PerspectiveCamera {
-  return new THREE.PerspectiveCamera(
+export function createPerspectiveCameraFromParams(
+  params: PerspectiveCameraParams,
+  three: typeof import('three'),
+): THREE.PerspectiveCamera {
+  return new three.PerspectiveCamera(
     params.fov,
     params.aspect ?? 1,
     params.near,

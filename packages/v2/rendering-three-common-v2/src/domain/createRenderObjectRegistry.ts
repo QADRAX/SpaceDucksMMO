@@ -1,12 +1,13 @@
-import * as THREE from 'three';
+import type * as THREE from 'three';
 import type { RenderObjectRegistry } from './renderContextThree';
 
 /**
  * Creates a registry that supports multiple Object3Ds per entity (mesh, camera, light)
  * by using a Group per entity. get() returns the group; add/remove manage children.
  * Shared by GL and WebGPU infra.
+ * @param three - Injected THREE module from backend (three or three/webgpu).
  */
-export function createRenderObjectRegistry(): RenderObjectRegistry {
+export function createRenderObjectRegistry(three: typeof import('three')): RenderObjectRegistry {
   const byEntity = new Map<string, THREE.Group>();
 
   return {
@@ -17,7 +18,7 @@ export function createRenderObjectRegistry(): RenderObjectRegistry {
     add(entityId: string, object3D: THREE.Object3D, scene: THREE.Scene): void {
       let group = byEntity.get(entityId);
       if (!group) {
-        group = new THREE.Group();
+        group = new three.Group();
         byEntity.set(entityId, group);
         scene.add(group);
       }

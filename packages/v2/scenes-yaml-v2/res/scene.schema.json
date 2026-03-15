@@ -877,7 +877,16 @@
                     "castShadow": {
                       "description": "Cast Shadow",
                       "type": "boolean"
-                    }
+                    },
+                    "shadowMapSize": { "description": "Shadow map resolution", "type": "number" },
+                    "shadowBias": { "description": "Shadow bias", "type": "number" },
+                    "shadowNormalBias": { "description": "Shadow normal bias", "type": "number" },
+                    "shadowCameraLeft": { "description": "Shadow ortho camera left", "type": "number" },
+                    "shadowCameraRight": { "description": "Shadow ortho camera right", "type": "number" },
+                    "shadowCameraTop": { "description": "Shadow ortho camera top", "type": "number" },
+                    "shadowCameraBottom": { "description": "Shadow ortho camera bottom", "type": "number" },
+                    "shadowCameraNear": { "description": "Shadow camera near", "type": "number" },
+                    "shadowCameraFar": { "description": "Shadow camera far", "type": "number" }
                   },
                   "additionalProperties": true
                 }
@@ -914,7 +923,10 @@
                     "castShadow": {
                       "description": "Cast Shadow",
                       "type": "boolean"
-                    }
+                    },
+                    "shadowMapSize": { "description": "Shadow map resolution", "type": "number" },
+                    "shadowBias": { "description": "Shadow bias", "type": "number" },
+                    "shadowNormalBias": { "description": "Shadow normal bias", "type": "number" }
                   },
                   "additionalProperties": true
                 }
@@ -958,7 +970,10 @@
                     "castShadow": {
                       "description": "Cast Shadow",
                       "type": "boolean"
-                    }
+                    },
+                    "shadowMapSize": { "description": "Shadow map resolution", "type": "number" },
+                    "shadowBias": { "description": "Shadow bias", "type": "number" },
+                    "shadowNormalBias": { "description": "Shadow normal bias", "type": "number" }
                   },
                   "additionalProperties": true
                 }

@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import type { Material } from 'three';
 import { isPlainMaterialComponentType } from '@duckengine/core-v2';
 import type { RenderFeature } from '@duckengine/rendering-base-v2';
 import type { RenderContextThree } from '../renderContextThree';
@@ -29,9 +29,9 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
       const root = context.registry.get(entity.id);
       const mesh = findMesh(root);
       if (mesh) {
-        const prev = mesh.material as THREE.Material;
+        const prev = mesh.material as Material;
         if (prev) prev.dispose();
-        mesh.material = materialFromComponent(comp, context.getTexture);
+        mesh.material = materialFromComponent(comp, context.getTexture, context.three);
         mesh.visible = !hasUnresolvedTextures(comp, context.getTexture);
         lastMaterialKeyByEntity.set(entity.id, key);
         context.diagnostic?.log('debug', 'Material synced', {
@@ -49,9 +49,9 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
       const root = context.registry.get(entity.id);
       const mesh = findMesh(root);
       if (mesh) {
-        const prev = mesh.material as THREE.Material;
+        const prev = mesh.material as Material;
         if (prev) prev.dispose();
-        mesh.material = materialFromComponent(comp, context.getTexture);
+        mesh.material = materialFromComponent(comp, context.getTexture, context.three);
         mesh.visible = !hasUnresolvedTextures(comp, context.getTexture);
         lastMaterialKeyByEntity.set(entity.id, materialKey(comp, context.getTexture));
         context.diagnostic?.log('debug', 'Material synced', {

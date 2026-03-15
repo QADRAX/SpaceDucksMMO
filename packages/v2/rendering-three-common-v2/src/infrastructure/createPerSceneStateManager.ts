@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import {
   createPerSceneStateManager as createPerSceneStateManagerFromCore,
   ResourceCachePortDef,
@@ -6,6 +5,7 @@ import {
   DiagnosticPortDef,
   type EngineState,
 } from '@duckengine/core-v2';
+import type { RenderFeature } from '@duckengine/rendering-base-v2';
 import {
   createDefaultRenderFeatures,
   createRenderObjectRegistry,
@@ -20,18 +20,24 @@ import type { SceneState } from '@duckengine/core-v2';
  * with a factory that creates Three.js per-scene state.
  */
 export interface CreatePerSceneStateManagerOptions {
+  /** THREE module from backend (three or three/webgpu). Required for object creation. */
+  three: typeof import('three');
   /** Called when a new per-scene state is created. Use to register scene-scoped ports (e.g. GizmoPort). */
   onSceneStateCreated: (scene: SceneState, state: PerSceneState) => void;
+  /** Optional: custom feature set. If not provided, uses createDefaultRenderFeatures. */
+  createFeatures?: () => RenderFeature<RenderContextThree>[];
 }
 
 /**
  * Creates per-scene state manager for rendering (GL/WebGPU).
  * Delegates orchestration to core; implements Three.js-specific createSceneState.
+ * The THREE module is injected by the backend so Scene, Light, Mesh, etc. use the correct namespace.
  */
 export function createPerSceneStateManager(
   engine: EngineState,
   options: CreatePerSceneStateManagerOptions,
 ) {
+  const { three, onSceneStateCreated, createFeatures } = options;
   const registry = createSubsystemPortRegistry(
     engine.subsystemRuntime.ports,
     engine.subsystemRuntime.portDefinitions,
@@ -39,7 +45,7 @@ export function createPerSceneStateManager(
   const cache = registry.get(ResourceCachePortDef);
   const diagnostic = registry.get(DiagnosticPortDef);
   const { getMeshData, getSkyboxTexture, getTexture } =
-    createResolversFromResourceCache(cache);
+    createResolversFromResourceCache(cache, three);
 
   return createPerSceneStateManagerFromCore<PerSceneState>(engine, {
     createSceneState: (_engine, scene) => {
@@ -47,10 +53,11 @@ export function createPerSceneStateManager(
         subsystem: 'rendering-three',
         sceneId: scene.id,
       });
-      const threeScene = new THREE.Scene();
-      threeScene.background = new THREE.Color(0x1a1a2e);
-      const sceneRegistry = createRenderObjectRegistry();
+      const threeScene = new three.Scene();
+      threeScene.background = new three.Color(0x1a1a2e);
+      const sceneRegistry = createRenderObjectRegistry(three);
       const context: RenderContextThree = {
+        three,
         sceneId: scene.id,
         scene,
         threeScene,
@@ -60,9 +67,9 @@ export function createPerSceneStateManager(
         getTexture,
         diagnostic: diagnostic ?? undefined,
       };
-      const features = createDefaultRenderFeatures();
+      const features = (createFeatures ?? createDefaultRenderFeatures)();
       return { threeScene, registry: sceneRegistry, context, features };
     },
-    onSceneStateCreated: options.onSceneStateCreated,
+    onSceneStateCreated,
   });
 }

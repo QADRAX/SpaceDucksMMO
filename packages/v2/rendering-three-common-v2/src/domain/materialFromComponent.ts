@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import type * as THREE from 'three';
 import type { MaterialComponent, ResourceRef } from '@duckengine/core-v2';
 import { parseColor } from './parseColor';
 import type { TextureResolver } from './renderContextThree';
@@ -6,10 +6,12 @@ import type { TextureResolver } from './renderContextThree';
 /**
  * Builds a Three.js Material from a plain material component (standard/basic/phong/lambert).
  * When textureResolver is provided, applies albedo and other texture maps from ResourceRefs.
+ * @param three - Injected THREE module from backend (three or three/webgpu).
  */
 export function materialFromComponent(
   comp: MaterialComponent,
-  textureResolver?: TextureResolver,
+  textureResolver: TextureResolver | undefined,
+  three: typeof import('three'),
 ): THREE.Material {
   const color = comp.color ? parseColor(comp.color, 0xcccccc) : 0xcccccc;
   const transparent = comp.transparent ?? false;
@@ -19,12 +21,12 @@ export function materialFromComponent(
 
   switch (comp.type) {
     case 'basicMaterial': {
-      const mat = new THREE.MeshBasicMaterial({ color, transparent, opacity, map });
+      const mat = new three.MeshBasicMaterial({ color, transparent, opacity, map });
       if (comp.wireframe) mat.wireframe = true;
       return mat;
     }
     case 'lambertMaterial':
-      return new THREE.MeshLambertMaterial({
+      return new three.MeshLambertMaterial({
         color,
         transparent,
         opacity,
@@ -32,7 +34,7 @@ export function materialFromComponent(
         emissive: comp.emissive ? parseColor(comp.emissive, 0x000000) : 0x000000,
       });
     case 'phongMaterial':
-      return new THREE.MeshPhongMaterial({
+      return new three.MeshPhongMaterial({
         color,
         transparent,
         opacity,
@@ -54,7 +56,7 @@ export function materialFromComponent(
         metallicMap?: ResourceRef<'texture'>;
         envMap?: ResourceRef<'texture'>;
       };
-      const mat = new THREE.MeshStandardMaterial({
+      const mat = new three.MeshStandardMaterial({
         color,
         transparent,
         opacity,

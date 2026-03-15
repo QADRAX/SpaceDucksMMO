@@ -147,4 +147,7 @@ entities:
     transform:
       position: { x: 5, y: 12, z: 5 }
     components:
-      directionalLight: { intensity: 1 }
+      directionalLight:
+        intensity: 1
+        shadowBias: 0
+        shadowNormalBias: 0
