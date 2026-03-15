@@ -2,6 +2,7 @@ import type * as THREE from 'three';
 import type { RenderContextBase, RenderFeature } from '@duckengine/rendering-base-v2';
 import type { ResourceRef } from '@duckengine/core-v2';
 import type { MeshGeometryFileData } from '@duckengine/core-v2';
+import type { DiagnosticPort } from '@duckengine/core-v2';
 
 /**
  * Resolves a mesh resource ref to geometry data. Implemented by infra (GL/WebGPU);
@@ -34,6 +35,8 @@ export interface RenderContextThree extends RenderContextBase {
   readonly getSkyboxTexture?: SkyboxResolver;
   /** Optional: resolve texture ref for material maps (albedo, normalMap, etc.). */
   readonly getTexture?: TextureResolver;
+  /** Optional: diagnostic port for subsystem logging (no console.*). */
+  readonly diagnostic?: DiagnosticPort;
 }
 
 /**

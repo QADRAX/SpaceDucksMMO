@@ -30,6 +30,11 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
         if (prev) prev.dispose();
         mesh.material = materialFromComponent(comp, context.getTexture);
         lastMaterialKeyByEntity.set(entity.id, key);
+        context.diagnostic?.log('debug', 'Material synced', {
+          subsystem: 'rendering-three',
+          entityId: entity.id,
+          materialRef: comp.material?.key ?? comp.albedo?.key ?? comp.type,
+        });
       }
     },
 
@@ -44,6 +49,11 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
         if (prev) prev.dispose();
         mesh.material = materialFromComponent(comp, context.getTexture);
         lastMaterialKeyByEntity.set(entity.id, materialKey(comp, context.getTexture));
+        context.diagnostic?.log('debug', 'Material synced', {
+          subsystem: 'rendering-three',
+          entityId: entity.id,
+          materialRef: comp.material?.key ?? comp.albedo?.key ?? comp.type,
+        });
       }
     },
   };

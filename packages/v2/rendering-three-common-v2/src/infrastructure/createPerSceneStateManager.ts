@@ -3,6 +3,7 @@ import {
   createPerSceneStateManager as createPerSceneStateManagerFromCore,
   ResourceCachePortDef,
   createSubsystemPortRegistry,
+  DiagnosticPortDef,
   type EngineState,
 } from '@duckengine/core-v2';
 import {
@@ -36,11 +37,16 @@ export function createPerSceneStateManager(
     engine.subsystemRuntime.portDefinitions,
   );
   const cache = registry.get(ResourceCachePortDef);
+  const diagnostic = registry.get(DiagnosticPortDef);
   const { getMeshData, getSkyboxTexture, getTexture } =
     createResolversFromResourceCache(cache);
 
   return createPerSceneStateManagerFromCore<PerSceneState>(engine, {
     createSceneState: (_engine, scene) => {
+      diagnostic?.log('debug', 'Rendering scene created', {
+        subsystem: 'rendering-three',
+        sceneId: scene.id,
+      });
       const threeScene = new THREE.Scene();
       threeScene.background = new THREE.Color(0x1a1a2e);
       const sceneRegistry = createRenderObjectRegistry();
@@ -52,6 +58,7 @@ export function createPerSceneStateManager(
         getMeshData,
         getSkyboxTexture,
         getTexture,
+        diagnostic: diagnostic ?? undefined,
       };
       const features = createDefaultRenderFeatures();
       return { threeScene, registry: sceneRegistry, context, features };

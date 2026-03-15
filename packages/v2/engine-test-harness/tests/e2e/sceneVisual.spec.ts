@@ -69,6 +69,16 @@ test.describe('Scene Visual', () => {
       'Expected "Texture loaded" for MetalGoldFoil001',
     ).toBe(true);
 
+    expect(
+      logMessages.some((m) => m.includes('Rendering scene created') && m.includes('rendering-three')),
+      'Expected "Rendering scene created" log from rendering subsystem',
+    ).toBe(true);
+
+    expect(
+      logMessages.some((m) => m.includes('Material synced') && m.includes('MetalGoldFoil001')),
+      'Expected "Material synced" for MetalGoldFoil001 from rendering',
+    ).toBe(true);
+
     console.log(`Diagnostic logs (${logs.length} entries):`, JSON.stringify(logs.slice(-10).map((e) => ({ level: e.level, message: e.message, context: e.context })), null, 2));
 
     const screenshot = await page.screenshot({
