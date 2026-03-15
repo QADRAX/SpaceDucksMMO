@@ -38,6 +38,18 @@ export const updateEngine = defineEngineUseCase<UpdateEngineParams, void>({
     const enginePaused = engine.paused;
 
     for (const phase of FRAME_PHASES) {
+      // preRender: run engine subsystems first so rendering sync creates per-scene state
+      // before scene subsystems (e.g. scripting onDrawGizmos) need it.
+      const engineFirst = phase === 'preRender';
+
+      if (engineFirst) {
+        for (const subsystem of engine.engineSubsystems) {
+          if (enginePaused && !subsystem.updateWhenPaused) continue;
+          const fn = getEnginePhaseFn(subsystem, phase);
+          if (fn) fn(engine, dt);
+        }
+      }
+
       // Scene subsystems (no render phase)
       if (phase !== 'render') {
         for (const scene of engine.scenes.values()) {
@@ -50,11 +62,13 @@ export const updateEngine = defineEngineUseCase<UpdateEngineParams, void>({
         }
       }
 
-      // Engine subsystems
-      for (const subsystem of engine.engineSubsystems) {
-        if (enginePaused && !subsystem.updateWhenPaused) continue;
-        const fn = getEnginePhaseFn(subsystem, phase);
-        if (fn) fn(engine, dt);
+      if (!engineFirst) {
+        // Engine subsystems (or render phase only)
+        for (const subsystem of engine.engineSubsystems) {
+          if (enginePaused && !subsystem.updateWhenPaused) continue;
+          const fn = getEnginePhaseFn(subsystem, phase);
+          if (fn) fn(engine, dt);
+        }
       }
     }
   },

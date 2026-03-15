@@ -6,6 +6,7 @@ import {
   syncSceneToRenderTree,
   createPerSceneStateManager,
   renderViewports,
+  createGizmoScenePortRegistration,
 } from '@duckengine/rendering-three-common-v2';
 
 /**
@@ -18,10 +19,15 @@ import {
  *
  * Canvas: resolved from engine.canvases.get(viewport.canvasId). Register via api.registerCanvas().
  * Resources: from ResourceCachePort when registered (resource coordinator).
+ *
+ * Registers GizmoPort on each scene's scenePorts when state is created (same pattern as physics).
  */
 export function createRenderingState(params: { engine: EngineState }): RenderEngineState {
   const engine = params.engine;
-  const { perScene, getOrCreateSceneState } = createPerSceneStateManager(engine);
+  const { onSceneStateCreated, clearAll } = createGizmoScenePortRegistration();
+  const { perScene, getOrCreateSceneState } = createPerSceneStateManager(engine, {
+    onSceneStateCreated,
+  });
 
   const renderersByCanvasId = new Map<string, THREE.WebGLRenderer>();
 
@@ -43,6 +49,7 @@ export function createRenderingState(params: { engine: EngineState }): RenderEng
 
   return {
     sync(engine: EngineState, _dt: number) {
+      clearAll();
       for (const [sceneId, scene] of engine.scenes) {
         const state = getOrCreateSceneState(engine, sceneId);
         if (state) {

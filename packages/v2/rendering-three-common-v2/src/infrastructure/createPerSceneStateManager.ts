@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { EngineState, SceneId } from '@duckengine/core-v2';
+import type { SceneState } from '@duckengine/core-v2';
 import {
   ResourceCachePortDef,
   createSubsystemPortRegistry,
@@ -12,11 +13,19 @@ import {
 } from '../domain';
 import { createResolversFromResourceCache } from './createResolversFromResourceCache';
 
+export interface CreatePerSceneStateManagerOptions {
+  /** Called when a new per-scene state is created. Use to register scene-scoped ports (e.g. GizmoPort). */
+  onSceneStateCreated?: (scene: SceneState, state: PerSceneState) => void;
+}
+
 /**
  * Creates per-scene state manager: resolvers, perScene map, and getOrCreateSceneState.
  * Shared by GL and WebGPU createRenderingState.
  */
-export function createPerSceneStateManager(engine: EngineState) {
+export function createPerSceneStateManager(
+  engine: EngineState,
+  options?: CreatePerSceneStateManagerOptions,
+) {
   const registry = createSubsystemPortRegistry(
     engine.subsystemRuntime.ports,
     engine.subsystemRuntime.portDefinitions,
@@ -51,6 +60,7 @@ export function createPerSceneStateManager(engine: EngineState) {
     const features = createDefaultRenderFeatures();
     state = { threeScene, registry, context, features };
     perScene.set(sceneId, state);
+    options?.onSceneStateCreated?.(scene, state);
     return state;
   }
 

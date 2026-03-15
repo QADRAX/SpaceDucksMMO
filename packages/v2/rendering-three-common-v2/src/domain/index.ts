@@ -28,6 +28,8 @@ export {
 } from './lightFromParams';
 export { materialFromComponent } from './materialFromComponent';
 export { parseColor } from './parseColor';
+export { colorToHex } from './colorToHex';
+export { createGizmoDrawer } from './createGizmoDrawer';
 export { removeFromRegistryAndDispose } from './removeFromRegistry';
 export { syncTransformToObject3D } from './syncTransformToObject3D';
 export { findMesh, findCamera, applyShadow, applyTilingToMaterial, disposeMesh } from './three';

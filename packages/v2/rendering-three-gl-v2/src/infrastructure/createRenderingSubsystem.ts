@@ -1,6 +1,4 @@
-import type { SubsystemPortProvider } from '@duckengine/core-v2';
-import { defineEngineSubsystem, type EngineSubsystem } from '@duckengine/core-v2';
-import { ViewportRectProviderPortDef } from '@duckengine/core-v2';
+import { createEngineSubsystem, type EngineSubsystem } from '@duckengine/core-v2';
 import type { ViewportRectProviderPort } from '@duckengine/core-v2';
 import {
   syncRender,
@@ -9,6 +7,7 @@ import {
   reconcilePendingRenderablesForKey,
   type RenderEngineState,
 } from '@duckengine/rendering-base-v2';
+import { provideRenderingPorts } from '@duckengine/rendering-three-common-v2';
 import { createRenderingState } from './createRenderingState';
 
 /** Options for the WebGL rendering subsystem. */
@@ -22,31 +21,26 @@ export interface CreateRenderingSubsystemOptions {
  * setupEngine({ engineSubsystems: [createRenderingSubsystem(options)] })
  * or api.registerSubsystem({ subsystem: createRenderingSubsystem(options) }).
  *
- * When ResourceCachePort is registered (via createResourceCoordinatorSubsystem with createResourceCache),
- * mesh and skybox resolution use the cache. Add createResourceCoordinatorSubsystem({ resourceLoader }) — cache is internal to coordinator.
- * to engineSubsystems for full resource loading.
+ * Registers:
+ * - ViewportRectProviderPort (engine-level, from opts) via provideRenderingPorts
+ * - GizmoPort (per-scene) when rendering creates per-scene state (createGizmoScenePortRegistration)
  */
 export function createRenderingSubsystem(
   options: CreateRenderingSubsystemOptions,
 ): EngineSubsystem {
   const { viewportRectProvider } = options;
 
-  const portProvider: SubsystemPortProvider = ({ ports }) => {
-    if (!ports.has(ViewportRectProviderPortDef)) {
-      ports.register(ViewportRectProviderPortDef, viewportRectProvider);
-    }
-  };
-
-  const base = defineEngineSubsystem<RenderEngineState>('rendering-three-gl')
-    .withState(({ engine }) => createRenderingState({ engine }))
-    .onEngineEvent('resource-loaded', reconcilePendingRenderablesForKey)
-    .onPreRender(syncRender)
-    .onRender(renderFrame)
-    .onDispose(disposeRender)
-    .build();
-
-  return {
-    ...base,
-    portProviders: [portProvider],
-  };
+  return createEngineSubsystem<RenderEngineState>({
+    id: 'rendering-three-gl',
+    createState: ({ engine }) => createRenderingState({ engine }),
+    engineEvents: {
+      'resource-loaded': reconcilePendingRenderablesForKey,
+    },
+    phases: {
+      preRender: syncRender,
+      render: renderFrame,
+    },
+    portProviders: [provideRenderingPorts(viewportRectProvider)],
+    dispose: disposeRender,
+  });
 }

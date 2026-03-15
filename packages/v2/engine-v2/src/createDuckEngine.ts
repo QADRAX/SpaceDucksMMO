@@ -1,0 +1,120 @@
+import {
+  createEngine,
+  createDuckEngineAPI,
+  DiagnosticPortDef,
+  InputPortDef,
+  createDefaultViewportRectProvider,
+} from '@duckengine/core-v2';
+import type {
+  DuckEngineAPI,
+  InputPort,
+  DiagnosticPort,
+  ViewportRectProviderPort,
+  PortBinding,
+} from '@duckengine/core-v2';
+import type { ResourceLoader } from '@duckengine/resource-coordinator-v2';
+import { createResourceCoordinatorSubsystem } from '@duckengine/resource-coordinator-v2';
+import { createPhysicsSubsystem } from '@duckengine/physics-rapier-v2';
+import { createRenderingSubsystem } from '@duckengine/rendering-three-webgpu-v2';
+import { createScriptingSubsystem } from '@duckengine/scripting-lua';
+import type { EngineSubsystem, SceneSubsystemFactory } from '@duckengine/core-v2';
+
+/** Options for creating the DuckEngine with all subsystems. */
+export interface CreateDuckEngineOptions {
+  /** Resource loader for mesh, texture, skybox, script resolution. Required for resource coordinator. */
+  readonly resourceLoader: ResourceLoader;
+  /** Viewport rect provider for rendering layout. Default: in-memory provider. */
+  readonly viewportRectProvider?: ViewportRectProviderPort;
+  /** Input port for scripting (keyboard, mouse). Default: no-op. */
+  readonly input?: InputPort;
+  /** Diagnostic port for logging. Default: no-op. */
+  readonly diagnostic?: DiagnosticPort;
+  /** Custom port bindings merged with defaults. */
+  readonly customPorts?: PortBinding<unknown>[];
+  /** Subsystems to include. Default: all. */
+  readonly subsystems?: {
+    resourceCoordinator?: boolean;
+    physics?: boolean;
+    rendering?: boolean;
+    scripting?: boolean;
+  };
+}
+
+const noopDiagnostic: DiagnosticPort = {
+  log: () => {},
+};
+
+const noopInput: InputPort = {
+  isKeyPressed: () => false,
+  getMouseDelta: () => ({ x: 0, y: 0 }),
+  getMouseButtons: () => ({ left: false, right: false, middle: false }),
+};
+
+/**
+ * Creates a fully configured DuckEngine with core + physics + rendering + scripting + resource coordinator.
+ *
+ * The consumer provides ResourceLoader and optionally ViewportRectProvider.
+ * Other ports (Input, Gizmo, Diagnostic) default to no-ops.
+ *
+ * @example
+ * ```ts
+ * const api = await createDuckEngine({
+ *   resourceLoader: myWebCoreLoader,
+ *   viewportRectProvider: myLayoutProvider,
+ * });
+ * api.setup({});
+ * api.addScene({ sceneId: createSceneId('main') });
+ * api.scene(createSceneId('main')).setupScene({});
+ * ```
+ */
+export async function createDuckEngine(
+  options: CreateDuckEngineOptions,
+): Promise<DuckEngineAPI> {
+  const {
+    resourceLoader,
+    viewportRectProvider = createDefaultViewportRectProvider(),
+    input = noopInput,
+    diagnostic = noopDiagnostic,
+    customPorts = [],
+    subsystems = {},
+  } = options;
+
+  const subs = {
+    resourceCoordinator: subsystems.resourceCoordinator ?? true,
+    physics: subsystems.physics ?? true,
+    rendering: subsystems.rendering ?? true,
+    scripting: subsystems.scripting ?? true,
+  };
+
+  const engine = createEngine();
+  const api = createDuckEngineAPI(engine);
+
+  const defaultPorts: PortBinding<unknown>[] = [
+    DiagnosticPortDef.bind(diagnostic),
+    InputPortDef.bind(input),
+  ];
+
+  const engineSubsystems: EngineSubsystem[] = [];
+  if (subs.resourceCoordinator) {
+    engineSubsystems.push(createResourceCoordinatorSubsystem({ resourceLoader }));
+  }
+  if (subs.rendering) {
+    engineSubsystems.push(createRenderingSubsystem({ viewportRectProvider }));
+  }
+
+  const sceneSubsystems: SceneSubsystemFactory[] = [];
+  if (subs.physics) {
+    sceneSubsystems.push(createPhysicsSubsystem());
+  }
+  if (subs.scripting) {
+    sceneSubsystems.push(await createScriptingSubsystem());
+  }
+
+  api.setup({
+    customPorts: [...defaultPorts, ...customPorts],
+    engineSubsystems,
+    sceneSubsystems,
+  });
+
+  return api;
+}

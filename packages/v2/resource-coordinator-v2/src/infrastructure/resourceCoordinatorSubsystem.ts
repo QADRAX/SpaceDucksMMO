@@ -1,4 +1,4 @@
-import { defineEngineSubsystem, type EngineSubsystem } from '@duckengine/core-v2';
+import { createEngineSubsystem, type EngineSubsystem } from '@duckengine/core-v2';
 import {
   loadRefsOnEntityAdded,
   loadRefsOnComponentChanged,
@@ -19,19 +19,18 @@ export interface CreateResourceCoordinatorSubsystemOptions {
  * Loader is closed over in state. Triggers fetches on entity-added and component-changed.
  */
 export function createResourceCoordinatorSubsystem(
-  options: CreateResourceCoordinatorSubsystemOptions
+  options: CreateResourceCoordinatorSubsystemOptions,
 ): EngineSubsystem {
   const { resourceLoader } = options;
-  const provider = provideResourceCoordinatorPorts();
-  const base = defineEngineSubsystem<ResourceCoordinatorState>('resource-coordinator')
-    .withState(() => ({ resourceLoader }))
-    .onSceneEvent('entity-added', loadRefsOnEntityAdded)
-    .onSceneEvent('component-changed', loadRefsOnComponentChanged)
-    .onSceneEvent('prefab-added', loadRefsOnPrefabAdded)
-    .build();
 
-  return {
-    ...base,
-    portProviders: [provider],
-  };
+  return createEngineSubsystem<ResourceCoordinatorState>({
+    id: 'resource-coordinator',
+    createState: () => ({ resourceLoader }),
+    sceneEvents: {
+      'entity-added': loadRefsOnEntityAdded,
+      'component-changed': loadRefsOnComponentChanged,
+      'prefab-added': loadRefsOnPrefabAdded,
+    },
+    portProviders: [provideResourceCoordinatorPorts()],
+  });
 }

@@ -3,7 +3,9 @@ import {
     createDuckEngineAPI,
     ResourceCachePortDef,
     DiagnosticPortDef,
-    definePort,
+    InputPortDef,
+    GizmoPortDef,
+    PhysicsQueryPortDef,
     createSceneSubsystem,
     createResourceKey,
     createResourceRef,
@@ -21,26 +23,6 @@ import type { EngineSubsystem } from '@duckengine/core-v2';
 import { createScriptingSubsystem } from '../scriptingSubsystem';
 
 // Standard port definitions used across the engine
-const InputPortDef = definePort<InputPort>('io:input')
-    .addMethod('isKeyPressed')
-    .addMethod('getMouseDelta')
-    .addMethod('getMouseButtons')
-    .build();
-
-const GizmoPortDef = definePort<GizmoPort>('io:gizmo')
-    .addMethod('drawLine')
-    .addMethod('drawSphere')
-    .addMethod('drawBox')
-    .addMethod('drawLabel')
-    .addMethod('drawGrid')
-    .addMethod('clear')
-    .build();
-
-const PhysicsQueryPortDef = definePort<PhysicsQueryPort>('io:physics-query')
-    .addMethod('raycast')
-    .addMethod('getCollisionEvents')
-    .build();
-
 /**
  * Creates a scene subsystem that registers a scene-scoped mock PhysicsQueryPort.
  * Raycast returns a hit with entityId 'floor-' + scene.id so tests can assert

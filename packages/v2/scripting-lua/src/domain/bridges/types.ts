@@ -37,10 +37,16 @@ export interface BridgeDeclaration {
   readonly factory: BridgeFactory;
 }
 
+/** Gizmo port shape used by the bridge. */
+export type GizmoPortShape = Pick<GizmoPort, 'drawLine' | 'drawSphere' | 'drawBox' | 'drawLabel' | 'drawGrid' | 'clear'>;
+
 /** External ports that bridges may optionally consume. */
 export interface BridgePorts {
   readonly physicsQuery?: PhysicsQueryPort;
-  readonly gizmo?: Pick<GizmoPort, 'drawLine' | 'drawSphere' | 'drawBox' | 'drawLabel' | 'clear'>;
+  /** Gizmo port. Resolved dynamically so rendering can register per-scene when sync runs. */
+  readonly getGizmo?: () => GizmoPortShape | undefined;
+  /** @deprecated Use getGizmo() for dynamic resolution. Static fallback for tests. */
+  readonly gizmo?: GizmoPortShape;
   readonly input?: InputPort;
   readonly uiSlotOperations?: UISlotOperationsPort;
 }
@@ -54,7 +60,7 @@ export const ENGINE_SYSTEM_BRIDGES: ReadonlySet<string> = new Set([
 ]);
 
 /** Default engine-level subsystem port keys consumed by scripting bridges. */
-export const SCRIPTING_BRIDGE_PORT_KEYS: Readonly<Record<keyof BridgePorts, SubsystemPortKey>> = {
+export const SCRIPTING_BRIDGE_PORT_KEYS: Readonly<Record<Exclude<keyof BridgePorts, 'getGizmo'>, SubsystemPortKey>> = {
   physicsQuery: 'io:physics-query',
   gizmo: 'io:gizmo',
   input: 'io:input',

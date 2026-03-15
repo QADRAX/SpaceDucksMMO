@@ -1,0 +1,25 @@
+{
+  "name": "@duckengine/engine-v2",
+  "version": "0.1.0",
+  "private": false,
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@duckengine/core-v2": "^0.1.0",
+    "@duckengine/physics-rapier-v2": "^0.1.0",
+    "@duckengine/rendering-three-webgpu-v2": "^0.1.0",
+    "@duckengine/resource-coordinator-v2": "^0.1.0",
+    "@duckengine/scripting-lua": "^0.1.0"
+  }
+}

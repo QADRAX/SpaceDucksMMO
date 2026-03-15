@@ -214,6 +214,39 @@ export interface EngineSubsystemUpdateParams {
   readonly ports: SubsystemPortRegistry;
 }
 
+/**
+ * Flat config for creating an EngineSubsystem.
+ * Composes state and use cases without fluent builder nesting.
+ * Use this instead of defineEngineSubsystem for simpler, declarative definition.
+ */
+export interface EngineSubsystemConfig<TState> {
+  /** Unique id for the subsystem (used in logging/debugging). */
+  readonly id: string;
+  /** Creates subsystem state. Receives engine. */
+  readonly createState: (ctx: { engine: EngineState }) => TState;
+  /** Engine-level event handlers (e.g. resource-loaded). */
+  readonly engineEvents?: Partial<
+    Record<EngineChangeEvent['kind'], SubsystemUseCase<TState, SubsystemEngineEventParams, void>>
+  >;
+  /** Scene event handlers. Receives events from ALL scenes. */
+  readonly sceneEvents?: Partial<
+    Record<
+      SceneChangeEventWithError['kind'],
+      SubsystemUseCase<TState, EngineSubsystemSceneEventParams, void>
+    >
+  >;
+  /** Phase handlers keyed by phase name. */
+  readonly phases?: Partial<
+    Record<FramePhase, SubsystemUseCase<TState, EngineSubsystemUpdateParams, void>>
+  >;
+  /** Port providers run during engine setup. */
+  readonly portProviders?: ReadonlyArray<SubsystemPortProvider>;
+  /** Disposal use case. */
+  readonly dispose?: SubsystemUseCase<TState, void, void>;
+  /** If true, phase callbacks run even when engine is paused. */
+  readonly updateWhenPaused?: boolean;
+}
+
 /** Fluent builder for creating an EngineSubsystem. */
 export interface EngineSubsystemBuilder<TState> {
   /** Initialize the subsystem's internal state. */

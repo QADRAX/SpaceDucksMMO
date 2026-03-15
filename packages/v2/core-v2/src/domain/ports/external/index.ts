@@ -5,9 +5,13 @@
 export { PhysicsQueryPortDef, PHYSICS_QUERY_PORT_ID } from './physicsQueryPortDef';
 export type { PhysicsQueryPort } from './physicsQueryPort';
 
-export { GizmoPortDef } from './gizmoPortDef';
+export { GizmoPortDef, GIZMO_PORT_ID } from './gizmoPortDef';
 export type { GizmoPort } from './gizmoPort';
 
+export { GizmoPortProviderDef, GIZMO_PORT_PROVIDER_ID } from './gizmoPortProviderDef';
+export type { GizmoPortProvider } from './gizmoPortProvider';
+
+export { InputPortDef, INPUT_PORT_ID } from './inputPortDef';
 export type { InputPort, InputMouseDelta, InputMouseButtons } from './inputPort';
 
 export { ResourceCachePortDef } from './resourceCachePortDef';
