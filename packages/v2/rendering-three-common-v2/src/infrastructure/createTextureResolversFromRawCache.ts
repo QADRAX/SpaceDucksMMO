@@ -2,37 +2,13 @@ import * as THREE from 'three';
 import type { ResourceRef } from '@duckengine/core-v2';
 import type { SkyboxResolver, TextureResolver } from '../domain/renderContextThree';
 
-/** Raw texture data from cache. Coordinator stores Blob; alternative backends may use single URL. */
-export type RawTextureData = Blob | readonly [string, ...unknown[]];
-
-/** Raw skybox data from cache. Coordinator stores 6 face URLs (px, nx, py, ny, pz, nz). */
-export type RawSkyboxData = readonly [string, string, string, string, string, string];
-
 /**
  * Input shape for texture/skybox resolution.
- * ResourceCachePort returns unknown; we narrow via type guards.
+ * Matches ResourceCachePort: getTexture → Blob | null, getSkyboxTexture → string[] | null.
  */
 export interface RawResourceCacheInput {
-  getTexture?(ref: ResourceRef<'texture'>): unknown;
-  getSkyboxTexture?(ref: ResourceRef<'skybox'>): unknown;
-}
-
-function isRawTextureData(raw: unknown): raw is RawTextureData {
-  if (raw instanceof Blob) return true;
-  return Array.isArray(raw) && raw.length > 0 && typeof raw[0] === 'string';
-}
-
-function isRawSkyboxData(raw: unknown): raw is RawSkyboxData {
-  return (
-    Array.isArray(raw) &&
-    raw.length >= 6 &&
-    raw.slice(0, 6).every((x): x is string => typeof x === 'string')
-  );
-}
-
-function textureDataToLoadUrl(raw: RawTextureData): string {
-  if (raw instanceof Blob) return URL.createObjectURL(raw);
-  return raw[0];
+  getTexture?(ref: ResourceRef<'texture'>): Blob | null;
+  getSkyboxTexture?(ref: ResourceRef<'skybox'>): string[] | null;
 }
 
 function cacheKey(ref: ResourceRef<'texture' | 'skybox'>): string {
@@ -42,7 +18,6 @@ function cacheKey(ref: ResourceRef<'texture' | 'skybox'>): string {
 /**
  * Creates THREE.Texture/CubeTexture resolvers from a raw cache (Blob, string[]).
  * Parses on demand and caches parsed THREE objects.
- * Accepts cache returning unknown; narrows via type guards.
  */
 export function createTextureResolversFromRawCache(
   rawCache: RawResourceCacheInput,
@@ -58,15 +33,15 @@ export function createTextureResolversFromRawCache(
         const cached = textureCache.get(key);
         if (cached) return cached;
 
-        const raw = rawCache.getTexture!(ref);
-        if (!isRawTextureData(raw)) return null;
+        const blob = rawCache.getTexture!(ref);
+        if (!blob) return null;
 
-        const url = textureDataToLoadUrl(raw);
+        const url = URL.createObjectURL(blob);
         const texture = textureLoader.load(
           url,
-          () => (raw instanceof Blob ? URL.revokeObjectURL(url) : undefined),
+          () => URL.revokeObjectURL(url),
           undefined,
-          () => (raw instanceof Blob ? URL.revokeObjectURL(url) : undefined),
+          () => URL.revokeObjectURL(url),
         );
         textureCache.set(key, texture);
         return texture;
@@ -79,10 +54,10 @@ export function createTextureResolversFromRawCache(
         const cached = skyboxCache.get(key);
         if (cached) return cached;
 
-        const raw = rawCache.getSkyboxTexture!(ref);
-        if (!isRawSkyboxData(raw)) return null;
+        const urls = rawCache.getSkyboxTexture!(ref);
+        if (!urls || urls.length < 6) return null;
 
-        const cubeTexture = cubeTextureLoader.load(raw.slice(0, 6));
+        const cubeTexture = cubeTextureLoader.load(urls.slice(0, 6));
         skyboxCache.set(key, cubeTexture);
         return cubeTexture;
       }

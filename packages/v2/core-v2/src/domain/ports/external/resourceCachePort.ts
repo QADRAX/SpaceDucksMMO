@@ -11,11 +11,11 @@ export interface ResourceCachePort {
   /** Sync lookup for mesh geometry. Returns null if not yet loaded. */
   getMeshData(ref: ResourceRef<'mesh'>): MeshGeometryFileData | null;
 
-  /** Sync lookup for texture. Raw cache returns Blob | null. Rendering adapts to THREE.Texture. */
-  getTexture?(ref: ResourceRef<'texture'>): unknown | null;
+  /** Sync lookup for texture. Returns Blob | null. Rendering adapts to THREE.Texture. */
+  getTexture?(ref: ResourceRef<'texture'>): Blob | null;
 
-  /** Sync lookup for skybox. Raw cache returns string[] | null (URLs). Rendering adapts to THREE.CubeTexture. */
-  getSkyboxTexture?(ref: ResourceRef<'skybox'>): unknown | null;
+  /** Sync lookup for skybox. Returns string[] | null (6 face URLs). Rendering adapts to THREE.CubeTexture. */
+  getSkyboxTexture?(ref: ResourceRef<'skybox'>): string[] | null;
 
   /** Sync lookup for script source. Returns null if not yet loaded. */
   getScriptSource(ref: ResourceRef<'script'>): string | null;
