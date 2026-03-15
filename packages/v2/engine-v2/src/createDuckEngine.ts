@@ -9,6 +9,7 @@ import {
   createLogStackDiagnosticPort,
   createConsoleSink,
 } from '@duckengine/diagnostic-v2';
+import { createNoopInputPort } from '@duckengine/input-node-v2';
 import type {
   DuckEngineAPI,
   InputPort,
@@ -49,11 +50,6 @@ const defaultDiagnostic = createLogStackDiagnosticPort({
   sinks: [createConsoleSink()],
 });
 
-const noopInput: InputPort = {
-  isKeyPressed: () => false,
-  getMouseDelta: () => ({ x: 0, y: 0 }),
-  getMouseButtons: () => ({ left: false, right: false, middle: false }),
-};
 
 /**
  * Creates a fully configured DuckEngine with core + physics + rendering + scripting + resource coordinator.
@@ -85,7 +81,7 @@ export async function createDuckEngine(
   const {
     resourceLoader,
     viewportRectProvider = createDefaultViewportRectProvider(),
-    input = noopInput,
+    input = createNoopInputPort(),
     diagnostic = defaultDiagnostic.port,
     customPorts = [],
     subsystems = {},

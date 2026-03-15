@@ -12,7 +12,22 @@ export { GizmoPortProviderDef, GIZMO_PORT_PROVIDER_ID } from './gizmoPortProvide
 export type { GizmoPortProvider } from './gizmoPortProvider';
 
 export { InputPortDef, INPUT_PORT_ID } from './inputPortDef';
-export type { InputPort, InputMouseDelta, InputMouseButtons } from './inputPort';
+export {
+  INPUT_ACTION_NAMES,
+  INPUT_ACTION_NAMES_LIST,
+  isInputActionName,
+} from './inputActionNames';
+export type { InputActionName } from './inputActionNames';
+export type {
+  InputPort,
+  InputMouseDelta,
+  InputMouseButtons,
+  InputMousePosition,
+  InputWheelDelta,
+  InputGamepadState,
+  InputGamepadButton,
+  InputGamepadAxis,
+} from './inputPort';
 
 export { ResourceCachePortDef } from './resourceCachePortDef';
 export type { ResourceCachePort } from './resourceCachePort';

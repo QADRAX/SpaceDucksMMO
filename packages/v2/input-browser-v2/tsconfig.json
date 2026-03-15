@@ -13,17 +13,10 @@
     "noUnusedParameters": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "lib": ["ES2020", "DOM"],
+    "types": []
   },
-  "references": [
-    { "path": "../core-v2" },
-    { "path": "../diagnostic-v2" },
-    { "path": "../input-node-v2" },
-    { "path": "../physics-rapier" },
-    { "path": "../rendering-three-webgpu-v2" },
-    { "path": "../resource-coordinator-v2" },
-    { "path": "../scripting-lua" }
-  ],
+  "references": [{ "path": "../core-v2" }],
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]
 }

@@ -13,7 +13,8 @@
   },
   "scripts": {
     "build": "tsc -b tsconfig.json",
-    "test": "node --experimental-vm-modules ../../../node_modules/jest/bin/jest.js",
+    "test": "npm run typecheck && node --experimental-vm-modules ../../../node_modules/jest/bin/jest.js",
+    "typecheck": "tsc --noEmit",
     "format": "npx prettier --write \"src/**/*.ts\"",
     "format:check": "npx prettier --check \"src/**/*.ts\"",
     "clean-imports": "node consolidateImports.mjs"

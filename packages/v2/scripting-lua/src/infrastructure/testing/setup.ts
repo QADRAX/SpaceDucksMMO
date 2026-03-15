@@ -9,6 +9,7 @@ import {
     createSceneSubsystem,
     createResourceKey,
     createResourceRef,
+    INPUT_ACTION_NAMES,
 } from '@duckengine/core-v2';
 import type {
     InputPort,
@@ -50,13 +51,29 @@ export function createMockPhysicsPerSceneSubsystem() {
 
 /**
  * Creates standard mock ports used in scripting tests.
+ * Mock implements InputPort + action API (getAction, getAction2, isActionPressed)
+ * without depending on input-mappings-v2.
  */
 export function createMockPorts() {
-    const mockInput: InputPort = {
-        isKeyPressed: jest.fn(() => true),
+    // Actions that return 1 to make first_person_move tests pass (selective to avoid canceling)
+    const ACTIONS_WITH_VALUE = new Set<string>([
+        INPUT_ACTION_NAMES.moveForward,
+        INPUT_ACTION_NAMES.moveLeft,
+        INPUT_ACTION_NAMES.jump,
+        INPUT_ACTION_NAMES.sprint,
+    ]);
+    const mockInput = {
+        isKeyPressed: jest.fn((key: string) => ['w', 'a', 'space', 'shift'].includes(key.toLowerCase())),
         getMouseDelta: jest.fn(() => ({ x: 10, y: -5 })),
         getMouseButtons: jest.fn(() => ({ left: true, right: false, middle: false })),
-    };
+        getMousePosition: jest.fn(() => ({ x: 100, y: 200 })),
+        getMouseWheelDelta: jest.fn(() => 0),
+        getGamepad: jest.fn(() => null),
+        getGamepadCount: jest.fn(() => 0),
+        getAction: jest.fn((action: string) => ACTIONS_WITH_VALUE.has(action) ? 1 : 0),
+        getAction2: jest.fn(() => ({ x: 10, y: -5 })),
+        isActionPressed: jest.fn((action: string) => ACTIONS_WITH_VALUE.has(action)),
+    } as InputPort & { getAction: (a: string) => number; getAction2: (x: string, y: string) => { x: number; y: number }; isActionPressed: (a: string) => boolean };
 
     const mockGizmo: GizmoPort = {
         drawLine: jest.fn(),

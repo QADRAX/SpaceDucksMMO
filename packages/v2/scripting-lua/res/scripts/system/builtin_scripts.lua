@@ -5,6 +5,7 @@ BuiltInScripts = {
     Billboard = "builtin://billboard.lua",
     Bounce = "builtin://bounce.lua",
     DestroyAfter = "builtin://destroy_after.lua",
+    FirstPersonLook = "builtin://first_person_look.lua",
     FirstPersonMove = "builtin://first_person_move.lua",
     FollowEntity = "builtin://follow_entity.lua",
     LookAtEntity = "builtin://look_at_entity.lua",

@@ -12,4 +12,8 @@ export const InputPortDef = definePort<InputPort>(INPUT_PORT_ID)
   .addMethod('isKeyPressed')
   .addMethod('getMouseDelta')
   .addMethod('getMouseButtons')
+  .addMethod('getMousePosition')
+  .addMethod('getMouseWheelDelta')
+  .addMethod('getGamepad')
+  .addMethod('getGamepadCount')
   .build();

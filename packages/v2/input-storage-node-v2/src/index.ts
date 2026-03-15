@@ -1,0 +1,1 @@
+export { createFileBindingStorage } from './createFileBindingStorage';

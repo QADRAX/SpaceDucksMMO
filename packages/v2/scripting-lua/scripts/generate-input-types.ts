@@ -1,4 +1,14 @@
----@meta
+/**
+ * Generates res/scripts/types/input_v2.d.lua from core-v2 INPUT_ACTION_NAMES_LIST.
+ * Run: pnpm run generate:input-types
+ */
+import * as fs from 'fs';
+import * as path from 'path';
+import { INPUT_ACTION_NAMES_LIST } from '@duckengine/core-v2';
+
+const actionNameAlias = INPUT_ACTION_NAMES_LIST.map((a) => `---| "${a}"`).join('\n');
+
+const output = `---@meta
 -- ═══════════════════════════════════════════════════════════════════════
 -- DuckEngine Lua API v2 — Input
 -- Keyboard, mouse, gamepad, and action-based input.
@@ -8,15 +18,7 @@
 -- ═══════════════════════════════════════════════════════════════════════
 
 ---@alias InputActionNameV2
----| "moveForward"
----| "moveBackward"
----| "moveLeft"
----| "moveRight"
----| "jump"
----| "lookHorizontal"
----| "lookVertical"
----| "sprint"
----| "flyDown"
+${actionNameAlias}
 
 ---Mouse button state.
 ---@class MouseButtonsV2
@@ -83,3 +85,8 @@ function input.getAction2(actionX, actionY) end
 ---@param action InputActionNameV2 Action name.
 ---@return boolean pressed
 function input.isActionPressed(action) end
+`;
+
+const targetPath = path.join(__dirname, '../res/scripts/types/input_v2.d.lua');
+fs.writeFileSync(targetPath, output, 'utf-8');
+console.log('Generated:', targetPath);

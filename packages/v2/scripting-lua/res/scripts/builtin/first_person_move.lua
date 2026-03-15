@@ -1,6 +1,7 @@
 -- =======================================================================
 -- first_person_move.lua (V2)
 -- Kinematic WASD movement for spectator cameras, ghosts, and editors.
+-- Uses action-based input (agnostic of keyboard/gamepad).
 -- Does NOT require a physics rigid body — directly sets entity position.
 -- =======================================================================
 
@@ -14,7 +15,7 @@
 local FirstPersonMove = {
     schema = {
         name = "First Person Move (Kinematic) (V2)",
-        description = "WASD movement and optional flying. Moves the entity directly without physics.",
+        description = "WASD movement and optional flying. Uses action-based input (keyboard + gamepad).",
         properties = {
             moveSpeed        = { type = "number", default = 5, description = "Base walking speed (units per second)." },
             sprintMultiplier = { type = "number", default = 2, description = "Speed multiplier when holding Shift." },
@@ -24,25 +25,19 @@ local FirstPersonMove = {
 }
 
 function FirstPersonMove:update(dt)
-    local w     = Engine.Input.isKeyPressed("w")
-    local s     = Engine.Input.isKeyPressed("s")
-    local a     = Engine.Input.isKeyPressed("a")
-    local d     = Engine.Input.isKeyPressed("d")
-    local up    = Engine.Input.isKeyPressed("space")
-    local down  = Engine.Input.isKeyPressed("leftcontrol") or Engine.Input.isKeyPressed("c")
-    local shift = Engine.Input.isKeyPressed("leftshift")
+    local forward  = Engine.Input.getAction("moveForward")
+    local backward = Engine.Input.getAction("moveBackward")
+    local left     = Engine.Input.getAction("moveLeft")
+    local right    = Engine.Input.getAction("moveRight")
+    local up       = Engine.Input.getAction("jump")
+    local down     = Engine.Input.getAction("flyDown")
+    local sprint   = Engine.Input.getAction("sprint")
 
     local flyMode = self.properties.flyMode
 
-    local mv = math.vec3.new(0, 0, 0)
-    if w then mv.z = -1 end
-    if s then mv.z = 1 end
-    if a then mv.x = -1 end
-    if d then mv.x = 1 end
-
+    local mv = math.vec3.new(right - left, 0, backward - forward)
     if flyMode then
-        if up then mv.y = 1 end
-        if down then mv.y = -1 end
+        mv.y = up - down
     end
 
     if mv:length() <= 0 then return end
@@ -72,7 +67,7 @@ function FirstPersonMove:update(dt)
     if worldMove:length() == 0 then return end
     worldMove = worldMove:normalize()
 
-    local speed = self.properties.moveSpeed * (shift and self.properties.sprintMultiplier or 1)
+    local speed = self.properties.moveSpeed * (sprint > 0 and self.properties.sprintMultiplier or 1)
     local curRaw = transform.getPosition()
     local cur = math.vec3.new(curRaw.x, curRaw.y, curRaw.z)
 
