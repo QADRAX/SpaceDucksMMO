@@ -14,6 +14,8 @@ export interface ViewportRect {
  *
  * Multiple viewports can point to the same scene (split-screen,
  * minimap) or to different scenes (editor + preview).
+ *
+ * Rect is provided by ViewportRectProviderPort (consumer responsibility).
  */
 export interface Viewport {
   readonly id: ViewportId;
@@ -23,8 +25,6 @@ export interface Viewport {
   readonly cameraEntityId: EntityId;
   /** Target canvas identifier. */
   readonly canvasId: CanvasId;
-  /** Normalised region inside the canvas. */
-  readonly rect: ViewportRect;
   /** Whether this viewport is rendered. */
   readonly enabled: boolean;
   /** Per-viewport debug visualization toggles (e.g. collider, mesh). */
@@ -34,6 +34,8 @@ export interface Viewport {
 /**
  * Mutable viewport state operated on by application-layer viewport use cases.
  * Created by `createViewport`, mutated by viewport use-case functions.
+ *
+ * Rect is provided by ViewportRectProviderPort (consumer responsibility).
  */
 export interface ViewportState {
   readonly id: ViewportId;
@@ -43,8 +45,6 @@ export interface ViewportState {
   cameraEntityId: EntityId;
   /** Target canvas identifier. */
   canvasId: CanvasId;
-  /** Normalised region inside the canvas. */
-  rect: ViewportRect;
   /** Whether this viewport is rendered. */
   enabled: boolean;
   /** Per-viewport debug visualization toggles (e.g. collider, mesh). */

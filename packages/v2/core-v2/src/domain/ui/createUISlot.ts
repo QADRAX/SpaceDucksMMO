@@ -1,7 +1,7 @@
 import type { SceneId, UISlotId, ViewportId } from '../ids';
 import type { ViewportRect } from '../viewport';
 import type { UISlotState } from './types';
-import { DEFAULT_RECT } from '../viewport/constants';
+import { FULL_RECT } from '../viewport/constants';
 
 /** Parameters for creating a UI slot. */
 export interface CreateUISlotParams {
@@ -20,7 +20,7 @@ export function createUISlot(params: CreateUISlotParams): UISlotState {
     slotId: params.slotId,
     sceneId: params.sceneId,
     viewportId: params.viewportId ?? null,
-    rect: { ...DEFAULT_RECT, ...params.rect },
+    rect: { ...FULL_RECT, ...params.rect },
     zIndex: params.zIndex ?? 0,
     enabled: params.enabled ?? true,
     descriptor: params.descriptor ?? {},

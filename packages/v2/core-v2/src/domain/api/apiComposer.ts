@@ -68,9 +68,13 @@ export function composeAPI(engine: EngineState): APIComposer {
           const fail = runGuards(useCase.guards, rootState, state, params);
           if (fail) return fail;
         }
+        const viewportContext =
+          domainName === 'Viewport' && useCase.domain === 'viewport'
+            ? { engine: rootState }
+            : undefined;
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any --
            Runtime safety is guaranteed by the APIComposer.add() type checks. */
-        return wrapResult((useCase as any).execute(state, params));
+        return wrapResult((useCase as any).execute(state, params, viewportContext));
       };
     }
     return bound;

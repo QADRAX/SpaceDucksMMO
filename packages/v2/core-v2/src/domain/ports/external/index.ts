@@ -21,3 +21,6 @@ export type { UIRendererPort } from './uiRendererPort';
 
 export { ViewportOverlayProviderPortDef } from './viewportOverlayProviderPortDef';
 export type { ViewportOverlayProviderPort } from './viewportOverlayProviderPort';
+
+export { ViewportRectProviderPortDef } from './viewportRectProviderPortDef';
+export type { ViewportRectProviderPort } from './viewportRectProviderPort';

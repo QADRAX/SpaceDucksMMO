@@ -65,16 +65,26 @@ export interface BoundUseCase<TParams, TOutput> {
     execute(params: TParams): TOutput;
 }
 
+/** Context passed to viewport use cases that need engine access (e.g. resizeViewport). */
+export interface ViewportUseCaseContext {
+  readonly engine: EngineState;
+}
+
 /**
  * A use case that operates on a ViewportState.
  * Tagged with `domain: 'viewport'` for runtime and compile-time discrimination.
+ * Execute may receive optional context with engine for port access.
  */
-export interface ViewportUseCase<TParams = void, TOutput = void> extends UseCase<
-    ViewportState,
-    TParams,
-    TOutput
+export interface ViewportUseCase<TParams = void, TOutput = void> extends Omit<
+    UseCase<ViewportState, TParams, TOutput>,
+    'execute'
 > {
     readonly domain: 'viewport';
+    execute(
+        state: ViewportState,
+        params: TParams,
+        context?: ViewportUseCaseContext,
+    ): TOutput;
 }
 
 /** Concrete guard type for viewport use cases. */

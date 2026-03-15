@@ -1,1 +1,4 @@
-export { createRenderingSubsystem } from './infrastructure/createRenderingSubsystem';
+export {
+  createRenderingSubsystem,
+  type CreateRenderingSubsystemOptions,
+} from './infrastructure/createRenderingSubsystem';

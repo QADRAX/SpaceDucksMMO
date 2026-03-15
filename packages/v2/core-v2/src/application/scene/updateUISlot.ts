@@ -3,7 +3,7 @@ import type { Result } from '../../domain/utils';
 import { ok, err } from '../../domain/utils';
 import { defineSceneUseCase } from '../../domain/useCases';
 import { emitSceneChange } from '../../domain/scene/emitSceneChange';
-import { DEFAULT_RECT } from '../../domain/viewport/constants';
+import { FULL_RECT } from '../../domain/viewport/constants';
 
 /** Parameters for the updateUISlot use case. */
 export interface UpdateUISlotParamsWithId {
@@ -27,7 +27,7 @@ export const updateUISlot = defineSceneUseCase<UpdateUISlotParamsWithId, Result<
     }
 
     if (rect !== undefined) {
-      slot.rect = { ...DEFAULT_RECT, ...slot.rect, ...rect };
+      slot.rect = { ...FULL_RECT, ...slot.rect, ...rect };
     }
     if (zIndex !== undefined) {
       slot.zIndex = zIndex;
