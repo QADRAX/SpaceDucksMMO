@@ -296,7 +296,7 @@ describe('Physics integration edge cases', () => {
 
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
-    expect(() => runFrames(api, 2, 500)).not.toThrow();
+    expect(() => runFrames(api, 2, 0.5)).not.toThrow();
   });
 
   it('collision events: getCollisionEvents returns array; after contact, pair may appear as enter or stay', async () => {

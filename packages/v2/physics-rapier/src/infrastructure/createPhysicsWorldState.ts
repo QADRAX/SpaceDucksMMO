@@ -82,10 +82,10 @@ export function createPhysicsWorldState(options?: CreatePhysicsWorldStateOptions
     bodies.removeEntityBody(world, entityId);
   }
 
-  function step(scene: SceneState, dtMs: number): void {
+  function step(scene: SceneState, dtSec: number): void {
     if (disposed) return;
     collisions.clearAccumulatedEvents();
-    const dt = Math.max(0, dtMs) / 1000;
+    const dt = Math.max(0, dtSec);
     accumulator += Math.min(dt, MAX_ACCUMULATOR_DT);
 
     const gravity = resolveSceneGravity(scene);

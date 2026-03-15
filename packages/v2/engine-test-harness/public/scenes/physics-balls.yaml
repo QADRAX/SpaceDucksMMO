@@ -1,0 +1,150 @@
+# Physics test: floor with concrete, gold balls falling, walls, camera on waypoint path.
+entities:
+  # --- Gravity (Y-down, standard Earth) ---
+  - id: gravity
+    components:
+      gravity: { x: 0, y: -9.81, z: 0 }
+
+  # --- Floor (concrete-muddy, static) ---
+  - id: floor
+    transform:
+      position: { x: 0, y: -0.25, z: 0 }
+    components:
+      boxGeometry: { width: 12, height: 0.5, depth: 12, castShadow: true, receiveShadow: true }
+      standardMaterial: textures/concrete-muddy
+      rigidBody: { bodyType: static }
+      boxCollider: { halfExtents: { x: 6, y: 0.25, z: 6 } }
+
+  # --- Walls (static, contain balls) ---
+  - id: wall-north
+    transform:
+      position: { x: 0, y: 1.5, z: 6 }
+    components:
+      boxGeometry: { width: 12, height: 3, depth: 0.5, castShadow: true }
+      standardMaterial: textures/concrete-muddy
+      rigidBody: { bodyType: static }
+      boxCollider: { halfExtents: { x: 6, y: 1.5, z: 0.25 } }
+
+  - id: wall-south
+    transform:
+      position: { x: 0, y: 1.5, z: -6 }
+    components:
+      boxGeometry: { width: 12, height: 3, depth: 0.5, castShadow: true }
+      standardMaterial: textures/concrete-muddy
+      rigidBody: { bodyType: static }
+      boxCollider: { halfExtents: { x: 6, y: 1.5, z: 0.25 } }
+
+  - id: wall-east
+    transform:
+      position: { x: 6, y: 1.5, z: 0 }
+    components:
+      boxGeometry: { width: 0.5, height: 3, depth: 12, castShadow: true }
+      standardMaterial: textures/concrete-muddy
+      rigidBody: { bodyType: static }
+      boxCollider: { halfExtents: { x: 0.25, y: 1.5, z: 6 } }
+
+  - id: wall-west
+    transform:
+      position: { x: -6, y: 1.5, z: 0 }
+    components:
+      boxGeometry: { width: 0.5, height: 3, depth: 12, castShadow: true }
+      standardMaterial: textures/concrete-muddy
+      rigidBody: { bodyType: static }
+      boxCollider: { halfExtents: { x: 0.25, y: 1.5, z: 6 } }
+
+  # --- Center target (empty entity for camera to look at) ---
+  - id: center-target
+    transform:
+      position: { x: 0, y: 1, z: 0 }
+
+  # --- Balls (gold, dynamic, sphere collider, different heights to fall in sequence) ---
+  - id: ball-1
+    transform:
+      position: { x: -2, y: 8, z: -2 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3 }
+
+  - id: ball-2
+    transform:
+      position: { x: 1, y: 7, z: 1 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3 }
+
+  - id: ball-3
+    transform:
+      position: { x: 2, y: 9, z: -1 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3 }
+
+  - id: ball-4
+    transform:
+      position: { x: -1, y: 6, z: 2 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3 }
+
+  - id: ball-5
+    transform:
+      position: { x: 0, y: 10, z: 0 }
+    components:
+      sphereGeometry: { radius: 0.3, castShadow: true }
+      standardMaterial: textures/MetalGoldFoil001
+      rigidBody: { bodyType: dynamic }
+      sphereCollider: { radius: 0.3 }
+
+  # --- Waypoints (empty, for camera path around arena, above walls) ---
+  - id: wp-1
+    transform:
+      position: { x: -5, y: 4, z: -5 }
+  - id: wp-2
+    transform:
+      position: { x: 5, y: 4, z: -5 }
+  - id: wp-3
+    transform:
+      position: { x: 5, y: 4, z: 5 }
+  - id: wp-4
+    transform:
+      position: { x: -5, y: 4, z: 5 }
+
+  # --- Camera (waypoint path + look at center) ---
+  - id: main-camera
+    transform:
+      position: { x: -5, y: 4, z: -5 }
+    components:
+      cameraView: { fov: 60 }
+      script:
+        scripts:
+          - scriptId: builtin://waypoint_path.lua
+            enabled: true
+            properties:
+              waypoints: [wp-1, wp-2, wp-3, wp-4]
+              speed: 3
+              loop: true
+              arrivalThreshold: 0.2
+          - scriptId: builtin://move_to_point.lua
+            enabled: true
+            properties:
+              duration: 2
+              easing: "linear"
+          - scriptId: builtin://look_at_entity.lua
+            enabled: true
+            properties:
+              targetEntityId: center-target
+
+  # --- Sun ---
+  - id: sun
+    transform:
+      position: { x: 5, y: 12, z: 5 }
+    components:
+      directionalLight: { intensity: 1 }

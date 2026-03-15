@@ -1,4 +1,5 @@
 import type { EulerLike, QuatLike, Vec3Like } from './types';
+import { vec3Cross, vec3Normalize } from './vec3';
 
 /**
  * Creates a quaternion from Euler angles in YXZ order.
@@ -88,4 +89,80 @@ export function quatFromDirection(dir: Vec3Like, up: Vec3Like = { x: 0, y: 1, z:
 /** Creates a QuatLike. Defaults to identity quaternion (0,0,0,1). */
 export function quat(x = 0, y = 0, z = 0, w = 1): QuatLike {
   return { x, y, z, w };
+}
+
+const DEFAULT_WORLD_UP: Vec3Like = { x: 0, y: 1, z: 0 };
+const EPS = 1e-6;
+
+/**
+ * Creates a quaternion that orients the entity to look at `target` from `position`,
+ * with the camera's up vector constrained to stay horizontal (aligned with worldUp).
+ * Prevents "neck twist" / roll when orbiting around a target.
+ *
+ * @param position - World position of the looker (e.g. camera).
+ * @param target - World position to look at.
+ * @param worldUp - World up vector. Defaults to (0,1,0).
+ */
+export function quatFromLookAt(
+  position: Vec3Like,
+  target: Vec3Like,
+  worldUp: Vec3Like = DEFAULT_WORLD_UP,
+): QuatLike {
+  const dx = target.x - position.x;
+  const dy = target.y - position.y;
+  const dz = target.z - position.z;
+  const len = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  if (len < EPS) return { x: 0, y: 0, z: 0, w: 1 };
+
+  const forward = { x: dx / len, y: dy / len, z: dz / len };
+  let right = vec3Cross(forward, worldUp);
+  const rightLen = Math.sqrt(right.x * right.x + right.y * right.y + right.z * right.z);
+
+  if (rightLen < EPS) {
+    right = Math.abs(forward.y) > 0.99
+      ? { x: 1, y: 0, z: 0 }
+      : vec3Cross(forward, { x: 0, y: 1, z: 0 });
+  }
+  right = vec3Normalize(right);
+  const up = vec3Cross(right, forward);
+
+  const rx = right.x, ry = right.y, rz = right.z;
+  const ux = up.x, uy = up.y, uz = up.z;
+  const fx = -forward.x, fy = -forward.y, fz = -forward.z;
+
+  const trace = rx + uy + fz;
+  if (trace > 0) {
+    const s = 0.5 / Math.sqrt(trace + 1);
+    return quatNormalize({
+      x: (uz - fy) * s,
+      y: (fx - rz) * s,
+      z: (ry - ux) * s,
+      w: 0.25 / s,
+    });
+  }
+  if (rx > uy && rx > fz) {
+    const s = 2 * Math.sqrt(1 + rx - uy - fz);
+    return quatNormalize({
+      x: 0.25 * s,
+      y: (ux + ry) / s,
+      z: (fx + rz) / s,
+      w: (uz - fy) / s,
+    });
+  }
+  if (uy > fz) {
+    const s = 2 * Math.sqrt(1 + uy - rx - fz);
+    return quatNormalize({
+      x: (ux + ry) / s,
+      y: 0.25 * s,
+      z: (fy + uz) / s,
+      w: (fx - rz) / s,
+    });
+  }
+  const s = 2 * Math.sqrt(1 + fz - rx - uy);
+  return quatNormalize({
+    x: (fx + rz) / s,
+    y: (fy + uz) / s,
+    z: 0.25 * s,
+    w: (ry - ux) / s,
+  });
 }

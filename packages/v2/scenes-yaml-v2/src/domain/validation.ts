@@ -100,6 +100,15 @@ function validateComponentValue(
   knownKeys.add('enabled');
   knownKeys.add('metadata');
 
+  // Allow composite vec3 keys (e.g. halfExtents) when inspector has halfExtents.x, halfExtents.y, halfExtents.z
+  for (const f of fields) {
+    const k = (f as { key: string }).key;
+    if (k.includes('.')) {
+      const parent = k.split('.')[0];
+      knownKeys.add(parent);
+    }
+  }
+
   const obj = value as Record<string, unknown>;
   for (const [key, val] of Object.entries(obj)) {
     if (!knownKeys.has(key)) {
@@ -110,6 +119,16 @@ function validateComponentValue(
       const r = validateFieldValue(field as any, val);
       if (!r.ok) {
         return fail(`${path}.${key}`, r.error.message);
+      }
+    }
+    // Validate composite vec3 (e.g. halfExtents: { x, y, z }) when no direct field match
+    if (!field && val !== undefined && typeof val === 'object' && val !== null && !Array.isArray(val)) {
+      const v = val as Record<string, unknown>;
+      if ('x' in v && 'y' in v && 'z' in v) {
+        const r = validateVec3(val, `${path}.${key}`);
+        if (!r.ok) {
+          return fail(`${path}.${key}`, r.error.message);
+        }
       }
     }
   }

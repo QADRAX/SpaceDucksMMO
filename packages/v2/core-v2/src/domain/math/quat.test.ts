@@ -5,6 +5,7 @@ import {
   quatNormalize,
   quatInvert,
   quatFromDirection,
+  quatFromLookAt,
 } from './quat';
 import { applyQuatToVec } from './vec3';
 
@@ -84,6 +85,39 @@ describe('quatFromDirection', () => {
 
   it('returns identity for zero-length direction', () => {
     const q = quatFromDirection({ x: 0, y: 0, z: 0 });
+    expect(q.w).toBeCloseTo(1);
+  });
+});
+
+describe('quatFromLookAt', () => {
+  it('orients forward (0,0,-1) toward target from position', () => {
+    const q = quatFromLookAt({ x: 5, y: 0, z: 0 }, { x: 0, y: 0, z: 0 });
+    const forward = applyQuatToVec({ x: 0, y: 0, z: -1 }, q);
+    expect(forward.x).toBeCloseTo(-1);
+    expect(forward.y).toBeCloseTo(0);
+    expect(forward.z).toBeCloseTo(0);
+  });
+
+  it('produces valid rotation with world-up constraint (no roll when orbiting horizontally)', () => {
+    const pos = { x: 3, y: 2, z: 3 };
+    const target = { x: 0, y: 2, z: 0 };
+    const q = quatFromLookAt(pos, target);
+    const forward = applyQuatToVec({ x: 0, y: 0, z: -1 }, q);
+    const up = applyQuatToVec({ x: 0, y: 1, z: 0 }, q);
+    const dir = { x: target.x - pos.x, y: target.y - pos.y, z: target.z - pos.z };
+    const len = Math.sqrt(dir.x * dir.x + dir.y * dir.y + dir.z * dir.z);
+    const expectedForward = { x: dir.x / len, y: dir.y / len, z: dir.z / len };
+    expect(forward.x).toBeCloseTo(expectedForward.x);
+    expect(forward.y).toBeCloseTo(expectedForward.y);
+    expect(forward.z).toBeCloseTo(expectedForward.z);
+    expect(up.y).toBeGreaterThan(0.5);
+  });
+
+  it('returns identity when position equals target', () => {
+    const q = quatFromLookAt({ x: 1, y: 2, z: 3 }, { x: 1, y: 2, z: 3 });
+    expect(q.x).toBeCloseTo(0);
+    expect(q.y).toBeCloseTo(0);
+    expect(q.z).toBeCloseTo(0);
     expect(q.w).toBeCloseTo(1);
   });
 });

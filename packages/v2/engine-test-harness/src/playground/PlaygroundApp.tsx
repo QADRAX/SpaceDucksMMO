@@ -29,7 +29,7 @@ export function PlaygroundApp() {
   const [loadSuccess, setLoadSuccess] = useState<string | null>(null);
   const isTestModeUrl = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'test';
   const [showLogs, setShowLogs] = useState(isTestModeUrl);
-  const [sceneList] = useState<string[]>(['gold-sphere', 'orbit-sphere']);
+  const [sceneList] = useState<string[]>(['gold-sphere', 'orbit-sphere', 'physics-balls']);
 
   useEffect(() => {
     let mounted = true;

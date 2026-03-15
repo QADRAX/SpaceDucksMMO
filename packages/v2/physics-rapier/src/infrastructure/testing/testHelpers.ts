@@ -79,14 +79,15 @@ export function addEntityWithStaticFloor(
 
 /**
  * Runs N engine update frames (each runs the physics phase).
+ * @param dtSec - Delta time in seconds per frame (default 1/60 ≈ 0.0167)
  */
 export function runFrames(
   api: DuckEngineAPI,
   count: number,
-  dtMs = 16,
+  dtSec = 1 / 60,
 ): void {
   for (let i = 0; i < count; i++) {
-    api.update({ dt: dtMs });
+    api.update({ dt: dtSec });
   }
 }
 

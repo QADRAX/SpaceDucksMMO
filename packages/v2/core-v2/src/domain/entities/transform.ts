@@ -3,8 +3,8 @@ import type { TransformState } from './types';
 import {
   applyQuatToVec,
   eulerFromQuatYXZ,
-  quatFromDirection,
   quatFromEulerYXZ,
+  quatFromLookAt,
   quatMul,
 } from '../math';
 
@@ -108,15 +108,13 @@ export function setUniformScale(t: TransformState, s: number): void {
   setScale(t, s, s, s);
 }
 
-/** Orients the transform to face a target world position. */
+/** Orients the transform to face a target world position.
+ * Uses world-up constraint (0,1,0) to prevent roll/"neck twist" when orbiting.
+ */
 export function lookAt(t: TransformState, target: Vec3Like): void {
   ensureClean(t);
-  const dir = {
-    x: target.x - t.worldPosition.x,
-    y: target.y - t.worldPosition.y,
-    z: target.z - t.worldPosition.z,
-  };
-  const e = eulerFromQuatYXZ(quatFromDirection(dir));
+  const q = quatFromLookAt(t.worldPosition, target);
+  const e = eulerFromQuatYXZ(q);
   t.localRotation.x = e.x;
   t.localRotation.y = e.y;
   t.localRotation.z = e.z;
