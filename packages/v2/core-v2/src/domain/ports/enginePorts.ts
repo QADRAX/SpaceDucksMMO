@@ -1,5 +1,6 @@
 import type { PortBinding } from '../subsystems/types';
 import type { DiagnosticPort } from './external/diagnosticPort';
+import type { PerformanceProfilingPort } from './external/performanceProfilingPort';
 import type { UIRendererPort } from './external/uiRendererPort';
 import type { ViewportOverlayProviderPort } from './external/viewportOverlayProviderPort';
 import type { SceneEventBusProviderPort } from './internal/sceneEventBusProviderPort';
@@ -15,6 +16,12 @@ export interface EnginePorts {
    * Use consoleDiagnosticPort for a default console implementation.
    */
   readonly diagnostic?: PortBinding<DiagnosticPort>;
+
+  /**
+   * Optional frame-by-frame performance profiling.
+   * When registered, updateEngine records phase timings for test reports or dev tools.
+   */
+  readonly performanceProfiling?: PortBinding<PerformanceProfilingPort>;
 
   /**
    * UI renderer adapter. Client mounts SPAs (React, Preact, etc.) in DOM containers.

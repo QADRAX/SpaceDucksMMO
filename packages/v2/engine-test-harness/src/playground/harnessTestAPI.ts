@@ -5,10 +5,18 @@
 import type { HarnessAppState } from '../infrastructure/createHarnessApp';
 import { loadSceneYaml } from '../infrastructure/createHarnessApp';
 
+export interface PerformanceReport {
+  frames: Array<{ frame: number; t: number; delta: number; fps: number }>;
+  phases: Array<{ frame: number; phase: string; duration: number }>;
+  frameTotals: Array<{ frame: number; duration: number }>;
+}
+
 export interface HarnessTestAPI {
   loadSceneYaml(yaml: string): { ok: boolean; error?: string };
   readyForScreenshot(): Promise<void>;
   getLogs?(): unknown[];
+  getPerformanceReport?(): PerformanceReport | null;
+  stopPerformanceRecording?(): void;
 }
 
 let harnessState: HarnessAppState | null = null;
@@ -29,6 +37,18 @@ export function createHarnessTestAPI(): HarnessTestAPI {
     },
     getLogs() {
       return harnessState?.logStack ? [...harnessState.logStack.getEntries()] : [];
+    },
+    getPerformanceReport(): PerformanceReport | null {
+      const pr = harnessState?.performanceReport;
+      if (!pr || pr.frames.length === 0) return null;
+      return {
+        frames: [...pr.frames],
+        phases: [...pr.phases],
+        frameTotals: [...pr.frameTotals],
+      };
+    },
+    stopPerformanceRecording() {
+      harnessState?.performanceReport?.stopRaf?.();
     },
     readyForScreenshot(): Promise<void> {
       return new Promise((resolve) => {
@@ -51,11 +71,15 @@ export function installHarnessTestAPI(api: HarnessTestAPI): void {
     loadSceneYaml?: (y: string) => { ok: boolean; error?: string };
     readyForScreenshot?: () => Promise<void>;
     getLogs?: () => unknown[];
+    getPerformanceReport?: () => PerformanceReport | null;
+    stopPerformanceRecording?: () => void;
     __harnessReady?: boolean;
   };
   w.loadSceneYaml = api.loadSceneYaml.bind(api);
   w.readyForScreenshot = api.readyForScreenshot.bind(api);
   w.getLogs = api.getLogs?.bind(api);
+  w.getPerformanceReport = api.getPerformanceReport?.bind(api);
+  w.stopPerformanceRecording = api.stopPerformanceRecording?.bind(api);
   w.__harnessReady = true;
 }
 

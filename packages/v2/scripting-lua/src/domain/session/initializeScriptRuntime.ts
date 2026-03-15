@@ -33,6 +33,7 @@ export interface ScriptRuntimeOptions {
     readonly sceneEventBusProvider?: SceneEventBusProviderPort;
     readonly resolveSource?: (scriptId: string) => Promise<string | null>;
     readonly resolveScriptSchema?: (scriptId: string) => Promise<ScriptSchema | null>;
+    readonly diagnostic?: import('@duckengine/core-v2').DiagnosticPort;
 }
 
 /**
@@ -89,5 +90,6 @@ export function initializeScriptRuntime(options: ScriptRuntimeOptions): Scriptin
         sceneEventBusProvider,
         resolveSource: options.resolveSource,
         resolveScriptSchema: options.resolveScriptSchema,
+        diagnostic: options.diagnostic,
     });
 }

@@ -1,6 +1,7 @@
 import { defineEngineUseCase } from '../../domain/useCases';
 import { guardEngineSetupComplete } from '../../domain/engine/engineGuards';
 import { FRAME_PHASES, type FramePhase, type SceneSubsystem, type EngineSubsystem } from '../../domain/subsystems';
+import { PerformanceProfilingPortDef } from '../../domain/ports';
 import type { SceneState } from '../../domain/scene';
 import type { EngineState } from '../../domain/engine';
 
@@ -21,6 +22,12 @@ function getEnginePhaseFn(subsystem: EngineSubsystem, phase: FramePhase): ((engi
   return typeof fn === 'function' ? fn : undefined;
 }
 
+function now(): number {
+  return typeof performance !== 'undefined' && typeof performance.now === 'function'
+    ? performance.now()
+    : Date.now();
+}
+
 /**
  * Advances the entire engine by one frame.
  *
@@ -30,14 +37,24 @@ function getEnginePhaseFn(subsystem: EngineSubsystem, phase: FramePhase): ((engi
  * 2. Calls engine subsystems (all phases including render).
  *
  * Respects engine-level and scene-level pause flags.
+ *
+ * When PerformanceProfilingPort is registered, records phase timings
+ * and frame totals via the port.
  */
 export const updateEngine = defineEngineUseCase<UpdateEngineParams, void>({
   name: 'updateEngine',
   guards: [guardEngineSetupComplete],
   execute(engine, { dt }) {
     const enginePaused = engine.paused;
+    const perfPort = engine.subsystemRuntime.ports.get(PerformanceProfilingPortDef.id) as
+      | { recordPhase: (p: FramePhase, ms: number) => void; recordFrameEnd: (ms: number) => void }
+      | undefined;
+
+    const frameStart = perfPort ? now() : 0;
 
     for (const phase of FRAME_PHASES) {
+      const phaseStart = perfPort ? now() : 0;
+
       // preRender: run engine subsystems first so rendering sync creates per-scene state
       // before scene subsystems (e.g. scripting onDrawGizmos) need it.
       const engineFirst = phase === 'preRender';
@@ -70,6 +87,14 @@ export const updateEngine = defineEngineUseCase<UpdateEngineParams, void>({
           if (fn) fn(engine, dt);
         }
       }
+
+      if (perfPort) {
+        perfPort.recordPhase(phase, now() - phaseStart);
+      }
+    }
+
+    if (perfPort) {
+      perfPort.recordFrameEnd(now() - frameStart);
     }
   },
 });

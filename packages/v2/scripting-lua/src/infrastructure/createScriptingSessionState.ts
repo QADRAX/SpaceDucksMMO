@@ -28,6 +28,11 @@ export function createScriptingSessionState(
     resourceCache,
   );
 
+  diagnostic?.log('debug', 'Scripting session created', {
+    subsystem: 'scripting-lua',
+    sceneId: ctx.scene.id,
+  });
+
   if (sandbox.bindDiagnostic) {
     sandbox.bindDiagnostic(diagnostic);
   }
@@ -37,5 +42,6 @@ export function createScriptingSessionState(
     engine,
     resolveSource: (id) => resolver.resolveSource(id),
     resolveScriptSchema: createBuiltInScriptSchemaResolver(),
+    diagnostic: diagnostic ?? undefined,
   });
 }

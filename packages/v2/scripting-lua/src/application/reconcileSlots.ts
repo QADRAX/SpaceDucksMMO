@@ -1,4 +1,5 @@
-import type { SubsystemEventParams, PropertyValues } from '@duckengine/core-v2';
+import type { EntityId, SubsystemEventParams, PropertyValues } from '@duckengine/core-v2';
+import type { SceneState } from '@duckengine/core-v2';
 import { defineSubsystemEventUseCase, emitSceneChange } from '@duckengine/core-v2';
 import type { ScriptingSessionState } from '../domain/session';
 import { slotKey, initScriptSlot, destroyScriptSlot } from '../domain/slots';
@@ -6,25 +7,15 @@ import { createScriptBridgeContext, ENGINE_SYSTEM_BRIDGES } from '../domain/brid
 import { createComponentAccessorPair } from '../domain/componentAccessors';
 
 /**
- * Reconciles script slots for a single entity against its ECS `script` component.
- *
- * - Creates new slots for scripts that appear in the component but have no slot yet.
- * - Destroys slots whose scripts were removed from the component.
- * - Updates the `enabled` flag on existing slots.
- *
- * New slot creation is async (source resolution) and tracked in `pending`.
+ * Core reconcile logic for a single entity. Shared by component-changed and entity-added handlers.
+ * When entities are loaded from YAML with script components already attached, only entity-added
+ * fires (component-changed does not, since components were added before the entity entered the scene).
  */
-export const reconcileSlots =
-  defineSubsystemEventUseCase<ScriptingSessionState, SubsystemEventParams, void>({
-    name: 'scripting/reconcileSlots',
-    event: 'component-changed',
-
-    execute(session: ScriptingSessionState, params: SubsystemEventParams): void {
-      const { scene } = params;
-      if (params.event.kind !== 'component-changed') return;
-      if (params.event.componentType !== 'script') return;
-
-      const entityId = params.event.entityId;
+function reconcileEntityScriptSlots(
+  session: ScriptingSessionState,
+  scene: SceneState,
+  entityId: EntityId,
+): void {
       const { slots, pending, sandbox } = session;
 
       if (sandbox.bindScriptErrorReporter) {
@@ -57,6 +48,11 @@ export const reconcileSlots =
               (e) => e.entityId === entityId && e.scriptId === ref.scriptId
             );
             if (!isPending) {
+              session.diagnostic?.log('debug', 'Script slot init', {
+                subsystem: 'scripting-lua',
+                entityId,
+                scriptId: ref.scriptId,
+              });
               initScriptSlot(
               slots,
               pending,
@@ -98,5 +94,34 @@ export const reconcileSlots =
           destroyScriptSlot(slots, sandbox, session.eventBus, entityId, slot.scriptId);
         }
       }
+}
+
+/**
+ * Reconciles script slots when script component changes.
+ */
+export const reconcileSlots =
+  defineSubsystemEventUseCase<ScriptingSessionState, SubsystemEventParams, void>({
+    name: 'scripting/reconcileSlots',
+    event: 'component-changed',
+
+    execute(session: ScriptingSessionState, params: SubsystemEventParams): void {
+      if (params.event.kind !== 'component-changed') return;
+      if (params.event.componentType !== 'script') return;
+      reconcileEntityScriptSlots(session, params.scene, params.event.entityId);
+    },
+  });
+
+/**
+ * Reconciles script slots when entity is added. Required for entities loaded from YAML
+ * with script components (component-changed does not fire for pre-attached components).
+ */
+export const reconcileSlotsOnEntityAdded =
+  defineSubsystemEventUseCase<ScriptingSessionState, SubsystemEventParams, void>({
+    name: 'scripting/reconcileSlotsOnEntityAdded',
+    event: 'entity-added',
+
+    execute(session: ScriptingSessionState, params: SubsystemEventParams): void {
+      if (params.event.kind !== 'entity-added') return;
+      reconcileEntityScriptSlots(session, params.scene, params.event.entityId);
     },
   });

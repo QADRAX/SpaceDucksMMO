@@ -7,6 +7,7 @@ import {
   createDuckEngineAPI,
   DiagnosticPortDef,
   InputPortDef,
+  PerformanceProfilingPortDef,
   createDefaultViewportRectProvider,
   type InputPort,
   type ViewportRectProviderPort,
@@ -28,6 +29,11 @@ import { createResourceCoordinatorSubsystem } from '@duckengine/resource-coordin
 import { createPhysicsSubsystem } from '@duckengine/physics-rapier-v2';
 import { createRenderingSubsystem } from '@duckengine/rendering-three-v2';
 import { createScriptingSubsystem } from '@duckengine/scripting-lua';
+import { createPerformanceProfilingPort } from './createPerformanceProfilingPort';
+import {
+  createPerformanceReportStorage,
+  type PerformanceReportStorage,
+} from './performanceReportStorage';
 
 export type HarnessMode = 'playground' | 'test';
 
@@ -86,9 +92,12 @@ export async function createHarnessEngine(
   const engine = createEngine();
   const api = createDuckEngineAPI(engine);
 
+  const performanceReport = createPerformanceReportStorage();
+
   const defaultPorts: PortBinding<unknown>[] = [
     DiagnosticPortDef.bind(diagnostic),
     InputPortDef.bind(input),
+    PerformanceProfilingPortDef.bind(createPerformanceProfilingPort(performanceReport)),
   ];
 
   const engineSubsystems: EngineSubsystem[] = [
@@ -111,6 +120,7 @@ export async function createHarnessEngine(
     api,
     logStack,
     viewportRectProvider,
+    performanceReport,
     disposeInput,
   };
 }

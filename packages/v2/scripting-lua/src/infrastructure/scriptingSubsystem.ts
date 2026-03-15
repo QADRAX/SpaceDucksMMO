@@ -1,6 +1,6 @@
 import { createSceneSubsystem } from '@duckengine/core-v2';
 import { createScriptingSessionState } from './createScriptingSessionState';
-import { reconcileSlots } from '../application/reconcileSlots';
+import { reconcileSlots, reconcileSlotsOnEntityAdded } from '../application/reconcileSlots';
 import { reconcilePendingScriptsForKey } from '../application/reconcilePendingScriptsForKey';
 import { destroyEntitySlots } from '../application/destroyEntitySlots';
 import {
@@ -26,6 +26,7 @@ export async function createScriptingSubsystem() {
     id: 'scripting-lua',
     createState: (ctx) => createScriptingSessionState(ctx, sandbox, engine),
     events: {
+      'entity-added': reconcileSlotsOnEntityAdded,
       'component-changed': reconcileSlots,
       'entity-removed': destroyEntitySlots,
       'scene-teardown': teardownSession,

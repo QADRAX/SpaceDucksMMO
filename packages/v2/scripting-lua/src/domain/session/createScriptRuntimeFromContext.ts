@@ -12,6 +12,7 @@ export interface CreateScriptRuntimeParams {
   readonly engine: LuaEngine;
   readonly resolveSource: (scriptId: string) => Promise<string | null>;
   readonly resolveScriptSchema: (scriptId: string) => Promise<ScriptSchema | null>;
+  readonly diagnostic?: import('@duckengine/core-v2').DiagnosticPort;
 }
 
 /**
@@ -42,5 +43,6 @@ export function createScriptRuntimeFromContext(
     sceneEventBusProvider,
     resolveSource: params.resolveSource,
     resolveScriptSchema: params.resolveScriptSchema,
+    diagnostic: params.diagnostic,
   });
 }

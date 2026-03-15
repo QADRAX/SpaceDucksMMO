@@ -14,6 +14,7 @@ import {
   installHarnessTestAPI,
   installHarnessTestAPIStub,
 } from './harnessTestAPI';
+import { startRafRecording } from '../infrastructure/startRafRecording';
 
 export function PlaygroundApp() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,7 +29,7 @@ export function PlaygroundApp() {
   const [loadSuccess, setLoadSuccess] = useState<string | null>(null);
   const isTestModeUrl = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'test';
   const [showLogs, setShowLogs] = useState(isTestModeUrl);
-  const [sceneList] = useState<string[]>(['gold-sphere']);
+  const [sceneList] = useState<string[]>(['gold-sphere', 'orbit-sphere']);
 
   useEffect(() => {
     let mounted = true;
@@ -41,20 +42,27 @@ export function PlaygroundApp() {
 
         const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : '/';
         const resourceLoader = createLocalResourceLoader({ baseUrl });
-        const { api, viewportRectProvider, logStack, disposeInput: di } = await createHarnessEngine({
-          resourceLoader,
-          mode: 'playground',
-          canvasElement: canvas,
-        });
+        const { api, viewportRectProvider, logStack, performanceReport, disposeInput: di } =
+          await createHarnessEngine({
+            resourceLoader,
+            mode: 'playground',
+            canvasElement: canvas,
+          });
         disposeInput = di;
 
         if (!mounted) return;
 
-        const appState = initHarnessScene(api, viewportRectProvider, canvas, logStack);
+        const appState = initHarnessScene(api, viewportRectProvider, canvas, logStack, {
+          performanceReport,
+        });
       stateRef.current = appState;
       setState(appState);
       setHarnessState(appState);
       installHarnessTestAPI(createHarnessTestAPI());
+
+      if (performanceReport) {
+        startRafRecording(performanceReport);
+      }
 
       const freeze = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('freeze') === '1';
       if (freeze) appState.frozen = true;

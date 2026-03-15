@@ -1,4 +1,5 @@
 import type {
+  DiagnosticPort,
   EntityId,
   PropertyValues,
   ScriptSchema,
@@ -51,4 +52,6 @@ export interface ScriptingSessionState {
   readonly resolveScriptSchema: (scriptId: string) => Promise<ScriptSchema | null>;
   /** Entity IDs queued for destruction (processed after frame hooks). */
   readonly pendingDestroys: EntityId[];
+  /** Optional diagnostic port for subsystem logging. */
+  readonly diagnostic?: DiagnosticPort;
 }

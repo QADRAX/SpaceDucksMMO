@@ -14,6 +14,7 @@ export interface CreateScriptingSessionParams {
   readonly sceneEventBusProvider?: SceneEventBusProviderPort;
   readonly resolveSource?: (scriptId: string) => Promise<string | null>;
   readonly resolveScriptSchema?: (scriptId: string) => Promise<ScriptSchema | null>;
+  readonly diagnostic?: import('@duckengine/core-v2').DiagnosticPort;
 }
 
 /** Creates a fresh ScriptingSessionState with empty slot maps. */
@@ -34,5 +35,6 @@ export function createScriptingSession(
     resolveSource: params.resolveSource ?? (() => Promise.resolve(null)),
     resolveScriptSchema: params.resolveScriptSchema ?? (() => Promise.resolve(null)),
     pendingDestroys: [],
+    diagnostic: params.diagnostic,
   };
 }

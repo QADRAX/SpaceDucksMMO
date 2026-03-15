@@ -43,3 +43,6 @@ export type { ViewportOverlayProviderPort } from './viewportOverlayProviderPort'
 
 export { ViewportRectProviderPortDef } from './viewportRectProviderPortDef';
 export type { ViewportRectProviderPort } from './viewportRectProviderPort';
+
+export { PerformanceProfilingPortDef } from './performanceProfilingPortDef';
+export type { PerformanceProfilingPort } from './performanceProfilingPort';

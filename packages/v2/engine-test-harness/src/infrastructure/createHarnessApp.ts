@@ -16,6 +16,7 @@ import {
 import type { DuckEngineAPI, ViewportRectProviderPort } from '@duckengine/core-v2';
 import type { LogStack } from '@duckengine/diagnostic-v2';
 import { loadSceneFromYaml, parseAndValidateSceneYaml } from '@duckengine/scenes-yaml-v2';
+import type { PerformanceReportStorage } from './performanceReportStorage';
 
 export const DEFAULT_SCENE_ID = createSceneId('main');
 export const DEFAULT_CAMERA_ID = createEntityId('harness-camera');
@@ -43,6 +44,11 @@ function createDefaultCameraEntity() {
   return entity;
 }
 
+/** Options for initHarnessScene. */
+export interface InitHarnessSceneOptions {
+  performanceReport?: PerformanceReportStorage;
+}
+
 /**
  * Initializes the harness: scene, camera, viewport, canvas registration.
  * Call after createHarnessEngine. Does not load any YAML.
@@ -52,6 +58,7 @@ export function initHarnessScene(
   viewportRectProvider: ViewportRectProviderPort,
   canvas: HTMLCanvasElement,
   logStack: LogStack,
+  options?: InitHarnessSceneOptions,
 ): HarnessAppState {
   api.addScene({ sceneId: DEFAULT_SCENE_ID });
   const sceneApi = api.scene(DEFAULT_SCENE_ID);
@@ -90,6 +97,7 @@ export function initHarnessScene(
     logStack,
     frozen: false,
     frameId: null,
+    performanceReport: options?.performanceReport,
   };
 }
 
