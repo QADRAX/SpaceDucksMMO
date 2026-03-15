@@ -1,11 +1,14 @@
 import { test, expect } from './fixtures/harnessTest';
 import { loadSceneYamlFixture } from './fixtures/loadSceneYaml';
+import { buildTestUrl, type RenderingBackend } from './fixtures/testUrl';
 
 test.use({ video: 'on' });
 
-test('physics-balls: loads scene, records video of full camera waypoint lap', async ({ page }) => {
-  test.setTimeout(90000);
-  await page.goto('/test.html?freeze=0');
+for (const backend of ['webgl', 'webgpu'] as const satisfies readonly RenderingBackend[]) {
+  test.describe(`${backend}`, () => {
+    test('physics-balls: loads scene, records video of full camera waypoint lap', async ({ page }) => {
+      test.setTimeout(90000);
+      await page.goto(buildTestUrl('/test.html', backend, { freeze: '0' }));
 
   const ready = await page.waitForFunction(
     () => (window as any).__harnessReady === true || (window as any).__harnessError,
@@ -64,7 +67,7 @@ test('physics-balls: loads scene, records video of full camera waypoint lap', as
   ).toBe(true);
 
   const screenshot = await page.screenshot({
-    path: 'test-output/physics-balls-captured.png',
+    path: `test-output/physics-balls-${backend}-captured.png`,
   });
   expect(screenshot).toBeTruthy();
   expect(screenshot.length).toBeGreaterThan(0);
@@ -74,3 +77,5 @@ test('physics-balls: loads scene, records video of full camera waypoint lap', as
     contentType: 'image/png',
   });
 });
+  });
+}

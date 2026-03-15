@@ -9,6 +9,7 @@ import {
   startUpdateLoop,
   stopUpdateLoop,
 } from './infrastructure/createHarnessApp';
+import type { RenderingBackend } from '@duckengine/rendering-three-v2';
 import {
   setHarnessState,
   createHarnessTestAPI,
@@ -16,6 +17,13 @@ import {
   installHarnessTestAPIStub,
 } from './playground/harnessTestAPI';
 import { startRafRecording } from './infrastructure/startRafRecording';
+
+function parseBackendFromUrl(): RenderingBackend {
+  const params = new URLSearchParams(window.location.search);
+  const b = params.get('backend');
+  if (b === 'webgpu' || b === 'webgl') return b;
+  return 'auto';
+}
 
 installHarnessTestAPIStub();
 
@@ -26,11 +34,13 @@ if (!canvas) throw new Error('Canvas not found');
   try {
     const baseUrl = `${window.location.origin}/`;
     const resourceLoader = createWorkerBackedResourceLoader({ baseUrl });
+    const preferBackend = parseBackendFromUrl();
     const { api, viewportRectProvider, logStack, performanceReport, disposeInput } =
       await createHarnessEngine({
         resourceLoader,
         mode: 'test',
         canvasElement: null,
+        preferBackend,
       });
 
     const appState = initHarnessScene(api, viewportRectProvider, canvas, logStack, {

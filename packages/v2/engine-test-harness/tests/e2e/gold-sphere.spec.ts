@@ -1,9 +1,12 @@
 import { test, expect } from './fixtures/harnessTest';
 import { loadSceneYamlFixture } from './fixtures/loadSceneYaml';
+import { buildTestUrl, type RenderingBackend } from './fixtures/testUrl';
 
-test('gold-sphere: loads scene, checks logs, takes screenshot', async ({ page }) => {
-  test.setTimeout(60000);
-  await page.goto('/test.html?freeze=1');
+for (const backend of ['webgl', 'webgpu'] as const satisfies readonly RenderingBackend[]) {
+  test.describe(`${backend}`, () => {
+    test('gold-sphere: loads scene, checks logs, takes screenshot', async ({ page }) => {
+      test.setTimeout(60000);
+      await page.goto(buildTestUrl('/test.html', backend, { freeze: '1' }));
 
   const ready = await page.waitForFunction(
     () => (window as any).__harnessReady === true || (window as any).__harnessError,
@@ -80,7 +83,7 @@ test('gold-sphere: loads scene, checks logs, takes screenshot', async ({ page })
   ).toBe(true);
 
   const screenshot = await page.screenshot({
-    path: 'test-output/gold-sphere-captured.png',
+    path: `test-output/gold-sphere-${backend}-captured.png`,
   });
   expect(screenshot).toBeTruthy();
   expect(screenshot.length).toBeGreaterThan(0);
@@ -90,3 +93,5 @@ test('gold-sphere: loads scene, checks logs, takes screenshot', async ({ page })
     contentType: 'image/png',
   });
 });
+  });
+}

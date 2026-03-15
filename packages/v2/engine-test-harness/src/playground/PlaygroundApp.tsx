@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createWorkerBackedResourceLoader } from '../infrastructure/createWorkerBackedResourceLoader';
 import { createHarnessEngine } from '../infrastructure/createHarnessEngine';
+import type { RenderingBackend } from '@duckengine/rendering-three-v2';
 import {
   initHarnessScene,
   loadSceneYaml,
@@ -31,6 +32,13 @@ export function PlaygroundApp() {
   const [showLogs, setShowLogs] = useState(isTestModeUrl);
   const [sceneList] = useState<string[]>(['gold-sphere', 'orbit-sphere', 'physics-balls']);
 
+  function parseBackendFromUrl(): RenderingBackend {
+    if (typeof window === 'undefined') return 'auto';
+    const b = new URLSearchParams(window.location.search).get('backend');
+    if (b === 'webgpu' || b === 'webgl') return b;
+    return 'auto';
+  }
+
   useEffect(() => {
     let mounted = true;
     let disposeInput: (() => void) | undefined;
@@ -42,11 +50,13 @@ export function PlaygroundApp() {
 
         const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : '/';
         const resourceLoader = createWorkerBackedResourceLoader({ baseUrl });
+        const preferBackend = parseBackendFromUrl();
         const { api, viewportRectProvider, logStack, performanceReport, disposeInput: di } =
           await createHarnessEngine({
             resourceLoader,
             mode: 'playground',
             canvasElement: canvas,
+            preferBackend,
           });
         disposeInput = di;
 
@@ -107,11 +117,59 @@ export function PlaygroundApp() {
     return () => clearInterval(id);
   }, [showLogs, state?.logStack]);
 
+  const currentBackend = parseBackendFromUrl();
+  const switchBackendUrl = (backend?: 'webgl' | 'webgpu') => {
+    const u = new URL(window.location.href);
+    if (backend) u.searchParams.set('backend', backend);
+    else u.searchParams.delete('backend');
+    return u.pathname + u.search;
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'sans-serif' }}>
       <header style={{ padding: '8px 16px', background: '#1a1a2e', color: '#eee', display: 'flex', alignItems: 'center', gap: 16 }}>
         <h1 style={{ margin: 0, fontSize: 18 }}>Engine Test Harness</h1>
         {isTestMode && <span style={{ background: '#444', padding: '2px 8px', borderRadius: 4 }}>Test Mode</span>}
+        <span style={{ fontSize: 12, color: '#94a3b8' }}>Renderer:</span>
+        <a
+          href={switchBackendUrl('webgl')}
+          style={{
+            padding: '4px 10px',
+            borderRadius: 4,
+            textDecoration: 'none',
+            color: currentBackend === 'webgl' ? '#fff' : '#7dd3fc',
+            background: currentBackend === 'webgl' ? '#e94560' : 'transparent',
+            fontWeight: currentBackend === 'webgl' ? 600 : 400,
+          }}
+        >
+          WebGL
+        </a>
+        <a
+          href={switchBackendUrl('webgpu')}
+          style={{
+            padding: '4px 10px',
+            borderRadius: 4,
+            textDecoration: 'none',
+            color: currentBackend === 'webgpu' ? '#fff' : '#7dd3fc',
+            background: currentBackend === 'webgpu' ? '#e94560' : 'transparent',
+            fontWeight: currentBackend === 'webgpu' ? 600 : 400,
+          }}
+        >
+          WebGPU
+        </a>
+        <a
+          href={switchBackendUrl()}
+          style={{
+            padding: '4px 10px',
+            borderRadius: 4,
+            textDecoration: 'none',
+            color: currentBackend === 'auto' ? '#fff' : '#7dd3fc',
+            background: currentBackend === 'auto' ? '#e94560' : 'transparent',
+            fontWeight: currentBackend === 'auto' ? 600 : 400,
+          }}
+        >
+          Auto
+        </a>
       </header>
 
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>

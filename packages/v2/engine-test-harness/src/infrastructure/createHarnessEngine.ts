@@ -27,7 +27,10 @@ import { createBrowserInputPort } from '@duckengine/input-browser-v2';
 import type { ResourceLoader } from '@duckengine/resource-coordinator-v2';
 import { createResourceCoordinatorSubsystem } from '@duckengine/resource-coordinator-v2';
 import { createPhysicsSubsystem } from '@duckengine/physics-rapier-v2';
-import { createRenderingSubsystem } from '@duckengine/rendering-three-v2';
+import {
+  createRenderingSubsystem,
+  type RenderingBackend,
+} from '@duckengine/rendering-three-v2';
 import { createScriptingSubsystem } from '@duckengine/scripting-lua';
 import { createPerformanceProfilingPort } from './createPerformanceProfilingPort';
 import {
@@ -48,6 +51,8 @@ export interface CreateHarnessEngineOptions {
   readonly sinks?: LogSink[];
   /** Custom port bindings merged with defaults. */
   readonly customPorts?: PortBinding<unknown>[];
+  /** Rendering backend: 'webgpu' | 'webgl' | 'auto'. Default: 'auto'. */
+  readonly preferBackend?: RenderingBackend;
 }
 
 export interface HarnessEngineResult {
@@ -72,6 +77,7 @@ export async function createHarnessEngine(
     viewportRectProvider = createDefaultViewportRectProvider(),
     sinks = [createConsoleSink()],
     customPorts = [],
+    preferBackend = 'auto',
   } = options;
 
   let disposeInput: (() => void) | undefined;
@@ -103,7 +109,7 @@ export async function createHarnessEngine(
 
   const engineSubsystems: EngineSubsystem[] = [
     createResourceCoordinatorSubsystem({ resourceLoader }),
-    createRenderingSubsystem({ viewportRectProvider, preferBackend: 'webgl' }),
+    createRenderingSubsystem({ viewportRectProvider, preferBackend }),
   ];
 
   const sceneSubsystems: SceneSubsystemFactory[] = [
