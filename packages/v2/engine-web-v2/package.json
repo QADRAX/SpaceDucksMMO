@@ -1,5 +1,5 @@
 {
-  "name": "@duckengine/engine-v2",
+  "name": "@duckengine/engine-web-v2",
   "version": "0.1.0",
   "private": false,
   "main": "dist/index.js",

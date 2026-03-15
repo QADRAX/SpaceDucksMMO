@@ -19,7 +19,7 @@ input-mappings-v2    → InputActionPort, BindingStoragePort, InputBindingsConfi
 input-browser-v2     → createBrowserInputPort({ targetElement, ... })
 input-node-v2        → createNoopInputPort() | createMockInputPort()
 input-storage-*      → implementaciones de BindingStoragePort (browser, node, etc.)
-engine-v2            → acepta input?: InputPort | InputActionPort, default = noop
+engine-web-v2        → acepta input?: InputPort | InputActionPort, default = noop
 ```
 
 **Capas:**

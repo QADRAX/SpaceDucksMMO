@@ -30,7 +30,7 @@ export interface CreateLogStackDiagnosticPortOptions {
  * Result of createLogStackDiagnosticPort.
  */
 export interface LogStackDiagnosticPortResult {
-  /** The DiagnosticPort to pass to createDuckEngine */
+  /** The DiagnosticPort (used internally by createWebEngineClient) */
   port: DiagnosticPort;
   /** The log stack (either provided or created) */
   logStack: LogStack;
@@ -44,13 +44,12 @@ export interface LogStackDiagnosticPortResult {
  *
  * @example
  * ```ts
- * const { port, logStack } = createLogStackDiagnosticPort({
+ * const client = await createWebEngineClient({
+ *   resourceLoader,
  *   sinks: [(e) => console.log(`[${e.level}]`, e.message)],
  * });
- * const api = await createDuckEngine({ diagnostic: port, ... });
- *
- * // Later: export to file, render UI, etc.
- * const entries = logStack.getEntries();
+ * // logStack is on the client
+ * const entries = client.logStack.getEntries();
  * ```
  */
 export function createLogStackDiagnosticPort(
