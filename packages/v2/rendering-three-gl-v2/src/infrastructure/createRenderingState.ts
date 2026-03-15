@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { EngineState } from '@duckengine/core-v2';
+import type { EngineState, SceneId } from '@duckengine/core-v2';
 import type { RenderEngineState } from '@duckengine/rendering-base-v2';
 import type { RendererFactory } from '@duckengine/rendering-three-common-v2';
 import {
@@ -48,6 +48,9 @@ export function createRenderingState(params: { engine: EngineState }): RenderEng
   };
 
   return {
+    ensureSceneReady(engine: EngineState, sceneId: SceneId) {
+      getOrCreateSceneState(engine, sceneId);
+    },
     sync(engine: EngineState, _dt: number) {
       clearAll();
       for (const [sceneId, scene] of engine.scenes) {

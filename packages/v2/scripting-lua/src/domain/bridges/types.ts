@@ -43,7 +43,7 @@ export type GizmoPortShape = Pick<GizmoPort, 'drawLine' | 'drawSphere' | 'drawBo
 /** External ports that bridges may optionally consume. */
 export interface BridgePorts {
   readonly physicsQuery?: PhysicsQueryPort;
-  /** Gizmo port. Resolved dynamically so rendering can register per-scene when sync runs. */
+  /** Gizmo port. Available at createState time (rendering registers in onSceneAdded). */
   readonly getGizmo?: () => GizmoPortShape | undefined;
   /** @deprecated Use getGizmo() for dynamic resolution. Static fallback for tests. */
   readonly gizmo?: GizmoPortShape;

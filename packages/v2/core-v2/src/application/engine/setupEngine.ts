@@ -93,8 +93,10 @@ export const setupEngine = defineEngineUseCase<SetupEngineParams, void>({
     if (params.sceneSubsystems && params.sceneSubsystems.length > 0) {
       engine.subsystemRuntime.sceneSubsystemFactories.push(...params.sceneSubsystems);
 
-      // Apply newly configured scene subsystems to already-existing scenes.
       for (const scene of engine.scenes.values()) {
+        for (const subsystem of engine.engineSubsystems) {
+          if (subsystem.onSceneAdded) subsystem.onSceneAdded(engine, scene);
+        }
         const subsystems = instantiateSceneSubsystems(engine, scene, params.sceneSubsystems);
         attachSceneSubsystems(engine, scene, subsystems);
       }

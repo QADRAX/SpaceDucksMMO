@@ -6,6 +6,7 @@ import type {
   EngineSubsystemUpdateParams,
   SubsystemEngineEventParams,
   EngineSubsystemSceneEventParams,
+  EngineSubsystemSceneAddedParams,
 } from './types';
 import type { EngineChangeEvent } from '../engine/engineEvents';
 import type { SceneChangeEventWithError, SceneState } from '../scene';
@@ -44,6 +45,7 @@ export function createEngineSubsystem<TState>(
     sceneEvents = {},
     phases = {},
     portProviders = [],
+    onSceneAdded: userOnSceneAdded,
     dispose,
     updateWhenPaused = false,
   } = config;
@@ -87,8 +89,19 @@ export function createEngineSubsystem<TState>(
         ) as EngineSubsystem['sceneEventHandlers'])
       : undefined;
 
+  const onSceneAdded =
+    userOnSceneAdded &&
+    ((engine: EngineState, scene: SceneState) => {
+      if (!stateRef.current) stateRef.current = stateFactory({ engine });
+      (userOnSceneAdded as SubsystemUseCase<TState, EngineSubsystemSceneAddedParams, void>).execute(
+        stateRef.current,
+        { engine, scene },
+      );
+    });
+
   return {
     portProviders: portProviders.length > 0 ? [...portProviders] : undefined,
+    onSceneAdded,
     engineEventHandlers,
     sceneEventHandlers,
     earlyUpdate: makeEnginePhaseCallback(phases.earlyUpdate, stateRef, stateFactory),

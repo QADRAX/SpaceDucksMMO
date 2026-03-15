@@ -69,6 +69,8 @@ export interface SceneSubsystem {
 export interface EngineSubsystem {
   /** Port providers run during setup before scene subsystems are instantiated. */
   readonly portProviders?: ReadonlyArray<SubsystemPortProvider>;
+  /** Called when a scene is added, before scene subsystems are instantiated. */
+  readonly onSceneAdded?: (engine: EngineState, scene: SceneState) => void;
   /** Engine-level event handlers (e.g. resource-loaded). Params omit scene. Used by setupEngine to register. */
   readonly engineEventHandlers?: Partial<
     Record<EngineChangeEvent['kind'], (engine: EngineState, event: EngineChangeEvent) => void>
@@ -207,6 +209,12 @@ export interface EngineSubsystemSceneEventParams {
   readonly event: SceneChangeEventWithError;
 }
 
+/** Params passed when a scene is added (onSceneAdded use case). */
+export interface EngineSubsystemSceneAddedParams {
+  readonly engine: EngineState;
+  readonly scene: SceneState;
+}
+
 /** Engine update params (engine + dt + ports). */
 export interface EngineSubsystemUpdateParams {
   readonly engine: EngineState;
@@ -241,6 +249,12 @@ export interface EngineSubsystemConfig<TState> {
   >;
   /** Port providers run during engine setup. */
   readonly portProviders?: ReadonlyArray<SubsystemPortProvider>;
+  /**
+   * Called when a scene is added, before scene subsystems are instantiated.
+   * Use to register per-scene ports (e.g. GizmoPort) so they are available when
+   * scene subsystems run createState. Avoids "works after first tick" patterns.
+   */
+  readonly onSceneAdded?: SubsystemUseCase<TState, EngineSubsystemSceneAddedParams, void>;
   /** Disposal use case. */
   readonly dispose?: SubsystemUseCase<TState, void, void>;
   /** If true, phase callbacks run even when engine is paused. */

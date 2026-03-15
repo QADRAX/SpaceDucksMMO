@@ -1,4 +1,4 @@
-import type { EngineState } from '@duckengine/core-v2';
+import type { EngineState, SceneId } from '@duckengine/core-v2';
 
 /**
  * Contract for the rendering engine subsystem state.
@@ -10,6 +10,12 @@ export interface RenderEngineState {
 
   /** Draw all viewports. Called in render phase. */
   render(engine: EngineState, dt: number): void;
+
+  /**
+   * Ensure per-scene state exists for the given scene (creates Three.js scene, registers GizmoPort, etc.).
+   * Called from onSceneAdded so ports are available before scene subsystems run createState.
+   */
+  ensureSceneReady(engine: EngineState, sceneId: SceneId): void;
 
   /** Release resources. */
   dispose?(): void;

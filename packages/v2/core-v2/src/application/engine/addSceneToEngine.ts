@@ -32,8 +32,10 @@ export const addSceneToEngine = defineEngineUseCase<AddSceneParams, Result<Scene
     (scene as { engine?: typeof engine }).engine = engine;
     engine.scenes.set(sceneId, scene);
 
-    // Engine-level scene subsystem factories are applied automatically to each new scene.
     runSubsystemPortProviders(engine);
+    for (const subsystem of engine.engineSubsystems) {
+      if (subsystem.onSceneAdded) subsystem.onSceneAdded(engine, scene);
+    }
     const defaultSubsystems = instantiateSceneSubsystems(
       engine,
       scene,

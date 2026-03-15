@@ -4,6 +4,7 @@ import {
   syncRender,
   renderFrame,
   disposeRender,
+  ensureSceneReady,
   reconcilePendingRenderablesForKey,
   type RenderEngineState,
 } from '@duckengine/rendering-base-v2';
@@ -23,7 +24,7 @@ export interface CreateRenderingSubsystemOptions {
  *
  * Registers:
  * - ViewportRectProviderPort (engine-level, from opts) via provideRenderingPorts
- * - GizmoPort (per-scene) when rendering creates per-scene state (createGizmoScenePortRegistration)
+ * - GizmoPort (per-scene) in onSceneAdded so it's available before scene subsystems run createState
  */
 export function createRenderingSubsystem(
   options: CreateRenderingSubsystemOptions,
@@ -41,6 +42,7 @@ export function createRenderingSubsystem(
       render: renderFrame,
     },
     portProviders: [provideRenderingPorts(viewportRectProvider)],
+    onSceneAdded: ensureSceneReady,
     dispose: disposeRender,
   });
 }

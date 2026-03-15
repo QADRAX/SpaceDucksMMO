@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import type { EngineState, SceneId } from '@duckengine/core-v2';
-import type { SceneState } from '@duckengine/core-v2';
 import {
+  createPerSceneStateManager as createPerSceneStateManagerFromCore,
   ResourceCachePortDef,
   createSubsystemPortRegistry,
+  type EngineState,
 } from '@duckengine/core-v2';
 import {
   createDefaultRenderFeatures,
@@ -12,19 +12,24 @@ import {
   type RenderContextThree,
 } from '../domain';
 import { createResolversFromResourceCache } from './createResolversFromResourceCache';
+import type { SceneState } from '@duckengine/core-v2';
 
+/**
+ * Rendering-specific options. Uses core's generic createPerSceneStateManager
+ * with a factory that creates Three.js per-scene state.
+ */
 export interface CreatePerSceneStateManagerOptions {
   /** Called when a new per-scene state is created. Use to register scene-scoped ports (e.g. GizmoPort). */
-  onSceneStateCreated?: (scene: SceneState, state: PerSceneState) => void;
+  onSceneStateCreated: (scene: SceneState, state: PerSceneState) => void;
 }
 
 /**
- * Creates per-scene state manager: resolvers, perScene map, and getOrCreateSceneState.
- * Shared by GL and WebGPU createRenderingState.
+ * Creates per-scene state manager for rendering (GL/WebGPU).
+ * Delegates orchestration to core; implements Three.js-specific createSceneState.
  */
 export function createPerSceneStateManager(
   engine: EngineState,
-  options?: CreatePerSceneStateManagerOptions,
+  options: CreatePerSceneStateManagerOptions,
 ) {
   const registry = createSubsystemPortRegistry(
     engine.subsystemRuntime.ports,
@@ -34,35 +39,22 @@ export function createPerSceneStateManager(
   const { getMeshData, getSkyboxTexture, getTexture } =
     createResolversFromResourceCache(cache);
 
-  const perScene = new Map<string, PerSceneState>();
-
-  function getOrCreateSceneState(
-    engine: EngineState,
-    sceneId: SceneId,
-  ): PerSceneState | undefined {
-    let state = perScene.get(sceneId);
-    if (state) return state;
-
-    const scene = engine.scenes.get(sceneId);
-    if (!scene) return undefined;
-
-    const threeScene = new THREE.Scene();
-    const registry = createRenderObjectRegistry();
-    const context: RenderContextThree = {
-      sceneId,
-      scene,
-      threeScene,
-      registry,
-      getMeshData,
-      getSkyboxTexture,
-      getTexture,
-    };
-    const features = createDefaultRenderFeatures();
-    state = { threeScene, registry, context, features };
-    perScene.set(sceneId, state);
-    options?.onSceneStateCreated?.(scene, state);
-    return state;
-  }
-
-  return { perScene, getOrCreateSceneState };
+  return createPerSceneStateManagerFromCore<PerSceneState>(engine, {
+    createSceneState: (_engine, scene) => {
+      const threeScene = new THREE.Scene();
+      const sceneRegistry = createRenderObjectRegistry();
+      const context: RenderContextThree = {
+        sceneId: scene.id,
+        scene,
+        threeScene,
+        registry: sceneRegistry,
+        getMeshData,
+        getSkyboxTexture,
+        getTexture,
+      };
+      const features = createDefaultRenderFeatures();
+      return { threeScene, registry: sceneRegistry, context, features };
+    },
+    onSceneStateCreated: options.onSceneStateCreated,
+  });
 }

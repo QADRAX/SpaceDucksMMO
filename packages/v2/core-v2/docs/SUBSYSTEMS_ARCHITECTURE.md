@@ -171,10 +171,147 @@ const diagnostic = ctx.ports.get(DiagnosticPortDef);        // del engine
 |------------|------|-------|--------|
 | ResourceCoordinator | ResourceCachePort | engine (port provider) | setupEngine |
 | Rendering | ViewportRectProviderPort | engine (provideRenderingPorts) | setupEngine |
-| Rendering | GizmoPort | scene.scenePorts | primer sync (createPerSceneStateManager) |
+| Rendering | GizmoPort | scene.scenePorts | onSceneAdded (antes de instantiateSceneSubsystems) |
 | Physics | PhysicsQueryPort | scene (ctx.ports.register en createState) | instantiateSceneSubsystems |
 
 ### Side effects del orden
 
 - **Port providers** corren antes de instanciar scene subsystems → los ports de engine están listos cuando scripting/physics hacen `ctx.ports.get()`.
-- **GizmoPort** se registra en el primer frame (sync) → scripting usa `getGizmo()` dinámico para resolverlo cuando ya existe.
+- **GizmoPort** se registra en `onSceneAdded` (antes de instanciar scene subsystems) → disponible en `createState` sin depender del primer tick.
+
+---
+
+## 9. Patrón genérico: engine subsystem en un archivo
+
+Para tener todos los bindings visibles en un mismo fichero, usa `createEngineSubsystem` con config plano:
+
+```ts
+// createRenderingSubsystem.ts — todo en un lugar
+export function createRenderingSubsystem(opts: CreateRenderingSubsystemOptions): EngineSubsystem {
+  return createEngineSubsystem<RenderEngineState>({
+    id: 'rendering-three-gl',
+    createState: ({ engine }) => createRenderingState({ engine }),
+    portProviders: [provideRenderingPorts(opts.viewportRectProvider)],  // engine ports
+    onSceneAdded: (state, engine, scene) => state.ensureSceneReady?.(engine, scene.id),  // scene ports
+    engineEvents: { 'resource-loaded': reconcilePendingRenderablesForKey },
+    phases: { preRender: syncRender, render: renderFrame },
+    dispose: disposeRender,
+  });
+}
+```
+
+**Resumen de bindings:**
+
+| Qué | Dónde | Cuándo |
+|-----|-------|--------|
+| ViewportRectProviderPort | portProviders | setupEngine |
+| GizmoPort | onSceneAdded → ensureSceneReady | addScene / setupEngine (antes de scene subsystems) |
+
+---
+
+## 10. Engine subsystems: per-scene vs engine-level
+
+No todos los engine subsystems tienen estado por escena:
+
+| Subsistema | Estado | Usa createPerSceneStateManager |
+|------------|--------|--------------------------------|
+| **Rendering** | Engine + per-scene (Three.js scene, GizmoPort por escena) | Sí |
+| **ResourceCoordinator** | Solo engine (cache global, loader) | No |
+
+**ResourceCoordinator** reacciona a scene events (entity-added, component-changed) pero no mantiene estado por escena: el cache es global, las cargas son desencadenadas por eventos.
+
+**Rendering** necesita estado por escena (Three.js Scene, registry, GizmoPort). Usa `createPerSceneStateManager` de core-v2:
+
+```ts
+// core-v2: genérico
+createPerSceneStateManager<TState>(engine, {
+  createSceneState: (engine, scene) => TState,
+  onSceneStateCreated: (scene, state) => void,
+}) => { perScene, getOrCreateSceneState }
+```
+
+Los paquetes (rendering-three-common) implementan la factory `createSceneState` con su lógica específica; core orquesta el Map y el callback.
+
+---
+
+## 11. Análisis: Engine vs Scene — modelo mental y coherencia
+
+### Diferencia real (no solo "global vs por escena")
+
+| Aspecto | SceneSubsystem | EngineSubsystem |
+|---------|----------------|-----------------|
+| **Instancias** | Una por escena | Una por engine |
+| **Contexto createState** | `ctx: { engine, scene, ports }` | `ctx: { engine }` |
+| **Quién itera** | Core itera `scene.subsystems` por fase | Core itera `engine.engineSubsystems` por fase |
+| **Fase render** | No tiene | Sí (único que dibuja) |
+| **Visibilidad** | Una escena | Todas las escenas |
+| **Ports** | `ctx.ports.register` → scene.scenePorts | portProviders → engine; onSceneAdded → scene.scenePorts |
+
+**Conclusión:** Engine = visibilidad cross-scene + fase render. Scene = una escena, sin render.
+
+---
+
+### Rendering: ¿por qué no es un SceneSubsystem?
+
+Rendering necesita:
+1. **Fase render** — solo engine subsystems la tienen.
+2. **Visibilidad cross-scene** — viewports pueden apuntar a distintas escenas; el render itera viewports.
+3. **Estado por escena** — Three.js Scene, GizmoPort por escena.
+
+Si fuera SceneSubsystem: no tendría fase render. El "render" tendría que vivir en otro sitio (engine). Y el engine necesitaría acceder al estado de rendering de cada escena. Eso implica que el engine tendría que conocer la estructura interna de un scene subsystem concreto → acoplamiento fuerte.
+
+**Patrón actual:** Engine subsystem con estado interno por escena (`createPerSceneStateManager`). El engine subsystem, en su preRender, itera escenas y hace sync. En su render, itera viewports y dibuja. El estado por escena es detalle de implementación, no un SceneSubsystem registrado en core.
+
+---
+
+### ¿Engine compone Scene?
+
+**Idea:** Un engine subsystem que internamente crea/orquestra scene subsystems.
+
+**Problemas:**
+1. **Doble registro:** Los scene subsystems se crean en `instantiateSceneSubsystems` desde `sceneSubsystemFactories`. Si rendering inyectara los suyos, habría dos flujos de creación.
+2. **Orden:** GizmoPort debe existir antes de que scripting corra onDrawGizmos. Hoy `onSceneAdded` corre antes de `instantiateSceneSubsystems`. Si rendering aportara scene subsystems, su orden respecto a scripting tendría que ser explícito.
+3. **Fase render:** El "per-scene" de rendering no tiene fase render. El render es engine-level (iterar viewports). Un scene subsystem de rendering solo tendría preRender (sync). El engine seguiría necesitando su fase render. La composición no simplifica el flujo.
+
+**Recomendación:** Mantener el patrón actual. `createPerSceneStateManager` + `onSceneAdded` es suficiente. El estado por escena es interno al engine subsystem; no hace falta formalizarlo como SceneSubsystem.
+
+---
+
+### Capas: use case, domain, infra (Rendering)
+
+| Capa | Qué | Dónde |
+|------|-----|-------|
+| **Domain** | `RenderEngineState` (sync, render, ensureSceneReady, dispose) | rendering-base-v2/domain |
+| **Application** | `syncRender`, `renderFrame`, `ensureSceneReady`, `disposeRender` | rendering-base-v2/application |
+| **Infrastructure** | `createRenderingState`, `createPerSceneStateManager`, `syncSceneToRenderTree`, `renderViewports`, `createGizmoScenePortRegistration` | rendering-three-gl, rendering-three-common |
+
+**Flujo:** Use case (thin) → `state.sync()` / `state.render()` → implementación en infra.
+
+El use case es un adaptador: traduce la fase del subsystem al contrato del state. La lógica real está en la implementación del state (infra). El domain es el contrato; no contiene lógica de negocio.
+
+**Posible confusión:** Parece que "perdemos" el use case porque solo delega. Pero el patrón es correcto: Application adapta, Domain define contrato, Infra implementa. La orquestación (iterar escenas, sync, render) vive en infra porque depende de Three.js, viewports, etc.
+
+---
+
+### Duplicidades y consistencia
+
+| Patrón | Estado | Acción |
+|--------|--------|--------|
+| createPerSceneStateManager | Core (genérico) + rendering-three-common (wrapper) | OK — delegación clara |
+| define vs create | defineEngineSubsystem, defineSceneSubsystem vs create* | Preferir create*; migrar UI cuando toque |
+| Port providers | provideRenderingPorts, provideResourceCoordinatorPorts | Mismo patrón; opcional: helper genérico |
+| Use case → phase | Todos usan defineSubsystemUseCase | Consistente |
+
+---
+
+### Modelo mental final
+
+1. **Scene subsystem:** Una instancia por escena. Core lo crea, lo adjunta, lo invoca por fase. Recibe `ctx.ports` (merged). Registra ports en scene.
+
+2. **Engine subsystem:** Una instancia por engine. Core lo invoca por fase (incl. render). Puede tener:
+   - Solo estado engine (ResourceCoordinator)
+   - Estado engine + estado por escena interno (Rendering, vía createPerSceneStateManager)
+
+3. **Estado por escena en engine:** Es detalle de implementación. El engine subsystem usa un Map interno; no es un SceneSubsystem. Core no lo conoce.
+
+4. **Capas:** Domain = contrato. Application = use cases (adaptadores). Infra = implementación.
