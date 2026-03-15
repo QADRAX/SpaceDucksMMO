@@ -14,7 +14,6 @@ export function createResourceRuntimeCache(): ResourceCachePort {
   const textureCache = new Map<string, Blob>();
   const skyboxCache = new Map<string, string[]>();
   const scriptCache = new Map<string, string>();
-  const scriptLoadInProgress = new Map<string, Promise<void>>();
 
   return {
     getMeshData(ref: ResourceRef<'mesh'>): MeshGeometryFileData | null {
@@ -31,24 +30,6 @@ export function createResourceRuntimeCache(): ResourceCachePort {
 
     getScriptSource(ref: ResourceRef<'script'>): string | null {
       return scriptCache.get(cacheKey(ref)) ?? null;
-    },
-
-    async getScriptSourceOrWait(ref: ResourceRef<'script'>): Promise<string | null> {
-      const key = cacheKey(ref);
-      const cached = scriptCache.get(key);
-      if (cached !== undefined) return cached;
-
-      const pending = scriptLoadInProgress.get(key);
-      if (pending) {
-        await pending;
-        return scriptCache.get(key) ?? null;
-      }
-      return null;
-    },
-
-    registerLoadInProgress(ref: ResourceRef<'script'>, promise: Promise<void>): void {
-      scriptLoadInProgress.set(cacheKey(ref), promise);
-      promise.finally(() => scriptLoadInProgress.delete(cacheKey(ref)));
     },
 
     storeMeshData(ref: ResourceRef<'mesh'>, data: MeshGeometryFileData): void {

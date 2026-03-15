@@ -20,12 +20,6 @@ export interface ResourceCachePort {
   /** Sync lookup for script source. Returns null if not yet loaded. */
   getScriptSource(ref: ResourceRef<'script'>): string | null;
 
-  /** When not in cache but load in progress, wait and return. For script resolver. */
-  getScriptSourceOrWait?(ref: ResourceRef<'script'>): Promise<string | null>;
-
-  /** Coordinator-only: register in-flight load so getScriptSourceOrWait can await. */
-  registerLoadInProgress?(ref: ResourceRef<'script'>, promise: Promise<void>): void;
-
   /** Coordinator-only: store mesh data. Called after loader.resolve + fetchFile. */
   storeMeshData?(ref: ResourceRef<'mesh'>, data: MeshGeometryFileData): void;
 

@@ -10,8 +10,6 @@ export const ResourceCachePortDef = definePort<ResourceCachePort>('resourceCache
   .addMethod('getTexture')
   .addMethod('getSkyboxTexture')
   .addMethod('getScriptSource')
-  .addMethod('getScriptSourceOrWait', { async: true })
-  .addMethod('registerLoadInProgress')
   .addMethod('storeMeshData')
   .addMethod('storeTextureFromBlob', { async: true })
   .addMethod('storeSkyboxFromUrls', { async: true })

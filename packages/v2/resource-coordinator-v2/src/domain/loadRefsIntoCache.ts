@@ -111,7 +111,6 @@ async function loadScript(
   })();
 
   scriptLoadInFlight.set(key, load);
-  cache.registerLoadInProgress?.(ref, load);
   await load;
   scriptLoadInFlight.delete(key);
 }

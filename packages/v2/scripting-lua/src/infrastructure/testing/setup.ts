@@ -112,28 +112,12 @@ function cacheKey(ref: ResourceRef<any>): string {
  */
 export function createScriptOnlyResourceCache(): ResourceCachePort {
     const scriptCache = new Map<string, string>();
-    const loadInProgress = new Map<string, Promise<void>>();
 
     return {
         getMeshData: () => null,
         getTexture: () => null,
         getSkyboxTexture: () => null,
         getScriptSource: (ref) => scriptCache.get(cacheKey(ref)) ?? null,
-        getScriptSourceOrWait: async (ref) => {
-            const key = cacheKey(ref);
-            const cached = scriptCache.get(key);
-            if (cached !== undefined) return cached;
-            const pending = loadInProgress.get(key);
-            if (pending) {
-                await pending;
-                return scriptCache.get(key) ?? null;
-            }
-            return null;
-        },
-        registerLoadInProgress: (ref, promise) => {
-            loadInProgress.set(cacheKey(ref), promise);
-            promise.finally(() => loadInProgress.delete(cacheKey(ref)));
-        },
         storeMeshData: () => {},
         storeTextureFromBlob: async () => {},
         storeSkyboxFromUrls: async () => {},
