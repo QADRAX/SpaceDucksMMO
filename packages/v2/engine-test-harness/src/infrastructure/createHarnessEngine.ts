@@ -1,71 +1,85 @@
+/**
+ * Composes the engine and all subsystems directly.
+ * No engine-web-v2 dependency — full control over ports and subsystems.
+ */
 import {
   createEngine,
   createDuckEngineAPI,
   DiagnosticPortDef,
   InputPortDef,
   createDefaultViewportRectProvider,
+  type InputPort,
+  type ViewportRectProviderPort,
+  type PortBinding,
+  type EngineSubsystem,
+  type SceneSubsystemFactory,
 } from '@duckengine/core-v2';
+import type { DuckEngineAPI } from '@duckengine/core-v2';
 import {
   createLogStackDiagnosticPort,
   createConsoleSink,
 } from '@duckengine/diagnostic-v2';
 import type { LogSink } from '@duckengine/diagnostic-v2';
+import type { LogStack } from '@duckengine/diagnostic-v2';
 import { createNoopInputPort } from '@duckengine/input-node-v2';
-import type {
-  InputPort,
-  ViewportRectProviderPort,
-  PortBinding,
-} from '@duckengine/core-v2';
+import { createBrowserInputPort } from '@duckengine/input-browser-v2';
 import type { ResourceLoader } from '@duckengine/resource-coordinator-v2';
 import { createResourceCoordinatorSubsystem } from '@duckengine/resource-coordinator-v2';
 import { createPhysicsSubsystem } from '@duckengine/physics-rapier-v2';
 import { createRenderingSubsystem } from '@duckengine/rendering-three-v2';
 import { createScriptingSubsystem } from '@duckengine/scripting-lua';
-import type { EngineSubsystem, SceneSubsystemFactory } from '@duckengine/core-v2';
-import type { DuckEngineWebClient } from './types';
 
-/** Options for creating the web engine client. */
-export interface CreateWebEngineClientOptions {
-  /** Resource loader for mesh, texture, skybox, script resolution. Required for resource coordinator. */
+export type HarnessMode = 'playground' | 'test';
+
+export interface CreateHarnessEngineOptions {
   readonly resourceLoader: ResourceLoader;
-  /** Viewport rect provider for rendering layout. Default: in-memory provider. */
+  readonly mode?: HarnessMode;
+  /** For playground: canvas element for input target. Ignored in test mode. */
+  readonly canvasElement?: HTMLElement | null;
+  /** Viewport rect provider. Default: in-memory with setRect. */
   readonly viewportRectProvider?: ViewportRectProviderPort;
-  /** Input port for scripting (keyboard, mouse). Default: no-op. */
-  readonly input?: InputPort;
-  /** Log sinks (e.g. console, file, UI). Default: [createConsoleSink()]. */
+  /** Log sinks. Default: [createConsoleSink()]. */
   readonly sinks?: LogSink[];
   /** Custom port bindings merged with defaults. */
   readonly customPorts?: PortBinding<unknown>[];
 }
 
+export interface HarnessEngineResult {
+  /** Full engine API — use directly with loadSceneFromYaml, no cast needed. */
+  api: DuckEngineAPI;
+  logStack: LogStack;
+  viewportRectProvider: ViewportRectProviderPort;
+  disposeInput?: () => void;
+}
+
 /**
- * Creates a ready-to-use DuckEngine client for web apps.
- * Setup is run internally — the returned client does not expose setup or registerSubsystem.
- * logStack is included for log inspection (export, UI console).
- *
- * @example
- * ```ts
- * const client = await createWebEngineClient({
- *   resourceLoader: myWebLoader,
- *   viewportRectProvider: myLayoutProvider,
- *   sinks: [(e) => console.log(`[${e.level}]`, e.message)],
- * });
- * client.addScene({ sceneId: createSceneId('main') });
- * client.scene(createSceneId('main')).setupScene({});
- * client.update({});
- * const entries = client.logStack.getEntries();
- * ```
+ * Composes the engine with all subsystems. In playground mode, uses real input.
  */
-export async function createWebEngineClient(
-  options: CreateWebEngineClientOptions,
-): Promise<DuckEngineWebClient> {
+export async function createHarnessEngine(
+  options: CreateHarnessEngineOptions,
+): Promise<HarnessEngineResult> {
   const {
     resourceLoader,
+    mode = 'playground',
+    canvasElement = null,
     viewportRectProvider = createDefaultViewportRectProvider(),
-    input = createNoopInputPort(),
     sinks = [createConsoleSink()],
     customPorts = [],
   } = options;
+
+  let disposeInput: (() => void) | undefined;
+
+  const input: InputPort =
+    mode === 'playground' && canvasElement
+      ? (() => {
+          const { port, dispose } = createBrowserInputPort({
+            targetElement: canvasElement,
+            ignoreEditableTargets: true,
+          });
+          disposeInput = dispose;
+          return port;
+        })()
+      : createNoopInputPort();
 
   const { port: diagnostic, logStack } = createLogStackDiagnosticPort({ sinks });
 
@@ -93,8 +107,10 @@ export async function createWebEngineClient(
     sceneSubsystems,
   });
 
-  const { setup, registerSubsystem, ...client } = api;
-  void setup;
-  void registerSubsystem;
-  return { ...client, logStack } as DuckEngineWebClient;
+  return {
+    api,
+    logStack,
+    viewportRectProvider,
+    disposeInput,
+  };
 }

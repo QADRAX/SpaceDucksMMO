@@ -4,6 +4,7 @@ import {
   ResourceCachePortDef,
   PhysicsQueryPortDef,
 } from '@duckengine/core-v2';
+import { initRapier } from './rapier';
 import { createPhysicsWorldState } from './createPhysicsWorldState';
 import { createPhysicsQueryPortImpl } from './physicsQueryPortImpl';
 import { addEntityToPhysics, removeEntityFromPhysics, onComponentChangedPhysics, onHierarchyChangedPhysics, stepPhysics, disposePhysics } from '../application';
@@ -12,12 +13,14 @@ import type { PhysicsWorldState } from './types';
 
 /**
  * Creates the scene subsystem factory for Rapier physics.
- * Register via api.setup({ sceneSubsystems: [createPhysicsSubsystem()] }).
+ * Initializes Rapier WASM internally — consumers do not need to call initRapier().
+ * Register via api.setup({ sceneSubsystems: [await createPhysicsSubsystem()] }).
  * Each scene gets its own Rapier World and registers the PhysicsQueryPort with id 'io:physics-query'
  * in the scene's port registry (merged with engine ports), so scripting resolves the correct scene's physics.
  * All logging is routed through the engine's diagnostic port (no console.*).
  */
-export function createPhysicsSubsystem() {
+export async function createPhysicsSubsystem() {
+  await initRapier();
   return createSceneSubsystem<PhysicsWorldState>({
     id: 'physics-rapier',
     createState(ctx) {

@@ -1,0 +1,34 @@
+{
+  "name": "@duckengine/engine-test-harness",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b tsconfig.json && npx vite build",
+    "preview": "npx vite preview",
+    "test:e2e": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@duckengine/core-v2": "^0.1.0",
+    "@duckengine/diagnostic-v2": "^0.1.0",
+    "@duckengine/input-browser-v2": "^0.1.0",
+    "@duckengine/input-node-v2": "^0.1.0",
+    "@duckengine/physics-rapier-v2": "^0.1.0",
+    "@duckengine/rendering-three-v2": "^0.1.0",
+    "@duckengine/resource-coordinator-v2": "^0.1.0",
+    "@duckengine/scenes-yaml-v2": "^0.1.0",
+    "@duckengine/scripting-lua": "^0.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.5.0",
+    "vite": "^6.0.3"
+  }
+}

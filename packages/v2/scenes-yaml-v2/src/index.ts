@@ -3,5 +3,5 @@
  * Declarative scene definitions in YAML with validation and loading.
  * Public API: loadSceneFromYaml (infrastructure).
  */
-export { loadSceneFromYaml } from './infrastructure';
+export { loadSceneFromYaml, parseAndValidateSceneYaml } from './infrastructure';
 export type { SceneDefinition } from './domain';
