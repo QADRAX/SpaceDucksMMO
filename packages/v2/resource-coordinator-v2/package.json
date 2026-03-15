@@ -14,7 +14,7 @@
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "typecheck": "tsc --noEmit",
-    "test": "npm run typecheck"
+    "test": "npm run typecheck && node --experimental-vm-modules ../../../node_modules/jest/bin/jest.js"
   },
   "dependencies": {
     "@duckengine/core-v2": "^0.1.0"
