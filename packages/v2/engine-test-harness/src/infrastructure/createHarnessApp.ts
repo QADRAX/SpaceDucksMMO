@@ -103,13 +103,20 @@ function findFirstCameraEntityId(yamlStr: string): string | null {
 }
 
 /**
- * Loads YAML into the scene. Adds YAML entities. If the scene defines a camera,
- * sets it as the viewport camera.
+ * Loads YAML into the scene. Clears existing entities first, then adds from YAML.
+ * If the scene defines a camera, sets it as the viewport camera.
  */
 export function loadSceneYaml(
   state: HarnessAppState,
   yamlStr: string,
 ): { ok: boolean; error?: string } {
+  const sceneApi = state.api.scene(state.sceneId);
+  const listResult = sceneApi.listEntities();
+  const roots = listResult.ok ? listResult.value : [];
+  for (const e of roots) {
+    sceneApi.removeEntity({ entityId: createEntityId(e.id) });
+  }
+
   const result = loadSceneFromYaml(state.api, state.sceneId, yamlStr);
   if (!result.ok) {
     return { ok: false, error: result.error.message };
@@ -130,11 +137,7 @@ export function startUpdateLoop(state: HarnessAppState): void {
   if (state.frameId != null) return;
 
   const tick = () => {
-    if (state.frozen) {
-      state.frameId = requestAnimationFrame(tick);
-      return;
-    }
-    state.api.update({ dt: 1 / 60 });
+    state.api.update({ dt: state.frozen ? 0 : 1 / 60 });
     state.frameId = requestAnimationFrame(tick);
   };
   state.frameId = requestAnimationFrame(tick);

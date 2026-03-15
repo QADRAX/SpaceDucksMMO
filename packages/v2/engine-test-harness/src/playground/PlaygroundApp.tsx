@@ -15,26 +15,6 @@ import {
   installHarnessTestAPIStub,
 } from './harnessTestAPI';
 
-const DEFAULT_YAML = `entities:
-  - id: main-camera
-    transform:
-      position: { x: 0, y: 6, z: 8 }
-    components:
-      cameraView: { fov: 60 }
-  - id: ambient
-    components:
-      ambientLight: { intensity: 0.5 }
-  - id: sun
-    transform:
-      position: { x: 5, y: 10, z: 5 }
-    components:
-      directionalLight: { intensity: 1 }
-  - id: floor
-    components:
-      boxGeometry: { width: 10, height: 0.5, depth: 10 }
-      standardMaterial: textures/floor
-`;
-
 export function PlaygroundApp() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const stateRef = useRef<HarnessAppState | null>(null);
@@ -43,10 +23,12 @@ export function PlaygroundApp() {
     installHarnessTestAPIStub();
   }, []);
   const [state, setState] = useState<HarnessAppState | null>(null);
-  const [yaml, setYaml] = useState(DEFAULT_YAML);
+  const [yaml, setYaml] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [showLogs, setShowLogs] = useState(false);
-  const [sceneList] = useState<string[]>(['simple-floor', 'concrete-floor', 'gold-floor', 'floor-with-camera']);
+  const [loadSuccess, setLoadSuccess] = useState<string | null>(null);
+  const isTestModeUrl = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'test';
+  const [showLogs, setShowLogs] = useState(isTestModeUrl);
+  const [sceneList] = useState<string[]>(['gold-sphere']);
 
   useEffect(() => {
     let mounted = true;
@@ -57,7 +39,8 @@ export function PlaygroundApp() {
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        const resourceLoader = createLocalResourceLoader({ baseUrl: '/' });
+        const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : '/';
+        const resourceLoader = createLocalResourceLoader({ baseUrl });
         const { api, viewportRectProvider, logStack, disposeInput: di } = await createHarnessEngine({
           resourceLoader,
           mode: 'playground',
@@ -75,14 +58,6 @@ export function PlaygroundApp() {
 
       const freeze = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('freeze') === '1';
       if (freeze) appState.frozen = true;
-
-      const isTestMode = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'test';
-      if (!isTestMode) {
-        const loadResult = loadSceneYaml(appState, DEFAULT_YAML);
-        if (!loadResult.ok) {
-          setError(loadResult.error ?? 'Load failed');
-        }
-      }
 
       startUpdateLoop(appState);
       } catch (e) {
@@ -105,15 +80,24 @@ export function PlaygroundApp() {
   const handleLoad = () => {
     if (!state) return;
     setError(null);
+    setLoadSuccess(null);
     const result = loadSceneYaml(state, yaml);
     if (!result.ok) {
       setError(result.error ?? 'Load failed');
+    } else {
+      setLoadSuccess('Scene loaded');
+      setTimeout(() => setLoadSuccess(null), 2000);
     }
   };
 
-  const isTestMode =
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('mode') === 'test';
+  const isTestMode = isTestModeUrl;
+
+  const [, setLogRefresh] = useState(0);
+  useEffect(() => {
+    if (!showLogs || !state?.logStack) return;
+    const id = setInterval(() => setLogRefresh((n) => n + 1), 150);
+    return () => clearInterval(id);
+  }, [showLogs, state?.logStack]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', fontFamily: 'sans-serif' }}>
@@ -134,12 +118,23 @@ export function PlaygroundApp() {
                   <button
                     style={{ background: 'transparent', border: 'none', color: '#7dd3fc', cursor: 'pointer', padding: 0, fontSize: 13 }}
                     onClick={async () => {
+                      if (!state) return;
                       try {
-                        const res = await fetch(`/scenes/${name}`);
+                        setError(null);
+                        setLoadSuccess(null);
+                        const url = `/scenes/${name}.yaml`;
+                        const res = await fetch(url);
+                        if (!res.ok) throw new Error(`HTTP ${res.status}: ${url}`);
                         const text = await res.text();
                         setYaml(text);
-                      } catch {
-                        setError('Failed to fetch scene');
+                        const loadResult = loadSceneYaml(state, text);
+                        if (!loadResult.ok) setError(loadResult.error ?? 'Load failed');
+                        else {
+                          setLoadSuccess(`Loaded ${name}`);
+                          setTimeout(() => setLoadSuccess(null), 2000);
+                        }
+                      } catch (e) {
+                        setError(`Failed to fetch scene: ${(e as Error).message}`);
                       }
                     }}
                   >
@@ -173,19 +168,23 @@ export function PlaygroundApp() {
             onClick={handleLoad}
             style={{
               marginTop: 8,
-              padding: '8px 16px',
+              padding: '10px 20px',
               background: '#e94560',
               color: '#fff',
               border: 'none',
               borderRadius: 4,
               cursor: 'pointer',
               fontSize: 14,
+              fontWeight: 600,
             }}
           >
             Load Scene
           </button>
           {error && (
-            <div style={{ marginTop: 8, color: '#f87171', fontSize: 12 }}>{error}</div>
+            <div style={{ marginTop: 8, padding: 8, background: 'rgba(248,113,113,0.2)', color: '#f87171', fontSize: 12, borderRadius: 4 }}>{error}</div>
+          )}
+          {loadSuccess && (
+            <div style={{ marginTop: 8, color: '#4ade80', fontSize: 12 }}>✓ {loadSuccess}</div>
           )}
 
           <h2 style={{ margin: '16px 0 12px', fontSize: 14 }}>Diagnostics</h2>
@@ -207,14 +206,14 @@ export function PlaygroundApp() {
             <div
               style={{
                 marginTop: 8,
-                maxHeight: 200,
-                overflowY: 'auto',
+                maxHeight: 320,
+                overflow: 'auto',
                 padding: 8,
                 background: '#0a0a14',
                 fontSize: 11,
                 fontFamily: 'monospace',
                 whiteSpace: 'pre-wrap',
-                wordBreak: 'break-all',
+                wordBreak: 'normal',
                 border: '1px solid #333',
                 borderRadius: 4,
               }}

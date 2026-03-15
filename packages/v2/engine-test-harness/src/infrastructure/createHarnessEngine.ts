@@ -93,7 +93,7 @@ export async function createHarnessEngine(
 
   const engineSubsystems: EngineSubsystem[] = [
     createResourceCoordinatorSubsystem({ resourceLoader }),
-    createRenderingSubsystem({ viewportRectProvider }),
+    createRenderingSubsystem({ viewportRectProvider, preferBackend: 'webgl' }),
   ];
 
   const sceneSubsystems: SceneSubsystemFactory[] = [

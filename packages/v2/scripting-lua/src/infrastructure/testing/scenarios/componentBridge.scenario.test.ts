@@ -244,14 +244,14 @@ describe('Scenario: Component bridge E2E', () => {
     );
     expect(props).not.toBeNull();
     expect(props!.albedoSetOk).toBe(true);
-    expect(props!.albedoKeyRead).toBe('textures/floor_diffuse');
+    expect(props!.albedoKeyRead).toBe('textures/concrete-muddy_diffuse');
 
     const matSnap = scene.entity(ENTITY_E5).component('standardMaterial').snapshot();
     expect(matSnap.ok).toBe(true);
     const mat = (matSnap as { ok: true; value: unknown }).value as {
       albedo?: { key: string; kind: string };
     };
-    expect(mat.albedo?.key).toBe('textures/floor_diffuse');
+    expect(mat.albedo?.key).toBe('textures/concrete-muddy_diffuse');
     expect(mat.albedo?.kind).toBe('texture');
   });
 });

@@ -126,7 +126,7 @@ return {
 
     -- setResource(entityId, componentType, fieldKey, resourceKey)
     self.properties.albedoSetOk = self.Component.setResource(
-      eid, 'standardMaterial', 'albedo', 'textures/floor_diffuse'
+      eid, 'standardMaterial', 'albedo', 'textures/concrete-muddy_diffuse'
     )
 
     -- Read back the ResourceRef key to verify

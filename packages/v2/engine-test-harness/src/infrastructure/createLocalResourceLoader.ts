@@ -27,7 +27,8 @@ export interface CreateLocalResourceLoaderOptions {
 
 function normalizeBaseUrl(base: string): string {
   const b = base.endsWith('/') ? base : base + '/';
-  return b.startsWith('/') ? b : '/' + b;
+  if (b.startsWith('/') || b.startsWith('http://') || b.startsWith('https://')) return b;
+  return '/' + b;
 }
 
 function resourceJsonUrl(baseUrl: string, key: string): string {
@@ -82,8 +83,9 @@ function fallbackResolve<K extends ResourceKind>(
 
   const files: Record<string, { url: string }> = {};
   if (kind === 'texture') {
+    const last = path.split('/').pop() ?? 'basecolor';
     files.image = {
-      url: `${normalized}${path}/basecolor.jpg`,
+      url: `${normalized}${path}/${last}.png`,
     };
   } else if (kind === 'mesh') {
     files.geometry = { url: `${normalized}${path}/geometry.json` };

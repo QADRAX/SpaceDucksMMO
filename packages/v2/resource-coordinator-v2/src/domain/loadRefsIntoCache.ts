@@ -5,9 +5,16 @@ import type {
   MeshGeometryFileData,
   ResolvedResource,
 } from '@duckengine/core-v2';
-import type { ResourceLoader } from './resourceLoader';
 import { emitEngineChange } from '@duckengine/core-v2';
+import { DiagnosticPortDef } from '@duckengine/core-v2';
+import type { ResourceLoader } from './resourceLoader';
 import type { CollectedRefs } from './collectResourceRefs';
+
+function getDiagnostic(engine: EngineState) {
+  return engine.subsystemRuntime.ports.get(DiagnosticPortDef.id) as
+    | { log(level: string, msg: string, ctx?: object): void }
+    | undefined;
+}
 
 async function loadMesh(
   engine: EngineState,
@@ -38,19 +45,31 @@ async function loadTexture(
   cache: ResourceCachePort,
   ref: ResourceRef<'texture'>,
 ): Promise<void> {
+  const diag = getDiagnostic(engine);
   if (cache.getTexture?.(ref)) return;
 
   const result = await loader.resolve(ref);
-  if (result.ok === false) return;
+  if (result.ok === false) {
+    diag?.log('warn', 'Texture resolve failed', { ref: ref.key, error: (result as { error?: unknown }).error });
+    return;
+  }
 
   const resolved = result.value as ResolvedResource<'texture'>;
   const imageFile = resolved.files.image;
-  if (!imageFile?.url) return;
+  if (!imageFile?.url) {
+    diag?.log('warn', 'Texture has no image URL', { ref: ref.key });
+    return;
+  }
 
+  diag?.log('debug', 'Fetching texture', { ref: ref.key, url: imageFile.url });
   const fetchResult = await loader.fetchFile(imageFile.url, 'blob');
-  if (fetchResult.ok === false) return;
+  if (fetchResult.ok === false) {
+    diag?.log('warn', 'Texture fetch failed', { ref: ref.key, url: imageFile.url, error: (fetchResult as { error?: unknown }).error });
+    return;
+  }
 
   await cache.storeTextureFromBlob?.(ref, fetchResult.value as Blob);
+  diag?.log('debug', 'Texture loaded', { ref: ref.key, url: imageFile.url });
   emitEngineChange(engine, { kind: 'resource-loaded', ref });
 }
 
@@ -126,6 +145,16 @@ export async function loadRefsIntoCache(
   cache: ResourceCachePort,
   refs: CollectedRefs,
 ): Promise<void> {
+  const diag = getDiagnostic(engine);
+  const total = refs.meshes.length + refs.textures.length + refs.skyboxes.length + refs.scripts.length;
+  if (total > 0) {
+    diag?.log('debug', 'Loading refs into cache', {
+      meshes: refs.meshes.length,
+      textures: refs.textures.length,
+      skyboxes: refs.skyboxes.length,
+      scripts: refs.scripts.length,
+    });
+  }
   for (const ref of refs.meshes) void loadMesh(engine, loader, cache, ref);
   for (const ref of refs.textures) void loadTexture(engine, loader, cache, ref);
   for (const ref of refs.skyboxes) void loadSkybox(engine, loader, cache, ref);

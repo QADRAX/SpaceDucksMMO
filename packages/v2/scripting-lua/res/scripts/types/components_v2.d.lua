@@ -32,7 +32,7 @@ function Component.setField(entityId, componentType, fieldKey, value) end
 ---@param entityId string Entity ID.
 ---@param componentType ComponentTypeV2 Component type.
 ---@param fieldKey string Field key (e.g. "albedo", "mesh", "skybox").
----@param resourceKey string Resource key (e.g. "textures/floor").
+---@param resourceKey string Resource key (e.g. "textures/concrete-muddy").
 ---@param kindOverride? ResourceKindV2 Optional kind override when field accepts multiple.
 ---@return boolean true on success.
 function Component.setResource(entityId, componentType, fieldKey, resourceKey, kindOverride) end

@@ -42,6 +42,7 @@ export function createPerSceneStateManager(
   return createPerSceneStateManagerFromCore<PerSceneState>(engine, {
     createSceneState: (_engine, scene) => {
       const threeScene = new THREE.Scene();
+      threeScene.background = new THREE.Color(0x1a1a2e);
       const sceneRegistry = createRenderObjectRegistry();
       const context: RenderContextThree = {
         sceneId: scene.id,

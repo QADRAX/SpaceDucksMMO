@@ -20,7 +20,7 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
         lastMaterialKeyByEntity.delete(entity.id);
         return;
       }
-      const key = materialKey(comp);
+      const key = materialKey(comp, context.getTexture);
       const lastKey = lastMaterialKeyByEntity.get(entity.id);
       if (key === lastKey) return;
       const root = context.registry.get(entity.id);
@@ -43,7 +43,7 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
         const prev = mesh.material as THREE.Material;
         if (prev) prev.dispose();
         mesh.material = materialFromComponent(comp, context.getTexture);
-        lastMaterialKeyByEntity.set(entity.id, materialKey(comp));
+        lastMaterialKeyByEntity.set(entity.id, materialKey(comp, context.getTexture));
       }
     },
   };

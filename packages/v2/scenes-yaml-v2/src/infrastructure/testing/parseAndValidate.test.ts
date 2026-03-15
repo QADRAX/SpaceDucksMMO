@@ -8,7 +8,7 @@ entities:
   - id: floor
     components:
       boxGeometry: { width: 10, height: 0.5, depth: 10 }
-      standardMaterial: textures/floor
+      standardMaterial: textures/concrete-muddy
 `;
     const result = parseAndValidateSceneYaml(yaml);
     expect(result.ok).toBe(true);

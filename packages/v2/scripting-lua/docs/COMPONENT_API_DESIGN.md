@@ -63,7 +63,7 @@ self.Component.setField(entityId, componentType, fieldKey, value)
 
 -- Setear recurso por key (string)
 self.Component.setResource(entityId, componentType, fieldKey, resourceKey)
--- Ej: self.Component.setResource(self.id, 'standardMaterial', 'albedo', 'textures/floor')
+-- Ej: self.Component.setResource(self.id, 'standardMaterial', 'albedo', 'textures/concrete-muddy')
 
 -- Setear recurso con kind explícito (si el campo acepta varios)
 self.Component.setResource(entityId, componentType, fieldKey, resourceKey, kind)
@@ -80,7 +80,7 @@ local has = self.Component.has(entityId, componentType)
 
 ```lua
 -- En Lua, ResourceRef se expone como:
-{ key = "textures/floor", kind = "texture" }
+{ key = "textures/concrete-muddy", kind = "texture" }
 -- o simplificado para setear: solo el key string
 
 -- setResource(entityId, componentType, fieldKey, key)
