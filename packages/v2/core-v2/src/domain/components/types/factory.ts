@@ -33,6 +33,7 @@ import type {
   RigidBodyComponent,
   SphereColliderComponent,
   TerrainColliderComponent,
+  TrimeshColliderComponent,
 } from './physics';
 import type { NameComponent, ScriptComponent } from './gameplay';
 /** Component types that can be created through the generic factory. */
@@ -70,6 +71,7 @@ export interface ComponentByType {
   cylinderCollider: CylinderColliderComponent;
   coneCollider: ConeColliderComponent;
   terrainCollider: TerrainColliderComponent;
+  trimeshCollider: TrimeshColliderComponent;
   lensFlare: LensFlareComponent;
   postProcess: PostProcessComponent;
   script: ScriptComponent;

@@ -5,7 +5,7 @@ import {
   type ResourceRef,
 } from '@duckengine/core-v2';
 import { createResourceKey } from '@duckengine/core-v2';
-import type { EntityState } from '@duckengine/core-v2';
+import type { EntityState, TrimeshColliderComponent } from '@duckengine/core-v2';
 import type { EngineState, SceneState } from '@duckengine/core-v2';
 import { PLAIN_MATERIAL_COMPONENT_TYPES } from '@duckengine/core-v2';
 
@@ -40,6 +40,11 @@ export function collectRefsFromEntity(entity: EntityState): CollectedRefs {
   const customGeom = getComponent(entity, 'customGeometry') as { mesh?: ResourceRef<'mesh'> } | undefined;
   if (customGeom?.mesh && isResourceRef(customGeom.mesh)) {
     meshes.push(customGeom.mesh as ResourceRef<'mesh'>);
+  }
+
+  const trimeshCol = getComponent(entity, 'trimeshCollider') as TrimeshColliderComponent | undefined;
+  if (trimeshCol?.mesh && isResourceRef(trimeshCol.mesh)) {
+    meshes.push(trimeshCol.mesh);
   }
 
   for (const matType of PLAIN_MATERIAL_COMPONENT_TYPES) {

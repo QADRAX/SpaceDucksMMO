@@ -98,6 +98,10 @@ function createColliderDesc(
       };
       break;
     }
+    case 'trimeshCollider':
+      // Placeholder until mesh data is resolved from cache; reconcilePendingPhysicsForKey syncs when mesh loads.
+      desc = R.ColliderDesc.ball(0.5);
+      break;
     default:
       desc = R.ColliderDesc.ball(0.5);
   }

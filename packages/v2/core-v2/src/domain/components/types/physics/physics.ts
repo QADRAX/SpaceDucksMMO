@@ -1,3 +1,4 @@
+import type { ResourceRef } from '../../../resources';
 import type { ComponentBase, ComponentType } from '../core';
 
 /** Supported rigid body types. */
@@ -80,6 +81,11 @@ export interface TerrainColliderComponent extends ColliderBaseComponent<'terrain
   heightfield: TerrainHeightfield;
 }
 
+/** Trimesh collider from mesh resource (vertices + indices). */
+export interface TrimeshColliderComponent extends ColliderBaseComponent<'trimeshCollider', TrimeshColliderComponent> {
+  mesh: ResourceRef<'mesh'>;
+}
+
 /** Union of all collider component types (for APIs that accept any collider shape). */
 export type ColliderComponent =
   | BoxColliderComponent
@@ -87,7 +93,8 @@ export type ColliderComponent =
   | CapsuleColliderComponent
   | CylinderColliderComponent
   | ConeColliderComponent
-  | TerrainColliderComponent;
+  | TerrainColliderComponent
+  | TrimeshColliderComponent;
 
 /** Union of currently supported physics components. */
 export type PhysicsComponent =

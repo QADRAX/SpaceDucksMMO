@@ -10,6 +10,7 @@ export function getColliderComponent(entity: EntityState): ColliderComponent | u
     (getComponent(entity, 'capsuleCollider') as ColliderComponent | undefined) ??
     (getComponent(entity, 'cylinderCollider') as ColliderComponent | undefined) ??
     (getComponent(entity, 'coneCollider') as ColliderComponent | undefined) ??
-    (getComponent(entity, 'terrainCollider') as ColliderComponent | undefined)
+    (getComponent(entity, 'terrainCollider') as ColliderComponent | undefined) ??
+    (getComponent(entity, 'trimeshCollider') as ColliderComponent | undefined)
   );
 }

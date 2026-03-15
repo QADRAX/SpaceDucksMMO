@@ -8,6 +8,7 @@ import type {
   CylinderColliderComponent,
   ConeColliderComponent,
   TerrainColliderComponent,
+  TrimeshColliderComponent,
 } from '../../types/physics/physics';
 
 /** Component types that affect physics (rigid body + all colliders). Used e.g. to re-sync on component change. */
@@ -19,6 +20,7 @@ export const PHYSICS_RELATED_COMPONENT_TYPES: readonly ComponentType[] = [
   'cylinderCollider',
   'coneCollider',
   'terrainCollider',
+  'trimeshCollider',
 ];
 
 /** Type guard: true if `t` is a physics-related component type (rigid body or collider). */
@@ -33,6 +35,7 @@ const COLLIDER_TYPES = [
   'cylinderCollider',
   'coneCollider',
   'terrainCollider',
+  'trimeshCollider',
 ] as const;
 
 const COLLIDER_COMMON_FIELDS = [
@@ -209,6 +212,23 @@ export const TERRAIN_COLLIDER_SPEC: ComponentSpec<TerrainColliderComponent> = {
   },
 };
 
+export const TRIMESH_COLLIDER_SPEC: ComponentSpec<TrimeshColliderComponent> = {
+  metadata: {
+    ...COLLIDER_META_BASE,
+    type: 'trimeshCollider',
+    label: 'Trimesh Collider',
+    icon: 'Box',
+    conflicts: COLLIDER_TYPES.filter(t => t !== 'trimeshCollider'),
+    inspector: {
+      fields: [
+        { key: 'mesh', label: 'Mesh Resource', type: 'reference' },
+        ...COLLIDER_COMMON_FIELDS,
+      ],
+    },
+  },
+  defaults: { ...COLLIDER_BASE_DEFAULTS, mesh: undefined as any },
+};
+
 /** All physics specs keyed by type. */
 export const PHYSICS_SPECS = {
   rigidBody: RIGID_BODY_SPEC,
@@ -219,4 +239,5 @@ export const PHYSICS_SPECS = {
   cylinderCollider: CYLINDER_COLLIDER_SPEC,
   coneCollider: CONE_COLLIDER_SPEC,
   terrainCollider: TERRAIN_COLLIDER_SPEC,
+  trimeshCollider: TRIMESH_COLLIDER_SPEC,
 };

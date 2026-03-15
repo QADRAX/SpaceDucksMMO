@@ -9,6 +9,7 @@ export type {
   RigidBodyComponent,
   GravityComponent,
   ColliderComponent,
+  TrimeshColliderComponent,
 } from './domain/components/types/physics/physics';
 export * from './domain/entities';
 export * from './domain/engine';

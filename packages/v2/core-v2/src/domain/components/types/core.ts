@@ -43,6 +43,7 @@ export type ComponentType =
     | 'cylinderCollider'
     | 'coneCollider'
     | 'terrainCollider'
+    | 'trimeshCollider'
     | 'lensFlare'
     | 'postProcess'
     | 'script'
