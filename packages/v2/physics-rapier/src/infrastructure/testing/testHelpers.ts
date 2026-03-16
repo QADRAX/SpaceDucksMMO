@@ -21,6 +21,7 @@ const DEFAULT_ENTITY_ID = createEntityId('e1');
 export type RigidBodyOptions = {
   bodyType?: 'static' | 'dynamic' | 'kinematic';
   withBoxCollider?: boolean;
+  withCylinderCollider?: boolean;
   jointToParent?: 'fixed' | 'revolute' | 'spherical' | null;
 };
 
@@ -185,6 +186,11 @@ export function addRigidBodyToEntity(
   if (options.withBoxCollider) {
     scene.entity(entityId).addComponent({
       component: createComponent('boxCollider', { halfExtents: { x: 0.5, y: 0.5, z: 0.5 } }),
+    });
+  }
+  if (options.withCylinderCollider) {
+    scene.entity(entityId).addComponent({
+      component: createComponent('cylinderCollider', { radius: 0.15, halfHeight: 0.6 }),
     });
   }
 }

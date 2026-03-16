@@ -1,0 +1,7 @@
+{
+  "componentType": "script",
+  "componentData": {},
+  "files": {
+    "source": { "url": "respawn_below_height.lua" }
+  }
+}

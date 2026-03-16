@@ -29,3 +29,8 @@ function physics:applyForce(force) end
 ---@param maxDistance number Maximum raycast distance.
 ---@return RaycastHitV2|nil hit The first hit result, or nil if nothing was hit.
 function physics.raycast(origin, direction, maxDistance) end
+
+---Teleport a rigid body to world position. Resets velocity. Use for respawn, etc.
+---@param entityId string Entity ID with rigidBody.
+---@param position Vec3V2 World position.
+function physics.teleportBody(entityId, position) end

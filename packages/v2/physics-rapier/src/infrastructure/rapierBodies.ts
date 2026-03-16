@@ -98,16 +98,19 @@ export function createRapierBodies(): RapierBodiesHandle {
         };
       };
       let jointParams: unknown;
+      // anchor1: parent's local space (parent origin = 0,0,0)
+      // anchor2: child's local space — point on child that coincides with parent origin.
+      // local.pos = child position in parent space, so parent origin in child space = -local.pos
+      const parentAnchor = { x: 0, y: 0, z: 0 };
+      const childAnchor = { x: -local.pos.x, y: -local.pos.y, z: -local.pos.z };
       if (jointType === 'spherical' && JointData.JointData?.spherical) {
-        jointParams = JointData.JointData.spherical(
-          { x: 0, y: 0, z: 0 },
-          local.pos
-        );
+        jointParams = JointData.JointData.spherical(parentAnchor, childAnchor);
       } else if (jointType === 'revolute' && JointData.JointData?.revolute) {
+        // Axis Z: beam tilts left/right (seesaw). Axis Y would spin like a carousel.
         jointParams = JointData.JointData.revolute(
-          { x: 0, y: 0, z: 0 },
-          local.pos,
-          { x: 0, y: 1, z: 0 }
+          parentAnchor,
+          childAnchor,
+          { x: 0, y: 0, z: 1 }
         );
       } else {
         jointParams = JointData.JointData?.fixed?.(
