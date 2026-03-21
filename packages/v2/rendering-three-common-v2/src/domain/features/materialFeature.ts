@@ -3,7 +3,13 @@ import { isPlainMaterialComponentType } from '@duckengine/core-v2';
 import type { RenderFeature } from '@duckengine/rendering-base-v2';
 import type { RenderContextThree } from '../renderContextThree';
 import { materialFromComponent } from '../materialFromComponent';
-import { findMesh, getMaterialComponent, materialKey, hasUnresolvedTextures } from '../three';
+import {
+  applySkinningMaterialIfSkinnedMesh,
+  findMesh,
+  getMaterialComponent,
+  materialKey,
+  hasUnresolvedTextures,
+} from '../three';
 
 /**
  * Feature: sync material component to mesh material. Requires entity to already have a mesh (GeometryFeature).
@@ -32,6 +38,7 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
         const prev = mesh.material as Material;
         if (prev) prev.dispose();
         mesh.material = materialFromComponent(comp, context.getTexture, context.three);
+        applySkinningMaterialIfSkinnedMesh(mesh, mesh.material as Material);
         mesh.visible = !hasUnresolvedTextures(comp, context.getTexture);
         lastMaterialKeyByEntity.set(entity.id, key);
         context.diagnostic?.log('debug', 'Material synced', {
@@ -52,6 +59,7 @@ export function createMaterialFeature(): RenderFeature<RenderContextThree> {
         const prev = mesh.material as Material;
         if (prev) prev.dispose();
         mesh.material = materialFromComponent(comp, context.getTexture, context.three);
+        applySkinningMaterialIfSkinnedMesh(mesh, mesh.material as Material);
         mesh.visible = !hasUnresolvedTextures(comp, context.getTexture);
         lastMaterialKeyByEntity.set(entity.id, materialKey(comp, context.getTexture));
         context.diagnostic?.log('debug', 'Material synced', {

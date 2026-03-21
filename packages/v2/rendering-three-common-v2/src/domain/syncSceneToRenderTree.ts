@@ -32,3 +32,16 @@ export function syncSceneToRenderTree(
     }
   }
 }
+
+/** Runs `syncSceneToRenderTree`, then each feature's `onFrame` (e.g. skinned bone matrices). */
+export function syncSceneToRenderTreeWithFrame(
+  scene: SceneState,
+  context: RenderContextThree,
+  features: ReadonlyArray<RenderFeature<RenderContextThree>>,
+  dt: number,
+): void {
+  syncSceneToRenderTree(scene, context, features);
+  for (const feature of features) {
+    feature.onFrame?.(dt, context);
+  }
+}

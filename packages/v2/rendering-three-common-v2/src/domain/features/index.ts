@@ -4,7 +4,7 @@
  * Implemented:
  * - CameraFeature: cameraPerspective / cameraOrthographic → Three.js cameras
  * - LightFeature: ambientLight, directionalLight, pointLight, spotLight → Three.js lights
- * - GeometryFeature: box/sphere/plane/cylinder/cone/torus + customGeometry (mesh resource) → Mesh
+ * - GeometryFeature: box/sphere/plane/cylinder/cone/torus + customGeometry (mesh resource) → Mesh / SkinnedMesh (skin + IBMs + joint attrs); onFrame updates skeleton from ECS joints
  * - MaterialFeature: standardMaterial, basicMaterial, phongMaterial, lambertMaterial → Mesh*Material
  * - SkyboxFeature: skybox → scene.background (CubeTexture; requires getSkyboxTexture in context)
  * - TextureTilingFeature: textureTiling → UV repeat/offset on mesh materials

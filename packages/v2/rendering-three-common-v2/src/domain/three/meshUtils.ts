@@ -1,4 +1,20 @@
 import type * as THREE from 'three';
+import { SkinnedMesh } from 'three';
+
+function isMaterialWithSkinning(
+  material: THREE.Material,
+): material is THREE.Material & { skinning: boolean } {
+  return 'skinning' in material && typeof (material as { skinning?: unknown }).skinning === 'boolean';
+}
+
+/**
+ * Three.js skinned meshes need materials with `skinning: true` so the shader uses bone matrices.
+ */
+export function applySkinningMaterialIfSkinnedMesh(mesh: THREE.Mesh, material: THREE.Material): void {
+  if (!(mesh instanceof SkinnedMesh)) return;
+  if (!isMaterialWithSkinning(material)) return;
+  material.skinning = true;
+}
 
 /**
  * Applies cast/receive shadow flags to a Three.js Mesh.
@@ -35,4 +51,22 @@ export function applyTilingToMaterial(
 export function disposeMesh(mesh: THREE.Mesh): void {
   mesh.geometry.dispose();
   (mesh.material as THREE.Material).dispose();
+}
+
+/**
+ * Disposes a skinned mesh: skeleton GPU resources, geometry, and material.
+ */
+export function disposeSkinnedMesh(mesh: THREE.SkinnedMesh): void {
+  mesh.skeleton.dispose();
+  mesh.geometry.dispose();
+  (mesh.material as THREE.Material).dispose();
+}
+
+/** Disposes either a plain mesh or a skinned mesh (skeleton + geometry + material). */
+export function disposeRenderableMesh(mesh: THREE.Mesh): void {
+  if (mesh instanceof SkinnedMesh) {
+    disposeSkinnedMesh(mesh);
+  } else {
+    disposeMesh(mesh);
+  }
 }

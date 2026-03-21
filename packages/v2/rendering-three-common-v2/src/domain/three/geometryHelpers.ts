@@ -8,6 +8,7 @@ import type {
   GeometryComponent,
   MeshGeometryFileData,
   CustomGeometryComponent,
+  SkinComponent,
 } from '@duckengine/core-v2';
 import type { RenderContextThree } from '../renderContextThree';
 
@@ -32,12 +33,16 @@ export function getMeshDataForCustom(
 /**
  * Builds a cache key so we only rebuild geometry when the component actually changed.
  * For customGeometry, include meshDataLoaded so we rebuild when resource loads.
+ * When `entity` is passed, includes `skin.rigRootEntityId` so Mesh ↔ SkinnedMesh transitions reconcile.
  */
 export function geometryKey(
+  entity: EntityState | undefined,
   comp: GeometryComponent,
   meshData: MeshGeometryFileData | null | undefined = undefined,
 ): string {
-  const base = `${comp.type}:${comp.castShadow}:${comp.receiveShadow}:`;
+  const skin = entity ? getComponent<SkinComponent>(entity, 'skin') : undefined;
+  const skinPart = skin ? `:skin:${skin.rigRootEntityId}` : '';
+  const base = `${comp.type}:${comp.castShadow}:${comp.receiveShadow}:${skinPart}:`;
   switch (comp.type) {
     case 'boxGeometry':
       return base + `${comp.width}:${comp.height}:${comp.depth}`;

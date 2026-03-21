@@ -47,5 +47,26 @@ export function buildBufferGeometryFromMeshData(
     geometry.computeBoundingSphere();
   }
 
+  const ji = data.jointIndices;
+  const jw = data.jointWeights;
+  if (ji && jw && ji.length === jw.length && ji.length % 4 === 0) {
+    let maxIdx = 0;
+    for (let i = 0; i < ji.length; i++) {
+      const v = ji[i]!;
+      if (v > maxIdx) maxIdx = v;
+    }
+    const useUint32 = maxIdx > 65535;
+    geometry.setAttribute(
+      'skinIndex',
+      useUint32
+        ? new three.Uint32BufferAttribute(new Uint32Array(ji as unknown as ArrayLike<number>), 4)
+        : new three.Uint16BufferAttribute(new Uint16Array(ji as unknown as ArrayLike<number>), 4),
+    );
+    geometry.setAttribute(
+      'skinWeight',
+      new three.Float32BufferAttribute(new Float32Array(jw as unknown as ArrayLike<number>), 4),
+    );
+  }
+
   return geometry;
 }

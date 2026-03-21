@@ -3,7 +3,7 @@ import type { EngineState, SceneId } from '@duckengine/core-v2';
 import type { RenderEngineState } from '@duckengine/rendering-base-v2';
 import type { RendererFactory } from '@duckengine/rendering-three-common-v2';
 import {
-  syncSceneToRenderTree,
+  syncSceneToRenderTreeWithFrame,
   createPerSceneStateManager,
   renderViewports,
   createGizmoScenePortRegistration,
@@ -59,12 +59,12 @@ export function createRenderingState(params: { engine: EngineState }): RenderEng
     ensureSceneReady(engine: EngineState, sceneId: SceneId) {
       getOrCreateSceneState(engine, sceneId);
     },
-    sync(engine: EngineState, _dt: number) {
+    sync(engine: EngineState, dt: number) {
       clearAll();
       for (const [sceneId, scene] of engine.scenes) {
         const state = getOrCreateSceneState(engine, sceneId);
         if (state) {
-          syncSceneToRenderTree(scene, state.context, state.features);
+          syncSceneToRenderTreeWithFrame(scene, state.context, state.features, dt);
         }
       }
     },
