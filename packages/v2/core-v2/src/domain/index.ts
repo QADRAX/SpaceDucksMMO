@@ -7,6 +7,7 @@ export * from './resources';
 export * from './components';
 export * from './engine';
 export * from './entities';
+export * from './rig';
 export * from './math';
 export * from './physics';
 export * from './properties';

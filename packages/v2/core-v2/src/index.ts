@@ -14,6 +14,7 @@ export type {
 export * from './domain/entities';
 export * from './domain/engine';
 export * from './domain/math';
+export * from './domain/rig';
 export * from './domain/physics';
 export * from './domain/scene';
 export * from './domain/useCases';

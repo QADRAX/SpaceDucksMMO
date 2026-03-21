@@ -3,3 +3,4 @@ export * from './vec3';
 export * from './euler';
 export * from './quat';
 export * from './utils';
+export * from './mat4';
