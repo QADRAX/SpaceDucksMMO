@@ -26,6 +26,7 @@ import { createNoopInputPort } from '@duckengine/input-node-v2';
 import { createBrowserInputPort } from '@duckengine/input-browser-v2';
 import type { ResourceLoader } from '@duckengine/resource-coordinator-v2';
 import { createResourceCoordinatorSubsystem } from '@duckengine/resource-coordinator-v2';
+import { createAnimationSubsystem } from '@duckengine/animation-runtime-v2';
 import { createPhysicsSubsystem } from '@duckengine/physics-rapier-v2';
 import {
   createRenderingSubsystem,
@@ -113,6 +114,7 @@ export async function createHarnessEngine(
   ];
 
   const sceneSubsystems: SceneSubsystemFactory[] = [
+    createAnimationSubsystem(),
     await createPhysicsSubsystem(),
     await createScriptingSubsystem(),
   ];

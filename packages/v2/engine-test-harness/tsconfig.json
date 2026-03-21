@@ -15,6 +15,7 @@
     "jsx": "react-jsx"
   },
   "references": [
+    { "path": "../animation-runtime-v2" },
     { "path": "../core-v2" },
     { "path": "../diagnostic-v2" },
     { "path": "../input-browser-v2" },

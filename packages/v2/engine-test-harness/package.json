@@ -11,6 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@duckengine/animation-runtime-v2": "^0.1.0",
     "@duckengine/core-v2": "^0.1.0",
     "@duckengine/diagnostic-v2": "^0.1.0",
     "@duckengine/input-browser-v2": "^0.1.0",

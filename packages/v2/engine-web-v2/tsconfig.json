@@ -15,6 +15,7 @@
     "skipLibCheck": true
   },
   "references": [
+    { "path": "../animation-runtime-v2" },
     { "path": "../core-v2" },
     { "path": "../diagnostic-v2" },
     { "path": "../input-node-v2" },
