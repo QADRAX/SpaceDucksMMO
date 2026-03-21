@@ -14,7 +14,7 @@ describe('Integration: Scene > setActiveCamera', () => {
         const cam = createEntity(createEntityId('cam1'));
         ctx.api.scene(createSceneId('main')).addEntity({ entity: cam });
         ctx.api.scene(createSceneId('main')).entity(createEntityId('cam1')).addComponent({
-            component: createComponent('cameraView') as any
+            component: createComponent('cameraPerspective') as any
         });
     });
 

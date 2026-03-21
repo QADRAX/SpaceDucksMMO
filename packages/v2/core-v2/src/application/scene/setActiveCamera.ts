@@ -14,7 +14,7 @@ export interface SetActiveCameraParams {
 /**
  * Sets or clears the active camera entity for the scene.
  * Pass `null` to clear the active camera.
- * When setting, the entity must exist in the scene and own a `cameraView` component.
+ * When setting, the entity must exist in the scene and own a perspective or orthographic camera.
  */
 export const setActiveCamera = defineSceneUseCase<SetActiveCameraParams, Result<void>>({
   name: 'setActiveCamera',
@@ -29,8 +29,11 @@ export const setActiveCamera = defineSceneUseCase<SetActiveCameraParams, Result<
     const entity = scene.entities.get(entityId);
     if (!entity) return err('not-found', `Entity '${entityId}' not found in scene.`);
 
-    if (!hasComponent(entity, 'cameraView')) {
-      return err('validation', `Entity '${entityId}' does not have a cameraView component.`);
+    if (!hasComponent(entity, 'cameraPerspective') && !hasComponent(entity, 'cameraOrthographic')) {
+      return err(
+        'validation',
+        `Entity '${entityId}' does not have a cameraPerspective or cameraOrthographic component.`,
+      );
     }
 
     scene.activeCameraId = entityId;

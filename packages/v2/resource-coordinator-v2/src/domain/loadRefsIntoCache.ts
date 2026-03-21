@@ -4,6 +4,7 @@ import type {
   ResourceRef,
   MeshGeometryFileData,
   ResolvedResource,
+  AnimationClipFileData,
 } from '@duckengine/core-v2';
 import { emitEngineChange } from '@duckengine/core-v2';
 import { DiagnosticPortDef } from '@duckengine/core-v2';
@@ -31,11 +32,78 @@ async function loadMesh(
   const geometryFile = resolved.files.geometry;
   if (!geometryFile?.url) return;
 
-  const fetchResult = await loader.fetchFile(geometryFile.url, 'text');
+  const fetchResult = await loader.fetchFile(geometryFile.url, 'blob');
   if (fetchResult.ok === false) return;
 
-  const data = JSON.parse(fetchResult.value as string) as MeshGeometryFileData;
+  const buffer = await (fetchResult.value as Blob).arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+
+  let data: MeshGeometryFileData | null = null;
+  if (loader.decodeMeshGeometryBytes) {
+    data = loader.decodeMeshGeometryBytes(bytes);
+  }
+  if (!data) {
+    try {
+      data = JSON.parse(new TextDecoder().decode(bytes)) as MeshGeometryFileData;
+    } catch {
+      return;
+    }
+  }
+
   cache.storeMeshData?.(ref, data);
+  emitEngineChange(engine, { kind: 'resource-loaded', ref });
+}
+
+async function loadSkeleton(
+  engine: EngineState,
+  loader: ResourceLoader,
+  cache: ResourceCachePort,
+  ref: ResourceRef<'skeleton'>,
+): Promise<void> {
+  if (cache.getSkeletonData?.(ref)) return;
+
+  const result = await loader.resolve(ref);
+  if (result.ok === false) return;
+
+  const resolved = result.value as ResolvedResource<'skeleton'>;
+  cache.storeSkeletonData?.(ref, resolved.componentData);
+  emitEngineChange(engine, { kind: 'resource-loaded', ref });
+}
+
+async function loadAnimationClip(
+  engine: EngineState,
+  loader: ResourceLoader,
+  cache: ResourceCachePort,
+  ref: ResourceRef<'animationClip'>,
+): Promise<void> {
+  if (cache.getAnimationClipData?.(ref)) return;
+
+  const result = await loader.resolve(ref);
+  if (result.ok === false) return;
+
+  const resolved = result.value as ResolvedResource<'animationClip'>;
+  const clipFile = resolved.files.clip;
+  if (!clipFile?.url) return;
+
+  const fetchResult = await loader.fetchFile(clipFile.url, 'blob');
+  if (fetchResult.ok === false) return;
+
+  const buffer = await (fetchResult.value as Blob).arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+
+  let data: AnimationClipFileData | null = null;
+  if (loader.decodeAnimationClipBytes) {
+    data = loader.decodeAnimationClipBytes(bytes);
+  }
+  if (!data) {
+    try {
+      data = JSON.parse(new TextDecoder().decode(bytes)) as AnimationClipFileData;
+    } catch {
+      return;
+    }
+  }
+
+  cache.storeAnimationClipData?.(ref, data);
   emitEngineChange(engine, { kind: 'resource-loaded', ref });
 }
 
@@ -155,16 +223,26 @@ export async function loadRefsIntoCache(
   refs: CollectedRefs,
 ): Promise<void> {
   const diag = getDiagnostic(engine);
-  const total = refs.meshes.length + refs.textures.length + refs.skyboxes.length + refs.scripts.length;
+  const total =
+    refs.meshes.length +
+    refs.skeletons.length +
+    refs.animationClips.length +
+    refs.textures.length +
+    refs.skyboxes.length +
+    refs.scripts.length;
   if (total > 0) {
     diag?.log('debug', 'Loading refs into cache', {
       meshes: refs.meshes.length,
+      skeletons: refs.skeletons.length,
+      animationClips: refs.animationClips.length,
       textures: refs.textures.length,
       skyboxes: refs.skyboxes.length,
       scripts: refs.scripts.length,
     });
   }
   for (const ref of refs.meshes) void loadMesh(engine, loader, cache, ref);
+  for (const ref of refs.skeletons) void loadSkeleton(engine, loader, cache, ref);
+  for (const ref of refs.animationClips) void loadAnimationClip(engine, loader, cache, ref);
   for (const ref of refs.textures) void loadTexture(engine, loader, cache, ref);
   for (const ref of refs.skyboxes) void loadSkybox(engine, loader, cache, ref);
   for (const ref of refs.scripts) void loadScript(engine, loader, cache, ref);

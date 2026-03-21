@@ -22,7 +22,7 @@ return {
     self.properties.hasName = self.Component.has(eid, 'name')
     self.properties.hasBox = self.Component.has(eid, 'boxGeometry')
     self.properties.hasScript = self.Component.has(eid, 'script')
-    self.properties.hasNonexistent = self.Component.has(eid, 'cameraView')  -- not on entity
+    self.properties.hasNonexistent = self.Component.has(eid, 'cameraPerspective')  -- not on entity
 
     -- getData(entityId, componentType) - full snapshot
     local nameData = self.Component.getData(eid, 'name')

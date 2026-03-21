@@ -28,7 +28,10 @@ export type ComponentType =
     | 'basicShaderMaterial'
     | 'standardShaderMaterial'
     | 'physicalShaderMaterial'
-    | 'cameraView'
+    | 'cameraPerspective'
+    | 'cameraOrthographic'
+    | 'skin'
+    | 'animator'
     | 'textureTiling'
     | 'ambientLight'
     | 'directionalLight'
@@ -50,7 +53,7 @@ export type ComponentType =
     | 'metadata';
 
 /** Dependency token used by metadata validation rules. */
-export type ComponentDependency = ComponentType | 'geometry';
+export type ComponentDependency = ComponentType | 'geometry' | 'camera';
 
 /** Primitive field kinds reused from shared property typing. */
 export type InspectorPrimitiveFieldType = Extract<

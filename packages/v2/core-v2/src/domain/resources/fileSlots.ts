@@ -32,6 +32,9 @@ export const TEXTURE_SLOT_KEYS = [
     'aoMap',
     'roughnessMap',
     'metallicMap',
+    /** Packed metallic (B) + roughness (G) in one texture (glTF metallicRoughness). */
+    'metallicRoughnessMap',
+    'emissiveMap',
     'envMap',
 ] as const;
 export type TextureSlotKey = (typeof TEXTURE_SLOT_KEYS)[number];
@@ -48,6 +51,8 @@ export interface StandardMaterialFileSlots extends MaterialFileSlots {
     readonly aoMap?: ResolvedFile;
     readonly roughnessMap?: ResolvedFile;
     readonly metallicMap?: ResolvedFile;
+    readonly metallicRoughnessMap?: ResolvedFile;
+    readonly emissiveMap?: ResolvedFile;
     readonly envMap?: ResolvedFile;
 }
 
@@ -75,10 +80,18 @@ export interface ShaderMaterialFileSlots {
  * The geometry file format is server-defined (e.g. custom binary, or extracted single-mesh).
  */
 export interface MeshFileSlots {
-    /** Mesh-only geometry file (positions, indices; optional normals/UVs). */
+    /** Mesh-only geometry file (JSON or engine-specific binary; decoded to MeshGeometryFileData). */
     readonly geometry: ResolvedFile;
     /** Optional thumbnail for editor UI. */
     readonly thumbnail?: ResolvedFile;
+}
+
+/** Skeleton resources are data-only (joint order); no required files. */
+export type SkeletonFileSlots = Record<string, never>;
+
+/** Animation clip: sampled key data (JSON or binary). */
+export interface AnimationClipFileSlots {
+    readonly clip: ResolvedFile;
 }
 
 // ── Environment file slots ────────────────────────────────────────────────────
@@ -127,6 +140,8 @@ export type FileSlotsFor<K extends ResourceKind> =
     K extends 'standardShaderMaterial' ? ShaderMaterialFileSlots :
     K extends 'physicalShaderMaterial' ? ShaderMaterialFileSlots :
     K extends 'mesh' ? MeshFileSlots :
+    K extends 'skeleton' ? SkeletonFileSlots :
+    K extends 'animationClip' ? AnimationClipFileSlots :
     K extends 'skybox' ? SkyboxFileSlots :
     K extends 'script' ? ScriptFileSlots :
     K extends 'texture' ? TextureFileSlots :

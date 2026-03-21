@@ -728,7 +728,7 @@ entities:
     transform:
       position: { x: -7, y: 5, z: -7 }
     components:
-      cameraView: { fov: 50 }
+      cameraPerspective: { fov: 50 }
       script:
         scripts:
           - scriptId: builtin://waypoint_path.lua

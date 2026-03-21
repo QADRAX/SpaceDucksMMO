@@ -7,7 +7,13 @@
 /** @jest-environment node */
 jest.unmock('wasmoon');
 
-import { createSceneId, createEntityId, createComponent } from '@duckengine/core-v2';
+import {
+  createSceneId,
+  createEntityId,
+  createComponent,
+  createResourceKey,
+  createResourceRef,
+} from '@duckengine/core-v2';
 import { setupScriptingIntegrationTest } from '../setup';
 import {
   addSceneWithEntity,
@@ -24,6 +30,7 @@ const ENTITY_E3 = createEntityId('e3');
 const ENTITY_E4 = createEntityId('e4');
 const ENTITY_E5 = createEntityId('e5');
 const ENTITY_E6 = createEntityId('e6');
+const ENTITY_E7 = createEntityId('e7');
 
 describe('Scenario: Component bridge E2E', () => {
   it('component_bridge_properties: getField/setField for name and boxGeometry', async () => {
@@ -305,5 +312,83 @@ describe('Scenario: Component bridge E2E', () => {
     };
     expect(light.shadowBias).toBe(0.002);
     expect(light.shadowNormalBias).toBe(0.02);
+  });
+
+  it('component_bridge_skin_animator: setResource skeleton + setField animator', async () => {
+    const { api } = await setupScriptingIntegrationTest();
+
+    addSceneWithEntity(api, MAIN_SCENE, ENTITY_E7);
+
+    const scene = api.scene(MAIN_SCENE);
+    scene.entity(ENTITY_E7).addComponent({
+      component: createComponent('customGeometry'),
+    });
+    scene.entity(ENTITY_E7).addComponent({
+      component: createComponent('skin'),
+    });
+    scene.entity(ENTITY_E7).addComponent({
+      component: createComponent('animator', {
+        clips: [createResourceRef(createResourceKey('anims/walk'), 'animationClip')],
+      }),
+    });
+
+    addEntityWithScripts(api, MAIN_SCENE, ENTITY_E7, [
+      {
+        scriptId: 'test://component_bridge_skin_animator.lua',
+        properties: {
+          meshSetOk: false,
+          skeletonSetOk: false,
+          skeletonKeyRead: '',
+          speedSetOk: false,
+          playingSetOk: false,
+          timeSetOk: false,
+          activeIndexSetOk: false,
+          speedReadBack: 0,
+          playingReadBack: false,
+          timeReadBack: 0,
+        },
+      },
+    ]);
+
+    api.update({ dt: 0 });
+    await waitForSlotInit(100);
+    runFrames(api, 1);
+
+    const props = getScriptProperties(
+      scene.entity(ENTITY_E7).component('script').snapshot(),
+    );
+    expect(props).not.toBeNull();
+    expect(props!.meshSetOk).toBe(true);
+    expect(props!.skeletonSetOk).toBe(true);
+    expect(props!.skeletonKeyRead).toBe('rigs/test_skeleton');
+    expect(props!.speedSetOk).toBe(true);
+    expect(props!.playingSetOk).toBe(true);
+    expect(props!.timeSetOk).toBe(true);
+    expect(props!.activeIndexSetOk).toBe(true);
+    expect(props!.speedReadBack).toBe(2);
+    expect(props!.playingReadBack).toBe(true);
+    expect(props!.timeReadBack).toBe(0.25);
+
+    const skinSnap = scene.entity(ENTITY_E7).component('skin').snapshot();
+    expect(skinSnap.ok).toBe(true);
+    const skin = (skinSnap as { ok: true; value: unknown }).value as {
+      skeleton?: { key: string; kind: string };
+    };
+    expect(skin.skeleton?.key).toBe('rigs/test_skeleton');
+    expect(skin.skeleton?.kind).toBe('skeleton');
+
+    const animSnap = scene.entity(ENTITY_E7).component('animator').snapshot();
+    expect(animSnap.ok).toBe(true);
+    const anim = (animSnap as { ok: true; value: unknown }).value as {
+      speed?: number;
+      playing?: boolean;
+      time?: number;
+      clips?: ReadonlyArray<{ key: string; kind: string }>;
+    };
+    expect(anim.speed).toBe(2);
+    expect(anim.playing).toBe(true);
+    expect(anim.time).toBe(0.25);
+    expect(anim.clips?.[0]?.key).toBe('anims/walk');
+    expect(anim.clips?.[0]?.kind).toBe('animationClip');
   });
 });

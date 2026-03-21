@@ -6,6 +6,7 @@ import { GEOMETRY_SPECS } from './constants/rendering/geometrySpecs';
 import { MATERIAL_SPECS } from './constants/rendering/material';
 import { SHADER_MATERIAL_SPECS } from './constants/rendering/shaderMaterial';
 import { CAMERA_SPECS } from './constants/rendering/camera';
+import { RIGGING_SPECS } from './constants/rendering/rigging';
 import { TEXTURE_SPECS } from './constants/rendering/texture';
 import { LIGHT_SPECS } from './constants/rendering/light';
 import { EFFECT_SPECS } from './constants/rendering/effects';
@@ -19,6 +20,7 @@ const ALL_SPECS: Record<string, { metadata: unknown; defaults: Record<string, un
   ...MATERIAL_SPECS,
   ...SHADER_MATERIAL_SPECS,
   ...CAMERA_SPECS,
+  ...RIGGING_SPECS,
   ...TEXTURE_SPECS,
   ...LIGHT_SPECS,
   ...EFFECT_SPECS,
@@ -169,8 +171,8 @@ describe('getComponentMetadata – structural rules', () => {
     }
   });
 
-  it('postProcess requires cameraView', () => {
-    expect(getComponentMetadata('postProcess').requires).toContain('cameraView');
+  it('postProcess requires camera', () => {
+    expect(getComponentMetadata('postProcess').requires).toContain('camera');
   });
 
   it('skybox is uniqueInScene', () => {

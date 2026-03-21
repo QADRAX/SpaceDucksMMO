@@ -15,6 +15,9 @@ export type ResourceKind =
     | 'physicalShaderMaterial'
     // ── Geometry (mesh-only: vertices, indices; for customGeometry + trimeshCollider) ─
     | 'mesh'
+    // ── Rigging / animation (resources consumed by skin + animator components) ─────
+    | 'skeleton'
+    | 'animationClip'
     // ── Environment ──────────────────────────────────────────────
     | 'skybox'       // Used by SkyboxComponent
     // ── Scripting ────────────────────────────────────────────────
@@ -32,6 +35,8 @@ export const RESOURCE_KINDS: readonly ResourceKind[] = [
     'standardShaderMaterial',
     'physicalShaderMaterial',
     'mesh',
+    'skeleton',
+    'animationClip',
     'skybox',
     'script',
     'texture',

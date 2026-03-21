@@ -78,7 +78,7 @@ declare module './createDuckEngineAPI' {
     addScene(params: AddSceneParams): Result<SceneState>;
     /** Removes a scene from the engine. Fails if any viewport still references it. */
     removeScene(params: RemoveSceneParams): Result<void>;
-    /** Adds a viewport. Requires a valid scene and camera entity with cameraView component. */
+    /** Adds a viewport. Requires a valid scene and camera entity with cameraPerspective or cameraOrthographic. */
     addViewport(params: AddViewportParams): Result<ViewportState>;
     /** Removes a viewport from the engine. */
     removeViewport(params: RemoveViewportParams): Result<void>;

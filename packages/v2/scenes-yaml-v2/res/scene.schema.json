@@ -432,9 +432,129 @@
                       "description": "Metallic Map",
                       "type": "string"
                     },
+                    "metallicRoughnessMap": {
+                      "description": "Metallic–Roughness Map",
+                      "type": "string"
+                    },
+                    "emissiveMap": {
+                      "description": "Emissive Map",
+                      "type": "string"
+                    },
                     "envMap": {
                       "description": "Environment Map",
                       "type": "string"
+                    },
+                    "alphaMode": {
+                      "description": "Alpha mode",
+                      "enum": [
+                        "opaque",
+                        "mask",
+                        "blend"
+                      ]
+                    },
+                    "alphaCutoff": {
+                      "description": "Alpha cutoff",
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "doubleSided": {
+                      "description": "Double sided",
+                      "type": "boolean"
+                    },
+                    "normalScale": {
+                      "description": "Normal scale",
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "ior": {
+                      "description": "IOR",
+                      "type": "number",
+                      "minimum": 1
+                    },
+                    "transmission": {
+                      "description": "Transmission",
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "thickness": {
+                      "description": "Thickness",
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "attenuationColor": {
+                      "description": "Attenuation color",
+                      "type": "string"
+                    },
+                    "attenuationDistance": {
+                      "description": "Attenuation distance",
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "clearcoat": {
+                      "description": "Clearcoat",
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "clearcoatRoughness": {
+                      "description": "Clearcoat roughness",
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "clearcoatNormalScale": {
+                      "description": "Clearcoat normal scale",
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "sheen": {
+                      "description": "Sheen",
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "sheenRoughness": {
+                      "description": "Sheen roughness",
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "sheenColor": {
+                      "description": "Sheen color",
+                      "type": "string"
+                    },
+                    "iridescence": {
+                      "description": "Iridescence",
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 1
+                    },
+                    "iridescenceIOR": {
+                      "description": "Iridescence IOR",
+                      "type": "number",
+                      "minimum": 1
+                    },
+                    "iridescenceThicknessRange": {
+                      "description": "Iridescence thickness range",
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ]
                     }
                   },
                   "additionalProperties": true
@@ -750,7 +870,7 @@
                 }
               ]
             },
-            "cameraView": {
+            "cameraPerspective": {
               "oneOf": [
                 {
                   "type": "string",
@@ -785,6 +905,40 @@
                 }
               ]
             },
+            "cameraOrthographic": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "description": "Resource key shorthand"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "halfHeight": {
+                      "description": "Half height",
+                      "type": "number",
+                      "minimum": 0.001
+                    },
+                    "near": {
+                      "description": "Near",
+                      "type": "number",
+                      "minimum": 0.001
+                    },
+                    "far": {
+                      "description": "Far",
+                      "type": "number",
+                      "minimum": 0.01
+                    },
+                    "aspect": {
+                      "description": "Aspect",
+                      "type": "number",
+                      "minimum": 0.1
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              ]
+            },
             "postProcess": {
               "oneOf": [
                 {
@@ -797,6 +951,64 @@
                     "effects": {
                       "description": "Effects",
                       "type": "object"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              ]
+            },
+            "skin": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "description": "Resource key shorthand"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "skeleton": {
+                      "description": "Skeleton Resource",
+                      "type": "string"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              ]
+            },
+            "animator": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "description": "Resource key shorthand"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "clips": {
+                      "description": "Clips",
+                      "type": "object"
+                    },
+                    "activeClipIndex": {
+                      "description": "Active clip",
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "playing": {
+                      "description": "Playing",
+                      "type": "boolean"
+                    },
+                    "loop": {
+                      "description": "Loop",
+                      "type": "boolean"
+                    },
+                    "speed": {
+                      "description": "Speed",
+                      "type": "number"
+                    },
+                    "time": {
+                      "description": "Time (s)",
+                      "type": "number",
+                      "minimum": 0
                     }
                   },
                   "additionalProperties": true
@@ -878,15 +1090,46 @@
                       "description": "Cast Shadow",
                       "type": "boolean"
                     },
-                    "shadowMapSize": { "description": "Shadow map resolution", "type": "number" },
-                    "shadowBias": { "description": "Shadow bias", "type": "number" },
-                    "shadowNormalBias": { "description": "Shadow normal bias", "type": "number" },
-                    "shadowCameraLeft": { "description": "Shadow ortho camera left", "type": "number" },
-                    "shadowCameraRight": { "description": "Shadow ortho camera right", "type": "number" },
-                    "shadowCameraTop": { "description": "Shadow ortho camera top", "type": "number" },
-                    "shadowCameraBottom": { "description": "Shadow ortho camera bottom", "type": "number" },
-                    "shadowCameraNear": { "description": "Shadow camera near", "type": "number" },
-                    "shadowCameraFar": { "description": "Shadow camera far", "type": "number" }
+                    "shadowMapSize": {
+                      "description": "Shadow Map Size",
+                      "type": "number",
+                      "minimum": 64
+                    },
+                    "shadowBias": {
+                      "description": "Shadow Bias",
+                      "type": "number"
+                    },
+                    "shadowNormalBias": {
+                      "description": "Shadow Normal Bias",
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "shadowCameraLeft": {
+                      "description": "Shadow Camera Left",
+                      "type": "number"
+                    },
+                    "shadowCameraRight": {
+                      "description": "Shadow Camera Right",
+                      "type": "number"
+                    },
+                    "shadowCameraTop": {
+                      "description": "Shadow Camera Top",
+                      "type": "number"
+                    },
+                    "shadowCameraBottom": {
+                      "description": "Shadow Camera Bottom",
+                      "type": "number"
+                    },
+                    "shadowCameraNear": {
+                      "description": "Shadow Camera Near",
+                      "type": "number",
+                      "minimum": 0
+                    },
+                    "shadowCameraFar": {
+                      "description": "Shadow Camera Far",
+                      "type": "number",
+                      "minimum": 0
+                    }
                   },
                   "additionalProperties": true
                 }
@@ -924,9 +1167,20 @@
                       "description": "Cast Shadow",
                       "type": "boolean"
                     },
-                    "shadowMapSize": { "description": "Shadow map resolution", "type": "number" },
-                    "shadowBias": { "description": "Shadow bias", "type": "number" },
-                    "shadowNormalBias": { "description": "Shadow normal bias", "type": "number" }
+                    "shadowMapSize": {
+                      "description": "Shadow Map Size",
+                      "type": "number",
+                      "minimum": 64
+                    },
+                    "shadowBias": {
+                      "description": "Shadow Bias",
+                      "type": "number"
+                    },
+                    "shadowNormalBias": {
+                      "description": "Shadow Normal Bias",
+                      "type": "number",
+                      "minimum": 0
+                    }
                   },
                   "additionalProperties": true
                 }
@@ -971,9 +1225,20 @@
                       "description": "Cast Shadow",
                       "type": "boolean"
                     },
-                    "shadowMapSize": { "description": "Shadow map resolution", "type": "number" },
-                    "shadowBias": { "description": "Shadow bias", "type": "number" },
-                    "shadowNormalBias": { "description": "Shadow normal bias", "type": "number" }
+                    "shadowMapSize": {
+                      "description": "Shadow Map Size",
+                      "type": "number",
+                      "minimum": 64
+                    },
+                    "shadowBias": {
+                      "description": "Shadow Bias",
+                      "type": "number"
+                    },
+                    "shadowNormalBias": {
+                      "description": "Shadow Normal Bias",
+                      "type": "number",
+                      "minimum": 0
+                    }
                   },
                   "additionalProperties": true
                 }

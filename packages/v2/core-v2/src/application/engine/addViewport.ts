@@ -23,7 +23,7 @@ export interface AddViewportParams {
 /**
  * Creates a viewport and registers it in the engine.
  * Validates the viewport id is unique, the scene exists,
- * and the camera entity exists in the scene with a cameraView component.
+ * and the camera entity exists in the scene with a cameraPerspective or cameraOrthographic component.
  * If params.rect is provided and ViewportRectProviderPort is registered, sets initial rect.
  * Returns the created ViewportState on success.
  */

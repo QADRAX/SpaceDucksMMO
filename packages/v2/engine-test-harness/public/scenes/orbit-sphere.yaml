@@ -10,7 +10,7 @@ entities:
     transform:
       position: { x: 0, y: 0, z: 8 }
     components:
-      cameraView: { fov: 60 }
+      cameraPerspective: { fov: 60 }
       script:
         scripts:
           - scriptId: builtin://orbit_camera.lua

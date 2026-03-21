@@ -57,8 +57,8 @@ describe('Integration: Component > setField', () => {
             if (meta.requires?.includes('geometry')) {
                 entityApi.addComponent({ component: createComponent('boxGeometry') as any });
             }
-            if (meta.requires?.includes('cameraView')) {
-                entityApi.addComponent({ component: createComponent('cameraView') as any });
+            if (meta.requires?.includes('camera')) {
+                entityApi.addComponent({ component: createComponent('cameraPerspective') as any });
             }
             if (meta.requiresInHierarchy?.includes('rigidBody')) {
                 entityApi.addComponent({ component: createComponent('rigidBody') as any });

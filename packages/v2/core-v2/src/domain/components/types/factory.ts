@@ -4,7 +4,10 @@ import type {
   BasicMaterialComponent,
   BasicShaderMaterialComponent,
   BoxGeometryComponent,
-  CameraViewComponent,
+  CameraPerspectiveComponent,
+  CameraOrthographicComponent,
+  SkinComponent,
+  AnimatorComponent,
   ConeGeometryComponent,
   CustomGeometryComponent,
   CylinderGeometryComponent,
@@ -56,7 +59,10 @@ export interface ComponentByType {
   basicShaderMaterial: BasicShaderMaterialComponent;
   standardShaderMaterial: StandardShaderMaterialComponent;
   physicalShaderMaterial: PhysicalShaderMaterialComponent;
-  cameraView: CameraViewComponent;
+  cameraPerspective: CameraPerspectiveComponent;
+  cameraOrthographic: CameraOrthographicComponent;
+  skin: SkinComponent;
+  animator: AnimatorComponent;
   textureTiling: TextureTilingComponent;
   ambientLight: AmbientLightComponent;
   directionalLight: DirectionalLightComponent;

@@ -46,15 +46,19 @@ export function createMockResourceLoader(overrides?: {
   };
 
   const defaultFetchFile: ResourceLoader['fetchFile'] = async (url, format) => {
+    const meshJson = JSON.stringify({ positions: [], indices: [] });
     if (format === 'text') {
       if (url.includes('geometry')) {
-        return { ok: true, value: JSON.stringify({ vertices: [], indices: [] }) };
+        return { ok: true, value: meshJson };
       }
       if (url.includes('source')) {
         return { ok: true, value: 'return {}' };
       }
     }
     if (format === 'blob') {
+      if (url.includes('geometry')) {
+        return { ok: true, value: new Blob([meshJson]) };
+      }
       return { ok: true, value: new Blob(['']) };
     }
     return { ok: false, error: { code: 'not-found', message: 'Unknown url' } } as any;

@@ -1,5 +1,11 @@
-import type { Result } from '@duckengine/core-v2';
-import type { ResourceKind, ResourceRef, ResolvedResource } from '@duckengine/core-v2';
+import type {
+  Result,
+  ResourceKind,
+  ResourceRef,
+  ResolvedResource,
+  MeshGeometryFileData,
+  AnimationClipFileData,
+} from '@duckengine/core-v2';
 
 /**
  * Contract for runtime resource resolution.
@@ -32,4 +38,16 @@ export interface ResourceLoader {
    * When present, coordinator uses this for textures instead of fetchFile(..., 'blob').
    */
   fetchTextureDecoded?(url: string): Promise<Result<ImageBitmap>>;
+
+  /**
+   * Optional: decode mesh geometry from binary bytes (engine-specific layout).
+   * When absent or returning null, coordinator falls back to UTF-8 JSON parse as {@link MeshGeometryFileData}.
+   */
+  decodeMeshGeometryBytes?(bytes: Uint8Array | ArrayBuffer): MeshGeometryFileData | null;
+
+  /**
+   * Optional: decode animation clip from binary bytes.
+   * When absent or returning null, coordinator falls back to UTF-8 JSON parse as {@link AnimationClipFileData}.
+   */
+  decodeAnimationClipBytes?(bytes: Uint8Array | ArrayBuffer): AnimationClipFileData | null;
 }

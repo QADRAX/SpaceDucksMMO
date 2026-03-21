@@ -1,4 +1,9 @@
-import type { ResourceRef, MeshGeometryFileData } from '../../resources';
+import type {
+  ResourceRef,
+  MeshGeometryFileData,
+  SkeletonData,
+  AnimationClipFileData,
+} from '../../resources';
 
 /**
  * Sync cache for resolved resources. Populated by ResourceCoordinator (the only
@@ -11,6 +16,12 @@ export interface ResourceCachePort {
   /** Sync lookup for mesh geometry. Returns null if not yet loaded. */
   getMeshData(ref: ResourceRef<'mesh'>): MeshGeometryFileData | null;
 
+  /** Sync lookup for skeleton joint order (data-only resource). */
+  getSkeletonData?(ref: ResourceRef<'skeleton'>): SkeletonData | null;
+
+  /** Sync lookup for decoded animation clip samples. */
+  getAnimationClipData?(ref: ResourceRef<'animationClip'>): AnimationClipFileData | null;
+
   /** Sync lookup for texture. Returns Blob | ImageBitmap | null. Rendering adapts to THREE.Texture. */
   getTexture?(ref: ResourceRef<'texture'>): Blob | ImageBitmap | null;
 
@@ -20,8 +31,14 @@ export interface ResourceCachePort {
   /** Sync lookup for script source. Returns null if not yet loaded. */
   getScriptSource(ref: ResourceRef<'script'>): string | null;
 
-  /** Coordinator-only: store mesh data. Called after loader.resolve + fetchFile. */
+  /** Coordinator-only: store mesh data. Called after loader.resolve + fetch (JSON or binary decode). */
   storeMeshData?(ref: ResourceRef<'mesh'>, data: MeshGeometryFileData): void;
+
+  /** Coordinator-only: cache skeleton scalar data from resolve (no clip file). */
+  storeSkeletonData?(ref: ResourceRef<'skeleton'>, data: SkeletonData): void;
+
+  /** Coordinator-only: store decoded animation clip file payload. */
+  storeAnimationClipData?(ref: ResourceRef<'animationClip'>, data: AnimationClipFileData): void;
 
   /** Coordinator-only: store texture blob (raw image data). Rendering parses to THREE.Texture. */
   storeTextureFromBlob?(ref: ResourceRef<'texture'>, blob: Blob): Promise<void>;

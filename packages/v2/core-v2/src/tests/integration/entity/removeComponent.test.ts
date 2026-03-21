@@ -13,6 +13,7 @@ import { GEOMETRY_SPECS } from '../../../domain/components/constants/rendering/g
 import { MATERIAL_SPECS } from '../../../domain/components/constants/rendering/material';
 import { SHADER_MATERIAL_SPECS } from '../../../domain/components/constants/rendering/shaderMaterial';
 import { CAMERA_SPECS } from '../../../domain/components/constants/rendering/camera';
+import { RIGGING_SPECS } from '../../../domain/components/constants/rendering/rigging';
 import { TEXTURE_SPECS } from '../../../domain/components/constants/rendering/texture';
 import { LIGHT_SPECS } from '../../../domain/components/constants/rendering/light';
 import { EFFECT_SPECS } from '../../../domain/components/constants/rendering/effects';
@@ -25,6 +26,7 @@ const ALL_SPECS = {
     ...MATERIAL_SPECS,
     ...SHADER_MATERIAL_SPECS,
     ...CAMERA_SPECS,
+    ...RIGGING_SPECS,
     ...TEXTURE_SPECS,
     ...LIGHT_SPECS,
     ...EFFECT_SPECS,
@@ -54,7 +56,12 @@ describe('Integration: Entity > removeComponent (Bulk)', () => {
             const m = getComponentMetadata(t);
             if (m.requires) {
                 for (const req of m.requires) {
-                    const reqType = req === 'geometry' ? 'boxGeometry' : req as CreatableComponentType;
+                    const reqType =
+                        req === 'geometry'
+                            ? 'boxGeometry'
+                            : req === 'camera'
+                              ? 'cameraPerspective'
+                              : (req as CreatableComponentType);
                     if (!ctx.engine.scenes.get(MAIN_SCENE)?.entities.get(id)?.components.has(reqType as any)) {
                         satisfyDeps(reqType, id);
                         entApi.addComponent({ component: createComponent(reqType) as any });
@@ -109,7 +116,12 @@ describe('Integration: Entity > removeComponent (Bulk)', () => {
             const m = getComponentMetadata(t);
             if (m.requires) {
                 for (const r of m.requires) {
-                    const rt = r === 'geometry' ? 'boxGeometry' : r as CreatableComponentType;
+                    const rt =
+                        r === 'geometry'
+                            ? 'boxGeometry'
+                            : r === 'camera'
+                              ? 'cameraPerspective'
+                              : (r as CreatableComponentType);
                     if (!ctx.engine.scenes.get(MAIN_SCENE)?.entities.get(id)?.components.has(rt as any)) {
                         satisfy(rt, id);
                         ctx.api.scene(MAIN_SCENE).entity(id).addComponent({ component: createComponent(rt) as any });

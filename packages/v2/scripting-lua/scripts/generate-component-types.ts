@@ -10,6 +10,7 @@ import {
   MATERIAL_SPECS,
   SHADER_MATERIAL_SPECS,
   CAMERA_SPECS,
+  RIGGING_SPECS,
   TEXTURE_SPECS,
   LIGHT_SPECS,
   EFFECT_SPECS,
@@ -25,6 +26,7 @@ const ALL_SPECS: Record<string, unknown> = {
   ...MATERIAL_SPECS,
   ...SHADER_MATERIAL_SPECS,
   ...CAMERA_SPECS,
+  ...RIGGING_SPECS,
   ...TEXTURE_SPECS,
   ...LIGHT_SPECS,
   ...EFFECT_SPECS,
@@ -71,6 +73,17 @@ const output = `---@meta
 --
 -- AUTO-GENERATED. Run: pnpm run generate:component-types
 -- ═══════════════════════════════════════════════════════════════════════
+-- Aliases must appear before Component.* methods so LuaLS resolves ComponentTypeV2
+-- on @param (otherwise componentType widens to string and literals fail to match).
+
+---@alias ComponentTypeV2
+${componentTypeAlias}
+
+---@alias ResourceKindV2
+${resourceKindAlias}
+
+-- Field key aliases per component (for Component.getField/setField autocomplete)
+${fieldKeyAliases}
 
 ---Component bridge for generic component field access.
 ---@class ComponentV2
@@ -111,15 +124,6 @@ function Component.getData(entityId, componentType) end
 ---@param componentType ComponentTypeV2 Component type.
 ---@return boolean
 function Component.has(entityId, componentType) end
-
----@alias ComponentTypeV2
-${componentTypeAlias}
-
----@alias ResourceKindV2
-${resourceKindAlias}
-
--- Field key aliases per component (for Component.getField/setField autocomplete)
-${fieldKeyAliases}
 `;
 
 const targetPath = path.join(

@@ -8,46 +8,8 @@
 --
 -- AUTO-GENERATED. Run: pnpm run generate:component-types
 -- ═══════════════════════════════════════════════════════════════════════
-
----Component bridge for generic component field access.
----@class ComponentV2
-Component = {}
-
----Get a field value (supports dot-notation).
----@param entityId string Entity ID.
----@param componentType ComponentTypeV2 Component type.
----@param fieldKey string Field key (e.g. "halfExtents.x", "mass").
----@return any
-function Component.getField(entityId, componentType, fieldKey) end
-
----Set a field value (validates against inspector metadata).
----@param entityId string Entity ID.
----@param componentType ComponentTypeV2 Component type.
----@param fieldKey string Field key.
----@param value any New value.
----@return boolean true on success.
-function Component.setField(entityId, componentType, fieldKey, value) end
-
----Set a resource field by key (builds ResourceRef from field metadata).
----@param entityId string Entity ID.
----@param componentType ComponentTypeV2 Component type.
----@param fieldKey string Field key (e.g. "albedo", "mesh", "skybox").
----@param resourceKey string Resource key (e.g. "textures/concrete-muddy").
----@param kindOverride? ResourceKindV2 Optional kind override when field accepts multiple.
----@return boolean true on success.
-function Component.setResource(entityId, componentType, fieldKey, resourceKey, kindOverride) end
-
----Get full component snapshot (readonly).
----@param entityId string Entity ID.
----@param componentType ComponentTypeV2 Component type.
----@return table|nil Frozen snapshot or nil if not found.
-function Component.getData(entityId, componentType) end
-
----Check if entity has the component.
----@param entityId string Entity ID.
----@param componentType ComponentTypeV2 Component type.
----@return boolean
-function Component.has(entityId, componentType) end
+-- Aliases must appear before Component.* methods so LuaLS resolves ComponentTypeV2
+-- on @param (otherwise componentType widens to string and literals fail to match).
 
 ---@alias ComponentTypeV2
 ---| "name"
@@ -65,8 +27,11 @@ function Component.has(entityId, componentType) end
 ---| "basicShaderMaterial"
 ---| "standardShaderMaterial"
 ---| "physicalShaderMaterial"
----| "cameraView"
+---| "cameraPerspective"
+---| "cameraOrthographic"
 ---| "postProcess"
+---| "skin"
+---| "animator"
 ---| "textureTiling"
 ---| "ambientLight"
 ---| "directionalLight"
@@ -94,6 +59,8 @@ function Component.has(entityId, componentType) end
 ---| "standardShaderMaterial"
 ---| "physicalShaderMaterial"
 ---| "mesh"
+---| "skeleton"
+---| "animationClip"
 ---| "skybox"
 ---| "script"
 ---| "texture"
@@ -164,7 +131,27 @@ function Component.has(entityId, componentType) end
 ---| "aoMap"
 ---| "roughnessMap"
 ---| "metallicMap"
+---| "metallicRoughnessMap"
+---| "emissiveMap"
 ---| "envMap"
+---| "alphaMode"
+---| "alphaCutoff"
+---| "doubleSided"
+---| "normalScale"
+---| "ior"
+---| "transmission"
+---| "thickness"
+---| "attenuationColor"
+---| "attenuationDistance"
+---| "clearcoat"
+---| "clearcoatRoughness"
+---| "clearcoatNormalScale"
+---| "sheen"
+---| "sheenRoughness"
+---| "sheenColor"
+---| "iridescence"
+---| "iridescenceIOR"
+---| "iridescenceThicknessRange"
 
 ---@alias BasicMaterialFieldV2
 ---| "material"
@@ -221,14 +208,31 @@ function Component.has(entityId, componentType) end
 ---| "ior"
 ---| "thickness"
 
----@alias CameraViewFieldV2
+---@alias CameraPerspectiveFieldV2
 ---| "fov"
+---| "near"
+---| "far"
+---| "aspect"
+
+---@alias CameraOrthographicFieldV2
+---| "halfHeight"
 ---| "near"
 ---| "far"
 ---| "aspect"
 
 ---@alias PostProcessFieldV2
 ---| "effects"
+
+---@alias SkinFieldV2
+---| "skeleton"
+
+---@alias AnimatorFieldV2
+---| "clips"
+---| "activeClipIndex"
+---| "playing"
+---| "loop"
+---| "speed"
+---| "time"
 
 ---@alias TextureTilingFieldV2
 ---| "repeatU"
@@ -361,3 +365,43 @@ function Component.has(entityId, componentType) end
 
 ---@alias ScriptFieldV2
 ---| "scripts"
+
+---Component bridge for generic component field access.
+---@class ComponentV2
+Component = {}
+
+---Get a field value (supports dot-notation).
+---@param entityId string Entity ID.
+---@param componentType ComponentTypeV2 Component type.
+---@param fieldKey string Field key (e.g. "halfExtents.x", "mass").
+---@return any
+function Component.getField(entityId, componentType, fieldKey) end
+
+---Set a field value (validates against inspector metadata).
+---@param entityId string Entity ID.
+---@param componentType ComponentTypeV2 Component type.
+---@param fieldKey string Field key.
+---@param value any New value.
+---@return boolean true on success.
+function Component.setField(entityId, componentType, fieldKey, value) end
+
+---Set a resource field by key (builds ResourceRef from field metadata).
+---@param entityId string Entity ID.
+---@param componentType ComponentTypeV2 Component type.
+---@param fieldKey string Field key (e.g. "albedo", "mesh", "skybox").
+---@param resourceKey string Resource key (e.g. "textures/concrete-muddy").
+---@param kindOverride? ResourceKindV2 Optional kind override when field accepts multiple.
+---@return boolean true on success.
+function Component.setResource(entityId, componentType, fieldKey, resourceKey, kindOverride) end
+
+---Get full component snapshot (readonly).
+---@param entityId string Entity ID.
+---@param componentType ComponentTypeV2 Component type.
+---@return table|nil Frozen snapshot or nil if not found.
+function Component.getData(entityId, componentType) end
+
+---Check if entity has the component.
+---@param entityId string Entity ID.
+---@param componentType ComponentTypeV2 Component type.
+---@return boolean
+function Component.has(entityId, componentType) end

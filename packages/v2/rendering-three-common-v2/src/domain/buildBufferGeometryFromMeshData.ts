@@ -16,7 +16,7 @@ export function buildBufferGeometryFromMeshData(
     'position',
     new three.BufferAttribute(new Float32Array(data.positions), 3),
   );
-  geometry.setIndex(data.indices);
+  geometry.setIndex(Array.from(data.indices));
 
   if (data.normals && data.normals.length === data.positions.length) {
     geometry.setAttribute(

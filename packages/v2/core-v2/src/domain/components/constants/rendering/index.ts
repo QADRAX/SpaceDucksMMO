@@ -1,4 +1,5 @@
 export * from './camera';
+export * from './rigging';
 export * from './effects';
 export * from './environment';
 export * from './geometrySpecs';

@@ -46,7 +46,7 @@ describe('Resource coordinator integration', () => {
     const meshRef = createResourceRef(createResourceKey('test-mesh'), 'mesh');
     const data = cache!.getMeshData(meshRef);
     expect(data).not.toBeNull();
-    expect(data).toHaveProperty('vertices');
+    expect(data).toHaveProperty('positions');
   });
 
   it('entity added with script component triggers script load into cache', async () => {

@@ -15,18 +15,19 @@ export function sceneExists(engine: EngineState, sceneId: SceneId): boolean {
 }
 
 /**
- * Returns the entity if it exists in the scene and owns a `cameraView`
- * component, or undefined otherwise.
+ * Returns the entity if it exists in the scene and owns a perspective or orthographic
+ * camera component, or undefined otherwise.
  */
 export function findCameraEntity(scene: SceneState, entityId: EntityId): EntityState | undefined {
   const entity = scene.entities.get(entityId);
   if (!entity) return undefined;
-  return hasComponent(entity, 'cameraView') ? entity : undefined;
+  return hasComponent(entity, 'cameraPerspective') || hasComponent(entity, 'cameraOrthographic')
+    ? entity
+    : undefined;
 }
 
 /**
- * Returns true if the entity exists in the scene and owns a `cameraView`
- * component.
+ * Returns true if the entity exists in the scene and owns a camera component.
  */
 export function isCameraEntity(scene: SceneState, entityId: EntityId): boolean {
   return findCameraEntity(scene, entityId) !== undefined;

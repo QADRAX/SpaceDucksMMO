@@ -2,7 +2,7 @@
  * Render features (v2). Each syncs ECS components to Three.js objects.
  *
  * Implemented:
- * - CameraFeature: cameraView → PerspectiveCamera
+ * - CameraFeature: cameraPerspective / cameraOrthographic → Three.js cameras
  * - LightFeature: ambientLight, directionalLight, pointLight, spotLight → Three.js lights
  * - GeometryFeature: box/sphere/plane/cylinder/cone/torus + customGeometry (mesh resource) → Mesh
  * - MaterialFeature: standardMaterial, basicMaterial, phongMaterial, lambertMaterial → Mesh*Material

@@ -51,21 +51,6 @@ export function validateAddComponent<T extends ComponentBase>(
   return ok(undefined);
 }
 
-/**
- * Checks whether `type` can be safely removed from `entity`.
- * Blocks removal if another component on the entity declares it as a dependency.
- */
-export function validateRemoveComponent(entity: EntityState, type: ComponentType): Result<void> {
-  for (const [, comp] of entity.components) {
-    if (comp.type === type) continue;
-    const reqs = comp.metadata.requires;
-    if (reqs && reqs.includes(type)) {
-      return err('validation', `Cannot remove "${type}" — required by "${comp.type}".`);
-    }
-  }
-  return ok(undefined);
-}
-
 export const GEOMETRY_TYPES: ReadonlySet<string> = new Set([
   'boxGeometry',
   'sphereGeometry',
@@ -76,9 +61,16 @@ export const GEOMETRY_TYPES: ReadonlySet<string> = new Set([
   'customGeometry',
 ]);
 
+/** Perspective or orthographic camera — satisfies `requires: ["camera"]`. */
+export const CAMERA_TYPES: ReadonlySet<string> = new Set([
+  'cameraPerspective',
+  'cameraOrthographic',
+]);
+
 /**
  * Checks if a requirement is satisfied on `entity`.
  * Handles the "geometry" wildcard: any geometry component satisfies `requires: ["geometry"]`.
+ * Handles the "camera" wildcard: perspective or orthographic camera satisfies `requires: ["camera"]`.
  */
 export function satisfiesRequirement(entity: EntityState, req: ComponentDependency): boolean {
   if (entity.components.has(req as ComponentType)) return true;
@@ -87,7 +79,41 @@ export function satisfiesRequirement(entity: EntityState, req: ComponentDependen
       if (GEOMETRY_TYPES.has(t)) return true;
     }
   }
+  if (req === 'camera') {
+    for (const [t] of entity.components) {
+      if (CAMERA_TYPES.has(t)) return true;
+    }
+  }
   return false;
+}
+
+/**
+ * Checks whether `type` can be safely removed from `entity`.
+ * Blocks removal if another component on the entity declares it as a dependency.
+ * Handles `requires: ["camera"]` when removing the last camera component.
+ */
+export function validateRemoveComponent(entity: EntityState, type: ComponentType): Result<void> {
+  for (const [, comp] of entity.components) {
+    if (comp.type === type) continue;
+    const reqs = comp.metadata.requires;
+    if (reqs && reqs.includes(type)) {
+      return err('validation', `Cannot remove "${type}" — required by "${comp.type}".`);
+    }
+  }
+  if (CAMERA_TYPES.has(type)) {
+    const stillHasCamera = [...entity.components.keys()].some(
+      (t) => t !== type && CAMERA_TYPES.has(t),
+    );
+    if (!stillHasCamera) {
+      for (const [, comp] of entity.components) {
+        if (comp.type === type) continue;
+        if (comp.metadata.requires?.includes('camera' as ComponentDependency)) {
+          return err('validation', `Cannot remove "${type}" — required by "${comp.type}".`);
+        }
+      }
+    }
+  }
+  return ok(undefined);
 }
 
 /**

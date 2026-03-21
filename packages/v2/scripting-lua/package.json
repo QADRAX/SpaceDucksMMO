@@ -12,7 +12,7 @@
     }
   },
   "scripts": {
-    "build:scripts": "ts-node --project tsconfig.json scripts/generate-scripts.ts",
+    "build:scripts": "npx tsx scripts/generate-scripts.ts",
     "prebuild": "pnpm run generate:component-types && pnpm run generate:input-types",
     "generate:component-types": "npx tsx scripts/generate-component-types.ts",
     "generate:input-types": "npx tsx scripts/generate-input-types.ts",

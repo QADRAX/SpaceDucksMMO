@@ -44,7 +44,7 @@ export const guardSceneExists: EngineGuard<unknown, { readonly sceneId: SceneId 
 
 /**
  * Engine guard: validates that `params.cameraEntityId` exists in the
- * current scene and owns a `cameraView` component.
+ * current scene and owns a perspective or orthographic camera component.
  *
  * Requires a state with `sceneId` so it can resolve the scene.
  * Naturally fits viewport state but works with any state that

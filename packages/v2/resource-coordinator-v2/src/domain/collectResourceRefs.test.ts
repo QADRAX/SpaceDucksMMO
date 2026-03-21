@@ -28,6 +28,8 @@ describe('collectResourceRefs', () => {
     expect(refs.meshes).toHaveLength(1);
     expect(refs.meshes[0].key).toBe('test-mesh');
     expect(refs.meshes[0].kind).toBe('mesh');
+    expect(refs.skeletons).toHaveLength(0);
+    expect(refs.animationClips).toHaveLength(0);
     expect(refs.textures).toHaveLength(0);
     expect(refs.skyboxes).toHaveLength(0);
     expect(refs.scripts).toHaveLength(0);
@@ -88,6 +90,8 @@ describe('collectResourceRefs', () => {
 
     const refs = collectRefsFromEntity(entity);
     expect(refs.meshes).toHaveLength(0);
+    expect(refs.skeletons).toHaveLength(0);
+    expect(refs.animationClips).toHaveLength(0);
     expect(refs.textures).toHaveLength(0);
     expect(refs.skyboxes).toHaveLength(0);
     expect(refs.scripts).toHaveLength(0);
@@ -229,5 +233,23 @@ describe('collectResourceRefs', () => {
     const refs = collectRefsFromAllScenes(engine as any);
     expect(refs.meshes).toHaveLength(2);
     expect(refs.meshes.map((r) => r.key).sort()).toEqual(['scene-a-mesh', 'scene-b-mesh']);
+  });
+
+  it('collects skeleton and animation clip refs from skin and animator', () => {
+    const entity = createEntity(createEntityId('rig'));
+    const sk = createResourceRef(createResourceKey('char-skel'), 'skeleton');
+    const clip = createResourceRef(createResourceKey('walk'), 'animationClip');
+    addComponent(entity, createComponent('customGeometry', {
+      mesh: createResourceRef(createResourceKey('body'), 'mesh'),
+    }));
+    addComponent(entity, createComponent('skin', { skeleton: sk }));
+    addComponent(entity, createComponent('animator', { clips: [clip] }));
+
+    const refs = collectRefsFromEntity(entity);
+    expect(refs.meshes).toHaveLength(1);
+    expect(refs.skeletons).toHaveLength(1);
+    expect(refs.skeletons[0].key).toBe('char-skel');
+    expect(refs.animationClips).toHaveLength(1);
+    expect(refs.animationClips[0].key).toBe('walk');
   });
 });

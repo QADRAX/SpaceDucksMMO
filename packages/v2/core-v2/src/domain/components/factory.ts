@@ -9,6 +9,7 @@ import { MATERIAL_SPECS } from './constants/rendering/material';
 import { SHADER_MATERIAL_SPECS } from './constants/rendering/shaderMaterial';
 import { GEOMETRY_SPECS } from './constants/rendering/geometrySpecs';
 import { CAMERA_SPECS } from './constants/rendering/camera';
+import { RIGGING_SPECS } from './constants/rendering/rigging';
 import { TEXTURE_SPECS } from './constants/rendering/texture';
 import { EFFECT_SPECS } from './constants/rendering/effects';
 import { ENVIRONMENT_SPECS } from './constants/rendering/environment';
@@ -28,6 +29,7 @@ const COMPONENT_SPECS: {
   ...MATERIAL_SPECS,
   ...SHADER_MATERIAL_SPECS,
   ...CAMERA_SPECS,
+  ...RIGGING_SPECS,
   ...TEXTURE_SPECS,
   ...LIGHT_SPECS,
   ...EFFECT_SPECS,

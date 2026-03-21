@@ -114,10 +114,14 @@ export function createScriptOnlyResourceCache(): ResourceCachePort {
 
     return {
         getMeshData: () => null,
+        getSkeletonData: () => null,
+        getAnimationClipData: () => null,
         getTexture: () => null,
         getSkyboxTexture: () => null,
         getScriptSource: (ref) => scriptCache.get(cacheKey(ref)) ?? null,
         storeMeshData: () => {},
+        storeSkeletonData: () => {},
+        storeAnimationClipData: () => {},
         storeTextureFromBlob: async () => {},
         storeSkyboxFromUrls: async () => {},
         storeScriptSource: (ref, source) => {

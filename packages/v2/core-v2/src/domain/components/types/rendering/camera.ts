@@ -1,11 +1,20 @@
 import type { ComponentBase } from '../core';
 
-/** Camera projection settings. */
-export interface CameraViewComponent extends ComponentBase<'cameraView', CameraViewComponent> {
+/** Perspective camera (matches typical game / glTF perspective). */
+export interface CameraPerspectiveComponent extends ComponentBase<'cameraPerspective', CameraPerspectiveComponent> {
     fov: number;
+    aspect: number;
     near: number;
     far: number;
+}
+
+/** Orthographic camera (glTF orthographic; half-height + aspect defines frustum width). */
+export interface CameraOrthographicComponent extends ComponentBase<'cameraOrthographic', CameraOrthographicComponent> {
+    /** Half height of the view volume at the near plane (world units); width = halfHeight × aspect. */
+    halfHeight: number;
     aspect: number;
+    near: number;
+    far: number;
 }
 
 /** Single post-process effect descriptor. */
@@ -21,4 +30,4 @@ export interface PostProcessComponent extends ComponentBase<'postProcess', PostP
 }
 
 /** Union of camera-related components. */
-export type CameraComponent = CameraViewComponent | PostProcessComponent;
+export type CameraComponent = CameraPerspectiveComponent | CameraOrthographicComponent | PostProcessComponent;

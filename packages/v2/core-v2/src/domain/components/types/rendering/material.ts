@@ -1,5 +1,5 @@
 import type { ComponentBase } from '../core';
-import type { ResourceRef } from '../../../resources';
+import type { AlphaMode, ResourceRef } from '../../../resources';
 
 /** Literal union of plain (built-in) material component type strings. */
 export type PlainMaterialComponentType =
@@ -39,6 +39,25 @@ export interface StandardMaterialComponent extends MaterialComponentBase<'standa
     emissive: string | undefined;
     emissiveIntensity: number | undefined;
 
+    alphaMode: AlphaMode | undefined;
+    alphaCutoff: number | undefined;
+    doubleSided: boolean | undefined;
+    normalScale: number | undefined;
+    ior: number | undefined;
+    transmission: number | undefined;
+    thickness: number | undefined;
+    attenuationColor: string | undefined;
+    attenuationDistance: number | undefined;
+    clearcoat: number | undefined;
+    clearcoatRoughness: number | undefined;
+    clearcoatNormalScale: number | undefined;
+    sheen: number | undefined;
+    sheenRoughness: number | undefined;
+    sheenColor: string | undefined;
+    iridescence: number | undefined;
+    iridescenceIOR: number | undefined;
+    iridescenceThicknessRange: readonly [number, number] | undefined;
+
     // -- Texture Overrides --
     /** Normal map for surface detail override. */
     normalMap: ResourceRef<'texture'> | undefined;
@@ -48,6 +67,9 @@ export interface StandardMaterialComponent extends MaterialComponentBase<'standa
     roughnessMap: ResourceRef<'texture'> | undefined;
     /** Metallic map (greyscale) override. */
     metallicMap: ResourceRef<'texture'> | undefined;
+    /** glTF packed metallic (B) + roughness (G); overrides separate roughness/metallic maps when set. */
+    metallicRoughnessMap: ResourceRef<'texture'> | undefined;
+    emissiveMap: ResourceRef<'texture'> | undefined;
     /** Environment reflection map override. */
     envMap: ResourceRef<'texture'> | undefined;
 }
@@ -87,6 +109,8 @@ export function getMaterialTextureRefs(mat: MaterialComponent): ResourceRef<'tex
     if ('aoMap' in mat && mat.aoMap) refs.push(mat.aoMap);
     if ('roughnessMap' in mat && mat.roughnessMap) refs.push(mat.roughnessMap);
     if ('metallicMap' in mat && mat.metallicMap) refs.push(mat.metallicMap);
+    if ('metallicRoughnessMap' in mat && mat.metallicRoughnessMap) refs.push(mat.metallicRoughnessMap);
+    if ('emissiveMap' in mat && mat.emissiveMap) refs.push(mat.emissiveMap);
     if ('envMap' in mat && mat.envMap) refs.push(mat.envMap);
     return refs;
 }

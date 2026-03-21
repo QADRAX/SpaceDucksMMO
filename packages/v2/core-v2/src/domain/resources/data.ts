@@ -1,11 +1,23 @@
 import type { ResourceKind } from './kinds';
+import type { EntityId } from '../ids';
+
+export type { MeshGeometryFileData } from './meshGeometry';
+export type { AnimationClipFileData } from './animationClip';
 
 /** Shader blending mode — mirrored from ShaderMaterialComponent for data typing. */
 export type ResourceBlendingMode = 'normal' | 'additive' | 'multiply' | 'subtractive';
 
+/** glTF alpha modes — first-class in engine material data (importer maps glTF `alphaMode`). */
+export type AlphaMode = 'opaque' | 'mask' | 'blend';
+
 // ── Per-kind scalar attribute shapes ─────────────────────────────────────────
 
-/** Scalar data for a standardMaterial resource. */
+/**
+ * Scalar data for a standardMaterial resource.
+ * Includes glTF 2.0 core + common KHR_* PBR fields as first-class scalars;
+ * textures that are purely packing/layout (e.g. metallic+roughness in one map) are handled via
+ * {@link fileSlots} / import mapping, not duplicate scalar concepts.
+ */
 export interface StandardMaterialData {
     readonly color: string;
     readonly metalness: number;
@@ -14,6 +26,28 @@ export interface StandardMaterialData {
     readonly emissiveIntensity: number;
     readonly transparent: boolean;
     readonly opacity: number;
+    readonly alphaMode: AlphaMode;
+    /** Used when alphaMode is `mask` (glTF default 0.5). */
+    readonly alphaCutoff: number;
+    readonly doubleSided: boolean;
+    /** Tangent-space normal strength (glTF normalScale). */
+    readonly normalScale: number;
+    /** Index of refraction (transmission / glTF ior). */
+    readonly ior: number;
+    readonly transmission: number;
+    /** For thin transmission volume (glTF). */
+    readonly thickness: number;
+    readonly attenuationColor: string;
+    readonly attenuationDistance: number;
+    readonly clearcoat: number;
+    readonly clearcoatRoughness: number;
+    readonly clearcoatNormalScale: number;
+    readonly sheen: number;
+    readonly sheenRoughness: number;
+    readonly sheenColor: string;
+    readonly iridescence: number;
+    readonly iridescenceIOR: number;
+    readonly iridescenceThicknessRange: readonly [number, number];
 }
 
 /** Scalar data for a basicMaterial resource. */
@@ -69,32 +103,22 @@ export interface PhysicalShaderMaterialData extends ShaderMaterialDataBase {
     readonly thickness: number;
 }
 
-/** Scalar data for a mesh resource (no scalar attributes; geometry is in the geometry file). */
+/** Scalar data for a mesh resource (geometry lives in the geometry file). */
 export type MeshData = Record<string, never>;
 
 /**
- * JSON schema for the mesh resource's geometry file.
- * When the `geometry` file slot is served as JSON, the parsed content must match this shape.
- * Used by customGeometry (render) and trimeshCollider (physics); same file for both.
+ * Ordered joint list for skinning: vertex `jointIndices` index into this array.
+ * Joints are scene entities (bones); transform hierarchy is scene graph, not this resource.
  */
-export interface MeshGeometryFileData {
-    /** Vertex positions: flat [x, y, z, x, y, z, ...], length = vertexCount * 3 */
-    readonly positions: number[];
-    /** Triangle indices: flat [i0, j0, k0, i1, j1, k1, ...], length multiple of 3 */
-    readonly indices: number[];
-    /** Optional normals: flat [x, y, z, ...], length = vertexCount * 3 */
-    readonly normals?: number[];
-    /** Optional UVs: flat [u, v, u, v, ...], length = vertexCount * 2 */
-    readonly uvs?: number[];
-    /** Optional axis-aligned bounding box for culling/LOD */
-    readonly bounds?: {
-        readonly minX: number;
-        readonly minY: number;
-        readonly minZ: number;
-        readonly maxX: number;
-        readonly maxY: number;
-        readonly maxZ: number;
-    };
+export interface SkeletonData {
+    readonly jointEntityIds: readonly EntityId[];
+}
+
+/**
+ * Scalar data for an animationClip resource (full samples live in the clip file).
+ */
+export interface AnimationClipData {
+    readonly name?: string;
 }
 
 /** Scalar data for a skybox resource (no data — files only). */
@@ -124,6 +148,8 @@ export type ResourceData<K extends ResourceKind> =
     K extends 'standardShaderMaterial' ? StandardShaderMaterialData :
     K extends 'physicalShaderMaterial' ? PhysicalShaderMaterialData :
     K extends 'mesh' ? MeshData :
+    K extends 'skeleton' ? SkeletonData :
+    K extends 'animationClip' ? AnimationClipData :
     K extends 'skybox' ? SkyboxData :
     K extends 'script' ? ScriptData :
     K extends 'texture' ? TextureData :

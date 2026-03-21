@@ -39,7 +39,15 @@ export interface HarnessAppState {
 
 function createDefaultCameraEntity() {
   const entity = createEntity(DEFAULT_CAMERA_ID, 'Harness Camera');
-  addComponent(entity, createComponent('cameraView', { fov: 60 }));
+  addComponent(
+    entity,
+    createComponent('cameraPerspective', {
+      fov: 60,
+      near: 0.1,
+      far: 1000,
+      aspect: 16 / 9,
+    }),
+  );
   setPosition(entity.transform, 0, 6, 8);
   lookAt(entity.transform, { x: 0, y: 0, z: 0 });
   return entity;
@@ -106,7 +114,9 @@ function findFirstCameraEntityId(yamlStr: string): string | null {
   const parseResult = parseAndValidateSceneYaml(yamlStr);
   if (!parseResult.ok) return null;
   for (const entity of parseResult.value.entities) {
-    if (entity.components?.cameraView != null) return entity.id;
+    if (entity.components?.cameraPerspective != null || entity.components?.cameraOrthographic != null) {
+      return entity.id;
+    }
   }
   return null;
 }

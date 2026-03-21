@@ -28,3 +28,5 @@ Lua scripts for integration tests. Included in pre-build via `npm run build:scri
 | `component_bridge_resources.lua` | setResource for standardMaterial.material (ResourceRef) |
 | `component_bridge_resource_mesh.lua` | setResource for customGeometry.mesh (ResourceRef) |
 | `component_bridge_resource_texture.lua` | setResource for standardMaterial.albedo (texture slot) |
+| `component_bridge_light_fields.lua` | getField/setField for directionalLight shadow fields |
+| `component_bridge_skin_animator.lua` | setResource for skin.skeleton; setField for animator speed/playing/time |

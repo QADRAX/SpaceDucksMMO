@@ -1,4 +1,6 @@
 export * from './camera';
+export * from './animator';
+export * from './skin';
 export * from './effects';
 export * from './environment';
 export * from './geometry';

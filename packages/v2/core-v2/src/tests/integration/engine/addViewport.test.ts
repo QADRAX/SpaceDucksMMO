@@ -15,7 +15,7 @@ describe('Integration: Engine > addViewport', () => {
         const cam = createEntity(createEntityId('cam'));
         ctx.api.scene(createSceneId('main')).addEntity({ entity: cam });
         ctx.api.scene(createSceneId('main')).entity(createEntityId('cam')).addComponent({
-            component: createComponent('cameraView') as any
+            component: createComponent('cameraPerspective') as any
         });
     });
 
