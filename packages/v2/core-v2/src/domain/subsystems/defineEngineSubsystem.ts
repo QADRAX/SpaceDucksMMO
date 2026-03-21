@@ -146,6 +146,7 @@ export function defineEngineSubsystem<TState>(
                     : undefined;
 
             return {
+                subsystemId: _name,
                 engineEventHandlers,
                 sceneEventHandlers,
                 earlyUpdate: makeEnginePhaseCallback(phaseUseCases.earlyUpdate, stateRef, stateFactory),

@@ -1,7 +1,7 @@
 import { defineEngineUseCase } from '../../domain/useCases';
 import { guardEngineSetupComplete } from '../../domain/engine/engineGuards';
 import { FRAME_PHASES, type FramePhase, type SceneSubsystem, type EngineSubsystem } from '../../domain/subsystems';
-import { PerformanceProfilingPortDef } from '../../domain/ports';
+import { PerformanceProfilingPortDef, type PerformanceProfilingPort } from '../../domain/ports';
 import type { SceneState } from '../../domain/scene';
 import type { EngineState } from '../../domain/engine';
 
@@ -28,6 +28,52 @@ function now(): number {
     : Date.now();
 }
 
+function runEngineSubsystemPhase(
+  perfPort: PerformanceProfilingPort | undefined,
+  subsystem: EngineSubsystem,
+  index: number,
+  phase: FramePhase,
+  fn: () => void,
+): void {
+  const subsystemId = subsystem.subsystemId ?? `engine-subsystem-${index}`;
+  if (!perfPort) {
+    fn();
+    return;
+  }
+  const t0 = now();
+  fn();
+  perfPort.recordSubsystemPhase({
+    scope: 'engine',
+    subsystemId,
+    phase,
+    durationMs: now() - t0,
+  });
+}
+
+function runSceneSubsystemPhase(
+  perfPort: PerformanceProfilingPort | undefined,
+  subsystem: SceneSubsystem,
+  index: number,
+  sceneId: string,
+  phase: FramePhase,
+  fn: () => void,
+): void {
+  const subsystemId = subsystem.subsystemId ?? `scene-subsystem-${index}`;
+  if (!perfPort) {
+    fn();
+    return;
+  }
+  const t0 = now();
+  fn();
+  perfPort.recordSubsystemPhase({
+    scope: 'scene',
+    sceneId,
+    subsystemId,
+    phase,
+    durationMs: now() - t0,
+  });
+}
+
 /**
  * Advances the entire engine by one frame.
  *
@@ -38,17 +84,17 @@ function now(): number {
  *
  * Respects engine-level and scene-level pause flags.
  *
- * When PerformanceProfilingPort is registered, records phase timings
- * and frame totals via the port.
+ * When PerformanceProfilingPort is registered, records phase timings,
+ * per-subsystem slices within each phase, and frame totals via the port.
  */
 export const updateEngine = defineEngineUseCase<UpdateEngineParams, void>({
   name: 'updateEngine',
   guards: [guardEngineSetupComplete],
   execute(engine, { dt }) {
     const enginePaused = engine.paused;
-    const perfPort = engine.subsystemRuntime.ports.get(PerformanceProfilingPortDef.id) as
-      | { recordPhase: (p: FramePhase, ms: number) => void; recordFrameEnd: (ms: number) => void }
-      | undefined;
+    const perfPort = engine.subsystemRuntime.ports.get(
+      PerformanceProfilingPortDef.id,
+    ) as PerformanceProfilingPort | undefined;
 
     const frameStart = perfPort ? now() : 0;
 
@@ -60,10 +106,12 @@ export const updateEngine = defineEngineUseCase<UpdateEngineParams, void>({
       const engineFirst = phase === 'preRender';
 
       if (engineFirst) {
-        for (const subsystem of engine.engineSubsystems) {
+        for (let ei = 0; ei < engine.engineSubsystems.length; ei++) {
+          const subsystem = engine.engineSubsystems[ei]!;
           if (enginePaused && !subsystem.updateWhenPaused) continue;
           const fn = getEnginePhaseFn(subsystem, phase);
-          if (fn) fn(engine, dt);
+          if (!fn) continue;
+          runEngineSubsystemPhase(perfPort, subsystem, ei, phase, () => fn(engine, dt));
         }
       }
 
@@ -71,20 +119,24 @@ export const updateEngine = defineEngineUseCase<UpdateEngineParams, void>({
       if (phase !== 'render') {
         for (const scene of engine.scenes.values()) {
           const scenePaused = enginePaused || scene.paused;
-          for (const subsystem of scene.subsystems) {
+          for (let si = 0; si < scene.subsystems.length; si++) {
+            const subsystem = scene.subsystems[si]!;
             if (scenePaused && !subsystem.updateWhenPaused) continue;
             const fn = getScenePhaseFn(subsystem, phase as ScenePhase);
-            if (fn) fn(scene, dt);
+            if (!fn) continue;
+            runSceneSubsystemPhase(perfPort, subsystem, si, scene.id, phase, () => fn(scene, dt));
           }
         }
       }
 
       if (!engineFirst) {
         // Engine subsystems (or render phase only)
-        for (const subsystem of engine.engineSubsystems) {
+        for (let ei = 0; ei < engine.engineSubsystems.length; ei++) {
+          const subsystem = engine.engineSubsystems[ei]!;
           if (enginePaused && !subsystem.updateWhenPaused) continue;
           const fn = getEnginePhaseFn(subsystem, phase);
-          if (fn) fn(engine, dt);
+          if (!fn) continue;
+          runEngineSubsystemPhase(perfPort, subsystem, ei, phase, () => fn(engine, dt));
         }
       }
 

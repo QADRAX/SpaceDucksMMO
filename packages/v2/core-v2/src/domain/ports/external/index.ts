@@ -45,4 +45,8 @@ export { ViewportRectProviderPortDef } from './viewportRectProviderPortDef';
 export type { ViewportRectProviderPort } from './viewportRectProviderPort';
 
 export { PerformanceProfilingPortDef } from './performanceProfilingPortDef';
-export type { PerformanceProfilingPort } from './performanceProfilingPort';
+export type {
+  PerformanceProfilingPort,
+  SubsystemPhaseSlice,
+  SubsystemProfilingScope,
+} from './performanceProfilingPort';

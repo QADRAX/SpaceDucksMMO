@@ -53,6 +53,14 @@ export const test = base.extend<{ page: Page }>({
           contentType: 'application/json',
         });
       }
+
+      const subsystemSlices = raw?.subsystemSlices ?? [];
+      if (subsystemSlices.length > 0) {
+        await testInfo.attach('performance-subsystem-slices', {
+          body: JSON.stringify(subsystemSlices, null, 2),
+          contentType: 'application/json',
+        });
+      }
       }
     } catch {
       // Page may be closed; skip performance attachment

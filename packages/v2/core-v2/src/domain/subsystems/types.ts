@@ -41,6 +41,8 @@ export const SCENE_FRAME_PHASES: readonly SceneFramePhase[] = [
  * participates in the frame-update pipeline via phase callbacks.
  */
 export interface SceneSubsystem {
+  /** Optional id from factory config — used for profiling and logs. */
+  readonly subsystemId?: string;
   /** React to a scene change event (reactive channel). */
   handleSceneEvent(scene: SceneState, event: SceneChangeEventWithError): void;
   /** Engine-level event handlers. Used by attachSceneSubsystem to register listeners. */
@@ -67,6 +69,8 @@ export interface SceneSubsystem {
  * full-engine visibility (all scenes/viewports), not a single scene.
  */
 export interface EngineSubsystem {
+  /** Optional id from subsystem config — used for profiling and logs. */
+  readonly subsystemId?: string;
   /** Port providers run during setup before scene subsystems are instantiated. */
   readonly portProviders?: ReadonlyArray<SubsystemPortProvider>;
   /** Called when a scene is added, before scene subsystems are instantiated. */

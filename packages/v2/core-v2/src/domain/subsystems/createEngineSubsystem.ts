@@ -100,6 +100,7 @@ export function createEngineSubsystem<TState>(
     });
 
   return {
+    subsystemId: config.id,
     portProviders: portProviders.length > 0 ? [...portProviders] : undefined,
     onSceneAdded,
     engineEventHandlers,

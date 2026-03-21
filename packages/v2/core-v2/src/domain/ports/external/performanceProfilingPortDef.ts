@@ -7,5 +7,6 @@ import type { PerformanceProfilingPort } from './performanceProfilingPort';
  */
 export const PerformanceProfilingPortDef = definePort<PerformanceProfilingPort>('io:performanceProfiling')
   .addMethod('recordPhase')
+  .addMethod('recordSubsystemPhase')
   .addMethod('recordFrameEnd')
   .build();

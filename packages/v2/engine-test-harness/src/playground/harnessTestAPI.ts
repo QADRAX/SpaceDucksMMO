@@ -8,6 +8,14 @@ import { loadSceneYaml } from '../infrastructure/createHarnessApp';
 export interface PerformanceReport {
   frames: Array<{ frame: number; t: number; delta: number; fps: number }>;
   phases: Array<{ frame: number; phase: string; duration: number }>;
+  subsystemSlices: Array<{
+    frame: number;
+    scope: 'engine' | 'scene';
+    sceneId?: string;
+    subsystemId: string;
+    phase: string;
+    duration: number;
+  }>;
   frameTotals: Array<{ frame: number; duration: number }>;
 }
 
@@ -44,6 +52,7 @@ export function createHarnessTestAPI(): HarnessTestAPI {
       return {
         frames: [...pr.frames],
         phases: [...pr.phases],
+        subsystemSlices: [...pr.subsystemSlices],
         frameTotals: [...pr.frameTotals],
       };
     },

@@ -36,6 +36,10 @@ export function createSceneSubsystem<TState>(config: SceneSubsystemConfig<TState
     if (dispose) composer.onDispose(dispose);
     if (updateWhenPaused) composer.updateWhenPaused(true);
 
-    return composer.build();
+    const built = composer.build();
+    return {
+      ...built,
+      subsystemId: config.id,
+    };
   };
 }
