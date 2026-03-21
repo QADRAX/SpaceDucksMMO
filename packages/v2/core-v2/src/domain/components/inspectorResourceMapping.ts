@@ -34,7 +34,6 @@ export function inferResourceKindFromInspectorField(
     if (fieldType === 'resource' && fieldKey === 'material') return componentType as ResourceKind;
     if (fieldType === 'reference' && fieldKey === 'skybox') return 'skybox';
     if (fieldType === 'reference' && fieldKey === 'mesh') return 'mesh';
-    if (fieldType === 'reference' && fieldKey === 'skeleton') return 'skeleton';
     return null;
 }
 

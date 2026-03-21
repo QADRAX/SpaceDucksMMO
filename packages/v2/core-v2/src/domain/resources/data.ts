@@ -1,5 +1,4 @@
 import type { ResourceKind } from './kinds';
-import type { EntityId } from '../ids';
 
 export type { MeshGeometryFileData } from './meshGeometry';
 export type { AnimationClipFileData } from './animationClip';
@@ -107,14 +106,6 @@ export interface PhysicalShaderMaterialData extends ShaderMaterialDataBase {
 export type MeshData = Record<string, never>;
 
 /**
- * Ordered joint list for skinning: vertex `jointIndices` index into this array.
- * Joints are scene entities (bones); transform hierarchy is scene graph, not this resource.
- */
-export interface SkeletonData {
-    readonly jointEntityIds: readonly EntityId[];
-}
-
-/**
  * Scalar data for an animationClip resource (full samples live in the clip file).
  */
 export interface AnimationClipData {
@@ -148,7 +139,6 @@ export type ResourceData<K extends ResourceKind> =
     K extends 'standardShaderMaterial' ? StandardShaderMaterialData :
     K extends 'physicalShaderMaterial' ? PhysicalShaderMaterialData :
     K extends 'mesh' ? MeshData :
-    K extends 'skeleton' ? SkeletonData :
     K extends 'animationClip' ? AnimationClipData :
     K extends 'skybox' ? SkyboxData :
     K extends 'script' ? ScriptData :

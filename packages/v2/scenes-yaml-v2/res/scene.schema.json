@@ -103,7 +103,7 @@
                   "type": "object",
                   "properties": {
                     "value": {
-                      "description": "Value",
+                      "description": "Value (entity id)",
                       "type": "string"
                     }
                   },
@@ -348,7 +348,7 @@
                   "type": "object",
                   "properties": {
                     "mesh": {
-                      "description": "Mesh Resource",
+                      "description": "Mesh Resource (entity id)",
                       "type": "string"
                     },
                     "castShadow": {
@@ -374,7 +374,7 @@
                   "type": "object",
                   "properties": {
                     "material": {
-                      "description": "Material Resource",
+                      "description": "Material Resource (entity id)",
                       "type": "string"
                     },
                     "color": {
@@ -392,7 +392,7 @@
                       "maximum": 1
                     },
                     "albedo": {
-                      "description": "Albedo Map",
+                      "description": "Albedo Map (entity id)",
                       "type": "string"
                     },
                     "metalness": {
@@ -417,31 +417,31 @@
                       "minimum": 0
                     },
                     "normalMap": {
-                      "description": "Normal Map",
+                      "description": "Normal Map (entity id)",
                       "type": "string"
                     },
                     "aoMap": {
-                      "description": "AO Map",
+                      "description": "AO Map (entity id)",
                       "type": "string"
                     },
                     "roughnessMap": {
-                      "description": "Roughness Map",
+                      "description": "Roughness Map (entity id)",
                       "type": "string"
                     },
                     "metallicMap": {
-                      "description": "Metallic Map",
+                      "description": "Metallic Map (entity id)",
                       "type": "string"
                     },
                     "metallicRoughnessMap": {
-                      "description": "Metallic–Roughness Map",
+                      "description": "Metallic–Roughness Map (entity id)",
                       "type": "string"
                     },
                     "emissiveMap": {
-                      "description": "Emissive Map",
+                      "description": "Emissive Map (entity id)",
                       "type": "string"
                     },
                     "envMap": {
-                      "description": "Environment Map",
+                      "description": "Environment Map (entity id)",
                       "type": "string"
                     },
                     "alphaMode": {
@@ -571,7 +571,7 @@
                   "type": "object",
                   "properties": {
                     "material": {
-                      "description": "Material Resource",
+                      "description": "Material Resource (entity id)",
                       "type": "string"
                     },
                     "color": {
@@ -589,7 +589,7 @@
                       "maximum": 1
                     },
                     "albedo": {
-                      "description": "Albedo Map",
+                      "description": "Albedo Map (entity id)",
                       "type": "string"
                     },
                     "wireframe": {
@@ -611,7 +611,7 @@
                   "type": "object",
                   "properties": {
                     "material": {
-                      "description": "Material Resource",
+                      "description": "Material Resource (entity id)",
                       "type": "string"
                     },
                     "color": {
@@ -629,7 +629,7 @@
                       "maximum": 1
                     },
                     "albedo": {
-                      "description": "Albedo Map",
+                      "description": "Albedo Map (entity id)",
                       "type": "string"
                     },
                     "specular": {
@@ -661,7 +661,7 @@
                   "type": "object",
                   "properties": {
                     "material": {
-                      "description": "Material Resource",
+                      "description": "Material Resource (entity id)",
                       "type": "string"
                     },
                     "color": {
@@ -679,7 +679,7 @@
                       "maximum": 1
                     },
                     "albedo": {
-                      "description": "Albedo Map",
+                      "description": "Albedo Map (entity id)",
                       "type": "string"
                     },
                     "emissive": {
@@ -966,9 +966,28 @@
                 {
                   "type": "object",
                   "properties": {
-                    "skeleton": {
-                      "description": "Skeleton Resource",
+                    "rigRootEntityId": {
+                      "description": "Rig root entity (entity id)",
                       "type": "string"
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              ]
+            },
+            "joint": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "description": "Resource key shorthand"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "jointIndex": {
+                      "description": "Joint index",
+                      "type": "number",
+                      "minimum": 0
                     }
                   },
                   "additionalProperties": true
@@ -1326,7 +1345,7 @@
                   "type": "object",
                   "properties": {
                     "skybox": {
-                      "description": "Skybox Resource",
+                      "description": "Skybox Resource (entity id)",
                       "type": "string"
                     }
                   },
@@ -1661,7 +1680,7 @@
                   "type": "object",
                   "properties": {
                     "mesh": {
-                      "description": "Mesh Resource",
+                      "description": "Mesh Resource (entity id)",
                       "type": "string"
                     },
                     "friction": {

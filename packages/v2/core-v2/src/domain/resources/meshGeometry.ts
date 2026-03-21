@@ -15,7 +15,7 @@ export interface MeshBounds {
 
 /**
  * Per-joint inverse bind matrices, column-major 4×4 (16 floats per joint).
- * Vertex `jointIndices` select rows into this list (same order as {@link SkeletonData.jointEntityIds}).
+ * Vertex `jointIndices` select rows into the joint palette (same order as {@link JointComponent.jointIndex} under {@link SkinComponent.rigRootEntityId}).
  */
 export interface MeshSkinInverseBindData {
     readonly inverseBindMatrices: readonly number[];
@@ -53,11 +53,11 @@ export interface MeshGeometryFileData {
     readonly tangents?: readonly number[];
     /** Vertex COLOR_0 RGBA, length = vertexCount × 4 */
     readonly colors?: readonly number[];
-    /** JOINTS_0: four indices per vertex into the skeleton joint list, length = vertexCount × 4 */
+    /** JOINTS_0: four indices per vertex into the joint palette (see joint components), length = vertexCount × 4 */
     readonly jointIndices?: readonly number[];
     /** WEIGHTS_0: four weights per vertex, length = vertexCount × 4 */
     readonly jointWeights?: readonly number[];
-    /** IBM table for joints referenced by jointIndices (see skin-skeleton domain docs on core-v2). */
+    /** IBM table for joints referenced by jointIndices (see skin + joint components on core-v2). */
     readonly skin?: MeshSkinInverseBindData;
     readonly morphTargets?: readonly MorphTargetDelta[];
     readonly bounds?: MeshBounds;

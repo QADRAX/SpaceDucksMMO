@@ -314,7 +314,7 @@ describe('Scenario: Component bridge E2E', () => {
     expect(light.shadowNormalBias).toBe(0.02);
   });
 
-  it('component_bridge_skin_animator: setResource skeleton + setField animator', async () => {
+  it('component_bridge_skin_animator: setField skin rigRoot + setField animator', async () => {
     const { api } = await setupScriptingIntegrationTest();
 
     addSceneWithEntity(api, MAIN_SCENE, ENTITY_E7);
@@ -337,8 +337,8 @@ describe('Scenario: Component bridge E2E', () => {
         scriptId: 'test://component_bridge_skin_animator.lua',
         properties: {
           meshSetOk: false,
-          skeletonSetOk: false,
-          skeletonKeyRead: '',
+          rigRootSetOk: false,
+          rigRootRead: '',
           speedSetOk: false,
           playingSetOk: false,
           timeSetOk: false,
@@ -359,8 +359,8 @@ describe('Scenario: Component bridge E2E', () => {
     );
     expect(props).not.toBeNull();
     expect(props!.meshSetOk).toBe(true);
-    expect(props!.skeletonSetOk).toBe(true);
-    expect(props!.skeletonKeyRead).toBe('rigs/test_skeleton');
+    expect(props!.rigRootSetOk).toBe(true);
+    expect(props!.rigRootRead).toBe('e7');
     expect(props!.speedSetOk).toBe(true);
     expect(props!.playingSetOk).toBe(true);
     expect(props!.timeSetOk).toBe(true);
@@ -372,10 +372,9 @@ describe('Scenario: Component bridge E2E', () => {
     const skinSnap = scene.entity(ENTITY_E7).component('skin').snapshot();
     expect(skinSnap.ok).toBe(true);
     const skin = (skinSnap as { ok: true; value: unknown }).value as {
-      skeleton?: { key: string; kind: string };
+      rigRootEntityId?: string;
     };
-    expect(skin.skeleton?.key).toBe('rigs/test_skeleton');
-    expect(skin.skeleton?.kind).toBe('skeleton');
+    expect(skin.rigRootEntityId).toBe('e7');
 
     const animSnap = scene.entity(ENTITY_E7).component('animator').snapshot();
     expect(animSnap.ok).toBe(true);

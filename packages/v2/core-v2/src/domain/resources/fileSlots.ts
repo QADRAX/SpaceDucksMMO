@@ -86,9 +86,6 @@ export interface MeshFileSlots {
     readonly thumbnail?: ResolvedFile;
 }
 
-/** Skeleton resources are data-only (joint order); no required files. */
-export type SkeletonFileSlots = Record<string, never>;
-
 /** Animation clip: sampled key data (JSON or binary). */
 export interface AnimationClipFileSlots {
     readonly clip: ResolvedFile;
@@ -140,7 +137,6 @@ export type FileSlotsFor<K extends ResourceKind> =
     K extends 'standardShaderMaterial' ? ShaderMaterialFileSlots :
     K extends 'physicalShaderMaterial' ? ShaderMaterialFileSlots :
     K extends 'mesh' ? MeshFileSlots :
-    K extends 'skeleton' ? SkeletonFileSlots :
     K extends 'animationClip' ? AnimationClipFileSlots :
     K extends 'skybox' ? SkyboxFileSlots :
     K extends 'script' ? ScriptFileSlots :

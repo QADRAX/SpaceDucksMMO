@@ -54,22 +54,6 @@ async function loadMesh(
   emitEngineChange(engine, { kind: 'resource-loaded', ref });
 }
 
-async function loadSkeleton(
-  engine: EngineState,
-  loader: ResourceLoader,
-  cache: ResourceCachePort,
-  ref: ResourceRef<'skeleton'>,
-): Promise<void> {
-  if (cache.getSkeletonData?.(ref)) return;
-
-  const result = await loader.resolve(ref);
-  if (result.ok === false) return;
-
-  const resolved = result.value as ResolvedResource<'skeleton'>;
-  cache.storeSkeletonData?.(ref, resolved.componentData);
-  emitEngineChange(engine, { kind: 'resource-loaded', ref });
-}
-
 async function loadAnimationClip(
   engine: EngineState,
   loader: ResourceLoader,
@@ -225,7 +209,6 @@ export async function loadRefsIntoCache(
   const diag = getDiagnostic(engine);
   const total =
     refs.meshes.length +
-    refs.skeletons.length +
     refs.animationClips.length +
     refs.textures.length +
     refs.skyboxes.length +
@@ -233,7 +216,6 @@ export async function loadRefsIntoCache(
   if (total > 0) {
     diag?.log('debug', 'Loading refs into cache', {
       meshes: refs.meshes.length,
-      skeletons: refs.skeletons.length,
       animationClips: refs.animationClips.length,
       textures: refs.textures.length,
       skyboxes: refs.skyboxes.length,
@@ -241,7 +223,6 @@ export async function loadRefsIntoCache(
     });
   }
   for (const ref of refs.meshes) void loadMesh(engine, loader, cache, ref);
-  for (const ref of refs.skeletons) void loadSkeleton(engine, loader, cache, ref);
   for (const ref of refs.animationClips) void loadAnimationClip(engine, loader, cache, ref);
   for (const ref of refs.textures) void loadTexture(engine, loader, cache, ref);
   for (const ref of refs.skyboxes) void loadSkybox(engine, loader, cache, ref);

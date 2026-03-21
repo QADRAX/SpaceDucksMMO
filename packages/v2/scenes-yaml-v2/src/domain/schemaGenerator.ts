@@ -58,7 +58,15 @@ function fieldToJsonSchema(field: { type?: string; key: string; label?: string; 
     case 'texture':
     case 'reference':
     case 'resource':
-      return { ...base, type: 'string' };
+    case 'entityRef':
+      return { ...base, type: 'string', description: `${field.label ?? field.key} (entity id)` };
+    case 'entityRefArray':
+      return {
+        ...base,
+        type: 'array',
+        items: { type: 'string' },
+        description: `${field.label ?? field.key} (entity ids)`,
+      };
     case 'color':
       return { ...base, type: 'string' };
     case 'enum':

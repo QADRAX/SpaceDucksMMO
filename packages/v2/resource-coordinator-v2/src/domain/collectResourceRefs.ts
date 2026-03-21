@@ -14,7 +14,6 @@ import {
   type SkyboxComponent,
   type ScriptComponent,
   type MaterialComponent,
-  type SkinComponent,
   type AnimatorComponent,
 } from '@duckengine/core-v2';
 
@@ -25,7 +24,6 @@ function isBuiltInOrTestScript(scriptId: string): boolean {
 
 export interface CollectedRefs {
   meshes: ResourceRef<'mesh'>[];
-  skeletons: ResourceRef<'skeleton'>[];
   animationClips: ResourceRef<'animationClip'>[];
   textures: ResourceRef<'texture'>[];
   skyboxes: ResourceRef<'skybox'>[];
@@ -35,7 +33,6 @@ export interface CollectedRefs {
 /** Collects resource refs from a single entity. */
 export function collectRefsFromEntity(entity: EntityState): CollectedRefs {
   const meshes: ResourceRef<'mesh'>[] = [];
-  const skeletons: ResourceRef<'skeleton'>[] = [];
   const animationClips: ResourceRef<'animationClip'>[] = [];
   const textures: ResourceRef<'texture'>[] = [];
   const skyboxes: ResourceRef<'skybox'>[] = [];
@@ -49,11 +46,6 @@ export function collectRefsFromEntity(entity: EntityState): CollectedRefs {
   const trimeshCol = getComponent<TrimeshColliderComponent>(entity, 'trimeshCollider');
   if (trimeshCol?.mesh && isResourceRef(trimeshCol.mesh)) {
     meshes.push(trimeshCol.mesh);
-  }
-
-  const skin = getComponent<SkinComponent>(entity, 'skin');
-  if (skin?.skeleton && isResourceRef(skin.skeleton)) {
-    skeletons.push(skin.skeleton);
   }
 
   const animator = getComponent<AnimatorComponent>(entity, 'animator');
@@ -85,7 +77,7 @@ export function collectRefsFromEntity(entity: EntityState): CollectedRefs {
     }
   }
 
-  return { meshes, skeletons, animationClips, textures, skyboxes, scripts };
+  return { meshes, animationClips, textures, skyboxes, scripts };
 }
 
 function collectFromEntityAndChildren(
@@ -94,7 +86,6 @@ function collectFromEntityAndChildren(
 ): void {
   const refs = collectRefsFromEntity(entity);
   acc.meshes.push(...refs.meshes);
-  acc.skeletons.push(...refs.skeletons);
   acc.animationClips.push(...refs.animationClips);
   acc.textures.push(...refs.textures);
   acc.skyboxes.push(...refs.skyboxes);
@@ -108,7 +99,6 @@ function collectFromEntityAndChildren(
 export function collectRefsFromSubtree(entity: EntityState): CollectedRefs {
   const acc: CollectedRefs = {
     meshes: [],
-    skeletons: [],
     animationClips: [],
     textures: [],
     skyboxes: [],
@@ -122,7 +112,6 @@ export function collectRefsFromSubtree(entity: EntityState): CollectedRefs {
 export function collectRefsFromPrefabs(scene: SceneState): CollectedRefs {
   const acc: CollectedRefs = {
     meshes: [],
-    skeletons: [],
     animationClips: [],
     textures: [],
     skyboxes: [],
@@ -131,7 +120,6 @@ export function collectRefsFromPrefabs(scene: SceneState): CollectedRefs {
   for (const prefabEntity of scene.prefabs.values()) {
     const refs = collectRefsFromSubtree(prefabEntity);
     acc.meshes.push(...refs.meshes);
-    acc.skeletons.push(...refs.skeletons);
     acc.animationClips.push(...refs.animationClips);
     acc.textures.push(...refs.textures);
     acc.skyboxes.push(...refs.skyboxes);
@@ -144,7 +132,6 @@ export function collectRefsFromPrefabs(scene: SceneState): CollectedRefs {
 export function collectRefsFromScene(scene: SceneState): CollectedRefs {
   const acc: CollectedRefs = {
     meshes: [],
-    skeletons: [],
     animationClips: [],
     textures: [],
     skyboxes: [],
@@ -153,7 +140,6 @@ export function collectRefsFromScene(scene: SceneState): CollectedRefs {
   for (const entity of scene.entities.values()) {
     const refs = collectRefsFromEntity(entity);
     acc.meshes.push(...refs.meshes);
-    acc.skeletons.push(...refs.skeletons);
     acc.animationClips.push(...refs.animationClips);
     acc.textures.push(...refs.textures);
     acc.skyboxes.push(...refs.skyboxes);
@@ -161,7 +147,6 @@ export function collectRefsFromScene(scene: SceneState): CollectedRefs {
   }
   const prefabRefs = collectRefsFromPrefabs(scene);
   acc.meshes.push(...prefabRefs.meshes);
-  acc.skeletons.push(...prefabRefs.skeletons);
   acc.animationClips.push(...prefabRefs.animationClips);
   acc.textures.push(...prefabRefs.textures);
   acc.skyboxes.push(...prefabRefs.skyboxes);
@@ -173,7 +158,6 @@ export function collectRefsFromScene(scene: SceneState): CollectedRefs {
 export function collectRefsFromAllScenes(engine: EngineState): CollectedRefs {
   const acc: CollectedRefs = {
     meshes: [],
-    skeletons: [],
     animationClips: [],
     textures: [],
     skyboxes: [],
@@ -182,7 +166,6 @@ export function collectRefsFromAllScenes(engine: EngineState): CollectedRefs {
   for (const scene of engine.scenes.values()) {
     const refs = collectRefsFromScene(scene);
     acc.meshes.push(...refs.meshes);
-    acc.skeletons.push(...refs.skeletons);
     acc.animationClips.push(...refs.animationClips);
     acc.textures.push(...refs.textures);
     acc.skyboxes.push(...refs.skyboxes);

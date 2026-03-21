@@ -1,10 +1,10 @@
--- E2E test: Component bridge for skin (ResourceRef skeleton) and animator (playback fields).
+-- E2E test: Component bridge for skin (rigRootEntityId) and animator (playback fields).
 -- Requires entity with: customGeometry, skin, animator (animator may include one clip ref from host).
 
 ---@class ComponentBridgeSkinAnimatorPropsV2
 ---@field meshSetOk boolean
----@field skeletonSetOk boolean
----@field skeletonKeyRead string
+---@field rigRootSetOk boolean
+---@field rigRootRead string
 ---@field speedSetOk boolean
 ---@field playingSetOk boolean
 ---@field timeSetOk boolean
@@ -25,12 +25,11 @@ return {
       eid, 'customGeometry', 'mesh', 'meshes/test_cube'
     )
 
-    self.properties.skeletonSetOk = self.Component.setResource(
-      eid, 'skin', 'skeleton', 'rigs/test_skeleton', 'skeleton'
-    )
+    -- Rig root = this entity (same id as script host) for the test harness
+    self.properties.rigRootSetOk = self.Component.setField(eid, 'skin', 'rigRootEntityId', eid)
 
-    local sk = self.Component.getField(eid, 'skin', 'skeleton')
-    self.properties.skeletonKeyRead = (sk and sk.key) or ''
+    local rr = self.Component.getField(eid, 'skin', 'rigRootEntityId')
+    self.properties.rigRootRead = (type(rr) == 'string') and rr or ''
 
     self.properties.speedSetOk = self.Component.setField(eid, 'animator', 'speed', 2)
     self.properties.playingSetOk = self.Component.setField(eid, 'animator', 'playing', true)

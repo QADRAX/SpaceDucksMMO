@@ -7,13 +7,11 @@ import type { ResourceCachePort } from './resourceCachePort';
  */
 export const ResourceCachePortDef = definePort<ResourceCachePort>('resourceCache')
   .addMethod('getMeshData')
-  .addMethod('getSkeletonData')
   .addMethod('getAnimationClipData')
   .addMethod('getTexture')
   .addMethod('getSkyboxTexture')
   .addMethod('getScriptSource')
   .addMethod('storeMeshData')
-  .addMethod('storeSkeletonData')
   .addMethod('storeAnimationClipData')
   .addMethod('storeTextureFromBlob', { async: true })
   .addMethod('storeSkyboxFromUrls', { async: true })

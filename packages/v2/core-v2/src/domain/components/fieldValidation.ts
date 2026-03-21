@@ -20,6 +20,7 @@ function toPrimitiveRules(field: InspectorFieldConfig): PrimitiveValidationRules
         case 'string':
         case 'texture':
         case 'reference':
+        case 'entityRef':
             return { kind: 'string', required: true, nullable: field.nullable };
         case 'color':
             return {
@@ -62,6 +63,23 @@ export function validateFieldValue(
 ): Result<void> {
     const fail = (message: string): Result<void> =>
         err('validation', `Field '${field.key}' ${message}`);
+
+    if (field.type === 'entityRefArray') {
+        const allowNull = field.nullable === true;
+        if (value === null || value === undefined) {
+            if (allowNull) return ok(undefined);
+            return fail('is required but is null or undefined');
+        }
+        if (!Array.isArray(value)) {
+            return fail(`expected an array of entity ids, got ${typeof value}`);
+        }
+        for (let i = 0; i < value.length; i++) {
+            if (typeof value[i] !== 'string') {
+                return fail(`expected string entity id at index ${i}`);
+            }
+        }
+        return ok(undefined);
+    }
 
     const rules = toPrimitiveRules(field);
     if (!rules) {

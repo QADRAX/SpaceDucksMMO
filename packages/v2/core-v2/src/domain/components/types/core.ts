@@ -31,6 +31,7 @@ export type ComponentType =
     | 'cameraPerspective'
     | 'cameraOrthographic'
     | 'skin'
+    | 'joint'
     | 'animator'
     | 'textureTiling'
     | 'ambientLight'
@@ -61,7 +62,11 @@ export type InspectorPrimitiveFieldType = Extract<
     ComponentPrimitiveKind
 >;
 
-/** UI field type for inspector rendering. */
+/**
+ * UI field type for inspector rendering.
+ * - `reference` — resource key (mesh, skybox, …), not a scene entity.
+ * - `entityRef` / `entityRefArray` — scene entities (values are {@link EntityId} strings).
+ */
 export type InspectorFieldType =
     | InspectorPrimitiveFieldType
     | 'texture'
@@ -72,6 +77,8 @@ export type InspectorFieldType =
     | 'resource'
     | 'vector'
     | 'reference'
+    | 'entityRef'
+    | 'entityRefArray'
     | 'uniforms';
 
 /** Shared configuration for inspector fields. */

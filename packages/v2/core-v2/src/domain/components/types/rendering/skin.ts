@@ -1,10 +1,14 @@
 import type { ComponentBase } from '../core';
-import type { ResourceRef } from '../../../resources';
+import type { EntityId } from '../../../ids';
 
 /**
- * Binds a skinned mesh (customGeometry + mesh resource with joint data) to a skeleton resource.
- * Vertex `jointIndices` in {@link MeshGeometryFileData} index into {@link SkeletonData.jointEntityIds}.
+ * Skinned mesh binding: geometry and weights live on the mesh resource; joint palette order
+ * is defined by entities with {@link JointComponent} under {@link rigRootEntityId}.
  */
 export interface SkinComponent extends ComponentBase<'skin', SkinComponent> {
-    skeleton: ResourceRef<'skeleton'>;
+  /**
+   * Root entity of the bone hierarchy. Descendants with `joint` + `jointIndex` define
+   * the joint order matched by vertex `jointIndices` on the mesh.
+   */
+  rigRootEntityId: EntityId;
 }

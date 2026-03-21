@@ -16,6 +16,7 @@ export type {
   CameraComponent,
 } from './types/rendering/camera';
 export type { SkinComponent } from './types/rendering/skin';
+export type { JointComponent } from './types/rendering/joint';
 export type { AnimatorComponent } from './types/rendering/animator';
 export type { TextureTilingComponent } from './types/rendering/texture';
 export type {

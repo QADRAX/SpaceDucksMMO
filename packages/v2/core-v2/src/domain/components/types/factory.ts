@@ -7,6 +7,7 @@ import type {
   CameraPerspectiveComponent,
   CameraOrthographicComponent,
   SkinComponent,
+  JointComponent,
   AnimatorComponent,
   ConeGeometryComponent,
   CustomGeometryComponent,
@@ -62,6 +63,7 @@ export interface ComponentByType {
   cameraPerspective: CameraPerspectiveComponent;
   cameraOrthographic: CameraOrthographicComponent;
   skin: SkinComponent;
+  joint: JointComponent;
   animator: AnimatorComponent;
   textureTiling: TextureTilingComponent;
   ambientLight: AmbientLightComponent;

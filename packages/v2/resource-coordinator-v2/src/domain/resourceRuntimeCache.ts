@@ -2,7 +2,6 @@ import type {
   ResourceCachePort,
   ResourceRef,
   MeshGeometryFileData,
-  SkeletonData,
   AnimationClipFileData,
 } from '@duckengine/core-v2';
 
@@ -16,7 +15,6 @@ function cacheKey(ref: ResourceRef<any>): string {
  */
 export function createResourceRuntimeCache(): ResourceCachePort {
   const meshCache = new Map<string, MeshGeometryFileData>();
-  const skeletonCache = new Map<string, SkeletonData>();
   const animationClipCache = new Map<string, AnimationClipFileData>();
   const textureCache = new Map<string, Blob | ImageBitmap>();
   const skyboxCache = new Map<string, string[]>();
@@ -25,10 +23,6 @@ export function createResourceRuntimeCache(): ResourceCachePort {
   return {
     getMeshData(ref: ResourceRef<'mesh'>): MeshGeometryFileData | null {
       return meshCache.get(cacheKey(ref)) ?? null;
-    },
-
-    getSkeletonData(ref: ResourceRef<'skeleton'>): SkeletonData | null {
-      return skeletonCache.get(cacheKey(ref)) ?? null;
     },
 
     getAnimationClipData(ref: ResourceRef<'animationClip'>): AnimationClipFileData | null {
@@ -49,10 +43,6 @@ export function createResourceRuntimeCache(): ResourceCachePort {
 
     storeMeshData(ref: ResourceRef<'mesh'>, data: MeshGeometryFileData): void {
       meshCache.set(cacheKey(ref), data);
-    },
-
-    storeSkeletonData(ref: ResourceRef<'skeleton'>, data: SkeletonData): void {
-      skeletonCache.set(cacheKey(ref), data);
     },
 
     storeAnimationClipData(ref: ResourceRef<'animationClip'>, data: AnimationClipFileData): void {

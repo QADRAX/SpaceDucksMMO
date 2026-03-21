@@ -31,6 +31,7 @@
 ---| "cameraOrthographic"
 ---| "postProcess"
 ---| "skin"
+---| "joint"
 ---| "animator"
 ---| "textureTiling"
 ---| "ambientLight"
@@ -59,7 +60,6 @@
 ---| "standardShaderMaterial"
 ---| "physicalShaderMaterial"
 ---| "mesh"
----| "skeleton"
 ---| "animationClip"
 ---| "skybox"
 ---| "script"
@@ -224,7 +224,10 @@
 ---| "effects"
 
 ---@alias SkinFieldV2
----| "skeleton"
+---| "rigRootEntityId"
+
+---@alias JointFieldV2
+---| "jointIndex"
 
 ---@alias AnimatorFieldV2
 ---| "clips"

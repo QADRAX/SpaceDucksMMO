@@ -1,7 +1,6 @@
 import type {
   ResourceRef,
   MeshGeometryFileData,
-  SkeletonData,
   AnimationClipFileData,
 } from '../../resources';
 
@@ -15,9 +14,6 @@ import type {
 export interface ResourceCachePort {
   /** Sync lookup for mesh geometry. Returns null if not yet loaded. */
   getMeshData(ref: ResourceRef<'mesh'>): MeshGeometryFileData | null;
-
-  /** Sync lookup for skeleton joint order (data-only resource). */
-  getSkeletonData?(ref: ResourceRef<'skeleton'>): SkeletonData | null;
 
   /** Sync lookup for decoded animation clip samples. */
   getAnimationClipData?(ref: ResourceRef<'animationClip'>): AnimationClipFileData | null;
@@ -33,9 +29,6 @@ export interface ResourceCachePort {
 
   /** Coordinator-only: store mesh data. Called after loader.resolve + fetch (JSON or binary decode). */
   storeMeshData?(ref: ResourceRef<'mesh'>, data: MeshGeometryFileData): void;
-
-  /** Coordinator-only: cache skeleton scalar data from resolve (no clip file). */
-  storeSkeletonData?(ref: ResourceRef<'skeleton'>, data: SkeletonData): void;
 
   /** Coordinator-only: store decoded animation clip file payload. */
   storeAnimationClipData?(ref: ResourceRef<'animationClip'>, data: AnimationClipFileData): void;
