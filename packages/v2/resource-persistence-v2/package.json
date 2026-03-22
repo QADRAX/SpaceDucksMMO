@@ -1,0 +1,40 @@
+{
+  "name": "@duckengine/resource-persistence-v2",
+  "version": "0.1.0",
+  "private": false,
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./infrastructure/storage/s3": {
+      "types": "./dist/infrastructure/storage/s3BlobStorage.d.ts",
+      "default": "./dist/infrastructure/storage/s3BlobStorage.js"
+    },
+    "./infrastructure/storage/azure": {
+      "types": "./dist/infrastructure/storage/azureBlobStorage.d.ts",
+      "default": "./dist/infrastructure/storage/azureBlobStorage.js"
+    }
+  },
+  "scripts": {
+    "build": "prisma generate && tsc -b tsconfig.json",
+    "test": "npm run typecheck && node --experimental-vm-modules ../../../node_modules/jest/bin/jest.js --config jest.config.cjs",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "prisma:generate": "prisma generate"
+  },
+  "dependencies": {
+    "@duckengine/core-v2": "^0.1.0",
+    "@prisma/client": "^6.19.2",
+    "adm-zip": "^0.5.16",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/adm-zip": "^0.5.7",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.14.0",
+    "prisma": "^6.19.2"
+  }
+}

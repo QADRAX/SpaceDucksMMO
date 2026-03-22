@@ -1,0 +1,75 @@
+// Engine resources + file blobs (no user/auth models). Ported from web-core.
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model FileAsset {
+  id          String   @id @default(uuid())
+  fileName    String
+  contentType String
+  size        Int
+  sha256      String
+  storagePath String
+  createdAt   DateTime @default(now())
+
+  bindings ResourceBinding[]
+
+  thumbnailForResources Resource[] @relation("ResourceThumbnail")
+
+  @@index([sha256])
+}
+
+model Resource {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  displayName String
+  kind        String
+  activeVersion Int    @default(1)
+  thumbnailFileAssetId String?
+  thumbnailFileAsset   FileAsset? @relation("ResourceThumbnail", fields: [thumbnailFileAssetId], references: [id], onDelete: SetNull)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  versions ResourceVersion[]
+
+  @@index([key])
+  @@index([kind])
+}
+
+model ResourceVersion {
+  id            String   @id @default(uuid())
+  resourceId    String
+  resource      Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+  version       Int
+  componentType String
+  componentData String   @default("{}")
+  createdAt     DateTime @default(now())
+
+  bindings ResourceBinding[]
+
+  @@unique([resourceId, version])
+  @@index([resourceId])
+  @@index([componentType])
+}
+
+model ResourceBinding {
+  id                String         @id @default(uuid())
+  resourceVersionId String
+  resourceVersion   ResourceVersion @relation(fields: [resourceVersionId], references: [id], onDelete: Cascade)
+  slot              String
+  fileAssetId       String
+  fileAsset         FileAsset      @relation(fields: [fileAssetId], references: [id], onDelete: Cascade)
+  createdAt         DateTime       @default(now())
+
+  @@unique([resourceVersionId, slot])
+  @@index([resourceVersionId])
+  @@index([fileAssetId])
+  @@index([slot])
+}

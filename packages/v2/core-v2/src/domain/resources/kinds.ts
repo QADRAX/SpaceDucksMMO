@@ -25,7 +25,7 @@ export type ResourceKind =
     | 'texture';
 
 /** All supported resource kinds as a constant array. */
-export const RESOURCE_KINDS: readonly ResourceKind[] = [
+export const RESOURCE_KINDS = [
     'standardMaterial',
     'basicMaterial',
     'phongMaterial',
@@ -38,4 +38,23 @@ export const RESOURCE_KINDS: readonly ResourceKind[] = [
     'skybox',
     'script',
     'texture',
-];
+] as const satisfies readonly ResourceKind[];
+
+/** Classic PBR material kinds (albedo + optional maps in file slots). */
+export const MATERIAL_RESOURCE_KINDS = [
+    'basicMaterial',
+    'lambertMaterial',
+    'phongMaterial',
+    'standardMaterial',
+] as const satisfies readonly ResourceKind[];
+
+export type MaterialResourceKind = (typeof MATERIAL_RESOURCE_KINDS)[number];
+
+/** Shader material kinds (vertex + fragment sources in file slots). */
+export const CUSTOM_SHADER_RESOURCE_KINDS = [
+    'basicShaderMaterial',
+    'standardShaderMaterial',
+    'physicalShaderMaterial',
+] as const satisfies readonly ResourceKind[];
+
+export type CustomShaderResourceKind = (typeof CUSTOM_SHADER_RESOURCE_KINDS)[number];

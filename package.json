@@ -22,7 +22,7 @@
   "scripts": {
     "build": "npm run build:all",
     "build:workspaces": "npm --workspaces run build",
-    "build:all": "npm run build:duckengine:web-core && npm run build:duckengine:web-core-api-client && npm run build:duckengine:core && npm run build:duckengine:physics-rapier && npm run build:duckengine:physics-rapier-v2 && npm run build:duckengine:core-v2 && npm run build:duckengine:animation-runtime-v2 && npm run build:duckengine:diagnostic-v2 && npm run build:duckengine:input-mappings-v2 && npm run build:duckengine:input-node-v2 && npm run build:duckengine:input-browser-v2 && npm run build:duckengine:input-storage-browser-v2 && npm run build:duckengine:input-storage-node-v2 && npm run build:duckengine:rendering-base-v2 && npm run build:duckengine:rendering-three-common-v2 && npm run build:duckengine:rendering-three-gl-v2 && npm run build:duckengine:rendering-three-webgpu-v2 && npm run build:duckengine:rendering-three-v2 && npm run build:duckengine:rendering-three && npm run build:duckengine:engine-web-v2 && npm run build:client",
+    "build:all": "npm run build:duckengine:web-core && npm run build:duckengine:web-core-api-client && npm run build:duckengine:core && npm run build:duckengine:physics-rapier && npm run build:duckengine:physics-rapier-v2 && npm run build:duckengine:core-v2 && npm run build:duckengine:resource-persistence-v2 && npm run build:duckengine:animation-runtime-v2 && npm run build:duckengine:diagnostic-v2 && npm run build:duckengine:input-mappings-v2 && npm run build:duckengine:input-node-v2 && npm run build:duckengine:input-browser-v2 && npm run build:duckengine:input-storage-browser-v2 && npm run build:duckengine:input-storage-node-v2 && npm run build:duckengine:rendering-base-v2 && npm run build:duckengine:rendering-three-common-v2 && npm run build:duckengine:rendering-three-gl-v2 && npm run build:duckengine:rendering-three-webgpu-v2 && npm run build:duckengine:rendering-three-v2 && npm run build:duckengine:rendering-three && npm run build:duckengine:engine-web-v2 && npm run build:client",
     "build:duckengine:web-core": "npm --workspace @duckengine/web-core run build",
     "build:duckengine:web-core-api-client": "npm --workspace @duckengine/web-core-api-client run build",
     "build:duckengine:core": "npm --workspace @duckengine/core run build",
@@ -43,6 +43,7 @@
     "build:duckengine:rendering-three-v2": "npm --workspace @duckengine/rendering-three-v2 run build",
     "build:duckengine:rendering-three": "npm --workspace @duckengine/rendering-three run build",
     "build:duckengine:engine-web-v2": "npm --workspace @duckengine/engine-web-v2 run build",
+    "build:duckengine:resource-persistence-v2": "npm --workspace @duckengine/resource-persistence-v2 run build",
     "build:client": "npm --workspace @spaceducks/client run build",
     "generate:duckengine:web-core-api-client": "npm --workspace @duckengine/web-core-api-client run generate",
     "dev:client": "npm --workspace @spaceducks/client run dev:all",
