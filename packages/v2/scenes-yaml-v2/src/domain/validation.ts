@@ -19,6 +19,7 @@ import {
   ENVIRONMENT_SPECS,
   PHYSICS_SPECS,
   SCRIPTING_SPECS,
+  RIGGING_SPECS,
 } from '@duckengine/core-v2';
 import { ok, err, type Result } from '@duckengine/core-v2';
 import type {
@@ -40,6 +41,7 @@ const ALL_SPECS: Record<string, unknown> = {
   ...ENVIRONMENT_SPECS,
   ...PHYSICS_SPECS,
   ...SCRIPTING_SPECS,
+  ...RIGGING_SPECS,
 };
 
 const CREATABLE_TYPES = new Set(Object.keys(ALL_SPECS));

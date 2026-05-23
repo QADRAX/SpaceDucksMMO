@@ -1,0 +1,34 @@
+{
+  "componentType": "standardMaterial",
+  "componentData": {
+    "color": "#ffffff",
+    "metalness": 1,
+    "roughness": 1,
+    "emissive": "#000000",
+    "emissiveIntensity": 1,
+    "transparent": false,
+    "opacity": 1,
+    "alphaMode": "opaque",
+    "alphaCutoff": 0.5,
+    "doubleSided": true,
+    "normalScale": 1,
+    "ior": 1.5,
+    "transmission": 0,
+    "thickness": 0,
+    "attenuationColor": "#ffffff",
+    "attenuationDistance": null,
+    "clearcoat": 1,
+    "clearcoatRoughness": 0.04,
+    "clearcoatNormalScale": 1,
+    "sheen": 0,
+    "sheenRoughness": 0,
+    "sheenColor": "#000000",
+    "iridescence": 0,
+    "iridescenceIOR": 1.3,
+    "iridescenceThicknessRange": [
+      100,
+      400
+    ]
+  },
+  "files": {}
+}

@@ -1,0 +1,9 @@
+{
+  "componentType": "mesh",
+  "componentData": {},
+  "files": {
+    "geometry": {
+      "url": "geometry.json"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "componentType": "animationClip",
+  "componentData": {},
+  "files": {
+    "clip": {
+      "url": "clip.json"
+    }
+  }
+}

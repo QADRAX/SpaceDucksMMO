@@ -1,0 +1,1376 @@
+entities:
+  - id: "engine-camera"
+    transform:
+      position: { x: 0, y: 1, z: 4 }
+    components:
+      cameraPerspective: { fov: 60 }
+
+  - id: "engine-dir-light"
+    transform:
+      position: { x: 5, y: 10, z: 5 }
+    components:
+      directionalLight: { intensity: 1.5 }
+
+  - id: "engine-amb-light"
+    components:
+      ambientLight: { intensity: 0.5 }
+
+  - id: "Sketchfab_model"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.7071067811865475, y: -2.0030704121098389e-16, z: -1.7431527984210495e-32, w: 0.7071067811865475 }
+      scale: { x: 1.748325228691101, y: 1.748325228691101, z: 1.748325228691101 }
+    components:
+      animator:
+        clips:
+          - "animations/Idle02_F"
+        activeClipIndex: 0
+        playing: true
+        loop: true
+        speed: 1
+        time: 0
+        enabled: true
+
+  - id: "CompanionBot.fbx"
+    parentId: "Sketchfab_model"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 1, y: 0, z: 0, w: 0 }
+      scale: { x: 0.009999999776482582, y: 0.009999999776482582, z: 0.009999999776482582 }
+
+  - id: "Object_2"
+    parentId: "CompanionBot.fbx"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+
+  - id: "RootNode"
+    parentId: "Object_2"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+
+  - id: "Object_4"
+    parentId: "RootNode"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+
+  - id: "_rootJoint"
+    parentId: "Object_4"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+    components:
+      joint:
+        jointIndex: 0
+        enabled: true
+
+  - id: "RL_BoneRoot_01"
+    parentId: "_rootJoint"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+    components:
+      joint:
+        jointIndex: 1
+        enabled: true
+
+  - id: "CC_Base_Hip_02_scaleCompensation"
+    parentId: "RL_BoneRoot_01"
+    transform:
+      position: { x: 0, y: 0, z: 112.20101165771484 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+
+  - id: "CC_Base_Hip_02"
+    parentId: "CC_Base_Hip_02_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.7868834137916565, y: 0, z: 0, w: 0.6171016693115234 }
+      scale: { x: 1, y: 1, z: 1 }
+    components:
+      joint:
+        jointIndex: 2
+        enabled: true
+
+  - id: "CC_Base_Pelvis_03_scaleCompensation"
+    parentId: "CC_Base_Hip_02"
+    transform:
+      position: { x: 0, y: 0.00000762939453125, z: 0 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+
+  - id: "CC_Base_Pelvis_03"
+    parentId: "CC_Base_Pelvis_03_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.09791986644268036, y: 0, z: 0, w: 0.9951943159103394 }
+      scale: { x: 1, y: 1, z: 1 }
+    components:
+      joint:
+        jointIndex: 3
+        enabled: true
+
+  - id: "CC_Base_L_Thigh_04_scaleCompensation"
+    parentId: "CC_Base_Pelvis_03"
+    transform:
+      position: { x: 9.962952613830566, y: -2.3979415893554688, z: 0.5343666076660156 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+
+  - id: "CC_Base_L_Thigh_04"
+    parentId: "CC_Base_L_Thigh_04_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.0014974548248574138, y: 0.1901014894247055, z: 0.9817277193069458, w: -0.008361337706446648 }
+      scale: { x: 0.9999999403953552, y: 1, z: 1 }
+    components:
+      joint:
+        jointIndex: 4
+        enabled: true
+
+  - id: "CC_Base_L_Calf_05_scaleCompensation"
+    parentId: "CC_Base_L_Thigh_04"
+    transform:
+      position: { x: 0.0024213790893554688, y: 48.28438949584961, z: -0.0015821456909179688 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1 }
+
+  - id: "CC_Base_L_Calf_05"
+    parentId: "CC_Base_L_Calf_05_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.023447396233677864, y: 0.0009390019113197923, z: -0.013800853863358498, w: 0.9996293783187866 }
+      scale: { x: 0.9999998807907104, y: 1, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 5
+        enabled: true
+
+  - id: "CC_Base_L_Foot_06_scaleCompensation"
+    parentId: "CC_Base_L_Calf_05"
+    transform:
+      position: { x: -0.0005779266357421875, y: 44.558319091796875, z: 0.000461578369140625 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_L_Foot_06"
+    parentId: "CC_Base_L_Foot_06_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.4198853373527527, y: -0.014233333058655262, z: -0.021935541182756424, w: 0.9072003960609436 }
+      scale: { x: 0.9999999403953552, y: 1, z: 1 }
+    components:
+      joint:
+        jointIndex: 6
+        enabled: true
+
+  - id: "CC_Base_L_ToeBaseShareBone_07_scaleCompensation"
+    parentId: "CC_Base_L_Foot_06"
+    transform:
+      position: { x: -0.00017261505126953125, y: 15.387544631958008, z: 0.00008678436279296875 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1 }
+
+  - id: "CC_Base_L_ToeBaseShareBone_07"
+    parentId: "CC_Base_L_ToeBaseShareBone_07_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.17881685495376587, y: 0.02681318297982216, z: -0.02899973839521408, w: 0.9830893278121948 }
+      scale: { x: 0.9999998807907104, y: 0.9999999403953552, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 7
+        enabled: true
+
+  - id: "CC_Base_L_ToeBase_08_scaleCompensation"
+    parentId: "CC_Base_L_Foot_06"
+    transform:
+      position: { x: -0.00017261505126953125, y: 15.387540817260742, z: 0.0000858306884765625 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1 }
+
+  - id: "CC_Base_L_ToeBase_08"
+    parentId: "CC_Base_L_ToeBase_08_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.17881059646606445, y: 0.026627304032444954, z: -0.02902471087872982, w: 0.9830947518348694 }
+      scale: { x: 0.9999998807907104, y: 0.9999999403953552, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 8
+        enabled: true
+
+  - id: "CC_Base_L_PinkyToe1_09_scaleCompensation"
+    parentId: "CC_Base_L_ToeBase_08"
+    transform:
+      position: { x: -2.8439018726348877, y: 0.2763368785381317, z: -0.540584146976471 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1.0000001192092896, z: 1.0000001192092896 }
+
+  - id: "CC_Base_L_PinkyToe1_09"
+    parentId: "CC_Base_L_PinkyToe1_09_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.1905926913022995, y: 0.0357389897108078, z: -0.01801140606403351, w: 0.9808530807495117 }
+      scale: { x: 1, y: 1, z: 0.9999998211860657 }
+    components:
+      joint:
+        jointIndex: 9
+        enabled: true
+
+  - id: "CC_Base_L_RingToe1_010_scaleCompensation"
+    parentId: "CC_Base_L_ToeBase_08"
+    transform:
+      position: { x: -1.4501029253005981, y: 1.405539870262146, z: -0.09510088711977005 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1.0000001192092896, z: 1.0000001192092896 }
+
+  - id: "CC_Base_L_RingToe1_010"
+    parentId: "CC_Base_L_RingToe1_010_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.22519896924495697, y: 0.05382373183965683, z: 0.0013583197724074125, w: 0.9728240370750427 }
+      scale: { x: 1, y: 1, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 10
+        enabled: true
+
+  - id: "CC_Base_L_MidToe1_011_scaleCompensation"
+    parentId: "CC_Base_L_ToeBase_08"
+    transform:
+      position: { x: 0, y: 2.384106397628784, z: -0.0000019073488601861754 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1.0000001192092896, z: 1.0000001192092896 }
+
+  - id: "CC_Base_L_MidToe1_011"
+    parentId: "CC_Base_L_MidToe1_011_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.15296831727027893, y: 0.042015090584754944, z: 0.011674700304865837, w: 0.9872686266899109 }
+      scale: { x: 0.9999998807907104, y: 0.9999998807907104, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 11
+        enabled: true
+
+  - id: "CC_Base_L_IndexToe1_012_scaleCompensation"
+    parentId: "CC_Base_L_ToeBase_08"
+    transform:
+      position: { x: 1.6095715761184692, y: 2.5548551082611084, z: 0.2937622368335724 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1.0000001192092896, z: 1.0000001192092896 }
+
+  - id: "CC_Base_L_IndexToe1_012"
+    parentId: "CC_Base_L_IndexToe1_012_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.1631486713886261, y: 0.046789173036813736, z: 0.012086479924619198, w: 0.985417366027832 }
+      scale: { x: 1, y: 0.9999999403953552, z: 0.9999999403953552 }
+    components:
+      joint:
+        jointIndex: 12
+        enabled: true
+
+  - id: "CC_Base_L_BigToe1_013_scaleCompensation"
+    parentId: "CC_Base_L_ToeBase_08"
+    transform:
+      position: { x: 3.79642653465271, y: 2.3392868041992188, z: 0.07084084302186966 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1.0000001192092896, z: 1.0000001192092896 }
+
+  - id: "CC_Base_L_BigToe1_013"
+    parentId: "CC_Base_L_BigToe1_013_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.031997304409742355, y: 0.004145655315369368, z: 0.009109379723668098, w: 0.9994378685951233 }
+      scale: { x: 1, y: 0.9999999403953552, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 13
+        enabled: true
+
+  - id: "CC_Base_L_CalfTwist01_014_scaleCompensation"
+    parentId: "CC_Base_L_Calf_05"
+    transform:
+      position: { x: 0, y: 0.000011444091796875, z: 0.0000019073486328125 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_L_CalfTwist01_014"
+    parentId: "CC_Base_L_CalfTwist01_014_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.0000070836399572726805, y: -6.7860631867513184e-18, z: -0.00000924477444641525, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999998211860657, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 14
+        enabled: true
+
+  - id: "CC_Base_L_CalfTwist02_015_scaleCompensation"
+    parentId: "CC_Base_L_CalfTwist01_014"
+    transform:
+      position: { x: -0.000705718994140625, y: 22.279136657714844, z: 0.0005445480346679688 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.000000238418579, y: 1.000000238418579, z: 1.0000001192092896 }
+
+  - id: "CC_Base_L_CalfTwist02_015"
+    parentId: "CC_Base_L_CalfTwist02_015_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.0000014118852504907409, y: 0.000012001170034636743, z: -0.0000016798735487100203, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999997615814209, z: 0.9999998211860657 }
+    components:
+      joint:
+        jointIndex: 15
+        enabled: true
+
+  - id: "CC_Base_L_KneeShareBone_016_scaleCompensation"
+    parentId: "CC_Base_L_Calf_05"
+    transform:
+      position: { x: 0, y: 0.000011444091796875, z: 0.0000019073486328125 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_L_KneeShareBone_016"
+    parentId: "CC_Base_L_KneeShareBone_016_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.01172485202550888, y: -0.00046954522258602083, z: 0.0069010695442557335, w: 0.9999074339866638 }
+      scale: { x: 0.9999998211860657, y: 0.9999999403953552, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 16
+        enabled: true
+
+  - id: "CC_Base_L_ThighTwist01_017_scaleCompensation"
+    parentId: "CC_Base_L_Thigh_04"
+    transform:
+      position: { x: -0.000003814697265625, y: -0.00003814697265625, z: 0.000003337860107421875 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1 }
+
+  - id: "CC_Base_L_ThighTwist01_017"
+    parentId: "CC_Base_L_ThighTwist01_017_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.000022917052774573676, y: -0.0000013746753211307805, z: 0.000007582827493024524, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 17
+        enabled: true
+
+  - id: "CC_Base_L_ThighTwist02_018_scaleCompensation"
+    parentId: "CC_Base_L_ThighTwist01_017"
+    transform:
+      position: { x: 0.0015735623892396688, y: 24.142230987548828, z: -0.001905917888507247 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999998807907104, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_L_ThighTwist02_018"
+    parentId: "CC_Base_L_ThighTwist02_018_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -1.015141535276598e-7, y: -0.0000020015286281704903, z: -6.239866223722856e-8, w: 1 }
+      scale: { x: 1, y: 0.9999999403953552, z: 1 }
+    components:
+      joint:
+        jointIndex: 18
+        enabled: true
+
+  - id: "CC_Base_R_Thigh_019_scaleCompensation"
+    parentId: "CC_Base_Pelvis_03"
+    transform:
+      position: { x: -9.962947845458984, y: -2.39794921875, z: 0.5343742370605469 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+
+  - id: "CC_Base_R_Thigh_019"
+    parentId: "CC_Base_R_Thigh_019_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.0014974555233493447, y: 0.1901014894247055, z: 0.9817277193069458, w: 0.008361338637769222 }
+      scale: { x: 0.9999999403953552, y: 1, z: 1 }
+    components:
+      joint:
+        jointIndex: 19
+        enabled: true
+
+  - id: "CC_Base_R_Calf_020_scaleCompensation"
+    parentId: "CC_Base_R_Thigh_019"
+    transform:
+      position: { x: -0.0024194717407226562, y: 48.28440475463867, z: -0.0015811920166015625 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1 }
+
+  - id: "CC_Base_R_Calf_020"
+    parentId: "CC_Base_R_Calf_020_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.023447394371032715, y: -0.0009390031336806715, z: 0.013800867833197117, w: 0.9996293783187866 }
+      scale: { x: 0.9999998807907104, y: 1, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 20
+        enabled: true
+
+  - id: "CC_Base_R_KneeShareBone_021_scaleCompensation"
+    parentId: "CC_Base_R_Calf_020"
+    transform:
+      position: { x: -0.00000476837158203125, y: -0.00002288818359375, z: 9.5367431640625e-7 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_R_KneeShareBone_021"
+    parentId: "CC_Base_R_KneeShareBone_021_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.011724762618541718, y: 0.0004695465904660523, z: -0.006901077926158905, w: 0.9999074339866638 }
+      scale: { x: 0.9999998807907104, y: 1, z: 0.9999999403953552 }
+    components:
+      joint:
+        jointIndex: 21
+        enabled: true
+
+  - id: "CC_Base_R_Foot_022_scaleCompensation"
+    parentId: "CC_Base_R_Calf_020"
+    transform:
+      position: { x: 0.0005769729614257812, y: 44.558284759521484, z: 0.000446319580078125 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_R_Foot_022"
+    parentId: "CC_Base_R_Foot_022_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.4198853373527527, y: 0.01423332653939724, z: 0.021935516968369484, w: 0.9072003960609436 }
+      scale: { x: 0.9999998807907104, y: 0.9999999403953552, z: 1 }
+    components:
+      joint:
+        jointIndex: 22
+        enabled: true
+
+  - id: "CC_Base_R_ToeBase_023_scaleCompensation"
+    parentId: "CC_Base_R_Foot_022"
+    transform:
+      position: { x: 0.000171661376953125, y: 15.387523651123047, z: 0.00009918212890625 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1.0000001192092896, z: 1 }
+
+  - id: "CC_Base_R_ToeBase_023"
+    parentId: "CC_Base_R_ToeBase_023_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.17881062626838684, y: -0.026627307757735252, z: 0.029024766758084297, w: 0.9830947518348694 }
+      scale: { x: 0.9999998807907104, y: 1, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 23
+        enabled: true
+
+  - id: "CC_Base_R_BigToe1_024_scaleCompensation"
+    parentId: "CC_Base_R_ToeBase_023"
+    transform:
+      position: { x: -3.7964277267456055, y: 2.339284896850586, z: 0.07084084302186966 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1.0000001192092896 }
+
+  - id: "CC_Base_R_BigToe1_024"
+    parentId: "CC_Base_R_BigToe1_024_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.031997356563806534, y: -0.0041456082835793495, z: -0.009109466336667538, w: 0.9994378685951233 }
+      scale: { x: 1, y: 0.9999999403953552, z: 0.9999997615814209 }
+    components:
+      joint:
+        jointIndex: 24
+        enabled: true
+
+  - id: "CC_Base_R_PinkyToe1_025_scaleCompensation"
+    parentId: "CC_Base_R_ToeBase_023"
+    transform:
+      position: { x: 2.8439009189605713, y: 0.2763354480266571, z: -0.5405855774879456 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1.0000001192092896 }
+
+  - id: "CC_Base_R_PinkyToe1_025"
+    parentId: "CC_Base_R_PinkyToe1_025_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.19059273600578308, y: -0.035738978534936905, z: 0.01801139861345291, w: 0.9808530807495117 }
+      scale: { x: 1, y: 1, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 25
+        enabled: true
+
+  - id: "CC_Base_R_RingToe1_026_scaleCompensation"
+    parentId: "CC_Base_R_ToeBase_023"
+    transform:
+      position: { x: 1.4500962495803833, y: 1.405539631843567, z: -0.09510327875614166 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1.0000001192092896 }
+
+  - id: "CC_Base_R_RingToe1_026"
+    parentId: "CC_Base_R_RingToe1_026_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.22519907355308533, y: -0.053823698312044144, z: -0.0013583278050646186, w: 0.972823977470398 }
+      scale: { x: 0.9999998211860657, y: 0.9999998807907104, z: 0.9999997615814209 }
+    components:
+      joint:
+        jointIndex: 26
+        enabled: true
+
+  - id: "CC_Base_R_IndexToe1_027_scaleCompensation"
+    parentId: "CC_Base_R_ToeBase_023"
+    transform:
+      position: { x: -1.6095736026763916, y: 2.5548534393310547, z: 0.29375937581062317 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1.0000001192092896 }
+
+  - id: "CC_Base_R_IndexToe1_027"
+    parentId: "CC_Base_R_IndexToe1_027_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.16314876079559326, y: -0.04678912088274956, z: -0.012086501345038414, w: 0.9854172468185425 }
+      scale: { x: 1, y: 1, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 27
+        enabled: true
+
+  - id: "CC_Base_R_MidToe1_028_scaleCompensation"
+    parentId: "CC_Base_R_ToeBase_023"
+    transform:
+      position: { x: 0, y: 2.3841047286987305, z: -0.000003337860562169226 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1.0000001192092896 }
+
+  - id: "CC_Base_R_MidToe1_028"
+    parentId: "CC_Base_R_MidToe1_028_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.15296800434589386, y: -0.04201503098011017, z: -0.011674712412059307, w: 0.9872685670852661 }
+      scale: { x: 0.9999998211860657, y: 0.9999998211860657, z: 0.9999997615814209 }
+    components:
+      joint:
+        jointIndex: 28
+        enabled: true
+
+  - id: "CC_Base_R_ToeBaseShareBone_029_scaleCompensation"
+    parentId: "CC_Base_R_Foot_022"
+    transform:
+      position: { x: 0.000171661376953125, y: 15.38752269744873, z: 0.00009965896606445312 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1.0000001192092896, z: 1 }
+
+  - id: "CC_Base_R_ToeBaseShareBone_029"
+    parentId: "CC_Base_R_ToeBaseShareBone_029_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.17881685495376587, y: -0.026813199743628502, z: 0.028999747708439827, w: 0.9830893278121948 }
+      scale: { x: 0.9999998807907104, y: 0.9999999403953552, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 29
+        enabled: true
+
+  - id: "CC_Base_R_CalfTwist01_030_scaleCompensation"
+    parentId: "CC_Base_R_Calf_020"
+    transform:
+      position: { x: -0.00000476837158203125, y: -0.00002288818359375, z: 9.5367431640625e-7 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_R_CalfTwist01_030"
+    parentId: "CC_Base_R_CalfTwist01_030_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.000007087365247571142, y: 1.350039926784148e-18, z: 0.000009247802154277451, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999998211860657, z: 0.9999998807907104 }
+    components:
+      joint:
+        jointIndex: 30
+        enabled: true
+
+  - id: "CC_Base_R_CalfTwist02_031_scaleCompensation"
+    parentId: "CC_Base_R_CalfTwist01_030"
+    transform:
+      position: { x: 0.0007066726684570312, y: 22.279132843017578, z: 0.0005464553833007812 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.000000238418579, y: 1.000000238418579, z: 1.0000001192092896 }
+
+  - id: "CC_Base_R_CalfTwist02_031"
+    parentId: "CC_Base_R_CalfTwist02_031_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.0000014547260889230529, y: -0.000012000298738712445, z: 0.0000016763817711762385, w: 1 }
+      scale: { x: 0.9999995827674866, y: 0.9999997615814209, z: 0.9999997615814209 }
+    components:
+      joint:
+        jointIndex: 31
+        enabled: true
+
+  - id: "CC_Base_R_ThighTwist01_032_scaleCompensation"
+    parentId: "CC_Base_R_Thigh_019"
+    transform:
+      position: { x: 9.5367431640625e-7, y: -0.00000762939453125, z: 0.000005245208740234375 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1 }
+
+  - id: "CC_Base_R_ThighTwist01_032"
+    parentId: "CC_Base_R_ThighTwist01_032_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.000022917984097148292, y: 0.0000013735402717429679, z: -0.000007595866463816492, w: 1 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 32
+        enabled: true
+
+  - id: "CC_Base_R_ThighTwist02_033_scaleCompensation"
+    parentId: "CC_Base_R_ThighTwist01_032"
+    transform:
+      position: { x: -0.0015754697378724813, y: 24.142192840576172, z: -0.0019054410513490438 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999998807907104, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_R_ThighTwist02_033"
+    parentId: "CC_Base_R_ThighTwist02_033_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -9.048552708955334e-18, y: 0.000002000538870561286, z: 6.472696867376726e-8, w: 1 }
+      scale: { x: 1, y: 0.9999999403953552, z: 1 }
+    components:
+      joint:
+        jointIndex: 33
+        enabled: true
+
+  - id: "CC_Base_Waist_034_scaleCompensation"
+    parentId: "CC_Base_Hip_02"
+    transform:
+      position: { x: 2.545772837328486e-13, y: 10.38653564453125, z: 2.0640602111816406 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+
+  - id: "CC_Base_Waist_034"
+    parentId: "CC_Base_Waist_034_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.21411782503128052, y: -3.4081922820652618e-15, z: -1.203010953076955e-7, w: 0.9768078327178955 }
+      scale: { x: 1, y: 1, z: 1 }
+    components:
+      joint:
+        jointIndex: 34
+        enabled: true
+
+  - id: "CC_Base_Spine01_035_scaleCompensation"
+    parentId: "CC_Base_Waist_034"
+    transform:
+      position: { x: -0.0000012686159607255831, y: 4.886054992675781, z: 0.0014667510986328125 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+
+  - id: "CC_Base_Spine01_035"
+    parentId: "CC_Base_Spine01_035_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.05693010240793228, y: -9.27495148012828e-16, z: 1.187869003160813e-7, w: 0.9983781576156616 }
+      scale: { x: 1, y: 1.000000238418579, z: 1.000000238418579 }
+    components:
+      joint:
+        jointIndex: 35
+        enabled: true
+
+  - id: "CC_Base_Spine02_036_scaleCompensation"
+    parentId: "CC_Base_Spine01_035"
+    transform:
+      position: { x: 9.001854550660937e-8, y: 12.029541015625, z: -0.0006246566772460938 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 0.9999997615814209, z: 0.9999997615814209 }
+
+  - id: "CC_Base_Spine02_036"
+    parentId: "CC_Base_Spine02_036_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.06765733659267426, y: 2.2459364981860232e-24, z: -2.6223711106999814e-25, w: 0.9977086186408997 }
+      scale: { x: 1, y: 1.0000001192092896, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 36
+        enabled: true
+
+  - id: "CC_Base_NeckTwist01_037_scaleCompensation"
+    parentId: "CC_Base_Spine02_036"
+    transform:
+      position: { x: 0.0000033164224078063853, y: 25.212310791015625, z: 0.0001811981201171875 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 0.9999998807907104, z: 0.9999998807907104 }
+
+  - id: "CC_Base_NeckTwist01_037"
+    parentId: "CC_Base_NeckTwist01_037_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.2571909427642822, y: -1.3988708715798632e-24, z: 3.723008827629869e-25, w: 0.9663606286048889 }
+      scale: { x: 1, y: 1.000000238418579, z: 1.000000238418579 }
+    components:
+      joint:
+        jointIndex: 37
+        enabled: true
+
+  - id: "CC_Base_NeckTwist02_038_scaleCompensation"
+    parentId: "CC_Base_NeckTwist01_037"
+    transform:
+      position: { x: 2.59560692938976e-7, y: 3.7846221923828125, z: -0.00000762939453125 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 0.9999997615814209, z: 0.9999997615814209 }
+
+  - id: "CC_Base_NeckTwist02_038"
+    parentId: "CC_Base_NeckTwist02_038_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.0000028163187835161807, y: -3.1018575321875483e-25, z: 2.4815426265199882e-24, w: 1 }
+      scale: { x: 1, y: 1.000000238418579, z: 1.000000238418579 }
+    components:
+      joint:
+        jointIndex: 38
+        enabled: true
+
+  - id: "CC_Base_Head_039_scaleCompensation"
+    parentId: "CC_Base_NeckTwist02_038"
+    transform:
+      position: { x: 2.0536822376016062e-7, y: 3.784576416015625, z: -0.000030517578125 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 0.9999997615814209, z: 0.9999997615814209 }
+
+  - id: "CC_Base_Head_039"
+    parentId: "CC_Base_Head_039_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.11892224103212357, y: -2.0962129663501777e-25, z: -8.58199412207223e-25, w: 0.9929035902023315 }
+      scale: { x: 1, y: 1.000000238418579, z: 1.000000238418579 }
+    components:
+      joint:
+        jointIndex: 39
+        enabled: true
+
+  - id: "CC_Base_FacialBone_040_scaleCompensation"
+    parentId: "CC_Base_Head_039"
+    transform:
+      position: { x: 1.3642420526593924e-12, y: 0.0000457763671875, z: -0.0000057220458984375 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 0.9999997615814209, z: 0.9999997615814209 }
+
+  - id: "CC_Base_FacialBone_040"
+    parentId: "CC_Base_FacialBone_040_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.4999999403953552, y: 0.5000000596046448, z: 0.4999999403953552, w: 0.5000000596046448 }
+      scale: { x: 1.000000238418579, y: 1.0000003576278687, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 40
+        enabled: true
+
+  - id: "CC_Base_JawRoot_041_scaleCompensation"
+    parentId: "CC_Base_FacialBone_040"
+    transform:
+      position: { x: 1.2227783203125, y: 2.3001136779785156, z: -2.772821972030215e-8 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999996423721313, z: 0.9999998807907104 }
+
+  - id: "CC_Base_JawRoot_041"
+    parentId: "CC_Base_JawRoot_041_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.00005863022306584753, y: -0.00004250299389241263, z: 0.7070914506912231, w: 0.7071220874786377 }
+      scale: { x: 1.000000238418579, y: 1.000000238418579, z: 1 }
+    components:
+      joint:
+        jointIndex: 41
+        enabled: true
+
+  - id: "CC_Base_Tongue01_042_scaleCompensation"
+    parentId: "CC_Base_JawRoot_041"
+    transform:
+      position: { x: 2.9047951698303223, y: 0.863983154296875, z: 0.0001895558089017868 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999997615814209, z: 1 }
+
+  - id: "CC_Base_Tongue01_042"
+    parentId: "CC_Base_Tongue01_042_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.0000010373612440162105, y: -0.00001904429154819809, z: 0.054366353899240494, w: 0.9985211491584778 }
+      scale: { x: 1.000000238418579, y: 1.0000003576278687, z: 1 }
+    components:
+      joint:
+        jointIndex: 42
+        enabled: true
+
+  - id: "CC_Base_Tongue02_043_scaleCompensation"
+    parentId: "CC_Base_Tongue01_042"
+    transform:
+      position: { x: 1.0357036590576172, y: 0.000030517578125, z: 1.2665987014770508e-7 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999996423721313, z: 1 }
+
+  - id: "CC_Base_Tongue02_043"
+    parentId: "CC_Base_Tongue02_043_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.000004836097104998771, y: -0.000011138499758089893, z: 0.08158260583877563, w: 0.9966666102409363 }
+      scale: { x: 1.0000003576278687, y: 1.0000003576278687, z: 1 }
+    components:
+      joint:
+        jointIndex: 43
+        enabled: true
+
+  - id: "CC_Base_Tongue03_044_scaleCompensation"
+    parentId: "CC_Base_Tongue02_043"
+    transform:
+      position: { x: 1.5165672302246094, y: -0.0001068115234375, z: -0.000002304092049598694 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999996423721313, y: 0.9999996423721313, z: 1 }
+
+  - id: "CC_Base_Tongue03_044"
+    parentId: "CC_Base_Tongue03_044_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.0000018600708244775888, y: -4.8133924187796246e-20, z: -8.717175319361559e-7, w: 1 }
+      scale: { x: 1.0000003576278687, y: 1.0000003576278687, z: 1 }
+    components:
+      joint:
+        jointIndex: 44
+        enabled: true
+
+  - id: "CC_Base_Teeth02_045_scaleCompensation"
+    parentId: "CC_Base_JawRoot_041"
+    transform:
+      position: { x: 2.975633144378662, y: 0.8313751220703125, z: 0.00018650852143764496 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999997615814209, z: 1 }
+
+  - id: "CC_Base_Teeth02_045"
+    parentId: "CC_Base_Teeth02_045_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 1, y: -0.000002387898803135613, z: 0.00009726746793603525, w: -0.0000801609130576253 }
+      scale: { x: 1.0000001192092896, y: 1.000000238418579, z: 1 }
+    components:
+      joint:
+        jointIndex: 45
+        enabled: true
+
+  - id: "CC_Base_R_Eye_046_scaleCompensation"
+    parentId: "CC_Base_FacialBone_040"
+    transform:
+      position: { x: 6.6538543701171875, y: 7.0503668785095215, z: -3.0123305320739746 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999996423721313, z: 0.9999998807907104 }
+
+  - id: "CC_Base_R_Eye_046"
+    parentId: "CC_Base_R_Eye_046_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.7071068286895752, y: 0.0000012240406022101524, z: 0.7071068286895752, w: -0.0000012240406022101524 }
+      scale: { x: 1, y: 1.000000238418579, z: 1.000000238418579 }
+    components:
+      joint:
+        jointIndex: 46
+        enabled: true
+
+  - id: "CC_Base_L_Eye_047_scaleCompensation"
+    parentId: "CC_Base_FacialBone_040"
+    transform:
+      position: { x: 6.6538543701171875, y: 7.050367832183838, z: 3.0123300552368164 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999996423721313, z: 0.9999998807907104 }
+
+  - id: "CC_Base_L_Eye_047"
+    parentId: "CC_Base_L_Eye_047_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.7071068286895752, y: 0.0000012240406022101524, z: 0.7071068286895752, w: -0.0000012240406022101524 }
+      scale: { x: 1, y: 1.000000238418579, z: 1.000000238418579 }
+    components:
+      joint:
+        jointIndex: 47
+        enabled: true
+
+  - id: "CC_Base_UpperJaw_048_scaleCompensation"
+    parentId: "CC_Base_FacialBone_040"
+    transform:
+      position: { x: 2.537872314453125, y: 6.079043388366699, z: -1.2522218639787752e-7 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999996423721313, z: 0.9999998807907104 }
+
+  - id: "CC_Base_UpperJaw_048"
+    parentId: "CC_Base_UpperJaw_048_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.000028190015655127354, y: -0.00003105352880083956, z: 0.7071105241775513, w: 0.7071030139923096 }
+      scale: { x: 1.0000003576278687, y: 1.0000003576278687, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 48
+        enabled: true
+
+  - id: "CC_Base_Teeth01_049_scaleCompensation"
+    parentId: "CC_Base_UpperJaw_048"
+    transform:
+      position: { x: 0.0291142500936985, y: -0.0018310549203306437, z: -0.0000024491603198839584 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999996423721313, y: 0.9999996423721313, z: 0.9999998807907104 }
+
+  - id: "CC_Base_Teeth01_049"
+    parentId: "CC_Base_Teeth01_049_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 1, y: -0.000010393551747256424, z: -0.0000339369653374888, w: 0.000010785449376271572 }
+      scale: { x: 1.0000003576278687, y: 1.0000003576278687, z: 1 }
+    components:
+      joint:
+        jointIndex: 49
+        enabled: true
+
+  - id: "CC_Base_L_Clavicle_050_scaleCompensation"
+    parentId: "CC_Base_Spine02_036"
+    transform:
+      position: { x: 4.981478691101074, y: 19.879302978515625, z: -1.149820327758789 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 0.9999998807907104, z: 0.9999998807907104 }
+
+  - id: "CC_Base_L_Clavicle_050"
+    parentId: "CC_Base_L_Clavicle_050_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.08018186688423157, y: 0.047216396778821945, z: -0.7961166501045227, w: 0.597946286201477 }
+      scale: { x: 1.0000001192092896, y: 0.9999999403953552, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 50
+        enabled: true
+
+  - id: "CC_Base_L_Upperarm_051_scaleCompensation"
+    parentId: "CC_Base_L_Clavicle_050"
+    transform:
+      position: { x: 0.000015258787243510596, y: 13.413633346557617, z: -0.000013589857189799659 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999998807907104, y: 1.0000001192092896, z: 0.9999998807907104 }
+
+  - id: "CC_Base_L_Upperarm_051"
+    parentId: "CC_Base_L_Upperarm_051_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.1551750898361206, y: -0.16079504787921906, z: -0.346815824508667, w: 0.9109251499176025 }
+      scale: { x: 1, y: 0.9999999403953552, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 51
+        enabled: true
+
+  - id: "CC_Base_L_Forearm_052_scaleCompensation"
+    parentId: "CC_Base_L_Upperarm_051"
+    transform:
+      position: { x: -0.0028991701547056437, y: 25.46530532836914, z: -0.0015239717904478312 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1.0000001192092896, z: 0.9999998807907104 }
+
+  - id: "CC_Base_L_Forearm_052"
+    parentId: "CC_Base_L_Forearm_052_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.23599527776241302, y: 0.000013265784218674526, z: 0.00005466182847158052, w: 0.9717541933059692 }
+      scale: { x: 1, y: 0.9999999403953552, z: 1 }
+    components:
+      joint:
+        jointIndex: 52
+        enabled: true
+
+  - id: "CC_Base_L_ForearmTwist01_053_scaleCompensation"
+    parentId: "CC_Base_L_Forearm_052"
+    transform:
+      position: { x: 0.00000762939453125, y: 1.4210854715202004e-14, z: 0.00000762939453125 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1.0000001192092896, z: 1 }
+
+  - id: "CC_Base_L_ForearmTwist01_053"
+    parentId: "CC_Base_L_ForearmTwist01_053_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -1.713726476282318e-7, y: -0.000612828996963799, z: -0.00000600518069404643, w: 0.9999998211860657 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 53
+        enabled: true
+
+  - id: "CC_Base_L_ForearmTwist02_00_scaleCompensation"
+    parentId: "CC_Base_L_ForearmTwist01_053"
+    transform:
+      position: { x: 0.00020599365234375, y: 11.210517883300781, z: -0.00000762939453125 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999998807907104, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_L_ForearmTwist02_00"
+    parentId: "CC_Base_L_ForearmTwist02_00_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.000003925511919078417, y: 0.09997589886188507, z: 0.0000062244712353276554, w: 0.9949898719787598 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 54
+        enabled: true
+
+  - id: "CC_Base_L_ElbowShareBone_054_scaleCompensation"
+    parentId: "CC_Base_L_Forearm_052"
+    transform:
+      position: { x: 0.00000762939453125, y: 1.4210854715202004e-14, z: 0.00000762939453125 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1.0000001192092896, z: 1 }
+
+  - id: "CC_Base_L_ElbowShareBone_054"
+    parentId: "CC_Base_L_ElbowShareBone_054_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.13904064893722534, y: -0.0003640072245616466, z: -0.002095702802762389, w: 0.9902843832969666 }
+      scale: { x: 0.9999998807907104, y: 0.9999998807907104, z: 1 }
+    components:
+      joint:
+        jointIndex: 55
+        enabled: true
+
+  - id: "CC_Base_L_Hand_055_scaleCompensation"
+    parentId: "CC_Base_L_Forearm_052"
+    transform:
+      position: { x: 0.00002288818359375, y: 22.42102813720703, z: 0.000011444091796875 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1.0000001192092896, z: 1 }
+
+  - id: "CC_Base_L_Hand_055"
+    parentId: "CC_Base_L_Hand_055_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -3.5506446552430445e-17, y: 0.19841322302818298, z: 3.5506446552430445e-17, w: 0.980118453502655 }
+      scale: { x: 1, y: 1, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 56
+        enabled: true
+
+  - id: "CC_Base_L_UpperarmTwist01_056_scaleCompensation"
+    parentId: "CC_Base_L_Upperarm_051"
+    transform:
+      position: { x: -0.000053405768994707614, y: 0.000007629395440744702, z: -0.000003814697720372351 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1.0000001192092896, z: 0.9999998807907104 }
+
+  - id: "CC_Base_L_UpperarmTwist01_056"
+    parentId: "CC_Base_L_UpperarmTwist01_056_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -6.159456501949536e-18, y: 0.10835348814725876, z: 5.651126553139364e-17, w: 0.9941124320030212 }
+      scale: { x: 1, y: 0.9999999403953552, z: 1.000000238418579 }
+    components:
+      joint:
+        jointIndex: 57
+        enabled: true
+
+  - id: "CC_Base_L_UpperarmTwist02_057_scaleCompensation"
+    parentId: "CC_Base_L_UpperarmTwist01_056"
+    transform:
+      position: { x: -0.00133514404296875, y: 12.732643127441406, z: -0.0009849071502685547 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1.0000001192092896, z: 0.9999997615814209 }
+
+  - id: "CC_Base_L_UpperarmTwist02_057"
+    parentId: "CC_Base_L_UpperarmTwist02_057_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -7.5056469484025e-8, y: -0.10835343599319458, z: -3.00032922950777e-8, w: 0.9941124320030212 }
+      scale: { x: 1.000000238418579, y: 1, z: 1.0000003576278687 }
+    components:
+      joint:
+        jointIndex: 58
+        enabled: true
+
+  - id: "CC_Base_L_RibsTwist_058_scaleCompensation"
+    parentId: "CC_Base_Spine02_036"
+    transform:
+      position: { x: 8.813989639282227, y: 5.9504547119140625, z: 7.960855484008789 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 0.9999998807907104, z: 0.9999998807907104 }
+
+  - id: "CC_Base_L_RibsTwist_058"
+    parentId: "CC_Base_L_RibsTwist_058_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.000008415240699832793, y: 0.6375719904899597, z: 0.7703909277915955, w: -0.0000015049815829115687 }
+      scale: { x: 0.9999999403953552, y: 1.0000001192092896, z: 1.000000238418579 }
+    components:
+      joint:
+        jointIndex: 59
+        enabled: true
+
+  - id: "CC_Base_L_Breast_059_scaleCompensation"
+    parentId: "CC_Base_L_RibsTwist_058"
+    transform:
+      position: { x: 0.00001430511474609375, y: 1.8482027053833008, z: 0.000152587890625 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 0.9999998807907104, z: 0.9999997615814209 }
+
+  - id: "CC_Base_L_Breast_059"
+    parentId: "CC_Base_L_Breast_059_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -1.671724021434784e-7, y: 8.470327957930065e-22, z: 1.932294314820656e-21, w: 1 }
+      scale: { x: 0.9999998211860657, y: 0.9999998211860657, z: 1 }
+    components:
+      joint:
+        jointIndex: 60
+        enabled: true
+
+  - id: "CC_Base_R_RibsTwist_060_scaleCompensation"
+    parentId: "CC_Base_Spine02_036"
+    transform:
+      position: { x: -8.813979148864746, y: 5.950469970703125, z: 7.960870742797852 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 0.9999998807907104, z: 0.9999998807907104 }
+
+  - id: "CC_Base_R_RibsTwist_060"
+    parentId: "CC_Base_R_RibsTwist_060_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.000008477501069137361, y: 0.6375719308853149, z: 0.7703908681869507, w: 0.0000016262995359284105 }
+      scale: { x: 0.9999999403953552, y: 1.0000001192092896, z: 1.000000238418579 }
+    components:
+      joint:
+        jointIndex: 61
+        enabled: true
+
+  - id: "CC_Base_R_Breast_061_scaleCompensation"
+    parentId: "CC_Base_R_RibsTwist_060"
+    transform:
+      position: { x: -0.00001621246337890625, y: 1.8482017517089844, z: 0.0001068115234375 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1.0000001192092896, y: 0.9999998807907104, z: 0.9999997615814209 }
+
+  - id: "CC_Base_R_Breast_061"
+    parentId: "CC_Base_R_Breast_061_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -1.3737003712321894e-7, y: 1.6940657935344048e-21, z: 7.146843016813056e-22, w: 1 }
+      scale: { x: 1, y: 1.000000238418579, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 62
+        enabled: true
+
+  - id: "CC_Base_R_Clavicle_062_scaleCompensation"
+    parentId: "CC_Base_Spine02_036"
+    transform:
+      position: { x: -4.981471538543701, y: 19.87933349609375, z: -1.1498126983642578 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 0.9999998807907104, z: 0.9999998807907104 }
+
+  - id: "CC_Base_R_Clavicle_062"
+    parentId: "CC_Base_R_Clavicle_062_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.08018190413713455, y: -0.04721638187766075, z: 0.7961167097091675, w: 0.5979462265968323 }
+      scale: { x: 1.000000238418579, y: 1.000000238418579, z: 1.0000003576278687 }
+    components:
+      joint:
+        jointIndex: 63
+        enabled: true
+
+  - id: "CC_Base_R_Upperarm_063_scaleCompensation"
+    parentId: "CC_Base_R_Clavicle_062"
+    transform:
+      position: { x: 0.0000457763671875, y: 13.41362190246582, z: -0.000010728836059570312 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999997615814209, z: 0.9999996423721313 }
+
+  - id: "CC_Base_R_Upperarm_063"
+    parentId: "CC_Base_R_Upperarm_063_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.15517476201057434, y: 0.16079387068748474, z: 0.34681543707847595, w: 0.9109254479408264 }
+      scale: { x: 1.000000238418579, y: 1.000000238418579, z: 1.000000238418579 }
+    components:
+      joint:
+        jointIndex: 64
+        enabled: true
+
+  - id: "CC_Base_R_Forearm_064_scaleCompensation"
+    parentId: "CC_Base_R_Upperarm_063"
+    transform:
+      position: { x: 0.0028610231820493937, y: 25.465274810791016, z: -0.0015201570931822062 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999997615814209, z: 0.9999997615814209 }
+
+  - id: "CC_Base_R_Forearm_064"
+    parentId: "CC_Base_R_Forearm_064_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.2359953075647354, y: -0.000013230430340627208, z: -0.00005477526065078564, w: 0.9717541933059692 }
+      scale: { x: 1, y: 1, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 65
+        enabled: true
+
+  - id: "CC_Base_R_ElbowShareBone_065_scaleCompensation"
+    parentId: "CC_Base_R_Forearm_064"
+    transform:
+      position: { x: -0.00000762939453125, y: 0.00000762939453125, z: 0.000003814697265625 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_R_ElbowShareBone_065"
+    parentId: "CC_Base_R_ElbowShareBone_065_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -0.13904064893722534, y: 0.0003639930218923837, z: 0.0020958250388503075, w: 0.9902843832969666 }
+      scale: { x: 1, y: 1, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 66
+        enabled: true
+
+  - id: "CC_Base_R_ForearmTwist01_066_scaleCompensation"
+    parentId: "CC_Base_R_Forearm_064"
+    transform:
+      position: { x: -0.00000762939453125, y: 0.00000762939453125, z: 0.000003814697265625 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_R_ForearmTwist01_066"
+    parentId: "CC_Base_R_ForearmTwist01_066_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -1.415700694451516e-7, y: 0.0006128178210929036, z: 0.000006049857347534271, w: 0.9999998211860657 }
+      scale: { x: 1, y: 0.9999999403953552, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 67
+        enabled: true
+
+  - id: "CC_Base_R_ForearmTwist02_067_scaleCompensation"
+    parentId: "CC_Base_R_ForearmTwist01_066"
+    transform:
+      position: { x: -0.00018310546875, y: 11.210525512695312, z: -0.00000762939453125 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1.0000001192092896, z: 0.9999998807907104 }
+
+  - id: "CC_Base_R_ForearmTwist02_067"
+    parentId: "CC_Base_R_ForearmTwist02_067_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0.000003983328952017473, y: -0.0999869778752327, z: -0.000006120686521171592, w: 0.9949888586997986 }
+      scale: { x: 1.000000238418579, y: 1.0000001192092896, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 68
+        enabled: true
+
+  - id: "CC_Base_R_Hand_068_scaleCompensation"
+    parentId: "CC_Base_R_Forearm_064"
+    transform:
+      position: { x: -0.00002288818359375, y: 22.421051025390625, z: 0.000003814697265625 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 0.9999998807907104 }
+
+  - id: "CC_Base_R_Hand_068"
+    parentId: "CC_Base_R_Hand_068_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 8.258890460410839e-8, y: -0.19841204583644867, z: 4.6719641488834895e-8, w: 0.9801188111305237 }
+      scale: { x: 1, y: 1, z: 1 }
+    components:
+      joint:
+        jointIndex: 69
+        enabled: true
+
+  - id: "CC_Base_R_UpperarmTwist01_069_scaleCompensation"
+    parentId: "CC_Base_R_Upperarm_063"
+    transform:
+      position: { x: 0, y: -1.4210854715202004e-14, z: -0.0000019073488601861754 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999997615814209, y: 0.9999997615814209, z: 0.9999997615814209 }
+
+  - id: "CC_Base_R_UpperarmTwist01_069"
+    parentId: "CC_Base_R_UpperarmTwist01_069_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: -1.4750054395963055e-16, y: -0.10835276544094086, z: -6.875434621633758e-8, w: 0.994112491607666 }
+      scale: { x: 1.0000001192092896, y: 1, z: 1 }
+    components:
+      joint:
+        jointIndex: 70
+        enabled: true
+
+  - id: "CC_Base_R_UpperarmTwist02_070_scaleCompensation"
+    parentId: "CC_Base_R_UpperarmTwist01_069"
+    transform:
+      position: { x: 0.00131988525390625, y: 12.732650756835938, z: -0.0009838342666625977 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 0.9999998807907104, y: 1, z: 1 }
+
+  - id: "CC_Base_R_UpperarmTwist02_070"
+    parentId: "CC_Base_R_UpperarmTwist02_070_scaleCompensation"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 7.354450253063658e-17, y: 0.10835272073745728, z: 7.349716923954475e-8, w: 0.994112491607666 }
+      scale: { x: 1.000000238418579, y: 1.0000001192092896, z: 1.0000001192092896 }
+    components:
+      joint:
+        jointIndex: 71
+        enabled: true
+
+  - id: "Object_7"
+    parentId: "Object_4"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+    components:
+      customGeometry:
+        mesh: "meshs/temp_Material_001_0"
+        castShadow: true
+        receiveShadow: true
+        enabled: true
+      standardMaterial:
+        material: "materials/Material_001"
+        enabled: true
+      skin:
+        rigRootEntityId: "_rootJoint"
+        enabled: true
+
+  - id: "Object_6"
+    parentId: "Object_4"
+    transform:
+      position: { x: 0, y: -3.552713678800501e-15, z: 0 }
+      rotation: { x: 1.1555579666323415e-33, y: 4.163336342344337e-17, z: -2.7755575615628914e-17, w: 1 }
+      scale: { x: 1, y: 1.0000000000000002, z: 1 }
+
+  - id: "temp"
+    parentId: "Object_4"
+    transform:
+      position: { x: 0, y: 0, z: 0 }
+      rotation: { x: 0, y: 0, z: 0, w: 1 }
+      scale: { x: 1, y: 1, z: 1 }
+
