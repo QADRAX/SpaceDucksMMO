@@ -118,6 +118,12 @@ export type SkyboxData = Record<string, never>;
 /** Scalar data for a script resource (no data — file only). */
 export type ScriptData = Record<string, never>;
 
+/** Scalar data for a spa resource (entry lives in file slots). */
+export type SpaData = Record<string, never>;
+
+/** Scalar data for a uiDocument resource (tree may live in file or data later). */
+export type UiDocumentData = Record<string, never>;
+
 /** Scalar data for a texture resource (no data — file only). */
 export type TextureData = Record<string, never>;
 
@@ -142,5 +148,7 @@ export type ResourceData<K extends ResourceKind> =
     K extends 'animationClip' ? AnimationClipData :
     K extends 'skybox' ? SkyboxData :
     K extends 'script' ? ScriptData :
+    K extends 'spa' ? SpaData :
+    K extends 'uiDocument' ? UiDocumentData :
     K extends 'texture' ? TextureData :
     never;

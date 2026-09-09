@@ -7,6 +7,7 @@ import {
   getTransform3d,
   reconcileTransform3dSubtree,
 } from '../entities/transform3dAccess';
+import { reconcileTransform2dSubtree } from '../entities/transform2dAccess';
 import { onTransformChange, removeTransformChange } from '../entities/transform';
 import type { TransformState } from '../entities/types';
 
@@ -45,6 +46,11 @@ export function attachEntityObservers(scene: SceneState, entity: EntityState): (
     attachTransformListener();
   };
 
+  /** After transform2d add/remove/enable toggle: screen pose chain for subtree. */
+  const onTransform2dParticipationChanged = () => {
+    reconcileTransform2dSubtree(entity);
+  };
+
   const componentListener: ComponentListener = (event) => {
     if (handling) return;
     handling = true;
@@ -69,6 +75,9 @@ export function attachEntityObservers(scene: SceneState, entity: EntityState): (
         if (event.component.type === 'transform3d') {
           onTransform3dParticipationChanged();
         }
+        if (event.component.type === 'transform2d') {
+          onTransform2dParticipationChanged();
+        }
       } else if (event.action === 'removed') {
         const errors = validateHierarchyInSubtree(entity);
         if (errors.length > 0) {
@@ -92,6 +101,11 @@ export function attachEntityObservers(scene: SceneState, entity: EntityState): (
             reconcileTransform3dSubtree(child);
           }
         }
+        if (event.component.type === 'transform2d') {
+          for (const child of entity.children) {
+            reconcileTransform2dSubtree(child);
+          }
+        }
       }
       emitSceneChange(scene, {
         kind: 'component-changed',
@@ -106,6 +120,9 @@ export function attachEntityObservers(scene: SceneState, entity: EntityState): (
   const changeListener: ComponentChangeListener = (entityId, type) => {
     if (type === 'transform3d') {
       onTransform3dParticipationChanged();
+    }
+    if (type === 'transform2d') {
+      onTransform2dParticipationChanged();
     }
     emitSceneChange(scene, { kind: 'component-changed', entityId, componentType: type });
   };

@@ -4,14 +4,11 @@ import type {
   SceneEventBus,
   SceneRaycastQuery,
   SceneState,
-  ViewportId,
 } from '@duckengine/core-v2';
 import {
   buildSceneAPI,
   buildEntityAPI,
   createPrefabId,
-  createUISlotId,
-  createViewportId,
   instantiatePrefab,
 } from '@duckengine/core-v2';
 import type { BridgeDeclaration, BridgePorts, BridgeSession } from './types';
@@ -113,45 +110,6 @@ export function createSceneBridgeDeclaration(eventBus: SceneEventBus): BridgeDec
           if (pending) {
             pending.push(toEntityId(entityId));
           }
-        },
-
-        /** Adds a UI slot to the scene. Delegates to uiSlotOperations port. */
-        addUISlot(params: {
-          slotId: string;
-          viewportId?: string | null;
-          rect?: { x?: number; y?: number; w?: number; h?: number };
-          zIndex?: number;
-          enabled?: boolean;
-          descriptor?: unknown;
-        }) {
-          const viewportId =
-            params.viewportId != null ? (createViewportId(params.viewportId) as ViewportId) : null;
-          return ports.uiSlotOperations?.addUISlot(scene.id, {
-            slotId: createUISlotId(params.slotId),
-            viewportId,
-            rect: params.rect,
-            zIndex: params.zIndex,
-            enabled: params.enabled,
-            descriptor: params.descriptor,
-          });
-        },
-
-        /** Removes a UI slot from the scene. */
-        removeUISlot(slotId: string) {
-          return ports.uiSlotOperations?.removeUISlot(scene.id, createUISlotId(slotId));
-        },
-
-        /** Updates a UI slot. */
-        updateUISlot(
-          slotId: string,
-          params: {
-            rect?: { x?: number; y?: number; w?: number; h?: number };
-            zIndex?: number;
-            enabled?: boolean;
-            descriptor?: unknown;
-          },
-        ) {
-          return ports.uiSlotOperations?.updateUISlot(scene.id, createUISlotId(slotId), params);
         },
       };
     },

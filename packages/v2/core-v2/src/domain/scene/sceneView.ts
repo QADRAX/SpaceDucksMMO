@@ -15,6 +15,5 @@ export function createSceneView(scene: SceneState): SceneView {
         rootEntityIds: [...scene.rootEntityIds],
         debugFlags: new Map(scene.debugFlags),
         prefabs: new Map(scene.prefabs) as unknown as ReadonlyMap<PrefabId, EntityState>,
-        uiSlots: new Map(scene.uiSlots),
     };
 }

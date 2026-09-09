@@ -6,7 +6,6 @@ import type {
   PhysicsQueryPort,
   SceneState,
   ScriptSchema,
-  UISlotOperationsPort,
 } from '@duckengine/core-v2';
 
 /** Bridge API object exposed to Lua. Keys are method names, values are callable. */
@@ -48,7 +47,6 @@ export interface BridgePorts {
   /** @deprecated Use getGizmo() for dynamic resolution. Static fallback for tests. */
   readonly gizmo?: GizmoPortShape;
   readonly input?: InputPort;
-  readonly uiSlotOperations?: UISlotOperationsPort;
 }
 
 /** Bridge names exposed as Engine.Input, Engine.Gizmo, etc. (not on self). */
@@ -64,7 +62,6 @@ export const SCRIPTING_BRIDGE_PORT_KEYS: Readonly<Record<Exclude<keyof BridgePor
   physicsQuery: 'io:physics-query',
   gizmo: 'io:gizmo',
   input: 'io:input',
-  uiSlotOperations: 'uiSlotOperations',
 };
 
 /** Resolved bridge APIs keyed by bridge name. */

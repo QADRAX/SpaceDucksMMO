@@ -8,9 +8,6 @@ import {
   addViewport,
   registerCanvas,
   unregisterCanvas,
-  addUISlot,
-  removeUISlot,
-  updateUISlot,
   setActiveCamera,
   setEnginePaused,
   setupEngine,
@@ -86,9 +83,6 @@ export function buildDuckEngineAPI(engine: EngineState) {
     .add('setPaused', setScenePaused)
     .add('subscribe', subscribeToSceneChanges)
     .add('listEntities', listEntities)
-    .add('addUISlot', addUISlot)
-    .add('removeUISlot', removeUISlot)
-    .add('updateUISlot', updateUISlot)
     // ── entity ─────────────────────────────────────────────────
     .add('addComponent', addComponentToEntity)
     .add('removeComponent', removeComponentFromEntity)

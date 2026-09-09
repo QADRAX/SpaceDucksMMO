@@ -35,12 +35,6 @@ export type { ResourceCachePort } from './resourceCachePort';
 export { DiagnosticPortDef } from './diagnosticPortDef';
 export type { DiagnosticPort, DiagnosticLevel, DiagnosticContext } from './diagnosticPort';
 
-export { UIRendererPortDef } from './uiRendererPortDef';
-export type { UIRendererPort } from './uiRendererPort';
-
-export { ViewportOverlayProviderPortDef } from './viewportOverlayProviderPortDef';
-export type { ViewportOverlayProviderPort } from './viewportOverlayProviderPort';
-
 export { ViewportRectProviderPortDef } from './viewportRectProviderPortDef';
 export type { ViewportRectProviderPort } from './viewportRectProviderPort';
 

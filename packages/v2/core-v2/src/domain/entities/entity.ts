@@ -8,6 +8,7 @@ import { createEntityObservers } from './observers';
 import { validateAddComponent, validateRemoveComponent } from './validation';
 import type { EntityId } from '../ids';
 import { reconcileTransform3dParent } from './transform3dAccess';
+import { reconcileTransform2dParent } from './transform2dAccess';
 import { createComponent } from '../components/factory';
 import type { Transform3dCreateOverride } from '../components/types/transform';
 
@@ -51,6 +52,9 @@ export function addComponent(entity: EntityState, comp: ComponentBase): Result<v
   if (comp.type === 'transform3d') {
     reconcileTransform3dParent(entity);
   }
+  if (comp.type === 'transform2d') {
+    reconcileTransform2dParent(entity);
+  }
   return ok(undefined);
 }
 
@@ -70,6 +74,11 @@ export function removeComponent(entity: EntityState, type: ComponentType): Resul
     // Children may need a new pose ancestor after this node loses transform3d.
     for (const child of entity.children) {
       reconcileTransform3dParent(child);
+    }
+  }
+  if (type === 'transform2d') {
+    for (const child of entity.children) {
+      reconcileTransform2dParent(child);
     }
   }
   return ok(undefined);
@@ -172,6 +181,7 @@ export function addChild(parent: EntityState, child: EntityState): void {
   child.parent = parent;
   parent.children.push(child);
   reconcileTransform3dParent(child);
+  reconcileTransform2dParent(child);
 }
 
 /** Removes a child by id, clearing parent refs and reconciling pose parenting. */
@@ -182,6 +192,7 @@ export function removeChildById(parent: EntityState, childId: EntityId): void {
   parent.children.splice(idx, 1);
   child.parent = undefined;
   reconcileTransform3dParent(child);
+  reconcileTransform2dParent(child);
 }
 
 /** Finds a direct child by id. */

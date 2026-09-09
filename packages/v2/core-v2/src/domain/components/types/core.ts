@@ -14,6 +14,9 @@ import type {
  */
 export type ComponentType =
     | 'transform3d'
+    | 'transform2d'
+    | 'uiView'
+    | 'uiSpa'
     | 'name'
     | 'boxGeometry'
     | 'sphereGeometry'

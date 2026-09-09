@@ -57,5 +57,4 @@ EntityState = id + hierarchy (parent/children) + components + presentation/debug
 
 ## Follow-ups (out of scope)
 
-- `transform2d` + `uiHost` (SPA-as-entity).
-- UI slot authoring migration.
+- Screen UI: `transform2d` + `uiView` / `uiSpa` — see `docs/v2-ui-system-contract.md` (legacy `scene.uiSlots` removed).

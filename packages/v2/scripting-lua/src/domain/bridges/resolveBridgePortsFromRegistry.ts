@@ -16,8 +16,5 @@ export function resolveBridgePortsFromRegistry(
     getGizmo: () => gizmo,
     gizmo,
     input: ports.getById<BridgePorts['input']>(SCRIPTING_BRIDGE_PORT_KEYS.input),
-    uiSlotOperations: ports.getById<BridgePorts['uiSlotOperations']>(
-      SCRIPTING_BRIDGE_PORT_KEYS.uiSlotOperations,
-    ),
   };
 }

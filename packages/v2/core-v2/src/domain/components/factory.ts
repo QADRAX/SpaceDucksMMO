@@ -21,6 +21,11 @@ import {
   createTransform3dComponent,
   type Transform3dCreateOverride,
 } from './constants/transform';
+import {
+  UI_SPECS,
+  createTransform2dComponent,
+  type Transform2dCreateOverride,
+} from './constants/ui';
 
 /** Central registry of all component specs (metadata + defaults). */
 const COMPONENT_SPECS: {
@@ -30,6 +35,7 @@ const COMPONENT_SPECS: {
   };
 } = {
   ...TRANSFORM_SPECS,
+  ...UI_SPECS,
   ...IDENTITY_SPECS,
   ...GEOMETRY_SPECS,
   ...MATERIAL_SPECS,
@@ -57,6 +63,11 @@ export function createComponent<T extends CreatableComponentType>(
   if (type === 'transform3d') {
     return createTransform3dComponent(
       overrides as Transform3dCreateOverride | undefined,
+    ) as ComponentByType[T];
+  }
+  if (type === 'transform2d') {
+    return createTransform2dComponent(
+      overrides as Transform2dCreateOverride | undefined,
     ) as ComponentByType[T];
   }
   const spec = COMPONENT_SPECS[type];

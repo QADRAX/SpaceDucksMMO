@@ -21,6 +21,9 @@ export type ResourceKind =
     | 'skybox'       // Used by SkyboxComponent
     // ── Scripting ────────────────────────────────────────────────
     | 'script'       // Used by ScriptComponent
+    // ── UI ───────────────────────────────────────────────────────
+    | 'spa'          // Used by UiSpaComponent
+    | 'uiDocument'   // Used by UiViewComponent (optional resource document)
     // ── Standalone asset (referenced by materials per slot) ───────
     | 'texture';
 
@@ -37,6 +40,8 @@ export const RESOURCE_KINDS = [
     'animationClip',
     'skybox',
     'script',
+    'spa',
+    'uiDocument',
     'texture',
 ] as const satisfies readonly ResourceKind[];
 

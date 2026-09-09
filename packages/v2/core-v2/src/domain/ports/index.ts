@@ -2,8 +2,8 @@
  * Domain ports — contracts for engine I/O and capabilities.
  *
  * Structure:
- * - internal/  — Core implements by default (SceneEventBusProvider, UISlotOperations)
- * - external/  — Client implements (Physics, Gizmo, Input, Resource, Diagnostic, UI)
+ * - internal/  — Core implements by default (SceneEventBusProvider)
+ * - external/  — Client implements (Physics, Gizmo, Input, Resource, Diagnostic, …)
  * - enginePorts.ts — Aggregates all ports for setup injection
  */
 export * from './internal';

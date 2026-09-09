@@ -8,7 +8,7 @@ This document describes the actual architecture of the Lua scripting subsystem u
 
 This package is a **scene subsystem adapter** (SceneSubsystem). It depends on `@duckengine/core-v2`; core-v2 never depends on it. It registers as a scene subsystem via `defineSceneSubsystem` and connects to the engine lifecycle through events and phase callbacks (`onEarlyUpdate`, `onUpdate`, `onLateUpdate`, `onPreRender`, `onPostRender`).
 
-**Ports from core**: `SceneEventBusProviderPort` (internal, auto-registered) provides the event bus per scene via `getOrCreateEventBus(sceneId)`. `UISlotOperationsPort` (internal) enables `Scene.addUISlot`, `removeUISlot`, `updateUISlot` from Lua. Both are available after `api.setup()`.
+**Ports from core**: `SceneEventBusProviderPort` (internal, auto-registered) provides the event bus per scene via `getOrCreateEventBus(sceneId)`. Available after `api.setup()`.
 
 ---
 
@@ -61,7 +61,7 @@ flowchart LR
 
 **Entity-scoped bridges**: Transform, Scene, Script are scoped per entityId. Input, Gizmo, Physics, Time are global and live in `Engine.*`.
 
-**BridgePorts**: Resolved from `SubsystemRuntimeState` at session init. Includes `physicsQuery`, `gizmo`, `input`, `uiSlotOperations`. `uiSlotOperations` is an internal port (core provides default); scripting gets it after `api.setup()`.
+**BridgePorts**: Resolved from `SubsystemRuntimeState` at session init. Includes `physicsQuery`, `gizmo`, `input`.
 
 **Custom ports**: `engine_ports['port-id']` is resolved from `SubsystemRuntimeState` (portDefinitions + ports). Async methods accept a callback as the last argument: `callback(err, result)`.
 

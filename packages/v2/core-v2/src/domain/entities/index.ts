@@ -77,4 +77,14 @@ export {
   reconcileTransform3dSubtree,
 } from './transform3dAccess';
 
+export {
+  hasTransform2d,
+  getTransform2d,
+  getTransform2dComponent,
+  requireTransform2d,
+  findNearestAncestorTransform2d,
+  reconcileTransform2dParent,
+  reconcileTransform2dSubtree,
+} from './transform2dAccess';
+
 export { type EntityView, createEntityView } from './entityView';

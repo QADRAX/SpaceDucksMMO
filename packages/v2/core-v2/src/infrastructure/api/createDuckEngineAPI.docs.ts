@@ -52,9 +52,6 @@ import type { SetupSceneParams } from '../../application/scene/setupScene';
 import type { UpdateSceneParams } from '../../application/scene/updateScene';
 import type { SetScenePausedParams } from '../../application/scene/setScenePaused';
 import type { SubscribeToSceneChangesParams } from '../../application/scene/subscribeToSceneChanges';
-import type { AddUISlotParams } from '../../domain/ports';
-import type { RemoveUISlotParams } from '../../application/scene/removeUISlot';
-import type { UpdateUISlotParamsWithId } from '../../application/scene/updateUISlot';
 import type { SetViewportEnabledParams } from '../../application/viewport/setViewportEnabled';
 import type { SetViewportDebugEnabledParams } from '../../application/viewport/setViewportDebugEnabled';
 import type { SetViewportSceneParams } from '../../application/viewport/setViewportScene';
@@ -135,12 +132,6 @@ declare module './createDuckEngineAPI' {
     subscribe(params: SubscribeToSceneChangesParams): Result<() => void>;
     /** Returns snapshots of all entities in the scene. */
     listEntities(): Result<EntityView[]>;
-    /** Adds a UI slot. Emits ui-slot-added. */
-    addUISlot(params: AddUISlotParams): Result<void>;
-    /** Removes a UI slot. Emits ui-slot-removed. */
-    removeUISlot(params: RemoveUISlotParams): Result<void>;
-    /** Updates a UI slot. Emits ui-slot-updated. */
-    updateUISlot(params: UpdateUISlotParamsWithId): Result<void>;
     /** Returns the entity-scoped API for the given entity id (addComponent, removeComponent, view, setDisplayName, setGizmoIcon, setDebug, listChildren, component). */
     entity(id: string): DuckEngineEntityScope;
   }

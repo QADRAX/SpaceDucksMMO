@@ -113,6 +113,18 @@ export interface ScriptFileSlots {
     readonly source: ResolvedFile;
 }
 
+/** File slots for a spa resource. */
+export interface SpaFileSlots {
+    /** SPA entry module (host-specific; e.g. JS bundle). */
+    readonly entry: ResolvedFile;
+}
+
+/** File slots for a uiDocument resource. */
+export interface UiDocumentFileSlots {
+    /** Duck UI document (YAML/JSON tree). */
+    readonly document: ResolvedFile;
+}
+
 // ── Texture file slots ────────────────────────────────────────────────────────
 
 /** File slots for a standalone texture resource. */
@@ -140,5 +152,7 @@ export type FileSlotsFor<K extends ResourceKind> =
     K extends 'animationClip' ? AnimationClipFileSlots :
     K extends 'skybox' ? SkyboxFileSlots :
     K extends 'script' ? ScriptFileSlots :
+    K extends 'spa' ? SpaFileSlots :
+    K extends 'uiDocument' ? UiDocumentFileSlots :
     K extends 'texture' ? TextureFileSlots :
     never;

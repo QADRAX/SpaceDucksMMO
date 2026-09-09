@@ -16,9 +16,6 @@ export type CanvasId = string & { readonly __brand: 'CanvasId' };
 /** Branded type for Resource identifiers. */
 export type ResourceKey = string & { readonly __brand: 'ResourceKey' };
 
-/** Branded type for UI slot identifiers. */
-export type UISlotId = string & { readonly __brand: 'UISlotId' };
-
 /** Branded type for Prefab identifiers. */
 export type PrefabId = string & { readonly __brand: 'PrefabId' };
 
@@ -50,11 +47,6 @@ export function createCanvasId(id: string): CanvasId {
 /** Factory to create a branded ResourceKey. */
 export function createResourceKey(key: string): ResourceKey {
     return key as ResourceKey;
-}
-
-/** Factory to create a branded UISlotId. */
-export function createUISlotId(id: string): UISlotId {
-    return id as UISlotId;
 }
 
 /** Factory to create a branded PrefabId. */
