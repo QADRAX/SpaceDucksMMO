@@ -16,6 +16,15 @@ local TransformV2 = {}
 ---@return boolean
 function TransformV2.has() end
 
+---Authoring flag on the raw transform3d (works while disabled). Nil if missing.
+---@return boolean|nil
+function TransformV2.isEnabled() end
+
+---Toggle spatial participation (ComponentBase.enabled on transform3d).
+---@param enabled boolean
+---@return boolean true on success.
+function TransformV2.setEnabled(enabled) end
+
 ---Get the WORLD position of the entity, or nil if no active pose.
 ---@return Vec3V2|nil
 function TransformV2.getPosition() end

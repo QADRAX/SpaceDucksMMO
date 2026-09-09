@@ -126,6 +126,19 @@ function Component.getData(entityId, componentType) end
 ---@param componentType ComponentTypeV2 Component type.
 ---@return boolean
 function Component.has(entityId, componentType) end
+
+---Set ComponentBase.enabled (e.g. transform3d spatial participation).
+---@param entityId string Entity ID.
+---@param componentType ComponentTypeV2 Component type.
+---@param enabled boolean
+---@return boolean true on success.
+function Component.setEnabled(entityId, componentType, enabled) end
+
+---Read ComponentBase.enabled.
+---@param entityId string Entity ID.
+---@param componentType ComponentTypeV2 Component type.
+---@return boolean|nil
+function Component.isEnabled(entityId, componentType) end
 `;
 
 const targetPath = path.join(

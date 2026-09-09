@@ -1,0 +1,33 @@
+# Visual demo: transform3d.enabled spatial participation toggle (Lua-driven).
+# - ambient-only entity has NO transform3d (scene still lit)
+# - cube has explicit transform3d + scripts/transform_toggle (interval toggles enabled)
+entities:
+  - id: ambient
+    components:
+      ambientLight: { intensity: 0.55 }
+
+  - id: main-camera
+    transform:
+      position: { x: 2.5, y: 2, z: 5 }
+    components:
+      cameraPerspective: { fov: 50 }
+
+  - id: sun
+    transform:
+      position: { x: 4, y: 8, z: 3 }
+    components:
+      directionalLight: { intensity: 0.9 }
+
+  - id: demo-cube
+    components:
+      transform3d:
+        enabled: true
+        position: { x: 0, y: 0, z: 0 }
+      boxGeometry: { width: 1.4, height: 1.4, depth: 1.4 }
+      standardMaterial: { color: "#ff3b5c" }
+      script:
+        scripts:
+          - scriptId: scripts/transform_toggle
+            enabled: true
+            properties:
+              interval: 3

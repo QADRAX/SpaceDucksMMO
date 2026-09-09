@@ -30,7 +30,7 @@ export function PlaygroundApp() {
   const [loadSuccess, setLoadSuccess] = useState<string | null>(null);
   const isTestModeUrl = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'test';
   const [showLogs, setShowLogs] = useState(isTestModeUrl);
-  const [sceneList] = useState<string[]>(['astra_lumen_ii_a_rigged_companion_android', 'gold-sphere', 'orbit-sphere', 'physics-balls', 'balance-scale']);
+  const [sceneList] = useState<string[]>(['astra_lumen_ii_a_rigged_companion_android', 'gold-sphere', 'orbit-sphere', 'physics-balls', 'balance-scale', 'transform-toggle']);
 
   function parseBackendFromUrl(): RenderingBackend {
     if (typeof window === 'undefined') return 'auto';

@@ -156,6 +156,52 @@ export const componentBridge: BridgeDeclaration = {
         if (!entity) return false;
         return entity.components.has(componentType);
       },
+
+      /**
+       * Set ComponentBase.enabled (e.g. transform3d spatial participation).
+       * Scoped: (owningEntityId, entityIdFromLua, componentType, enabled).
+       * Does not go through inspector fields — `enabled` is not a field key.
+       */
+      setEnabled(
+        owningEntityId: EntityId,
+        entityIdFromLua: string,
+        componentType: ComponentType,
+        enabled: boolean,
+      ): boolean {
+        if (!scene) return false;
+        const eid = entityIdFromLua === owningEntityId ? owningEntityId : toEntityId(entityIdFromLua);
+        const entity = scene.entities.get(eid);
+        if (!entity) return false;
+        const comp = entity.components.get(componentType);
+        if (!comp) return false;
+
+        comp.enabled = !!enabled;
+        entity.observers.fireComponentChanged(eid, componentType);
+        emitSceneChange(scene, {
+          kind: 'component-changed',
+          entityId: eid,
+          componentType,
+        });
+        return true;
+      },
+
+      /**
+       * Read ComponentBase.enabled.
+       * Scoped: (owningEntityId, entityIdFromLua, componentType).
+       */
+      isEnabled(
+        owningEntityId: EntityId,
+        entityIdFromLua: string,
+        componentType: ComponentType,
+      ): boolean | undefined {
+        if (!scene) return undefined;
+        const eid = entityIdFromLua === owningEntityId ? owningEntityId : toEntityId(entityIdFromLua);
+        const entity = scene.entities.get(eid);
+        if (!entity) return undefined;
+        const comp = entity.components.get(componentType);
+        if (!comp) return undefined;
+        return comp.enabled;
+      },
     };
   },
 };

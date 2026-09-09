@@ -70,9 +70,11 @@ export {
 export {
   hasTransform3d,
   getTransform3d,
+  getTransform3dComponent,
   requireTransform3d,
   findNearestAncestorTransform3d,
   reconcileTransform3dParent,
+  reconcileTransform3dSubtree,
 } from './transform3dAccess';
 
 export { type EntityView, createEntityView } from './entityView';

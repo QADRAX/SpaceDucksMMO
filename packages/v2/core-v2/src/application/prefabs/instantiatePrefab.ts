@@ -1,7 +1,7 @@
 import type { EntityId, PrefabId } from '../../domain/ids';
 import { cloneEntitySubtree } from '../../domain/entities';
 import { setPosition, setRotation } from '../../domain/entities';
-import { getTransform3d } from '../../domain/entities/transform3dAccess';
+import { getTransform3dComponent } from '../../domain/entities/transform3dAccess';
 import { addComponent } from '../../domain/entities';
 import { createComponent } from '../../domain/components';
 import type { Result } from '../../domain/utils';
@@ -42,11 +42,11 @@ export const instantiatePrefab = defineSceneUseCase<
     const clone = cloneEntitySubtree(template, generateEntityId);
 
     if (position || rotation) {
-      let state = getTransform3d(clone);
+      let state = getTransform3dComponent(clone);
       if (!state) {
         const addResult = addComponent(clone, createComponent('transform3d'));
         if (!addResult.ok) return addResult;
-        state = getTransform3d(clone);
+        state = getTransform3dComponent(clone);
       }
       if (!state) {
         return err('validation', 'Failed to ensure transform3d on prefab instance.');

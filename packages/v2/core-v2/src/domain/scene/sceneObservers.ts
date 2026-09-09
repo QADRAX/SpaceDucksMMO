@@ -5,7 +5,7 @@ import type { ComponentChangeListener, ComponentListener, ComponentType, EntityS
 import { validateHierarchyInSubtree } from '../entities';
 import {
   getTransform3d,
-  reconcileTransform3dParent,
+  reconcileTransform3dSubtree,
 } from '../entities/transform3dAccess';
 import { onTransformChange, removeTransformChange } from '../entities/transform';
 import type { TransformState } from '../entities/types';
@@ -39,6 +39,12 @@ export function attachEntityObservers(scene: SceneState, entity: EntityState): (
     onTransformChange(state, transformCb);
   };
 
+  /** After transform3d add/remove/enable toggle: listener + pose chain for subtree. */
+  const onTransform3dParticipationChanged = () => {
+    reconcileTransform3dSubtree(entity);
+    attachTransformListener();
+  };
+
   const componentListener: ComponentListener = (event) => {
     if (handling) return;
     handling = true;
@@ -61,8 +67,7 @@ export function attachEntityObservers(scene: SceneState, entity: EntityState): (
           }
         }
         if (event.component.type === 'transform3d') {
-          reconcileTransform3dParent(entity);
-          attachTransformListener();
+          onTransform3dParticipationChanged();
         }
       } else if (event.action === 'removed') {
         const errors = validateHierarchyInSubtree(entity);
@@ -84,7 +89,7 @@ export function attachEntityObservers(scene: SceneState, entity: EntityState): (
         if (event.component.type === 'transform3d') {
           detachTransformListener();
           for (const child of entity.children) {
-            reconcileTransform3dParent(child);
+            reconcileTransform3dSubtree(child);
           }
         }
       }
@@ -99,6 +104,9 @@ export function attachEntityObservers(scene: SceneState, entity: EntityState): (
   };
 
   const changeListener: ComponentChangeListener = (entityId, type) => {
+    if (type === 'transform3d') {
+      onTransform3dParticipationChanged();
+    }
     emitSceneChange(scene, { kind: 'component-changed', entityId, componentType: type });
   };
 

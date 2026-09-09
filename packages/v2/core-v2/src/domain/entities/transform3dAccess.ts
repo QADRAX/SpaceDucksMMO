@@ -9,7 +9,7 @@ export function hasTransform3d(entity: EntityState): boolean {
 }
 
 /**
- * Returns the active `transform3d` pose, or `undefined` when missing **or disabled**.
+ * Returns the **active** `transform3d` pose, or `undefined` when missing **or disabled**.
  * Runtime consumers should use this (null-logic): no separate `.enabled` checks.
  * For authoring/inspector access to a disabled pose, use {@link getComponent}(`'transform3d'`).
  */
@@ -17,6 +17,15 @@ export function getTransform3d(entity: EntityState): Transform3dComponent | unde
   const t = getComponent<Transform3dComponent>(entity, 'transform3d');
   if (!t || t.enabled === false) return undefined;
   return t;
+}
+
+/**
+ * Raw pose component including when disabled. Prefer {@link getTransform3d} at runtime.
+ */
+export function getTransform3dComponent(
+  entity: EntityState,
+): Transform3dComponent | undefined {
+  return getComponent<Transform3dComponent>(entity, 'transform3d');
 }
 
 /**
@@ -49,7 +58,18 @@ export function findNearestAncestorTransform3d(
  * Uses the raw component (including when self is disabled) so re-enable keeps a valid chain.
  */
 export function reconcileTransform3dParent(entity: EntityState): void {
-  const t = getComponent<Transform3dComponent>(entity, 'transform3d');
+  const t = getTransform3dComponent(entity);
   if (!t) return;
   setTransformParent(t, findNearestAncestorTransform3d(entity));
+}
+
+/**
+ * Reconciles pose-parent links for `entity` and every descendant.
+ * Call after enable/disable/add/remove of `transform3d` or hierarchy changes.
+ */
+export function reconcileTransform3dSubtree(entity: EntityState): void {
+  reconcileTransform3dParent(entity);
+  for (const child of entity.children) {
+    reconcileTransform3dSubtree(child);
+  }
 }

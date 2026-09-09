@@ -4,7 +4,7 @@
 import {
   addComponent,
   createComponent,
-  getTransform3d,
+  getTransform3dComponent,
   setPosition,
   setRotation,
   setScale,
@@ -14,15 +14,16 @@ import type { Vec3Like } from './sceneDefinition';
 
 /**
  * Ensures transform3d on the entity and applies position/rotation/scale locals.
+ * Mutates the raw component when disabled (does not create a duplicate).
  */
 export function applyTransformToEntity(
   entity: EntityState,
   transform: { position?: Vec3Like; rotation?: Vec3Like; scale?: Vec3Like },
 ): void {
-  let state = getTransform3d(entity);
+  let state = getTransform3dComponent(entity);
   if (!state) {
     addComponent(entity, createComponent('transform3d'));
-    state = getTransform3d(entity);
+    state = getTransform3dComponent(entity);
   }
   if (!state) return;
 

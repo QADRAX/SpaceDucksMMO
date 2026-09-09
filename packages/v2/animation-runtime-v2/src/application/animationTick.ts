@@ -19,12 +19,14 @@ import { wrapPlaybackTimeForClip } from '../domain/wrapPlaybackTime';
 import { sampleAnimationChannelAtTime, type SampledChannel } from '../domain/sampleAnimationChannel';
 
 function applySampleToEntity(target: EntityState, sampled: SampledChannel): void {
+  const pose = getTransform3d(target);
+  if (!pose) return; // out of space / no transform3d
   if (sampled.path === 'translation') {
-    setPosition(getTransform3d(target)!, sampled.v.x, sampled.v.y, sampled.v.z);
+    setPosition(pose, sampled.v.x, sampled.v.y, sampled.v.z);
   } else if (sampled.path === 'scale') {
-    setScale(getTransform3d(target)!, sampled.v.x, sampled.v.y, sampled.v.z);
+    setScale(pose, sampled.v.x, sampled.v.y, sampled.v.z);
   } else if (sampled.path === 'rotation') {
-    setRotationFromQuaternion(getTransform3d(target)!, sampled.q);
+    setRotationFromQuaternion(pose, sampled.q);
   }
 }
 

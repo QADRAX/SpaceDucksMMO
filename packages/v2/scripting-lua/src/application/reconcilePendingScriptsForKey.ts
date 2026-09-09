@@ -48,6 +48,7 @@ export const reconcilePendingScriptsForKey = {
         entry.scriptId,
         entry.properties,
         undefined,
+        session.diagnostic,
       );
     }
 

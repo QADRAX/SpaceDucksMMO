@@ -8,6 +8,7 @@ import { componentBridge } from './componentBridge';
 import { physicsBridge } from './physicsBridge';
 import { inputBridge } from './inputBridge';
 import { gizmoBridge } from './gizmoBridge';
+import { logBridge } from './logBridge';
 
 export interface ScriptingBridges {
   readonly bridges: ReadonlyArray<BridgeDeclaration>;
@@ -30,6 +31,7 @@ export function createDefaultScriptingBridges(eventBus: SceneEventBus): Scriptin
     inputBridge,
     createTimeBridgeDeclaration(timeState),
     gizmoBridge,
+    logBridge,
   ];
 
   return { bridges, timeState };

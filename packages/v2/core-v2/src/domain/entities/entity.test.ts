@@ -21,6 +21,7 @@ import { createComponent } from '../components';
 import { componentBase } from '../components';
 import type { ComponentBase, ComponentMetadata, ComponentType } from '../components';
 import { createEntityId } from '../ids';
+import { reconcileTransform3dSubtree } from './transform3dAccess';
 
 function mockMetadata(
   type: ComponentType,
@@ -176,6 +177,19 @@ describe('updateComponent / setComponentEnabled', () => {
     setComponentEnabled(e, 'transform3d', false);
     expect(getComponent(e, 'transform3d')).toBeDefined();
     expect(getTransform3d(e)).toBeUndefined();
+  });
+
+  it('disabled ancestor is skipped for child pose parent', () => {
+    const root = createSpatialEntity(createEntityId('root'));
+    const mid = createSpatialEntity(createEntityId('mid'));
+    const leaf = createSpatialEntity(createEntityId('leaf'));
+    addChild(root, mid);
+    addChild(mid, leaf);
+    expect(getTransform3d(leaf)!.parent).toBe(getTransform3d(mid));
+    setComponentEnabled(mid, 'transform3d', false);
+    reconcileTransform3dSubtree(mid);
+    expect(getTransform3d(mid)).toBeUndefined();
+    expect(getTransform3d(leaf)!.parent).toBe(getTransform3d(root));
   });
 });
 

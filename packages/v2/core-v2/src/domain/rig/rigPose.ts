@@ -210,9 +210,10 @@ export function computeSkinMatricesColumnMajor(
 
   const out = new Array<number>(jc * MAT4_FLOATS);
   for (let j = 0; j < jc; j++) {
-    const world = worldMatrixColumnMajorFromTransform(
-      getTransform3d(jointEntitiesOrderedByPalette[j])!,
-    );
+    const pose = getTransform3d(jointEntitiesOrderedByPalette[j]);
+    const world = pose
+      ? worldMatrixColumnMajorFromTransform(pose)
+      : ([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1] as const);
     const skin = multiplyMat4ColumnMajor(world, inverseBindMatrices, j * MAT4_FLOATS);
     for (let k = 0; k < MAT4_FLOATS; k++) out[j * MAT4_FLOATS + k] = skin[k];
   }

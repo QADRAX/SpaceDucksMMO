@@ -1,0 +1,7 @@
+{
+  "componentType": "script",
+  "componentData": {},
+  "files": {
+    "source": { "url": "transform_toggle.lua" }
+  }
+}

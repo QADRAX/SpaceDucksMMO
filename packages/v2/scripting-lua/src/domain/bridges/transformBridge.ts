@@ -13,6 +13,7 @@ import {
   getForward,
   getRight,
   getTransform3d,
+  getTransform3dComponent,
 } from '@duckengine/core-v2';
 import type { BridgeDeclaration, BridgePorts } from './types';
 
@@ -47,6 +48,31 @@ export const transformBridge: BridgeDeclaration = {
       /** True when the entity has an active (present + enabled) transform3d. */
       has(id: EntityId): boolean {
         return resolve(id) !== undefined;
+      },
+
+      /**
+       * Authoring flag on the raw transform3d component (works while disabled).
+       * Returns `undefined` when the component is missing.
+       */
+      isEnabled(id: EntityId): boolean | undefined {
+        const e = scene.entities.get(id);
+        if (!e) return undefined;
+        const t = getTransform3dComponent(e);
+        return t ? t.enabled : undefined;
+      },
+
+      /**
+       * Toggle spatial participation (`ComponentBase.enabled` on transform3d).
+       * Uses raw component access so disable → enable round-trips work from Lua.
+       */
+      setEnabled(id: EntityId, enabled: boolean): boolean {
+        const e = scene.entities.get(id);
+        if (!e) return false;
+        const t = getTransform3dComponent(e);
+        if (!t) return false;
+        t.enabled = !!enabled;
+        e.observers.fireComponentChanged(id, 'transform3d');
+        return true;
       },
 
       getPosition(id: EntityId) {

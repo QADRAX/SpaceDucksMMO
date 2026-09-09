@@ -18,6 +18,7 @@
 --   • time_v2.d.lua
 --   • transform_v2.d.lua
 --   • scripts_v2.d.lua
+--   • log_v2.d.lua         (self.Log: debug/info/warn/error → diagnostic)
 --
 -- All classes and APIs are suffixed with V2 to avoid conflicts with core v1.
 -- ═══════════════════════════════════════════════════════════════════════

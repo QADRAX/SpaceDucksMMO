@@ -77,6 +77,7 @@ function reconcileEntityScriptSlots(
               ref.scriptId,
               ref.properties,
               session.pendingScripts,
+              session.diagnostic,
             );
             }
           }

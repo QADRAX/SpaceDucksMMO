@@ -74,7 +74,23 @@ export function composeAPI(engine: EngineState): APIComposer {
             : undefined;
         /* eslint-disable-next-line @typescript-eslint/no-explicit-any --
            Runtime safety is guaranteed by the APIComposer.add() type checks. */
-        return wrapResult((useCase as any).execute(state, params, viewportContext));
+        const result = wrapResult((useCase as any).execute(state, params, viewportContext));
+        // Component use cases mutate the component bag directly; notify entity observers
+        // so scene subsystems (physics, etc.) see enable/field changes.
+        if (
+          domainName === 'Component' &&
+          (key === 'setEnabled' || key === 'setField') &&
+          rootState &&
+          typeof (rootState as { observers?: { fireComponentChanged?: Function } }).observers
+            ?.fireComponentChanged === 'function'
+        ) {
+          const entity = rootState as {
+            id: string;
+            observers: { fireComponentChanged: (entityId: string, type: string) => void };
+          };
+          entity.observers.fireComponentChanged(entity.id, id);
+        }
+        return result;
       };
     }
     return bound;

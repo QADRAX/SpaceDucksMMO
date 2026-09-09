@@ -14,6 +14,7 @@ export { scriptsBridge } from './scriptsBridge';
 export { componentBridge } from './componentBridge';
 export { createTimeBridgeDeclaration, createTimeState } from './timeBridge';
 export { gizmoBridge } from './gizmoBridge';
+export { logBridge } from './logBridge';
 export { createScriptBridgeContext } from './bridgeContext';
 export { resolveBridgePortsFromRegistry } from './resolveBridgePortsFromRegistry';
 export { resolveRuntimeBridgeTable } from './resolveRuntimeBridgeTable';

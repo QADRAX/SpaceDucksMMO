@@ -55,7 +55,8 @@ export function createPhysicsWorldState(options?: CreatePhysicsWorldStateOptions
 
   function addEntity(scene: SceneState, entity: EntityState): void {
     if (disposed) return;
-    ensureClean(getTransform3d(entity)!);
+    const pose = getTransform3d(entity);
+    if (pose) ensureClean(pose);
     const rb = getComponent<RigidBodyComponent>(entity, 'rigidBody');
     if (rb) {
       bodies.ensureRigidBody(R, world, entity, rb);

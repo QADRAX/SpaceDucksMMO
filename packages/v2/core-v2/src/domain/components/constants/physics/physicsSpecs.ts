@@ -11,8 +11,9 @@ import type {
   TrimeshColliderComponent,
 } from '../../types/physics/physics';
 
-/** Component types that affect physics (rigid body + all colliders). Used e.g. to re-sync on component change. */
+/** Component types that affect physics sync (body/colliders + spatial participation). */
 export const PHYSICS_RELATED_COMPONENT_TYPES: readonly ComponentType[] = [
+  'transform3d',
   'rigidBody',
   'boxCollider',
   'sphereCollider',

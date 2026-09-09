@@ -1,7 +1,13 @@
-import type { SceneState, ScriptSchema, EntityId, PropertyValues } from '@duckengine/core-v2';
+import type {
+  SceneState,
+  ScriptSchema,
+  EntityId,
+  PropertyValues,
+  DiagnosticPort,
+  SceneEventBus,
+} from '@duckengine/core-v2';
 import type { ScriptBridgeContext } from '../bridges';
 import type { ScriptSandbox } from '../ports';
-import type { SceneEventBus } from '@duckengine/core-v2';
 import { diffProperties, applyPropertyChanges } from '../properties';
 import type { ScriptSlotState, ScriptHook } from './types';
 import { isBuiltInOrTestScript } from '../scriptResolution';
@@ -58,6 +64,7 @@ export function initScriptSlot(
   scriptId: string,
   properties: PropertyValues,
   pendingScripts?: { push: (entry: { entityId: EntityId; scriptId: string; properties: PropertyValues }) => void },
+  diagnostic?: DiagnosticPort,
 ): void {
   const key = slotKey(entityId, scriptId);
   if (slots.has(key) || pending.has(key)) return;
@@ -83,6 +90,11 @@ export function initScriptSlot(
 
     sandbox.callHook(key, 'init', 0);
     if (slot.enabled) sandbox.callHook(key, 'onEnable', 0);
+    diagnostic?.log('debug', 'Script slot ready', {
+      subsystem: 'scripting-lua',
+      entityId,
+      scriptId,
+    });
   };
 
   const promise = init()
