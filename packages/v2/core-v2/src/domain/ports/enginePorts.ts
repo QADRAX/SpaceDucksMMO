@@ -1,6 +1,9 @@
 import type { PortBinding } from '../subsystems/types';
 import type { DiagnosticPort } from './external/diagnosticPort';
 import type { PerformanceProfilingPort } from './external/performanceProfilingPort';
+import type { UISurfaceHostPort } from './external/uiSurfaceHostPort';
+import type { UIViewRuntimePort } from './external/uiViewRuntimePort';
+import type { UISpaRuntimePort } from './external/uiSpaRuntimePort';
 import type { SceneEventBusProviderPort } from './internal/sceneEventBusProviderPort';
 
 /**
@@ -24,4 +27,19 @@ export interface EnginePorts {
    * Event bus provider for UI ↔ scripting. Internal default; consumer can override.
    */
   readonly sceneEventBusProvider?: PortBinding<SceneEventBusProviderPort>;
+
+  /**
+   * Host surface per viewport for UI roots (optional until ui-v2 is wired).
+   */
+  readonly uiSurfaceHost?: PortBinding<UISurfaceHostPort>;
+
+  /**
+   * Duck UI document runtime (optional until ui-v2 is wired).
+   */
+  readonly uiViewRuntime?: PortBinding<UIViewRuntimePort>;
+
+  /**
+   * Custom SPA UI runtime (optional until ui-v2 is wired).
+   */
+  readonly uiSpaRuntime?: PortBinding<UISpaRuntimePort>;
 }

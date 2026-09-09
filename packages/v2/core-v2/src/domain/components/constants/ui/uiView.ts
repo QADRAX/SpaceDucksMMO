@@ -26,11 +26,18 @@ export const UI_VIEW_SPEC: ComponentSpec<UiViewComponent> = {
           type: 'object',
           description: 'Serializable data bindings for the view.',
         },
+        {
+          key: 'uiTarget',
+          label: 'UI Target',
+          type: 'object',
+          description: 'Viewport filter (viewportIds / cameraIds / cameraTags). Empty = all.',
+        },
       ],
     },
   },
   defaults: {
     document: null,
     bindings: {},
+    uiTarget: {},
   },
 };

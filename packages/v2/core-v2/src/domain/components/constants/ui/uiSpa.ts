@@ -26,11 +26,18 @@ export const UI_SPA_SPEC: ComponentSpec<UiSpaComponent> = {
           type: 'object',
           description: 'Instance props (YAML + Lua UI.setProps).',
         },
+        {
+          key: 'uiTarget',
+          label: 'UI Target',
+          type: 'object',
+          description: 'Viewport filter (viewportIds / cameraIds / cameraTags). Empty = all.',
+        },
       ],
     },
   },
   defaults: {
     spa: null,
     props: {},
+    uiTarget: {},
   },
 };

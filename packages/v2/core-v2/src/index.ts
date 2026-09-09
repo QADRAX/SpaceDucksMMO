@@ -20,6 +20,7 @@ export * from './domain/scene';
 export * from './domain/useCases';
 export * from './domain/utils';
 export * from './domain/viewport';
+export * from './domain/ui';
 export * from './domain/ports';
 export * from './domain/scripting';
 export * from './domain/ids';

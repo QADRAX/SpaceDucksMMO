@@ -35,6 +35,24 @@ export type { ResourceCachePort } from './resourceCachePort';
 export { DiagnosticPortDef } from './diagnosticPortDef';
 export type { DiagnosticPort, DiagnosticLevel, DiagnosticContext } from './diagnosticPort';
 
+export { UISurfaceHostPortDef, UI_SURFACE_HOST_PORT_ID } from './uiSurfaceHostPortDef';
+export type { UISurfaceHostPort } from './uiSurfaceHostPort';
+
+export { UIViewRuntimePortDef, UI_VIEW_RUNTIME_PORT_ID } from './uiViewRuntimePortDef';
+export type {
+  UIViewRuntimePort,
+  UIViewMountParams,
+  UIViewUpdateParams,
+} from './uiViewRuntimePort';
+
+export { UISpaRuntimePortDef, UI_SPA_RUNTIME_PORT_ID } from './uiSpaRuntimePortDef';
+export type {
+  UISpaRuntimePort,
+  UISpaMountParams,
+  UISpaUpdateParams,
+  SpaMountContext,
+} from './uiSpaRuntimePort';
+
 export { ViewportRectProviderPortDef } from './viewportRectProviderPortDef';
 export type { ViewportRectProviderPort } from './viewportRectProviderPort';
 

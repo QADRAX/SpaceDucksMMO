@@ -1,5 +1,6 @@
 import type { ComponentBase } from '../core';
 import type { ResourceRef } from '../../../resources';
+import type { UiTarget } from '../../../ui/uiTarget';
 
 /**
  * A node in a Duck UI document (view hierarchy under {@link UiViewComponent}).
@@ -29,4 +30,6 @@ export interface UiViewComponent extends ComponentBase<'uiView', UiViewComponent
   document: UiNode | ResourceRef<'uiDocument'> | null;
   /** Serializable bindings (scene + Lua writable). */
   bindings: Record<string, unknown>;
+  /** Viewport filter (§3.6). Empty = all enabled viewports of the scene. */
+  uiTarget: UiTarget;
 }

@@ -27,6 +27,7 @@ import { createBrowserInputPort } from '@duckengine/input-browser-v2';
 import type { ResourceLoader } from '@duckengine/resource-coordinator-v2';
 import { createResourceCoordinatorSubsystem } from '@duckengine/resource-coordinator-v2';
 import { createAnimationSubsystem } from '@duckengine/animation-runtime-v2';
+import { createUISubsystem } from '@duckengine/ui-v2';
 import { createPhysicsSubsystem } from '@duckengine/physics-rapier-v2';
 import {
   createRenderingSubsystem,
@@ -117,6 +118,7 @@ export async function createHarnessEngine(
     createAnimationSubsystem(),
     await createPhysicsSubsystem(),
     await createScriptingSubsystem(),
+    createUISubsystem(),
   ];
 
   api.setup({
