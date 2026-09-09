@@ -24,7 +24,16 @@ function resolveOverrideValue(
   const field = meta.inspector?.fields?.find((f) => (f as { key: string }).key === fieldKey) as
     | { type?: string; key: string }
     | undefined;
-  if (!field || !isResourceFieldType(field.type)) return value;
+  if (!field) return value;
+
+  // uiView.document accepts inline tree (object) or uiDocument resource shorthand (string).
+  if (fieldKey === 'document' && field.type === 'object') {
+    const resolved = resolveShorthandToResourceRef(componentType as any, value);
+    if (resolved) return resolved.value;
+    return value;
+  }
+
+  if (!isResourceFieldType(field.type)) return value;
 
   const resolved = resolveShorthandToResourceRef(componentType as any, value);
   if (resolved) return resolved.value;

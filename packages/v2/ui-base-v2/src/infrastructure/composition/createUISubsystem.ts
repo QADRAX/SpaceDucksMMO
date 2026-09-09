@@ -15,7 +15,7 @@ import { unmountAllUiRoots } from '../../application/unmountAllUiRoots';
  */
 export function createUISubsystem(options?: CreateUISubsystemStateOptions) {
   return createSceneSubsystem<UISubsystemState>({
-    id: 'ui-v2',
+    id: 'ui',
     createState: (ctx) => createUISubsystemState(ctx, options),
     events: {
       'scene-setup': reconcileUiRoots,

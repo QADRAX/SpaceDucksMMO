@@ -27,7 +27,9 @@ import { createBrowserInputPort } from '@duckengine/input-browser-v2';
 import type { ResourceLoader } from '@duckengine/resource-coordinator-v2';
 import { createResourceCoordinatorSubsystem } from '@duckengine/resource-coordinator-v2';
 import { createAnimationSubsystem } from '@duckengine/animation-runtime-v2';
-import { createUISubsystem } from '@duckengine/ui-v2';
+import { createUISubsystem } from '@duckengine/ui-base-v2';
+import { createDefaultWebUIPorts } from '@duckengine/ui-dom-v2';
+import type { DomUISurfaceHost } from '@duckengine/ui-dom-v2';
 import { createPhysicsSubsystem } from '@duckengine/physics-rapier-v2';
 import {
   createRenderingSubsystem,
@@ -63,6 +65,8 @@ export interface HarnessEngineResult {
   logStack: LogStack;
   viewportRectProvider: ViewportRectProviderPort;
   performanceReport: PerformanceReportStorage;
+  /** DOM UI overlay host — call `attachOverlay` after the viewport canvas is ready. */
+  uiSurfaceHost: DomUISurfaceHost;
   disposeInput?: () => void;
 }
 
@@ -102,11 +106,13 @@ export async function createHarnessEngine(
   const api = createDuckEngineAPI(engine);
 
   const performanceReport = createPerformanceReportStorage();
+  const webUI = createDefaultWebUIPorts();
 
   const defaultPorts: PortBinding<unknown>[] = [
     DiagnosticPortDef.bind(diagnostic),
     InputPortDef.bind(input),
     PerformanceProfilingPortDef.bind(createPerformanceProfilingPort(performanceReport)),
+    ...webUI.ports,
   ];
 
   const engineSubsystems: EngineSubsystem[] = [
@@ -132,6 +138,7 @@ export async function createHarnessEngine(
     logStack,
     viewportRectProvider,
     performanceReport,
+    uiSurfaceHost: webUI.surfaceHost,
     disposeInput,
   };
 }

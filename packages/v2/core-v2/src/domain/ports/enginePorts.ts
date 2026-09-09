@@ -29,17 +29,17 @@ export interface EnginePorts {
   readonly sceneEventBusProvider?: PortBinding<SceneEventBusProviderPort>;
 
   /**
-   * Host surface per viewport for UI roots (optional until ui-v2 is wired).
+   * Host surface per viewport for UI roots (optional until a UI host is wired).
    */
   readonly uiSurfaceHost?: PortBinding<UISurfaceHostPort>;
 
   /**
-   * Duck UI document runtime (optional until ui-v2 is wired).
+   * Duck UI document runtime (optional until a UI host is wired).
    */
   readonly uiViewRuntime?: PortBinding<UIViewRuntimePort>;
 
   /**
-   * Custom SPA UI runtime (optional until ui-v2 is wired).
+   * Custom SPA UI runtime (optional until a UI host is wired).
    */
   readonly uiSpaRuntime?: PortBinding<UISpaRuntimePort>;
 }

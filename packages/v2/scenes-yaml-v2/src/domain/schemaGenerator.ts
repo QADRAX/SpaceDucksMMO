@@ -16,6 +16,7 @@ import {
   PHYSICS_SPECS,
   SCRIPTING_SPECS,
   TRANSFORM_SPECS,
+  UI_SPECS,
   getComponentMetadata,
 } from '@duckengine/core-v2';
 import type { CreatableComponentType } from '@duckengine/core-v2';
@@ -23,6 +24,7 @@ type JSONSchema = Record<string, unknown>;
 
 const ALL_SPECS: Record<string, unknown> = {
   ...TRANSFORM_SPECS,
+  ...UI_SPECS,
   ...IDENTITY_SPECS,
   ...GEOMETRY_SPECS,
   ...MATERIAL_SPECS,
@@ -47,6 +49,15 @@ const VEC3_SCHEMA: JSONSchema = {
     z: { type: 'number' },
   },
   required: ['x', 'y', 'z'],
+};
+
+const VEC2_SCHEMA: JSONSchema = {
+  type: 'object',
+  properties: {
+    x: { type: 'number' },
+    y: { type: 'number' },
+  },
+  required: ['x', 'y'],
 };
 
 function fieldToJsonSchema(field: { type?: string; key: string; label?: string; min?: number; max?: number; step?: number; nullable?: boolean; options?: { value: unknown }[] }): JSONSchema {
@@ -125,6 +136,19 @@ export function buildJsonSchemaFromSpecs(): JSONSchema {
           position: VEC3_SCHEMA,
           rotation: VEC3_SCHEMA,
           scale: VEC3_SCHEMA,
+        },
+      },
+      transform2d: {
+        type: 'object',
+        properties: {
+          position: VEC2_SCHEMA,
+          size: VEC2_SCHEMA,
+          rotation: { type: 'number' },
+          scale: VEC2_SCHEMA,
+          anchor: VEC2_SCHEMA,
+          pivot: VEC2_SCHEMA,
+          zIndex: { type: 'number' },
+          enabled: { type: 'boolean' },
         },
       },
       components: {

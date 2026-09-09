@@ -24,6 +24,7 @@
     "@duckengine/rendering-three-v2": "^0.1.0",
     "@duckengine/resource-coordinator-v2": "^0.1.0",
     "@duckengine/scripting-lua": "^0.1.0",
-    "@duckengine/ui-v2": "^0.1.0"
+    "@duckengine/ui-base-v2": "^0.1.0",
+    "@duckengine/ui-dom-v2": "^0.1.0"
   }
 }

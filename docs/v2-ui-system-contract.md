@@ -16,7 +16,7 @@ Screen-space UI for Duck Engine: ECS hosts **UI roots**; visual trees live **und
 - **G2** — First-party **Duck UI** (`uiView`) configurable from scene YAML/prefabs.
 - **G3** — **Custom SPA** as a first-class **resource** + component (`uiSpa`), with instance `props` in the scene contract and Lua.
 - **G4** — One Lua/JS **UI** surface that operates both Duck UI and custom SPA.
-- **G5** — Engine ships a **default UI kit** (`ui-v2`); composition roots wire it by default; ports remain replaceable.
+- **G5** — Engine ships a **default UI kit** (`ui-base-v2` + `ui-dom-v2`); composition roots wire it by default; ports remain replaceable.
 - **G6** — Host-agnostic ports: web today; non-HTML hosts later without changing ECS contracts.
 
 ### Non-goals
@@ -190,7 +190,7 @@ Exact file slots / persistence schemas are **implementation**; the contract only
 
 ### 4.3 Default kit vs resources
 
-- Duck UI **node types** (`column`, `text`, `button`, …) are provided by **`ui-v2` default kit**, not as `ResourceKind`s.
+- Duck UI **node types** (`column`, `text`, `button`, …) are provided by the **`ui-dom-v2` default kit**, not as `ResourceKind`s.
 - Custom game UIs that need a full app surface use **`spa` resources**.
 - Games may still ship reusable `uiDocument` resources for shared Duck layouts.
 
@@ -198,15 +198,16 @@ Exact file slots / persistence schemas are **implementation**; the contract only
 
 ## 5. Port / adapter model (host-agnostic)
 
-Painting never lives in core domain rules. Core (or `ui-v2` application layer) **projects** UI roots into port calls.
+Painting never lives in core domain rules. Core / `ui-base-v2` **projects** UI roots into port calls; hosts paint via adapters.
 
 ### 5.1 Separation
 
 ```
 core-v2          → ECS: transform2d, uiView, uiSpa, ids, events, projection inputs
-ui-v2            → Duck document runtime, default kit, reconcile, default port wiring helpers
+ui-base-v2       → reconcile + createUISubsystem (host-agnostic)
+ui-dom-v2        → DOM surface host + Duck kit runtime + createDefaultWebUIPorts
 Host adapter     → Web DOM | Canvas | Native | Test double
-Composition root → engine-web-v2 / harness: bind default adapter + kit (overridable)
+Composition root → engine-web-v2 / harness: bind base + DOM ports (overridable)
 ```
 
 ### 5.2 Surface ports (conceptual contracts)
@@ -225,7 +226,7 @@ Names are indicative; implementations must preserve **roles**, not necessarily f
 - Mount / update / unmount a **Duck UI document** for an entity root into a surface region (rect from `transform2d`).
 - Applies layout for the view tree; paints default kit controls.
 - Receives **bindings/prop patches** and reports **UI events** (node id + event name + payload) back into the engine event path.
-- Default implementation: shipped in `ui-v2` for web; replaceable for other hosts (immediate-mode canvas kit, etc.).
+- Default implementation: shipped in `ui-dom-v2` for web; replaceable for other hosts (immediate-mode canvas kit, etc.).
 
 #### C. `UISpaRuntimePort` (custom SPA backend)
 
@@ -262,8 +263,8 @@ SpaMountContext {
 
 | Level | Behavior |
 |-------|----------|
-| Default (`engine-web-v2`) | `ui-v2` kit + web `UIViewRuntimePort` + web `UISpaRuntimePort` + overlay host |
-| Extend | Register/override Duck **node types** inside the kit (product API of `ui-v2`) |
+| Default (`engine-web-v2`) | `ui-dom-v2` kit + web `UIViewRuntimePort` + overlay host |
+| Extend | Register/override Duck **node types** inside the kit (product API of `ui-dom-v2`) |
 | Replace | Bind alternate port implementations at setup (canvas UI, native, mocks) |
 | Headless / tests | No-op or recording ports |
 
@@ -297,7 +298,7 @@ UiNode {
 
 ### 6.3 Default kit (`duck.*` / built-in `type`s)
 
-- Shipped by `ui-v2`: at least layout primitives + text, panel, image, button, progress (exact catalog can grow).
+- Shipped by `ui-dom-v2`: at least layout primitives + text, panel, image, button, progress (exact catalog can grow).
 - Theme/tokens: configurable at kit/runtime level (host may map tokens to CSS variables **or** to non-CSS paint params).
 - Custom node types: kit extension API — still Duck UI, not new ECS components.
 
@@ -406,8 +407,9 @@ local paints = self.UI.targetsViewport('vp-main')
 | Package | Responsibility |
 |---------|----------------|
 | `core-v2` | Types/components `transform2d`, `uiView`, `uiSpa`; resource kinds; projection inputs; host-agnostic port **interfaces**; no vendor UI |
-| `ui-v2` (new) | Duck document runtime, default kit, reconcile helpers, **default web adapters** (optional split later) |
-| `engine-web-v2` / harness | Wire defaults; allow port/kit overrides |
+| `ui-base-v2` | Host-agnostic reconcile + `createUISubsystem` + test doubles |
+| `ui-dom-v2` | DOM surface host, Duck kit runtime, `createDefaultWebUIPorts` |
+| `engine-web-v2` / harness | Wire `ui-base-v2` + `ui-dom-v2`; allow port/kit overrides |
 | `scripting-lua` | `Transform2D` + `UI` bridges |
 | Game / tools | Author `spa` / `uiDocument` resources; optional kit node extensions |
 
@@ -418,7 +420,7 @@ local paints = self.UI.targetsViewport('vp-main')
 | Question | Answer in this contract |
 |----------|-------------------------|
 | Where is layout hierarchy? | Under `uiView` document (or inside SPA), **not** per-widget entities |
-| How does engine ship UI? | Default kit + web adapters in `ui-v2`, wired by composition roots |
+| How does engine ship UI? | Default kit in `ui-dom-v2` + reconcile in `ui-base-v2`, wired by composition roots |
 | How are SPAs configured? | `ResourceKind: 'spa'` + `uiSpa.props` in scene + Lua `UI.setProps` |
 | Which screen paints the UI? | `uiTarget` filter (§3.6): empty = all scene viewports; else `viewportIds` / `cameraIds` / `cameraTags` |
 | What does infra implement? | `UISurfaceHostPort` + `UIViewRuntimePort` + `UISpaRuntimePort` (roles) |

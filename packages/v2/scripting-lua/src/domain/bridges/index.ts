@@ -7,6 +7,8 @@ export {
 export type { BridgeAPI, BridgeDeclaration, BridgeFactory, BridgeSession, ScriptBridgeContext } from './types';
 export { toEntityId } from './types';
 export { transformBridge } from './transformBridge';
+export { transform2dBridge } from './transform2dBridge';
+export { uiBridge } from './uiBridge';
 export { createSceneBridgeDeclaration } from './sceneBridge';
 export { physicsBridge } from './physicsBridge';
 export { inputBridge } from './inputBridge';

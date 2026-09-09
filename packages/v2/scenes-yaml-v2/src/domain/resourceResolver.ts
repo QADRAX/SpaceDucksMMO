@@ -19,6 +19,8 @@ export function inferResourceKindFromKey(key: string): ResourceKind | null {
   if (key.startsWith('skyboxes/')) return 'skybox';
   if (key.startsWith('scripts/') || key.startsWith('builtin://') || key.startsWith('test://'))
     return 'script';
+  if (key.startsWith('spas/') || key.startsWith('spa/')) return 'spa';
+  if (key.startsWith('uiDocuments/') || key.startsWith('uiDocument/')) return 'uiDocument';
   return null;
 }
 
@@ -41,6 +43,8 @@ export function inferFieldKeyForResourceKey(
     if (fieldType === 'resource' && kind === componentType) return fieldKey;
     if (fieldType === 'reference' && fieldKey === 'skybox' && kind === 'skybox') return fieldKey;
     if (fieldType === 'reference' && fieldKey === 'mesh' && kind === 'mesh') return fieldKey;
+    if (fieldType === 'resource' && fieldKey === 'spa' && kind === 'spa') return fieldKey;
+    if (fieldType === 'object' && fieldKey === 'document' && kind === 'uiDocument') return fieldKey;
     if (fieldType === 'texture' && kind === 'texture') return fieldKey;
   }
   return null;

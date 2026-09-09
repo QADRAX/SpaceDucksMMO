@@ -14,8 +14,9 @@ import {
   getTransform3d,
   FULL_RECT,
 } from '@duckengine/core-v2';
-import type { DuckEngineAPI, ViewportRectProviderPort } from '@duckengine/core-v2';
+import type { DuckEngineAPI, ViewportId, ViewportRectProviderPort } from '@duckengine/core-v2';
 import type { LogStack } from '@duckengine/diagnostic-v2';
+import type { DomUISurfaceHost } from '@duckengine/ui-dom-v2';
 import { loadSceneFromYaml, parseAndValidateSceneYaml } from '@duckengine/scenes-yaml-v2';
 import type { PerformanceReportStorage } from './performanceReportStorage';
 
@@ -36,6 +37,7 @@ export interface HarnessAppState {
   frozen: boolean;
   frameId: number | null;
   performanceReport?: PerformanceReportStorage;
+  uiSurfaceHost?: DomUISurfaceHost;
 }
 
 function createDefaultCameraEntity() {
@@ -57,6 +59,8 @@ function createDefaultCameraEntity() {
 /** Options for initHarnessScene. */
 export interface InitHarnessSceneOptions {
   performanceReport?: PerformanceReportStorage;
+  /** When provided, attaches a DOM UI overlay over the canvas parent for the viewport. */
+  uiSurfaceHost?: DomUISurfaceHost;
 }
 
 /**
@@ -96,6 +100,12 @@ export function initHarnessScene(
     viewportRectProvider.setRect(DEFAULT_VIEWPORT_ID, FULL_RECT);
   }
 
+  const uiSurfaceHost = options?.uiSurfaceHost;
+  const overlayParent = canvas.parentElement;
+  if (uiSurfaceHost && overlayParent && overlayParent !== canvas) {
+    uiSurfaceHost.attachOverlay(DEFAULT_VIEWPORT_ID as ViewportId, overlayParent);
+  }
+
   return {
     api,
     viewportRectProvider,
@@ -108,6 +118,7 @@ export function initHarnessScene(
     frozen: false,
     frameId: null,
     performanceReport: options?.performanceReport,
+    uiSurfaceHost,
   };
 }
 

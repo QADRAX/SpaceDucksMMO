@@ -25,7 +25,8 @@
     { "path": "../resource-coordinator-v2" },
     { "path": "../scenes-yaml-v2" },
     { "path": "../scripting-lua" },
-    { "path": "../ui-v2" }
+    { "path": "../ui-base-v2" },
+    { "path": "../ui-dom-v2" }
   ],
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]

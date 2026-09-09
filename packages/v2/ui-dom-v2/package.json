@@ -1,5 +1,5 @@
 {
-  "name": "@duckengine/ui-v2",
+  "name": "@duckengine/ui-dom-v2",
   "version": "0.1.0",
   "private": false,
   "main": "dist/index.js",
@@ -12,17 +12,13 @@
     }
   },
   "scripts": {
-    "build": "tsc -b tsconfig.build.json --force",
-    "typecheck": "tsc --noEmit",
-    "test": "npm run typecheck && jest --config jest.config.cjs"
+    "build": "tsc -b tsconfig.json --force",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@duckengine/core-v2": "^0.1.0"
   },
   "devDependencies": {
-    "@types/jest": "^30.0.0",
-    "jest": "^30.2.0",
-    "ts-jest": "^29.4.5",
     "typescript": "^5.5.0"
   }
 }

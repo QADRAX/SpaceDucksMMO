@@ -10,11 +10,29 @@ export interface Vec3Like {
   z: number;
 }
 
-/** Transform definition in YAML. */
+/** Vec2-like object for screen-space transform2d. */
+export interface Vec2Like {
+  x: number;
+  y: number;
+}
+
+/** Transform definition in YAML (world pose → transform3d). */
 export interface TransformDefinition {
   position?: Vec3Like;
   rotation?: Vec3Like;
   scale?: Vec3Like;
+}
+
+/** Screen-space transform2d sugar (root box → transform2d). */
+export interface Transform2dDefinition {
+  position?: Vec2Like;
+  size?: Vec2Like;
+  rotation?: number;
+  scale?: Vec2Like;
+  anchor?: Vec2Like;
+  pivot?: Vec2Like;
+  zIndex?: number;
+  enabled?: boolean;
 }
 
 /**
@@ -33,6 +51,8 @@ export interface EntityDefinition {
   id: string;
   displayName?: string;
   transform?: TransformDefinition;
+  /** Optional screen UI root box sugar (mutually exclusive with components.transform2d). */
+  transform2d?: Transform2dDefinition;
   components?: ComponentsDefinition;
   children?: EntityDefinition[];
 }

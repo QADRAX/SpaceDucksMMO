@@ -32,8 +32,10 @@ export function inferResourceKindFromInspectorField(
     if (!fieldType) return null;
     if (fieldType === 'texture') return 'texture';
     if (fieldType === 'resource' && fieldKey === 'material') return componentType as ResourceKind;
+    if (fieldType === 'resource' && fieldKey === 'spa') return 'spa';
     if (fieldType === 'reference' && fieldKey === 'skybox') return 'skybox';
     if (fieldType === 'reference' && fieldKey === 'mesh') return 'mesh';
+    if (fieldType === 'object' && fieldKey === 'document') return 'uiDocument';
     return null;
 }
 

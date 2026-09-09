@@ -10,6 +10,7 @@ import {
   createEntityId,
   getComponentMetadata,
   hasTransform3d,
+  hasTransform2d,
 } from '@duckengine/core-v2';
 import type { EntityState } from '@duckengine/core-v2';
 import type { CreatableComponentType } from '@duckengine/core-v2';
@@ -17,6 +18,7 @@ import { ok, type Result } from '@duckengine/core-v2';
 import type { SceneDefinition, EntityDefinition } from '../domain/sceneDefinition';
 import { buildComponentOverrides } from '../domain/buildComponentOverrides';
 import { applyTransformToEntity } from '../domain/applyTransform';
+import { applyTransform2dToEntity } from '../domain/applyTransform2d';
 
 /**
  * Builds EntityState trees from a validated scene definition.
@@ -48,6 +50,20 @@ function ensureTransform3dForRequires(
   }
 }
 
+/**
+ * Auto-adds identity transform2d when a component requires it and none exists yet.
+ * YAML authors can still set the box via top-level `transform2d:` sugar.
+ */
+function ensureTransform2dForRequires(
+  entity: EntityState,
+  componentType: CreatableComponentType,
+): void {
+  const meta = getComponentMetadata(componentType);
+  if (meta.requires?.includes('transform2d') && !hasTransform2d(entity)) {
+    addComponent(entity, createComponent('transform2d'));
+  }
+}
+
 function buildEntityFromDefinition(def: EntityDefinition): Result<EntityState> {
   const id = createEntityId(def.id);
   const entity = createEntity(id, def.displayName ?? def.id);
@@ -56,10 +72,15 @@ function buildEntityFromDefinition(def: EntityDefinition): Result<EntityState> {
     applyTransformToEntity(entity, def.transform);
   }
 
+  if (def.transform2d) {
+    applyTransform2dToEntity(entity, def.transform2d);
+  }
+
   if (def.components) {
     for (const [compType, value] of Object.entries(def.components)) {
       const type = compType as CreatableComponentType;
       ensureTransform3dForRequires(entity, type);
+      ensureTransform2dForRequires(entity, type);
       const overrides = buildComponentOverrides(type, value);
       const comp = createComponent(type, overrides as any);
       const r = addComponent(entity, comp);

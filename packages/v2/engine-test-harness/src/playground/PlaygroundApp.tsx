@@ -30,7 +30,7 @@ export function PlaygroundApp() {
   const [loadSuccess, setLoadSuccess] = useState<string | null>(null);
   const isTestModeUrl = typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('mode') === 'test';
   const [showLogs, setShowLogs] = useState(isTestModeUrl);
-  const [sceneList] = useState<string[]>(['astra_lumen_ii_a_rigged_companion_android', 'gold-sphere', 'orbit-sphere', 'physics-balls', 'balance-scale', 'transform-toggle']);
+  const [sceneList] = useState<string[]>(['hud-ui', 'astra_lumen_ii_a_rigged_companion_android', 'gold-sphere', 'orbit-sphere', 'physics-balls', 'balance-scale', 'transform-toggle']);
 
   function parseBackendFromUrl(): RenderingBackend {
     if (typeof window === 'undefined') return 'auto';
@@ -51,7 +51,7 @@ export function PlaygroundApp() {
         const baseUrl = typeof window !== 'undefined' ? `${window.location.origin}/` : '/';
         const resourceLoader = createWorkerBackedResourceLoader({ baseUrl });
         const preferBackend = parseBackendFromUrl();
-        const { api, viewportRectProvider, logStack, performanceReport, disposeInput: di } =
+        const { api, viewportRectProvider, logStack, performanceReport, uiSurfaceHost, disposeInput: di } =
           await createHarnessEngine({
             resourceLoader,
             mode: 'playground',
@@ -64,6 +64,7 @@ export function PlaygroundApp() {
 
         const appState = initHarnessScene(api, viewportRectProvider, canvas, logStack, {
           performanceReport,
+          uiSurfaceHost,
         });
       stateRef.current = appState;
       setState(appState);

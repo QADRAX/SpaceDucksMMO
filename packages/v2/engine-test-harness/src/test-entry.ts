@@ -35,7 +35,7 @@ if (!canvas) throw new Error('Canvas not found');
     const baseUrl = `${window.location.origin}/`;
     const resourceLoader = createWorkerBackedResourceLoader({ baseUrl });
     const preferBackend = parseBackendFromUrl();
-    const { api, viewportRectProvider, logStack, performanceReport, disposeInput } =
+    const { api, viewportRectProvider, logStack, performanceReport, uiSurfaceHost, disposeInput } =
       await createHarnessEngine({
         resourceLoader,
         mode: 'test',
@@ -45,6 +45,7 @@ if (!canvas) throw new Error('Canvas not found');
 
     const appState = initHarnessScene(api, viewportRectProvider, canvas, logStack, {
       performanceReport,
+      uiSurfaceHost,
     });
     setHarnessState(appState);
     installHarnessTestAPI(createHarnessTestAPI());

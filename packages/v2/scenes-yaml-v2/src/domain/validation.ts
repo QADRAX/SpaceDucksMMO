@@ -21,6 +21,7 @@ import {
   SCRIPTING_SPECS,
   RIGGING_SPECS,
   TRANSFORM_SPECS,
+  UI_SPECS,
 } from '@duckengine/core-v2';
 import { ok, err, type Result } from '@duckengine/core-v2';
 import type {
@@ -28,10 +29,12 @@ import type {
   EntityDefinition,
   ComponentsDefinition,
   Vec3Like,
+  Vec2Like,
 } from './sceneDefinition';
 
 const ALL_SPECS: Record<string, unknown> = {
   ...TRANSFORM_SPECS,
+  ...UI_SPECS,
   ...IDENTITY_SPECS,
   ...GEOMETRY_SPECS,
   ...MATERIAL_SPECS,
@@ -73,6 +76,22 @@ function validateVec3(value: unknown, path: string): Result<Vec3Like> {
     return fail(path, 'Vec3 x, y, z must be numbers');
   }
   return ok({ x, y, z });
+}
+
+function validateVec2(value: unknown, path: string): Result<Vec2Like> {
+  if (value === null || value === undefined) {
+    return fail(path, 'Vec2 is required');
+  }
+  if (typeof value !== 'object' || Array.isArray(value)) {
+    return fail(path, 'Vec2 must be an object with x, y');
+  }
+  const v = value as Record<string, unknown>;
+  const x = v.x;
+  const y = v.y;
+  if (typeof x !== 'number' || typeof y !== 'number') {
+    return fail(path, 'Vec2 x, y must be numbers');
+  }
+  return ok({ x, y });
 }
 
 function validateComponentValue(
@@ -119,6 +138,17 @@ function validateComponentValue(
       return fail(`${path}.${key}`, `Unknown field: ${key}`);
     }
     const field = fields.find((f) => (f as { key: string }).key === key);
+    // uiView.document: inline UiNode tree (object) or uiDocument resource shorthand (string).
+    if (
+      componentType === 'uiView' &&
+      key === 'document' &&
+      typeof val === 'string'
+    ) {
+      if (val.trim().length === 0) {
+        return fail(`${path}.${key}`, 'Resource key cannot be empty');
+      }
+      continue;
+    }
     if (field && val !== undefined) {
       const r = validateFieldValue(field as any, val);
       if (!r.ok) {
@@ -168,6 +198,13 @@ function validateEntity(entity: EntityDefinition, path: string): Result<void> {
     );
   }
 
+  if (entity.transform2d && entity.components?.transform2d !== undefined) {
+    return fail(
+      path,
+      'Cannot use both top-level transform2d: sugar and components.transform2d',
+    );
+  }
+
   if (entity.transform) {
     const t = entity.transform;
     if (t.position) {
@@ -181,6 +218,39 @@ function validateEntity(entity: EntityDefinition, path: string): Result<void> {
     if (t.scale) {
       const r = validateVec3(t.scale, `${path}.transform.scale`);
       if (!r.ok) return r;
+    }
+  }
+
+  if (entity.transform2d) {
+    const t = entity.transform2d;
+    if (t.position) {
+      const r = validateVec2(t.position, `${path}.transform2d.position`);
+      if (!r.ok) return r;
+    }
+    if (t.size) {
+      const r = validateVec2(t.size, `${path}.transform2d.size`);
+      if (!r.ok) return r;
+    }
+    if (t.scale) {
+      const r = validateVec2(t.scale, `${path}.transform2d.scale`);
+      if (!r.ok) return r;
+    }
+    if (t.anchor) {
+      const r = validateVec2(t.anchor, `${path}.transform2d.anchor`);
+      if (!r.ok) return r;
+    }
+    if (t.pivot) {
+      const r = validateVec2(t.pivot, `${path}.transform2d.pivot`);
+      if (!r.ok) return r;
+    }
+    if (t.rotation !== undefined && typeof t.rotation !== 'number') {
+      return fail(`${path}.transform2d.rotation`, 'rotation must be a number');
+    }
+    if (t.zIndex !== undefined && typeof t.zIndex !== 'number') {
+      return fail(`${path}.transform2d.zIndex`, 'zIndex must be a number');
+    }
+    if (t.enabled !== undefined && typeof t.enabled !== 'boolean') {
+      return fail(`${path}.transform2d.enabled`, 'enabled must be a boolean');
     }
   }
 

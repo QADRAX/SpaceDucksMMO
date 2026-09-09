@@ -20,7 +20,8 @@ import type { ResourceLoader } from '@duckengine/resource-coordinator-v2';
 import { createResourceCoordinatorSubsystem } from '@duckengine/resource-coordinator-v2';
 import { createAnimationSubsystem } from '@duckengine/animation-runtime-v2';
 import { createPhysicsSubsystem } from '@duckengine/physics-rapier-v2';
-import { createUISubsystem } from '@duckengine/ui-v2';
+import { createUISubsystem } from '@duckengine/ui-base-v2';
+import { createDefaultWebUIPorts } from '@duckengine/ui-dom-v2';
 import { createRenderingSubsystem } from '@duckengine/rendering-three-v2';
 import { createScriptingSubsystem } from '@duckengine/scripting-lua';
 import type { EngineSubsystem, SceneSubsystemFactory } from '@duckengine/core-v2';
@@ -73,10 +74,12 @@ export async function createWebEngineClient(
 
   const engine = createEngine();
   const api = createDuckEngineAPI(engine);
+  const webUI = createDefaultWebUIPorts();
 
   const defaultPorts: PortBinding<unknown>[] = [
     DiagnosticPortDef.bind(diagnostic),
     InputPortDef.bind(input),
+    ...webUI.ports,
   ];
 
   const engineSubsystems: EngineSubsystem[] = [
@@ -100,5 +103,9 @@ export async function createWebEngineClient(
   const { setup, registerSubsystem, ...client } = api;
   void setup;
   void registerSubsystem;
-  return { ...client, logStack } as DuckEngineWebClient;
+  return {
+    ...client,
+    logStack,
+    uiSurfaceHost: webUI.surfaceHost,
+  } as DuckEngineWebClient;
 }

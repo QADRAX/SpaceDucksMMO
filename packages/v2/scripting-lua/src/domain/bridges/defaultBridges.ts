@@ -3,6 +3,8 @@ import type { BridgeDeclaration, TimeState } from './types';
 import { createSceneBridgeDeclaration } from './sceneBridge';
 import { createTimeBridgeDeclaration, createTimeState } from './timeBridge';
 import { transformBridge } from './transformBridge';
+import { transform2dBridge } from './transform2dBridge';
+import { uiBridge } from './uiBridge';
 import { scriptsBridge } from './scriptsBridge';
 import { componentBridge } from './componentBridge';
 import { physicsBridge } from './physicsBridge';
@@ -24,6 +26,8 @@ export function createDefaultScriptingBridges(eventBus: SceneEventBus): Scriptin
 
   const bridges = [
     transformBridge,
+    transform2dBridge,
+    uiBridge,
     createSceneBridgeDeclaration(eventBus),
     scriptsBridge,
     componentBridge,
