@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
 import { setupIntegrationTest, createSceneId, createEntityId, createViewportId, createCanvasId } from '../setup';
 import type { TestContext } from '../setup';
-import { createEntity } from '../../../domain/entities/entity';
+import { createSpatialEntity } from '../../../domain/entities/entity';
 import { createComponent } from '../../../domain/components/factory';
 
 describe('Integration: Engine > removeScene', () => {
@@ -32,7 +32,7 @@ describe('Integration: Engine > removeScene', () => {
         ctx.api.addScene({ sceneId: createSceneId('main') });
 
         // Add a camera for the viewport
-        ctx.api.scene(createSceneId('main')).addEntity({ entity: createEntity(createEntityId('cam')) });
+        ctx.api.scene(createSceneId('main')).addEntity({ entity: createSpatialEntity(createEntityId('cam')) });
         ctx.api.scene(createSceneId('main')).entity(createEntityId('cam')).addComponent({
             component: createComponent('cameraPerspective') as any
         });

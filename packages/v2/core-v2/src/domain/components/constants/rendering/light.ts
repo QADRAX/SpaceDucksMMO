@@ -36,6 +36,7 @@ export const DIRECTIONAL_LIGHT_SPEC: ComponentSpec<DirectionalLightComponent> = 
     icon: 'SunMedium',
     unique: true,
     conflicts: ['ambientLight', 'pointLight', 'spotLight'],
+    requires: ['transform3d'],
     inspector: {
       fields: [
         { key: 'color', label: 'Color', type: 'color' },
@@ -66,6 +67,7 @@ export const POINT_LIGHT_SPEC: ComponentSpec<PointLightComponent> = {
     icon: 'Lightbulb',
     unique: true,
     conflicts: ['ambientLight', 'directionalLight', 'spotLight'],
+    requires: ['transform3d'],
     inspector: {
       fields: [
         { key: 'color', label: 'Color', type: 'color' },
@@ -92,6 +94,7 @@ export const SPOT_LIGHT_SPEC: ComponentSpec<SpotLightComponent> = {
     icon: 'Flashlight',
     unique: true,
     conflicts: ['ambientLight', 'directionalLight', 'pointLight'],
+    requires: ['transform3d'],
     inspector: {
       fields: [
         { key: 'color', label: 'Color', type: 'color' },

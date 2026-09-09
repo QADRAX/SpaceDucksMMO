@@ -41,7 +41,8 @@ export type ScriptsAPI = Record<string, ScriptAPI | undefined>;
 export interface EntityAPI {
   readonly id: EntityId;
   name: string;
-  readonly transform: TransformAPI;
+  /** Null when the entity has no transform3d component. */
+  readonly transform: TransformAPI | null;
   readonly components: ComponentsAPI;
   readonly scripts: ScriptsAPI;
   isValid(): boolean;

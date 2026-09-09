@@ -46,11 +46,15 @@ local Billboard = {
 }
 
 function Billboard:lateUpdate(_dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local cam = self.references.cameraEntity
     if not cam or not self.Scene.exists(cam.id) then return end
 
-    local myPosRaw  = self.entity.components.transform.getPosition()
+    local myPosRaw  = transform.getPosition()
     local camPosRaw = cam.components.transform.getPosition()
+    if not myPosRaw or not camPosRaw then return end
 
     local myPos  = math.vec3.new(myPosRaw.x, myPosRaw.y, myPosRaw.z)
     local camPos = math.vec3.new(camPosRaw.x, camPosRaw.y, camPosRaw.z)
@@ -59,9 +63,9 @@ function Billboard:lateUpdate(_dt)
         local dir = math.vec3.new(camPos.x - myPos.x, 0, camPos.z - myPos.z)
         if dir:length() < 1e-4 then return end
         local target = myPos + dir
-        self.entity.components.transform.lookAt(target)
+        transform.lookAt(target)
     else
-        self.entity.components.transform.lookAt(camPos)
+        transform.lookAt(camPos)
     end
 end
 
@@ -97,13 +101,18 @@ local Bounce = {
 }
 
 function Bounce:init()
-    local pos = self.entity.components.transform.getLocalPosition()
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+    local pos = transform.getLocalPosition()
     self.state = {
         origin = pos
     }
 end
 
 function Bounce:update(_dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local props  = self.properties
     local origin = self.state.origin
     if not origin then return end
@@ -120,7 +129,7 @@ function Bounce:update(_dt)
     else
         pos.y = pos.y + offset
     end
-    self.entity.components.transform.setPosition(pos)
+    transform.setPosition(pos)
 end
 
 return Bounce
@@ -204,7 +213,9 @@ function FirstPersonLook:update(dt)
 
     ---@type TransformV2
     local transform = self.entity.components.transform
+    if not transform.has() then return end
     local rot = transform.getRotation()
+    if not rot then return end
     local euler = math.vec3.new(rot.x, rot.y, rot.z)
 
     euler.y = euler.y + yaw
@@ -262,8 +273,11 @@ function FirstPersonMove:update(dt)
 
     ---@type TransformV2
     local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local forwardRaw = transform.getForward()
     local rightRaw   = transform.getRight()
+    if not forwardRaw or not rightRaw then return end
     local forward = math.vec3.new(forwardRaw.x, forwardRaw.y, forwardRaw.z)
     local right   = math.vec3.new(rightRaw.x, rightRaw.y, rightRaw.z)
 
@@ -286,6 +300,7 @@ function FirstPersonMove:update(dt)
 
     local speed = self.properties.moveSpeed * (sprint > 0 and self.properties.sprintMultiplier or 1)
     local curRaw = transform.getPosition()
+    if not curRaw then return end
     local cur = math.vec3.new(curRaw.x, curRaw.y, curRaw.z)
 
     local newPos = cur + (worldMove * (speed * dt))
@@ -363,10 +378,13 @@ function FollowEntity:update(dt)
     local desiredY = targetPos.y + (offset.y or offset[2] or 0)
     local desiredZ = targetPos.z + (offset.z or offset[3] or 0)
 
-    local cur = self.entity.components.transform.getPosition()
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+    local cur = transform.getPosition()
+    if not cur then return end
     local t = math.min(1, speed * dt)
 
-    self.entity.components.transform.setPosition(
+    transform.setPosition(
         math.ext.lerp(cur.x, desiredX, t),
         math.ext.lerp(cur.y, desiredY, t),
         math.ext.lerp(cur.z, desiredZ, t)
@@ -401,6 +419,9 @@ local LookAtEntity = {
 }
 
 function LookAtEntity:update(_dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local target = self.references.targetEntityId
     if not target or not target.components then return end
 
@@ -413,7 +434,7 @@ function LookAtEntity:update(_dt)
         tpRaw.y + (offset.y or 0),
         tpRaw.z + (offset.z or 0)
     )
-    self.entity.components.transform.lookAt(targetPos)
+    transform.lookAt(targetPos)
 end
 
 return LookAtEntity
@@ -439,11 +460,14 @@ local LookAtPoint = {
 }
 
 function LookAtPoint:update(_dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local targetPoint = self.properties.targetPoint
     if not targetPoint then return end
 
     local target = math.vec3.new(targetPoint.x, targetPoint.y, targetPoint.z)
-    self.entity.components.transform.lookAt(target)
+    transform.lookAt(target)
 end
 
 return LookAtPoint
@@ -481,10 +505,11 @@ local MoveToPoint = {
 }
 
 function MoveToPoint:init()
+    local transform = self.entity.components.transform
     self.state = {
-        startPos = self.entity.components.transform.getLocalPosition(),
+        startPos = transform.has() and transform.getLocalPosition() or nil,
         elapsed  = 0,
-        active   = true
+        active   = transform.has()
     }
 end
 
@@ -494,7 +519,12 @@ end
 --- @param value any New value
 function MoveToPoint:onPropertyChanged(_dt, key, value)
     if key == "targetPoint" then
-        self.state.startPos = self.entity.components.transform.getLocalPosition()
+        local transform = self.entity.components.transform
+        if not transform.has() then
+            self.state.active = false
+            return
+        end
+        self.state.startPos = transform.getLocalPosition()
         self.state.elapsed  = 0
         self.state.active   = true
     end
@@ -502,11 +532,18 @@ end
 
 function MoveToPoint:update(dt)
     if not self.state.active then return end
+    local transform = self.entity.components.transform
+    if not transform.has() then
+        self.state.active = false
+        return
+    end
 
     local props   = self.properties
     local target  = props.targetPoint
     if not target then return end
     local state   = self.state
+    local start   = state.startPos
+    if not start then return end
     local secs    = dt
     state.elapsed = state.elapsed + secs
 
@@ -521,13 +558,11 @@ function MoveToPoint:update(dt)
 
     local easedFn = math.ext.easing[props.easing] or math.ext.easing.linear
     local easedT  = easedFn(t)
-    local start   = state.startPos
 
-    -- Interpolate
     local nx      = math.ext.lerp(start.x, target.x, easedT)
     local ny      = math.ext.lerp(start.y, target.y, easedT)
     local nz      = math.ext.lerp(start.z, target.z, easedT)
-    self.entity.components.transform.setPosition(math.vec3.new(nx, ny, nz))
+    transform.setPosition(math.vec3.new(nx, ny, nz))
 end
 
 return MoveToPoint
@@ -569,6 +604,9 @@ function OrbitCamera:init()
 end
 
 function OrbitCamera:update(dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local target = self.references.targetEntityId
     if not target or not target.components then return end
 
@@ -600,7 +638,7 @@ function OrbitCamera:update(dt)
         offsetZ = math.sin(a) * orbitDistance
     end
 
-    self.entity.components.transform.setPosition(
+    transform.setPosition(
         tpRaw.x + offsetX,
         tpRaw.y + offsetY,
         tpRaw.z + offsetZ
@@ -635,15 +673,19 @@ local RotateContinuous = {
 }
 
 function RotateContinuous:update(dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local props = self.properties
     local toRad = math.pi / 180
-    local rot = self.entity.components.transform.getRotation()
+    local rot = transform.getRotation()
+    if not rot then return end
 
     rot.x = rot.x + props.speedX * toRad * dt
     rot.y = rot.y + props.speedY * toRad * dt
     rot.z = rot.z + props.speedZ * toRad * dt
 
-    self.entity.components.transform.setRotation(rot)
+    transform.setRotation(rot)
 end
 
 return RotateContinuous
@@ -689,6 +731,9 @@ function SmoothFollow:init()
 end
 
 function SmoothFollow:update(dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local target = self.references.targetEntityId
     if not target or not target.components then return end
 
@@ -711,7 +756,7 @@ function SmoothFollow:update(dt)
 
     local last = self.state.lastGoal
     if not last or not self.state.startPos then
-        self.state.startPos = self.entity.components.transform.getPosition()
+        self.state.startPos = transform.getPosition()
         self.state.elapsed  = 0
         self.state.lastGoal = goal
     else
@@ -719,7 +764,7 @@ function SmoothFollow:update(dt)
             (goal.x - last.x) ^ 2 + (goal.y - last.y) ^ 2 + (goal.z - last.z) ^ 2
         )
         if dist > 0.01 then
-            self.state.startPos = self.entity.components.transform.getPosition()
+            self.state.startPos = transform.getPosition()
             self.state.elapsed  = 0
             self.state.lastGoal = goal
         end
@@ -733,7 +778,7 @@ function SmoothFollow:update(dt)
     local sp = self.state.startPos
     if not sp then return end
 
-    self.entity.components.transform.setPosition(
+    transform.setPosition(
         math.ext.lerp(sp.x, goal.x, t),
         math.ext.lerp(sp.y, goal.y, t),
         math.ext.lerp(sp.z, goal.z, t)
@@ -780,6 +825,9 @@ local SmoothLookAt = {
 }
 
 function SmoothLookAt:update(dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local target = self.references.targetEntityId
     if not target or not target.components then return end
 
@@ -798,7 +846,8 @@ function SmoothLookAt:update(dt)
     local desiredY = tpRaw.y + oy
     local desiredZ = tpRaw.z + oz
 
-    local cur = self.entity.components.transform.getPosition()
+    local cur = transform.getPosition()
+    if not cur then return end
     local dirX = desiredX - cur.x
     local dirY = desiredY - cur.y
     local dirZ = desiredZ - cur.z
@@ -807,7 +856,8 @@ function SmoothLookAt:update(dt)
     local horizontalDist = math.sqrt(dirX * dirX + dirZ * dirZ)
     local desiredPitch   = -math.atan(dirY, horizontalDist)
 
-    local rot = self.entity.components.transform.getRotation()
+    local rot = transform.getRotation()
+    if not rot then return end
 
     local raw = math.ext.clamp(speed * dt, 0, 1)
     local t   = math.ext.ease(props.easing or "sineOut", raw)
@@ -815,7 +865,7 @@ function SmoothLookAt:update(dt)
     local newPitch = lerpAngle(rot.x, desiredPitch, t)
     local newYaw   = lerpAngle(rot.y, desiredYaw, t)
 
-    self.entity.components.transform.setRotation(newPitch, newYaw, 0)
+    transform.setRotation(newPitch, newYaw, 0)
 end
 
 return SmoothLookAt
@@ -872,7 +922,10 @@ function SpawnOnInterval:update(dt)
     local prefabId = props.prefab
     if not prefabId or prefabId == "" then return end
 
-    local posRaw = self.entity.components.transform.getPosition()
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+    local posRaw = transform.getPosition()
+    if not posRaw then return end
     local offset = props.offset or { x = 0, y = 0, z = 0 }
     local spawnPos = {
         x = posRaw.x + (offset.x or offset[1] or 0),
@@ -929,6 +982,9 @@ function WaypointPath:init()
 end
 
 function WaypointPath:update(dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local waypoints = self.references.waypoints
     if not waypoints or #waypoints == 0 then return end
 
@@ -938,8 +994,9 @@ function WaypointPath:update(dt)
 
     -- Check if we arrived at target
     -- Note: Waypoint Path uses WORLD position for distance check because waypoints might be parented elsewhere
-    local posRaw = self.entity.components.transform.getPosition()
+    local posRaw = transform.getPosition()
     local targetRaw = targetEntity.components.transform.getPosition()
+    if not posRaw or not targetRaw then return end
     
     local pos = math.vec3.new(posRaw.x, posRaw.y, posRaw.z)
     local target = math.vec3.new(targetRaw.x, targetRaw.y, targetRaw.z)
@@ -963,6 +1020,7 @@ function WaypointPath:update(dt)
         targetEntity = waypoints[state.index]
         if not targetEntity then return end
         targetRaw = targetEntity.components.transform.getPosition()
+        if not targetRaw then return end
         target = math.vec3.new(targetRaw.x, targetRaw.y, targetRaw.z)
         dist = pos:distanceTo(target)
     end
@@ -1244,10 +1302,13 @@ end
 
 __EntityComponentsMT = {
   __index = function(t, k)
-    -- Normalize the key to match injected TypeScript bridge names (e.g. 'transform' -> 'Transform')
+    -- Normalize keys to injected TypeScript bridge names.
+    -- ECS type is transform3d; Lua also accepts the pose facade alias \`transform\`.
     local bridgeName = k:gsub("^%l", string.upper)
     if k == "script" then
-      bridgeName = "Script" 
+      bridgeName = "Script"
+    elseif k == "transform" or k == "transform3d" then
+      bridgeName = "Transform"
     end
 
     local slotKey = rawget(t, '__slotKey')

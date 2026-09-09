@@ -62,6 +62,7 @@ export const RIGID_BODY_SPEC: ComponentSpec<RigidBodyComponent> = {
     category: 'Physics',
     icon: 'Package',
     unique: true,
+    requires: ['transform3d'],
     inspector: {
       fields: [
         {

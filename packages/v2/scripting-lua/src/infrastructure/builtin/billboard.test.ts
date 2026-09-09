@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
-import { createEntity, createEntityId, createSceneId } from '@duckengine/core-v2';
+import {createSpatialEntity, createEntityId, createSceneId,
+  getTransform3d} from '@duckengine/core-v2';
 import {
   createScene,
   addEntityWithScripts,
@@ -16,8 +17,8 @@ describe('Built-in Script: Billboard', () => {
     const camId = createEntityId('camera');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(boardId) });
-    scene.addEntity({ entity: createEntity(camId) });
+    scene.addEntity({ entity: createSpatialEntity(boardId) });
+    scene.addEntity({ entity: createSpatialEntity(camId) });
 
     addEntityWithScripts(api, sceneId, boardId, [{
       scriptId: 'builtin://billboard.lua',
@@ -45,11 +46,11 @@ describe('Built-in Script: Billboard', () => {
     const camId = createEntityId('camera');
 
     const scene = createScene(api, sceneId);
-    const board = createEntity(boardId);
-    board.transform.localPosition = { x: 0, y: 0, z: 0 };
+    const board = createSpatialEntity(boardId);
+    getTransform3d(board)!.localPosition = { x: 0, y: 0, z: 0 };
     scene.addEntity({ entity: board });
-    const cam = createEntity(camId);
-    cam.transform.localPosition = { x: 5, y: 0, z: 5 };
+    const cam = createSpatialEntity(camId);
+    getTransform3d(cam)!.localPosition = { x: 5, y: 0, z: 5 };
     scene.addEntity({ entity: cam });
 
     addEntityWithScripts(api, sceneId, boardId, [{
@@ -67,7 +68,7 @@ describe('Built-in Script: Billboard', () => {
     const view = scene.entity(boardId).view();
     expect(view.ok).toBe(true);
     if (view.ok) {
-      expect(view.value.transform.localRotation).toBeDefined();
+      expect(view.value.transform!.localRotation).toBeDefined();
     }
   });
 
@@ -77,7 +78,7 @@ describe('Built-in Script: Billboard', () => {
     const boardId = createEntityId('board');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(boardId) });
+    scene.addEntity({ entity: createSpatialEntity(boardId) });
 
     addEntityWithScripts(api, sceneId, boardId, [{
       scriptId: 'builtin://billboard.lua',
@@ -105,8 +106,8 @@ describe('Built-in Script: Billboard', () => {
     const camId = createEntityId('camera');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(boardId) });
-    scene.addEntity({ entity: createEntity(camId) });
+    scene.addEntity({ entity: createSpatialEntity(boardId) });
+    scene.addEntity({ entity: createSpatialEntity(camId) });
 
     addEntityWithScripts(api, sceneId, boardId, [{
       scriptId: 'builtin://billboard.lua',

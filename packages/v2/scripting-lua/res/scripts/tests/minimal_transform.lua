@@ -14,7 +14,16 @@
 return {
     ---@param self MinimalTransformScript
     init = function(self)
-        local pos = self.entity.components.transform.getLocalPosition()
+        local transform = self.entity.components.transform
+        if not transform.has() then
+            self.properties.initCalled = false
+            return
+        end
+        local pos = transform.getLocalPosition()
+        if not pos then
+            self.properties.initCalled = false
+            return
+        end
         self.properties.startX = pos.x
         self.properties.startY = pos.y
         self.properties.startZ = pos.z

@@ -22,11 +22,15 @@ local Billboard = {
 }
 
 function Billboard:lateUpdate(_dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local cam = self.references.cameraEntity
     if not cam or not self.Scene.exists(cam.id) then return end
 
-    local myPosRaw  = self.entity.components.transform.getPosition()
+    local myPosRaw  = transform.getPosition()
     local camPosRaw = cam.components.transform.getPosition()
+    if not myPosRaw or not camPosRaw then return end
 
     local myPos  = math.vec3.new(myPosRaw.x, myPosRaw.y, myPosRaw.z)
     local camPos = math.vec3.new(camPosRaw.x, camPosRaw.y, camPosRaw.z)
@@ -35,9 +39,9 @@ function Billboard:lateUpdate(_dt)
         local dir = math.vec3.new(camPos.x - myPos.x, 0, camPos.z - myPos.z)
         if dir:length() < 1e-4 then return end
         local target = myPos + dir
-        self.entity.components.transform.lookAt(target)
+        transform.lookAt(target)
     else
-        self.entity.components.transform.lookAt(camPos)
+        transform.lookAt(camPos)
     end
 end
 

@@ -1,5 +1,6 @@
 import {
   createEntity,
+  createSpatialEntity,
   addComponent,
   removeChildById,
   getChild,
@@ -15,6 +16,8 @@ import {
   addChild,
   getChildren,
 } from './entity';
+import { getTransform3d } from './transform3dAccess';
+import { createComponent } from '../components';
 import { componentBase } from '../components';
 import type { ComponentBase, ComponentMetadata, ComponentType } from '../components';
 import { createEntityId } from '../ids';
@@ -166,6 +169,14 @@ describe('updateComponent / setComponentEnabled', () => {
     setComponentEnabled(e, 'boxGeometry' as any, false);
     expect(getComponent(e, 'boxGeometry' as any)?.enabled).toBe(false);
   });
+
+  it('getTransform3d is undefined when transform3d is disabled', () => {
+    const e = createSpatialEntity(createEntityId('spatial'));
+    expect(getTransform3d(e)).toBeDefined();
+    setComponentEnabled(e, 'transform3d', false);
+    expect(getComponent(e, 'transform3d')).toBeDefined();
+    expect(getTransform3d(e)).toBeUndefined();
+  });
 });
 
 describe('observers', () => {
@@ -234,15 +245,17 @@ describe('debug flags', () => {
 });
 
 describe('hierarchy', () => {
-  it('addChild sets parent and transform parent', () => {
+  it('addChild sets parent and transform parent when both have transform3d', () => {
     const pId = createEntityId('parent');
     const cId = createEntityId('child');
     const p = createEntity(pId);
     const c = createEntity(cId);
+    addComponent(p, createComponent('transform3d'));
+    addComponent(c, createComponent('transform3d'));
     addChild(p, c);
     expect(c.parent).toBe(p);
     expect(getChildren(p)).toHaveLength(1);
-    expect(c.transform.parent).toBe(p.transform);
+    expect(getTransform3d(c)!.parent).toBe(getTransform3d(p));
   });
 
   it('reparent removes from old parent', () => {
@@ -267,7 +280,7 @@ describe('hierarchy', () => {
     addChild(p, c);
     removeChildById(p, cId);
     expect(c.parent).toBeUndefined();
-    expect(c.transform.parent).toBeUndefined();
+    expect(getTransform3d(c)?.parent).toBeUndefined();
   });
 
   it('getChild finds direct child', () => {

@@ -6,11 +6,12 @@ import {
   createEntityId,
   createViewportId,
   createCanvasId,
-  createEntity,
+  createSpatialEntity,
   createComponent,
   addComponent,
   setPosition,
   lookAt,
+  getTransform3d,
   FULL_RECT,
 } from '@duckengine/core-v2';
 import type { DuckEngineAPI, ViewportRectProviderPort } from '@duckengine/core-v2';
@@ -38,7 +39,7 @@ export interface HarnessAppState {
 }
 
 function createDefaultCameraEntity() {
-  const entity = createEntity(DEFAULT_CAMERA_ID, 'Harness Camera');
+  const entity = createSpatialEntity(DEFAULT_CAMERA_ID, 'Harness Camera');
   addComponent(
     entity,
     createComponent('cameraPerspective', {
@@ -48,8 +49,8 @@ function createDefaultCameraEntity() {
       aspect: 16 / 9,
     }),
   );
-  setPosition(entity.transform, 0, 6, 8);
-  lookAt(entity.transform, { x: 0, y: 0, z: 0 });
+  setPosition(getTransform3d(entity)!, 0, 6, 8);
+  lookAt(getTransform3d(entity)!, { x: 0, y: 0, z: 0 });
   return entity;
 }
 

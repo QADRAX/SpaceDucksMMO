@@ -6,7 +6,10 @@
 -- ═══════════════════════════════════════════════════════════════════════
 
 ---@class EntityComponentsV2
+---Pose facade over ECS `transform3d` (nil methods / has()=false when missing or disabled).
 ---@field transform TransformV2
+---Alias for `transform` (ECS type name).
+---@field transform3d TransformV2
 ---@field script ScriptsV2
 
 ---An ECS entity exposed to Lua via the `__EntityMT` metatable.

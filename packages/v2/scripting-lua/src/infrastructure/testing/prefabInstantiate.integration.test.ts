@@ -9,7 +9,7 @@
 /** @jest-environment node */
 jest.unmock('wasmoon');
 
-import { createSceneId, createEntityId, createEntity, createPrefabId } from '@duckengine/core-v2';
+import {createSceneId, createEntityId, createEntity, createPrefabId} from '@duckengine/core-v2';
 import { setupScriptingIntegrationTest } from './setup';
 import {
   addSceneWithEntity,
@@ -93,9 +93,9 @@ describe('Prefab instantiate integration', () => {
     if (listResult.ok) {
       const bullets = listResult.value.filter((e) => e.displayName === 'Bullet');
       expect(bullets.length).toBe(1);
-      expect(bullets[0].transform.localPosition.x).toBe(10);
-      expect(bullets[0].transform.localPosition.y).toBe(20);
-      expect(bullets[0].transform.localPosition.z).toBe(30);
+      expect(bullets[0].transform!.localPosition.x).toBe(10);
+      expect(bullets[0].transform!.localPosition.y).toBe(20);
+      expect(bullets[0].transform!.localPosition.z).toBe(30);
     }
   });
 });

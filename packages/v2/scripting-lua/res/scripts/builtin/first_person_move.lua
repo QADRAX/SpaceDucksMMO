@@ -45,8 +45,11 @@ function FirstPersonMove:update(dt)
 
     ---@type TransformV2
     local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local forwardRaw = transform.getForward()
     local rightRaw   = transform.getRight()
+    if not forwardRaw or not rightRaw then return end
     local forward = math.vec3.new(forwardRaw.x, forwardRaw.y, forwardRaw.z)
     local right   = math.vec3.new(rightRaw.x, rightRaw.y, rightRaw.z)
 
@@ -69,6 +72,7 @@ function FirstPersonMove:update(dt)
 
     local speed = self.properties.moveSpeed * (sprint > 0 and self.properties.sprintMultiplier or 1)
     local curRaw = transform.getPosition()
+    if not curRaw then return end
     local cur = math.vec3.new(curRaw.x, curRaw.y, curRaw.z)
 
     local newPos = cur + (worldMove * (speed * dt))

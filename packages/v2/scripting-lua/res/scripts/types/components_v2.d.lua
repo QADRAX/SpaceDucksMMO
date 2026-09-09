@@ -12,6 +12,7 @@
 -- on @param (otherwise componentType widens to string and literals fail to match).
 
 ---@alias ComponentTypeV2
+---| "transform3d"
 ---| "name"
 ---| "boxGeometry"
 ---| "sphereGeometry"
@@ -66,6 +67,11 @@
 ---| "texture"
 
 -- Field key aliases per component (for Component.getField/setField autocomplete)
+---@alias Transform3dFieldV2
+---| "position"
+---| "rotation"
+---| "scale"
+
 ---@alias NameFieldV2
 ---| "value"
 

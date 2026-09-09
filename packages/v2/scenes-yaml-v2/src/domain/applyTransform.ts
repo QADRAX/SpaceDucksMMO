@@ -1,26 +1,38 @@
 /**
- * Domain: apply transform definition to entity.
- * Uses core-v2 transform API.
+ * Domain: apply transform definition by ensuring transform3d and setting locals.
  */
-import { setPosition, setRotation, setScale } from '@duckengine/core-v2';
+import {
+  addComponent,
+  createComponent,
+  getTransform3d,
+  setPosition,
+  setRotation,
+  setScale,
+} from '@duckengine/core-v2';
 import type { EntityState } from '@duckengine/core-v2';
 import type { Vec3Like } from './sceneDefinition';
 
 /**
- * Applies transform definition (position, rotation, scale) to entity.
+ * Ensures transform3d on the entity and applies position/rotation/scale locals.
  */
 export function applyTransformToEntity(
   entity: EntityState,
   transform: { position?: Vec3Like; rotation?: Vec3Like; scale?: Vec3Like },
 ): void {
-  const t = entity.transform;
+  let state = getTransform3d(entity);
+  if (!state) {
+    addComponent(entity, createComponent('transform3d'));
+    state = getTransform3d(entity);
+  }
+  if (!state) return;
+
   if (transform.position) {
-    setPosition(t, transform.position.x, transform.position.y, transform.position.z);
+    setPosition(state, transform.position.x, transform.position.y, transform.position.z);
   }
   if (transform.rotation) {
-    setRotation(t, transform.rotation.x, transform.rotation.y, transform.rotation.z);
+    setRotation(state, transform.rotation.x, transform.rotation.y, transform.rotation.z);
   }
   if (transform.scale) {
-    setScale(t, transform.scale.x, transform.scale.y, transform.scale.z);
+    setScale(state, transform.scale.x, transform.scale.y, transform.scale.z);
   }
 }

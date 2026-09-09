@@ -1,13 +1,13 @@
 import { describe, it, expect, beforeEach } from '@jest/globals';
-import {
-  createEntity,
+import {createEntity,
+  createSpatialEntity,
   createEntityId,
   addComponent,
   createComponent,
   createResourceKey,
   createResourceRef,
   getComponent,
-} from '@duckengine/core-v2';
+  getTransform3d} from '@duckengine/core-v2';
 import type { AnimationClipFileData, SceneState } from '@duckengine/core-v2';
 import type { AnimatorComponent } from '@duckengine/core-v2';
 import { animationTick } from './animationTick';
@@ -44,7 +44,7 @@ describe('animationTick', () => {
   });
 
   it('samples the active clip and writes translation to the joint entity (before physics/render)', () => {
-    const joint = createEntity(createEntityId('joint-a'));
+    const joint = createSpatialEntity(createEntityId('joint-a'));
     const animEntity = createEntity(createEntityId('rig'));
     addComponent(
       animEntity,
@@ -63,7 +63,7 @@ describe('animationTick', () => {
 
     animationTick.execute(state, { scene, dt: 0.5 });
 
-    const jt = joint.transform;
+    const jt = getTransform3d(joint)!;
     expect(jt.localPosition.x).toBeCloseTo(5, 5);
     expect(jt.localPosition.y).toBeCloseTo(0, 5);
     expect(jt.localPosition.z).toBeCloseTo(0, 5);

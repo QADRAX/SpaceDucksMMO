@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from '@jest/globals';
 import { setupIntegrationTest, createSceneId, createEntityId } from '../setup';
 import type { TestContext } from '../setup';
 import { createComponent, getComponentMetadata } from '../../../domain/components/factory';
-import { createEntity } from '../../../domain/entities/entity';
+import { createSpatialEntity } from '../../../domain/entities/entity';
 import type { CreatableComponentType } from '../../../domain/components/types/factory';
 import { getFieldValue } from '../../../domain/components/resolveFieldPath';
 
@@ -44,7 +44,7 @@ describe('Integration: Component > setField', () => {
         ctx = setupIntegrationTest();
         ctx.api.addScene({ sceneId: MAIN_SCENE });
         ctx.api.scene(MAIN_SCENE).addEntity({
-            entity: createEntity(E1)
+            entity: createSpatialEntity(E1)
         });
     });
 

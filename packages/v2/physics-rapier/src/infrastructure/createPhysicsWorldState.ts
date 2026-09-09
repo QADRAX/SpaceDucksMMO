@@ -13,6 +13,7 @@ import {
   DEFAULT_FIXED_STEP,
   DEFAULT_MAX_SUBSTEPS,
   MAX_ACCUMULATOR_DT,
+  getTransform3d,
 } from '@duckengine/core-v2';
 import type { World } from '@dimforge/rapier3d-compat';
 import { getEntity } from '../domain';
@@ -54,7 +55,7 @@ export function createPhysicsWorldState(options?: CreatePhysicsWorldStateOptions
 
   function addEntity(scene: SceneState, entity: EntityState): void {
     if (disposed) return;
-    ensureClean(entity.transform);
+    ensureClean(getTransform3d(entity)!);
     const rb = getComponent<RigidBodyComponent>(entity, 'rigidBody');
     if (rb) {
       bodies.ensureRigidBody(R, world, entity, rb);

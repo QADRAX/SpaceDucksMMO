@@ -39,6 +39,9 @@ function WaypointPath:init()
 end
 
 function WaypointPath:update(dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local waypoints = self.references.waypoints
     if not waypoints or #waypoints == 0 then return end
 
@@ -48,8 +51,9 @@ function WaypointPath:update(dt)
 
     -- Check if we arrived at target
     -- Note: Waypoint Path uses WORLD position for distance check because waypoints might be parented elsewhere
-    local posRaw = self.entity.components.transform.getPosition()
+    local posRaw = transform.getPosition()
     local targetRaw = targetEntity.components.transform.getPosition()
+    if not posRaw or not targetRaw then return end
     
     local pos = math.vec3.new(posRaw.x, posRaw.y, posRaw.z)
     local target = math.vec3.new(targetRaw.x, targetRaw.y, targetRaw.z)
@@ -73,6 +77,7 @@ function WaypointPath:update(dt)
         targetEntity = waypoints[state.index]
         if not targetEntity then return end
         targetRaw = targetEntity.components.transform.getPosition()
+        if not targetRaw then return end
         target = math.vec3.new(targetRaw.x, targetRaw.y, targetRaw.z)
         dist = pos:distanceTo(target)
     end

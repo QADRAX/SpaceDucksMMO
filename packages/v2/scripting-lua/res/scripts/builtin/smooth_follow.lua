@@ -39,6 +39,9 @@ function SmoothFollow:init()
 end
 
 function SmoothFollow:update(dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local target = self.references.targetEntityId
     if not target or not target.components then return end
 
@@ -61,7 +64,7 @@ function SmoothFollow:update(dt)
 
     local last = self.state.lastGoal
     if not last or not self.state.startPos then
-        self.state.startPos = self.entity.components.transform.getPosition()
+        self.state.startPos = transform.getPosition()
         self.state.elapsed  = 0
         self.state.lastGoal = goal
     else
@@ -69,7 +72,7 @@ function SmoothFollow:update(dt)
             (goal.x - last.x) ^ 2 + (goal.y - last.y) ^ 2 + (goal.z - last.z) ^ 2
         )
         if dist > 0.01 then
-            self.state.startPos = self.entity.components.transform.getPosition()
+            self.state.startPos = transform.getPosition()
             self.state.elapsed  = 0
             self.state.lastGoal = goal
         end
@@ -83,7 +86,7 @@ function SmoothFollow:update(dt)
     local sp = self.state.startPos
     if not sp then return end
 
-    self.entity.components.transform.setPosition(
+    transform.setPosition(
         math.ext.lerp(sp.x, goal.x, t),
         math.ext.lerp(sp.y, goal.y, t),
         math.ext.lerp(sp.z, goal.z, t)

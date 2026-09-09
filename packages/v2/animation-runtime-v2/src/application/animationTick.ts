@@ -12,6 +12,7 @@ import {
   setPosition,
   setScale,
   setRotationFromQuaternion,
+  getTransform3d,
 } from '@duckengine/core-v2';
 import type { AnimationSubsystemState } from '../domain/createAnimationSubsystemState';
 import { wrapPlaybackTimeForClip } from '../domain/wrapPlaybackTime';
@@ -19,11 +20,11 @@ import { sampleAnimationChannelAtTime, type SampledChannel } from '../domain/sam
 
 function applySampleToEntity(target: EntityState, sampled: SampledChannel): void {
   if (sampled.path === 'translation') {
-    setPosition(target.transform, sampled.v.x, sampled.v.y, sampled.v.z);
+    setPosition(getTransform3d(target)!, sampled.v.x, sampled.v.y, sampled.v.z);
   } else if (sampled.path === 'scale') {
-    setScale(target.transform, sampled.v.x, sampled.v.y, sampled.v.z);
+    setScale(getTransform3d(target)!, sampled.v.x, sampled.v.y, sampled.v.z);
   } else if (sampled.path === 'rotation') {
-    setRotationFromQuaternion(target.transform, sampled.q);
+    setRotationFromQuaternion(getTransform3d(target)!, sampled.q);
   }
 }
 

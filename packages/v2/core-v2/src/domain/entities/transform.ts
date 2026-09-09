@@ -121,6 +121,49 @@ export function lookAt(t: TransformState, target: Vec3Like): void {
   markDirty(t);
 }
 
+/** World position (ensures dirty world pose is up to date). */
+export function getPosition(t: TransformState): Vec3Like {
+  ensureClean(t);
+  return copyVec(t.worldPosition);
+}
+
+/** Local position relative to the pose parent. */
+export function getLocalPosition(t: TransformState): Vec3Like {
+  return copyVec(t.localPosition);
+}
+
+/** World rotation as Euler YXZ (radians). */
+export function getRotation(t: TransformState): EulerLike {
+  ensureClean(t);
+  return copyEuler(t.worldRotation);
+}
+
+/** Alias for {@link getRotation} (Euler YXZ, radians). */
+export function getAngle(t: TransformState): EulerLike {
+  return getRotation(t);
+}
+
+/** Local rotation as Euler YXZ (radians). */
+export function getLocalRotation(t: TransformState): EulerLike {
+  return copyEuler(t.localRotation);
+}
+
+/** Local Euler alias for {@link getLocalRotation}. */
+export function getLocalAngle(t: TransformState): EulerLike {
+  return getLocalRotation(t);
+}
+
+/** World scale. */
+export function getScale(t: TransformState): Vec3Like {
+  ensureClean(t);
+  return copyVec(t.worldScale);
+}
+
+/** Local scale. */
+export function getLocalScale(t: TransformState): Vec3Like {
+  return copyVec(t.localScale);
+}
+
 /** Sets or clears the parent. Manages dirty propagation automatically. */
 export function setTransformParent(t: TransformState, parent: TransformState | undefined): void {
   if (t.parent && t.parentCb) {

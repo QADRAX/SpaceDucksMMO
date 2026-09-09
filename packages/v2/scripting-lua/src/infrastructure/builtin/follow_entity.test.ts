@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
-import { createEntity, createEntityId, createSceneId } from '@duckengine/core-v2';
+import {createSpatialEntity, createEntityId, createSceneId,
+  getTransform3d} from '@duckengine/core-v2';
 import {
   createScene,
   addEntityWithScripts,
@@ -16,9 +17,9 @@ describe('Built-in Script: Follow Entity', () => {
     const targetId = createEntityId('target');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(followerId) });
-    const target = createEntity(targetId);
-    target.transform.localPosition = { x: 10, y: 0, z: 0 };
+    scene.addEntity({ entity: createSpatialEntity(followerId) });
+    const target = createSpatialEntity(targetId);
+    getTransform3d(target)!.localPosition = { x: 10, y: 0, z: 0 };
     scene.addEntity({ entity: target });
 
     addEntityWithScripts(api, sceneId, followerId, [{
@@ -36,11 +37,11 @@ describe('Built-in Script: Follow Entity', () => {
 
     const view0 = scene.entity(followerId).view();
     if (view0.ok) {
-      const x0 = view0.value.transform.localPosition.x;
+      const x0 = view0.value.transform!.localPosition.x;
       runFrames(api, 60, 0.016);
       const view1 = scene.entity(followerId).view();
       if (view1.ok) {
-        const x1 = view1.value.transform.localPosition.x;
+        const x1 = view1.value.transform!.localPosition.x;
         expect(x1).toBeGreaterThan(x0);
       }
     }
@@ -53,8 +54,8 @@ describe('Built-in Script: Follow Entity', () => {
     const targetId = createEntityId('target');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(followerId) });
-    scene.addEntity({ entity: createEntity(targetId) });
+    scene.addEntity({ entity: createSpatialEntity(followerId) });
+    scene.addEntity({ entity: createSpatialEntity(targetId) });
 
     addEntityWithScripts(api, sceneId, followerId, [{
       scriptId: 'builtin://follow_entity.lua',
@@ -87,9 +88,9 @@ describe('Built-in Script: Follow Entity', () => {
     const targetId = createEntityId('target');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(followerId) });
-    const target = createEntity(targetId);
-    target.transform.localPosition = { x: 10, y: 0, z: 0 };
+    scene.addEntity({ entity: createSpatialEntity(followerId) });
+    const target = createSpatialEntity(targetId);
+    getTransform3d(target)!.localPosition = { x: 10, y: 0, z: 0 };
     scene.addEntity({ entity: target });
 
     addEntityWithScripts(api, sceneId, followerId, [{
@@ -108,7 +109,7 @@ describe('Built-in Script: Follow Entity', () => {
     runFrames(api, 60, 0.016);
     const view = scene.entity(followerId).view();
     if (view.ok) {
-      expect(view.value.transform.localPosition.x).toBeGreaterThan(0);
+      expect(view.value.transform!.localPosition.x).toBeGreaterThan(0);
     }
   });
 });

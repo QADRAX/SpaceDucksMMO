@@ -26,7 +26,7 @@ describe('Built-in Script: Look at Point', () => {
     api.update({ dt: 0.016 });
     const view = scene.entity(entityId).view();
     if (view.ok) {
-      expect(view.value.transform.localRotation).toBeDefined();
+      expect(view.value.transform!.localRotation).toBeDefined();
     }
   });
 

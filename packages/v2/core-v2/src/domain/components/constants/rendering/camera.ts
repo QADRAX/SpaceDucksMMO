@@ -15,6 +15,7 @@ export const CAMERA_PERSPECTIVE_SPEC: ComponentSpec<CameraPerspectiveComponent> 
         icon: 'Camera',
         unique: true,
         conflicts: ['cameraOrthographic'],
+        requires: ['transform3d'],
         inspector: {
             fields: [
                 { key: 'fov', label: 'FOV', type: 'number', min: 1, max: 179, step: 1, unit: '°' },
@@ -37,6 +38,7 @@ export const CAMERA_ORTHOGRAPHIC_SPEC: ComponentSpec<CameraOrthographicComponent
         icon: 'Camera',
         unique: true,
         conflicts: ['cameraPerspective'],
+        requires: ['transform3d'],
         inspector: {
             fields: [
                 { key: 'halfHeight', label: 'Half height', type: 'number', min: 0.001, step: 0.1 },

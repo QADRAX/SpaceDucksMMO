@@ -1,17 +1,22 @@
 import {
-  ensureClean,
+  getLocalPosition,
+  getLocalRotation,
+  getLocalScale,
+  getPosition,
+  getRotation,
+  getScale,
   lookAt,
   setPosition,
   setRotation,
   setScale,
-  setTransformParent,
 } from '../../entities/transform';
-import type { EntityState, TransformState } from '../../entities';
+import type { EntityState } from '../../entities';
 import { addChild, removeChildById } from '../../entities';
+import { getTransform3d } from '../../entities/transform3dAccess';
 import type { SceneState } from '../../scene';
 import type { EntityAPI, TransformAPI, Vec3API } from './types';
 
-function toVec3Like(value: Vec3API): Vec3API {
+function toVec3Like(value: { x: number; y: number; z: number }): Vec3API {
   return { x: value.x, y: value.y, z: value.z };
 }
 
@@ -21,35 +26,22 @@ function canWrite(isSelf: boolean): boolean {
 
 /**
  * Builds a transform API for scripting with guarded write access.
+ * Caller must ensure the entity has transform3d.
  */
 export function buildTransformAPI(
-  transform: TransformState,
   ownerEntity: EntityState,
   scene: SceneState,
   isSelf: boolean,
   resolveEntityAPI: (entity: EntityState, isSelfEntity: boolean) => EntityAPI,
 ): TransformAPI {
-  const getParentEntity = (): EntityState | undefined => {
-    const parentTransform = transform.parent;
-    if (!parentTransform) return undefined;
-
-    for (const entity of scene.entities.values()) {
-      if (entity.transform === parentTransform) {
-        return entity;
-      }
-    }
-
-    return undefined;
-  };
-
-  const getChildrenEntities = (): EntityState[] => {
-    return ownerEntity.children;
-  };
+  const transform = getTransform3d(ownerEntity);
+  if (!transform) {
+    throw new Error(`buildTransformAPI: entity "${ownerEntity.id}" has no transform3d`);
+  }
 
   return {
     get position() {
-      ensureClean(transform);
-      return toVec3Like(transform.worldPosition);
+      return toVec3Like(getPosition(transform));
     },
     set position(value: Vec3API) {
       if (!canWrite(isSelf)) return;
@@ -57,8 +49,7 @@ export function buildTransformAPI(
     },
 
     get rotation() {
-      ensureClean(transform);
-      return toVec3Like(transform.worldRotation);
+      return toVec3Like(getRotation(transform));
     },
     set rotation(value: Vec3API) {
       if (!canWrite(isSelf)) return;
@@ -66,8 +57,7 @@ export function buildTransformAPI(
     },
 
     get scale() {
-      ensureClean(transform);
-      return toVec3Like(transform.worldScale);
+      return toVec3Like(getScale(transform));
     },
     set scale(value: Vec3API) {
       if (!canWrite(isSelf)) return;
@@ -75,7 +65,7 @@ export function buildTransformAPI(
     },
 
     get localPosition() {
-      return toVec3Like(transform.localPosition);
+      return toVec3Like(getLocalPosition(transform));
     },
     set localPosition(value: Vec3API) {
       if (!canWrite(isSelf)) return;
@@ -83,7 +73,7 @@ export function buildTransformAPI(
     },
 
     get localRotation() {
-      return toVec3Like(transform.localRotation);
+      return toVec3Like(getLocalRotation(transform));
     },
     set localRotation(value: Vec3API) {
       if (!canWrite(isSelf)) return;
@@ -91,7 +81,7 @@ export function buildTransformAPI(
     },
 
     get localScale() {
-      return toVec3Like(transform.localScale);
+      return toVec3Like(getLocalScale(transform));
     },
     set localScale(value: Vec3API) {
       if (!canWrite(isSelf)) return;
@@ -99,14 +89,13 @@ export function buildTransformAPI(
     },
 
     get parent() {
-      const parentEntity = getParentEntity();
-      if (!parentEntity) return null;
-      return resolveEntityAPI(parentEntity, false);
+      // Logical entity parent (hierarchy), not pose parent.
+      if (!ownerEntity.parent) return null;
+      return resolveEntityAPI(ownerEntity.parent, false);
     },
 
     get children() {
-      return getChildrenEntities()
-        .map((child) => resolveEntityAPI(child, false));
+      return ownerEntity.children.map((child) => resolveEntityAPI(child, false));
     },
 
     lookAt(target: Vec3API) {
@@ -122,8 +111,6 @@ export function buildTransformAPI(
       }
 
       if (!parent) {
-        setTransformParent(transform, undefined);
-        ownerEntity.parent = undefined;
         return;
       }
 

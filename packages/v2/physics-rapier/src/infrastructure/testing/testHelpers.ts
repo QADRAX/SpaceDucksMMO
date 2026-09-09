@@ -1,13 +1,15 @@
 import type { SceneId, EntityId } from '@duckengine/core-v2';
 import {
-  createEntity,
   createComponent,
   createSceneId,
   createEntityId,
   setPosition,
   setScale,
-  ensureClean,
   addChild,
+  getTransform3d,
+  getPosition,
+  createSpatialEntity,
+  addComponent,
 } from '@duckengine/core-v2';
 import type { DuckEngineAPI } from '@duckengine/core-v2';
 import type { PhysicsQueryPort, PhysicsCollisionEvent } from '@duckengine/core-v2';
@@ -44,7 +46,7 @@ export function addSceneWithEntity(
 ): ReturnType<DuckEngineAPI['scene']> {
   api.addScene({ sceneId });
   const scene: ReturnType<DuckEngineAPI['scene']> = api.scene(sceneId);
-  scene.addEntity({ entity: createEntity(entityId) });
+  scene.addEntity({ entity: createSpatialEntity(entityId) });
   return scene;
 }
 
@@ -117,7 +119,13 @@ export function setEntityPosition(
 ): void {
   const scene = engine.scenes.get(sceneId);
   const entity = scene?.entities.get(entityId);
-  if (entity) setPosition(entity.transform, x, y, z);
+  if (!entity) return;
+  let state = getTransform3d(entity);
+  if (!state) {
+    addComponent(entity, createComponent('transform3d'));
+    state = getTransform3d(entity);
+  }
+  if (state) setPosition(state, x, y, z);
 }
 
 /**
@@ -133,7 +141,13 @@ export function setEntityScale(
 ): void {
   const scene = engine.scenes.get(sceneId);
   const entity = scene?.entities.get(entityId);
-  if (entity) setScale(entity.transform, x, y, z);
+  if (!entity) return;
+  let state = getTransform3d(entity);
+  if (!state) {
+    addComponent(entity, createComponent('transform3d'));
+    state = getTransform3d(entity);
+  }
+  if (state) setScale(state, x, y, z);
 }
 
 /**
@@ -147,8 +161,9 @@ export function getEntityWorldPosition(
   const scene = engine.scenes.get(sceneId);
   const entity = scene?.entities.get(entityId);
   if (!entity) return undefined;
-  ensureClean(entity.transform);
-  return { ...entity.transform.worldPosition };
+  const t = getTransform3d(entity);
+  if (!t) return undefined;
+  return getPosition(t);
 }
 
 /**
@@ -162,8 +177,8 @@ export function addSceneWithParentChild(
   childId: EntityId,
 ): void {
   api.addScene({ sceneId });
-  const parent = createEntity(parentId);
-  const child = createEntity(childId);
+  const parent = createSpatialEntity(parentId);
+  const child = createSpatialEntity(childId);
   addChild(parent, child);
   api.scene(sceneId).addEntity({ entity: parent });
 }
@@ -219,9 +234,9 @@ export function addCompoundStructureToScene(
   rootId: EntityId,
   children: CompoundColliderSpec[],
 ): void {
-  const root = createEntity(rootId);
+  const root = createSpatialEntity(rootId);
   for (const spec of children) {
-    const child = createEntity(spec.entityId);
+    const child = createSpatialEntity(spec.entityId);
     addChild(root, child);
   }
   api.scene(sceneId).addEntity({ entity: root });

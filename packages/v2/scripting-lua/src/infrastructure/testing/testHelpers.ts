@@ -1,5 +1,5 @@
 import type { SceneId, EntityId, DuckEngineAPI } from '@duckengine/core-v2';
-import { createEntity, createComponent, createSceneId, createEntityId } from '@duckengine/core-v2';
+import { createSpatialEntity, createComponent, createSceneId, createEntityId } from '@duckengine/core-v2';
 import { setupScriptingIntegrationTest } from './setup';
 
 /** Script reference shape for addEntityWithScripts. */
@@ -76,7 +76,7 @@ export function addSceneWithEntity(
   entityId: EntityId = DEFAULT_ENTITY_ID,
 ): ReturnType<DuckEngineAPI['scene']> {
   const scene = createScene(api, sceneId);
-  scene.addEntity({ entity: createEntity(entityId) });
+  scene.addEntity({ entity: createSpatialEntity(entityId) });
   return scene;
 }
 
@@ -90,7 +90,7 @@ export function addEntityToScene(
   entityId: EntityId,
 ): void {
   const scene = api.scene(sceneId);
-  scene.addEntity({ entity: createEntity(entityId) });
+  scene.addEntity({ entity: createSpatialEntity(entityId) });
 }
 
 /**

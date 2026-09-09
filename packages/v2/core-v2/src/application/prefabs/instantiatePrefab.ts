@@ -1,6 +1,9 @@
 import type { EntityId, PrefabId } from '../../domain/ids';
 import { cloneEntitySubtree } from '../../domain/entities';
 import { setPosition, setRotation } from '../../domain/entities';
+import { getTransform3d } from '../../domain/entities/transform3dAccess';
+import { addComponent } from '../../domain/entities';
+import { createComponent } from '../../domain/components';
 import type { Result } from '../../domain/utils';
 import { ok, err } from '../../domain/utils';
 import { defineSceneUseCase } from '../../domain/useCases';
@@ -20,7 +23,7 @@ export interface InstantiatePrefabParams {
 
 /**
  * Instantiates a prefab by cloning its entity template and adding it to the scene.
- * Applies optional position and rotation to the root transform.
+ * Applies optional position and rotation to the root transform3d (adds one if missing).
  * Returns the new entity ID on success.
  */
 export const instantiatePrefab = defineSceneUseCase<
@@ -38,11 +41,22 @@ export const instantiatePrefab = defineSceneUseCase<
 
     const clone = cloneEntitySubtree(template, generateEntityId);
 
-    if (position) {
-      setPosition(clone.transform, position.x, position.y, position.z);
-    }
-    if (rotation) {
-      setRotation(clone.transform, rotation.x, rotation.y, rotation.z);
+    if (position || rotation) {
+      let state = getTransform3d(clone);
+      if (!state) {
+        const addResult = addComponent(clone, createComponent('transform3d'));
+        if (!addResult.ok) return addResult;
+        state = getTransform3d(clone);
+      }
+      if (!state) {
+        return err('validation', 'Failed to ensure transform3d on prefab instance.');
+      }
+      if (position) {
+        setPosition(state, position.x, position.y, position.z);
+      }
+      if (rotation) {
+        setRotation(state, rotation.x, rotation.y, rotation.z);
+      }
     }
 
     const addResult = addEntityToScene.execute(scene, { entity: clone });

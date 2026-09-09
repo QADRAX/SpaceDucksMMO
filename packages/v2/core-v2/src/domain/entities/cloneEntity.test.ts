@@ -1,4 +1,4 @@
-import { createEntity, addComponent, addChild, getComponent, hasComponent, getChildren } from './entity';
+import { createSpatialEntity, addComponent, addChild, getComponent, hasComponent, getChildren } from './entity';
 import { cloneEntitySubtree } from './cloneEntity';
 import { createEntityId } from '../ids';
 import { createComponent } from '../components';
@@ -6,7 +6,7 @@ import type { NameComponent, BoxGeometryComponent } from '../components';
 
 describe('cloneEntitySubtree', () => {
   it('clones a single entity with components', () => {
-    const template = createEntity(createEntityId('t1'), 'Template');
+    const template = createSpatialEntity(createEntityId('t1'), 'Template');
     addComponent(template, createComponent('name', { value: 'TestName' }));
     addComponent(template, createComponent('boxGeometry', { width: 2, height: 3, depth: 4 }));
 
@@ -31,8 +31,8 @@ describe('cloneEntitySubtree', () => {
   });
 
   it('clones entity hierarchy with parent-child', () => {
-    const parent = createEntity(createEntityId('p1'), 'Parent');
-    const child = createEntity(createEntityId('c1'), 'Child');
+    const parent = createSpatialEntity(createEntityId('p1'), 'Parent');
+    const child = createSpatialEntity(createEntityId('c1'), 'Child');
     addChild(parent, child);
     addComponent(parent, createComponent('name', { value: 'P' }));
     addComponent(child, createComponent('name', { value: 'C' }));
@@ -56,7 +56,7 @@ describe('cloneEntitySubtree', () => {
   });
 
   it('clone is independent from template', () => {
-    const template = createEntity(createEntityId('t1'));
+    const template = createSpatialEntity(createEntityId('t1'));
     addComponent(template, createComponent('name', { value: 'Original' }));
 
     const gen = () => createEntityId('clone-1');
@@ -71,7 +71,7 @@ describe('cloneEntitySubtree', () => {
   });
 
   it('preserves component enabled state', () => {
-    const template = createEntity(createEntityId('t1'));
+    const template = createSpatialEntity(createEntityId('t1'));
     const comp = createComponent('name', { value: 'X' });
     comp.enabled = false;
     addComponent(template, comp);

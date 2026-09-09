@@ -160,7 +160,7 @@ describe('Scenario: Dynamic entity with runtime-resolved script', () => {
     const scene = api.scene(sceneId);
     const view1a = scene.entity(mover1Id).view();
     expect(view1a.ok).toBe(true);
-    expect((view1a as { value: { transform: { localPosition: { x: number } } } }).value.transform.localPosition.x).toBeGreaterThan(0);
+    expect((view1a as { value: { transform: { localPosition: { x: number } } } }).value.transform!.localPosition.x).toBeGreaterThan(0);
 
     // 2. Spawn mover2 at runtime
     addEntityToScene(api, sceneId, mover2Id);
@@ -214,8 +214,8 @@ describe('Scenario: Dynamic entity with runtime-resolved script', () => {
     expect(entityIds).not.toContain(mover2Id);
 
     // Both remaining movers should have moved (x > 0)
-    const x1 = (view1 as { value: { transform: { localPosition: { x: number } } } }).value.transform.localPosition.x;
-    const x3 = (view3 as { value: { transform: { localPosition: { x: number } } } }).value.transform.localPosition.x;
+    const x1 = (view1 as { value: { transform: { localPosition: { x: number } } } }).value.transform!.localPosition.x;
+    const x3 = (view3 as { value: { transform: { localPosition: { x: number } } } }).value.transform!.localPosition.x;
     expect(x1).toBeGreaterThan(0);
     expect(x3).toBeGreaterThan(0);
   });

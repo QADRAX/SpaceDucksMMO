@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
-import { createEntity, createEntityId, createSceneId } from '@duckengine/core-v2';
+import {createSpatialEntity, createEntityId, createSceneId,
+  getTransform3d} from '@duckengine/core-v2';
 import {
   createScene,
   addEntityWithScripts,
@@ -15,10 +16,10 @@ describe('Built-in Script: Look at Entity', () => {
     const targetId = createEntityId('target');
 
     const scene = createScene(api, sceneId);
-    const looker = createEntity(lookerId);
+    const looker = createSpatialEntity(lookerId);
     scene.addEntity({ entity: looker });
-    const target = createEntity(targetId);
-    target.transform.localPosition = { x: 5, y: 0, z: 0 };
+    const target = createSpatialEntity(targetId);
+    getTransform3d(target)!.localPosition = { x: 5, y: 0, z: 0 };
     scene.addEntity({ entity: target });
 
     addEntityWithScripts(api, sceneId, lookerId, [{
@@ -34,7 +35,7 @@ describe('Built-in Script: Look at Entity', () => {
     api.update({ dt: 0.016 });
     const view = scene.entity(lookerId).view();
     if (view.ok) {
-      expect(view.value.transform.localRotation).toBeDefined();
+      expect(view.value.transform!.localRotation).toBeDefined();
     }
   });
 
@@ -45,8 +46,8 @@ describe('Built-in Script: Look at Entity', () => {
     const targetId = createEntityId('target');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(lookerId) });
-    scene.addEntity({ entity: createEntity(targetId) });
+    scene.addEntity({ entity: createSpatialEntity(lookerId) });
+    scene.addEntity({ entity: createSpatialEntity(targetId) });
 
     addEntityWithScripts(api, sceneId, lookerId, [{
       scriptId: 'builtin://look_at_entity.lua',
@@ -76,9 +77,9 @@ describe('Built-in Script: Look at Entity', () => {
     const targetId = createEntityId('target');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(lookerId) });
-    const target = createEntity(targetId);
-    target.transform.localPosition = { x: 5, y: 2, z: 0 };
+    scene.addEntity({ entity: createSpatialEntity(lookerId) });
+    const target = createSpatialEntity(targetId);
+    getTransform3d(target)!.localPosition = { x: 5, y: 2, z: 0 };
     scene.addEntity({ entity: target });
 
     addEntityWithScripts(api, sceneId, lookerId, [{
@@ -96,7 +97,7 @@ describe('Built-in Script: Look at Entity', () => {
     const view = scene.entity(lookerId).view();
     expect(view.ok).toBe(true);
     if (view.ok) {
-      expect(view.value.transform.localRotation).toBeDefined();
+      expect(view.value.transform!.localRotation).toBeDefined();
     }
   });
 });

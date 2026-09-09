@@ -2,7 +2,6 @@ import type { EntityState } from './types';
 import type { EntityId } from '../ids';
 import { createEntity } from './entity';
 import { addComponent, addChild } from './entity';
-import { copyTransform } from './transform';
 import { cloneComponent } from '../components/cloneComponent';
 
 /**
@@ -17,7 +16,7 @@ function collectIdsInOrder(entity: EntityState, out: EntityId[]): void {
 
 /**
  * Clones an entity subtree with new IDs. Does not add to any scene.
- * Parent-child relationships are restored. Transform is copied.
+ * Parent-child relationships are restored. transform3d pose is deep-copied when present.
  *
  * @param template - The root entity to clone (including its entire subtree).
  * @param idGenerator - Function that returns a new unique EntityId for each call.
@@ -43,11 +42,8 @@ export function cloneEntitySubtree(
       clone.debugFlags.set(kind, enabled);
     }
 
-    copyTransform(clone.transform, src.transform);
-
     for (const comp of src.components.values()) {
-      const clonedComp = cloneComponent(comp);
-      addComponent(clone, clonedComp);
+      addComponent(clone, cloneComponent(comp));
     }
 
     return clone;

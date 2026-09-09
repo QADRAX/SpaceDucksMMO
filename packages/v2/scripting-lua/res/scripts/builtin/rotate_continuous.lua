@@ -24,15 +24,19 @@ local RotateContinuous = {
 }
 
 function RotateContinuous:update(dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local props = self.properties
     local toRad = math.pi / 180
-    local rot = self.entity.components.transform.getRotation()
+    local rot = transform.getRotation()
+    if not rot then return end
 
     rot.x = rot.x + props.speedX * toRad * dt
     rot.y = rot.y + props.speedY * toRad * dt
     rot.z = rot.z + props.speedZ * toRad * dt
 
-    self.entity.components.transform.setRotation(rot)
+    transform.setRotation(rot)
 end
 
 return RotateContinuous

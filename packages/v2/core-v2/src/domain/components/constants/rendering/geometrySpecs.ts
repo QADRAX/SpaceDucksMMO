@@ -19,6 +19,7 @@ const GEO_BASE = {
   category: 'Rendering' as const,
   unique: true,
   conflicts: ['skybox'] as const,
+  requires: ['transform3d'] as const,
 };
 
 export const BOX_GEOMETRY_SPEC: ComponentSpec<BoxGeometryComponent> = {

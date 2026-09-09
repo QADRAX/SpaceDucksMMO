@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 import { createComponent } from '../../components';
-import { addComponent, addChild, createEntity } from '../../entities';
+import { addComponent, addChild, createSpatialEntity } from '../../entities';
 import { createScene } from '../../scene';
 import { buildEntityAPI } from './buildEntityAPI';
 import { createEntityId, createSceneId } from '../../ids';
@@ -10,7 +10,7 @@ describe('buildEntityAPI', () => {
   it('allows writing self entity display name', () => {
     const scene = createScene(createSceneId('scene'));
     const selfId = createEntityId('self');
-    const self = createEntity(selfId, 'Self Name');
+    const self = createSpatialEntity(selfId, 'Self Name');
     scene.entities.set(self.id, self);
 
     const api = buildEntityAPI(self, scene, true, {});
@@ -23,8 +23,8 @@ describe('buildEntityAPI', () => {
     const scene = createScene(createSceneId('scene'));
     const selfId = createEntityId('self');
     const otherId = createEntityId('other');
-    const self = createEntity(selfId, 'Self Name');
-    const other = createEntity(otherId, 'Other Name');
+    const self = createSpatialEntity(selfId, 'Self Name');
+    const other = createSpatialEntity(otherId, 'Other Name');
     scene.entities.set(self.id, self);
     scene.entities.set(other.id, other);
 
@@ -38,7 +38,7 @@ describe('buildEntityAPI', () => {
   it('allows destroying self entity', () => {
     const scene = createScene(createSceneId('scene'));
     const selfId = createEntityId('self');
-    const self = createEntity(selfId, 'Self Name');
+    const self = createSpatialEntity(selfId, 'Self Name');
     scene.entities.set(self.id, self);
 
     const api = buildEntityAPI(self, scene, true, {});
@@ -50,7 +50,7 @@ describe('buildEntityAPI', () => {
   it('allows access to all components because having EntityAPI is a capability', () => {
     const scene = createScene(createSceneId('scene'));
     const selfId = createEntityId('self');
-    const self = createEntity(selfId);
+    const self = createSpatialEntity(selfId);
     scene.entities.set(self.id, self);
 
     addComponent(self, createComponent('rigidBody'));
@@ -65,7 +65,7 @@ describe('buildEntityAPI', () => {
   it('allows access to all sibling scripts', () => {
     const scene = createScene(createSceneId('scene'));
     const selfId = createEntityId('self');
-    const self = createEntity(selfId);
+    const self = createSpatialEntity(selfId);
     scene.entities.set(self.id, self);
 
     addComponent(
@@ -89,9 +89,9 @@ describe('buildEntityAPI', () => {
     const selfId = createEntityId('self');
     const allowedId = createEntityId('allowed');
     const hiddenId = createEntityId('hidden');
-    const self = createEntity(selfId);
-    const allowedChild = createEntity(allowedId);
-    const hiddenChild = createEntity(hiddenId);
+    const self = createSpatialEntity(selfId);
+    const allowedChild = createSpatialEntity(allowedId);
+    const hiddenChild = createSpatialEntity(hiddenId);
 
     addChild(self, allowedChild);
     addChild(self, hiddenChild);
@@ -102,7 +102,7 @@ describe('buildEntityAPI', () => {
 
     const api = buildEntityAPI(self, scene, true);
 
-    expect(api.transform.children.map((child) => child.id)).toContain(allowedId);
-    expect(api.transform.children.map((child) => child.id)).toContain(hiddenId);
+    expect(api.transform!.children.map((child) => child.id)).toContain(allowedId);
+    expect(api.transform!.children.map((child) => child.id)).toContain(hiddenId);
   });
 });

@@ -37,7 +37,9 @@ function FirstPersonLook:update(dt)
 
     ---@type TransformV2
     local transform = self.entity.components.transform
+    if not transform.has() then return end
     local rot = transform.getRotation()
+    if not rot then return end
     local euler = math.vec3.new(rot.x, rot.y, rot.z)
 
     euler.y = euler.y + yaw

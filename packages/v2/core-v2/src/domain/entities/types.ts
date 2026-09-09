@@ -59,10 +59,10 @@ export interface TransformState {
 /**
  * Mutable entity state used internally by the engine.
  * All mutation functions operate on this type directly.
+ * Pose is optional via the `transform3d` component — not a field here.
  */
 export interface EntityState {
   readonly id: EntityId;
-  readonly transform: TransformState;
   readonly components: Map<ComponentType, ComponentBase>;
   /** Set of component types present on this entity. Kept in sync with components for O(1) "has any of these types" checks. */
   readonly componentTypes: Set<ComponentType>;

@@ -3,6 +3,7 @@ import type { MeshGeometryFileData } from '../resources/meshGeometry';
 import { MAT4_FLOATS, multiplyMat4ColumnMajor, worldMatrixColumnMajorFromTransform } from '../math/mat4';
 import type { JointComponent } from '../components/types/rendering/joint';
 import { getComponent } from '../entities/entity';
+import { getTransform3d } from '../entities/transform3dAccess';
 
 /**
  * Returns true if `entity` is `rigRoot` or a descendant in the entity parent chain.
@@ -209,7 +210,9 @@ export function computeSkinMatricesColumnMajor(
 
   const out = new Array<number>(jc * MAT4_FLOATS);
   for (let j = 0; j < jc; j++) {
-    const world = worldMatrixColumnMajorFromTransform(jointEntitiesOrderedByPalette[j].transform);
+    const world = worldMatrixColumnMajorFromTransform(
+      getTransform3d(jointEntitiesOrderedByPalette[j])!,
+    );
     const skin = multiplyMat4ColumnMajor(world, inverseBindMatrices, j * MAT4_FLOATS);
     for (let k = 0; k < MAT4_FLOATS; k++) out[j * MAT4_FLOATS + k] = skin[k];
   }

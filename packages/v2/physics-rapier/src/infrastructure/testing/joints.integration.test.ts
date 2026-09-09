@@ -2,7 +2,7 @@
  * Integration tests for rigid body composition with joints (parent-child linked bodies).
  * Tests fixed, revolute, and spherical jointToParent. Engine + physics only, no scripting.
  */
-import { createSceneId, createEntityId, createEntity } from '@duckengine/core-v2';
+import { createSceneId, createEntityId, createSpatialEntity } from '@duckengine/core-v2';
 import { setupPhysicsIntegrationTest } from './setup';
 import {
   addSceneWithParentChild,
@@ -22,7 +22,7 @@ describe('Physics joints integration (rigid body composition)', () => {
     const childId = createEntityId('child');
 
     addSceneWithParentChild(api, sceneId, parentId, childId);
-    api.scene(sceneId).addEntity({ entity: createEntity(floorId) });
+    api.scene(sceneId).addEntity({ entity: createSpatialEntity(floorId) });
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     setEntityPosition(engine, sceneId, floorId, 0, 0, 0);
 
@@ -55,7 +55,7 @@ describe('Physics joints integration (rigid body composition)', () => {
     const childId = createEntityId('child');
 
     addSceneWithParentChild(api, sceneId, parentId, childId);
-    api.scene(sceneId).addEntity({ entity: createEntity(floorId) });
+    api.scene(sceneId).addEntity({ entity: createSpatialEntity(floorId) });
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     setEntityPosition(engine, sceneId, floorId, 0, 0, 0);
 
@@ -89,7 +89,7 @@ describe('Physics joints integration (rigid body composition)', () => {
     const childId = createEntityId('child');
 
     addSceneWithParentChild(api, sceneId, parentId, childId);
-    api.scene(sceneId).addEntity({ entity: createEntity(floorId) });
+    api.scene(sceneId).addEntity({ entity: createSpatialEntity(floorId) });
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     setEntityPosition(engine, sceneId, floorId, 0, 0, 0);
 
@@ -134,7 +134,7 @@ describe('Physics joints integration (rigid body composition)', () => {
     const childId = createEntityId('child');
 
     addSceneWithParentChild(api, sceneId, parentId, childId);
-    api.scene(sceneId).addEntity({ entity: createEntity(floorId) });
+    api.scene(sceneId).addEntity({ entity: createSpatialEntity(floorId) });
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
     setEntityPosition(engine, sceneId, floorId, 0, 0, 0);
 

@@ -8,6 +8,8 @@ import {
   addChild,
   createComponent,
   createEntityId,
+  getComponentMetadata,
+  hasTransform3d,
 } from '@duckengine/core-v2';
 import type { EntityState } from '@duckengine/core-v2';
 import type { CreatableComponentType } from '@duckengine/core-v2';
@@ -32,6 +34,20 @@ export function buildEntitiesFromDefinition(
   return ok(entities);
 }
 
+/**
+ * Auto-adds identity transform3d when a component requires it and none exists yet.
+ * YAML authors can still set pose via top-level `transform:` sugar.
+ */
+function ensureTransform3dForRequires(
+  entity: EntityState,
+  componentType: CreatableComponentType,
+): void {
+  const meta = getComponentMetadata(componentType);
+  if (meta.requires?.includes('transform3d') && !hasTransform3d(entity)) {
+    addComponent(entity, createComponent('transform3d'));
+  }
+}
+
 function buildEntityFromDefinition(def: EntityDefinition): Result<EntityState> {
   const id = createEntityId(def.id);
   const entity = createEntity(id, def.displayName ?? def.id);
@@ -43,6 +59,7 @@ function buildEntityFromDefinition(def: EntityDefinition): Result<EntityState> {
   if (def.components) {
     for (const [compType, value] of Object.entries(def.components)) {
       const type = compType as CreatableComponentType;
+      ensureTransform3dForRequires(entity, type);
       const overrides = buildComponentOverrides(type, value);
       const comp = createComponent(type, overrides as any);
       const r = addComponent(entity, comp);

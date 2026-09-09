@@ -20,6 +20,7 @@ import {
   PHYSICS_SPECS,
   SCRIPTING_SPECS,
   RIGGING_SPECS,
+  TRANSFORM_SPECS,
 } from '@duckengine/core-v2';
 import { ok, err, type Result } from '@duckengine/core-v2';
 import type {
@@ -30,6 +31,7 @@ import type {
 } from './sceneDefinition';
 
 const ALL_SPECS: Record<string, unknown> = {
+  ...TRANSFORM_SPECS,
   ...IDENTITY_SPECS,
   ...GEOMETRY_SPECS,
   ...MATERIAL_SPECS,
@@ -157,6 +159,13 @@ function validateEntity(entity: EntityDefinition, path: string): Result<void> {
   }
   if (entity.id.trim().length === 0) {
     return fail(`${path}.id`, 'Entity id cannot be empty');
+  }
+
+  if (entity.transform && entity.components?.transform3d !== undefined) {
+    return fail(
+      path,
+      'Cannot use both top-level transform: sugar and components.transform3d',
+    );
   }
 
   if (entity.transform) {

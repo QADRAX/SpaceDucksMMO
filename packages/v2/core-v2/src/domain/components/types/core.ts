@@ -13,6 +13,7 @@ import type {
  * Each component carries exactly one of these string literals as its `type` field.
  */
 export type ComponentType =
+    | 'transform3d'
     | 'name'
     | 'boxGeometry'
     | 'sphereGeometry'
@@ -178,7 +179,12 @@ export interface ComponentBase<
 > {
     readonly type: TType;
     readonly metadata: ComponentMetadata<TSelf>;
-    enabled: boolean;
+    /**
+     * Soft runtime toggle for components that support enable/disable
+     * (animator, materials, lights, etc.). Omitted on structural components
+     * such as `transform3d`, where presence of the component is the only switch.
+     */
+    enabled?: boolean;
 }
 
 /** Fired when a component is added to or removed from an entity. */

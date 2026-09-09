@@ -36,6 +36,9 @@ local SmoothLookAt = {
 }
 
 function SmoothLookAt:update(dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local target = self.references.targetEntityId
     if not target or not target.components then return end
 
@@ -54,7 +57,8 @@ function SmoothLookAt:update(dt)
     local desiredY = tpRaw.y + oy
     local desiredZ = tpRaw.z + oz
 
-    local cur = self.entity.components.transform.getPosition()
+    local cur = transform.getPosition()
+    if not cur then return end
     local dirX = desiredX - cur.x
     local dirY = desiredY - cur.y
     local dirZ = desiredZ - cur.z
@@ -63,7 +67,8 @@ function SmoothLookAt:update(dt)
     local horizontalDist = math.sqrt(dirX * dirX + dirZ * dirZ)
     local desiredPitch   = -math.atan(dirY, horizontalDist)
 
-    local rot = self.entity.components.transform.getRotation()
+    local rot = transform.getRotation()
+    if not rot then return end
 
     local raw = math.ext.clamp(speed * dt, 0, 1)
     local t   = math.ext.ease(props.easing or "sineOut", raw)
@@ -71,7 +76,7 @@ function SmoothLookAt:update(dt)
     local newPitch = lerpAngle(rot.x, desiredPitch, t)
     local newYaw   = lerpAngle(rot.y, desiredYaw, t)
 
-    self.entity.components.transform.setRotation(newPitch, newYaw, 0)
+    transform.setRotation(newPitch, newYaw, 0)
 end
 
 return SmoothLookAt

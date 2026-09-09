@@ -36,7 +36,7 @@ describe('createComponent – shared structure', () => {
   it.each(ALL_TYPES)('%s → has type, enabled, metadata', (type) => {
     const c = createComponent(type);
     expect(c.type).toBe(type);
-    expect(c.enabled).toBe(true);
+    expect((c as { enabled?: boolean }).enabled).toBe(true);
     expect(c.metadata).toBeDefined();
     expect(c.metadata.type).toBe(type);
   });

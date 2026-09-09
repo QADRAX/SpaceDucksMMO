@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
-import { createEntity, createEntityId, createSceneId } from '@duckengine/core-v2';
+import {createSpatialEntity, createEntityId, createSceneId,
+  getTransform3d} from '@duckengine/core-v2';
 import {
   createScene,
   addEntityWithScripts,
@@ -16,9 +17,9 @@ describe('Built-in Script: Orbit Camera', () => {
     const targetId = createEntityId('target');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(orbiterId) });
-    const target = createEntity(targetId);
-    target.transform.localPosition = { x: 0, y: 0, z: 0 };
+    scene.addEntity({ entity: createSpatialEntity(orbiterId) });
+    const target = createSpatialEntity(targetId);
+    getTransform3d(target)!.localPosition = { x: 0, y: 0, z: 0 };
     scene.addEntity({ entity: target });
 
     addEntityWithScripts(api, sceneId, orbiterId, [{
@@ -39,7 +40,7 @@ describe('Built-in Script: Orbit Camera', () => {
       runFrames(api, 30, 0.016);
       const view1 = scene.entity(orbiterId).view();
       if (view1.ok) {
-        const pos = view1.value.transform.localPosition;
+        const pos = view1.value.transform!.localPosition;
         const dist = Math.sqrt(pos.x * pos.x + pos.z * pos.z);
         expect(dist).toBeCloseTo(6, 0);
       }
@@ -53,9 +54,9 @@ describe('Built-in Script: Orbit Camera', () => {
     const targetId = createEntityId('target');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(orbiterId) });
-    const target = createEntity(targetId);
-    target.transform.localPosition = { x: 0, y: 0, z: 0 };
+    scene.addEntity({ entity: createSpatialEntity(orbiterId) });
+    const target = createSpatialEntity(targetId);
+    getTransform3d(target)!.localPosition = { x: 0, y: 0, z: 0 };
     scene.addEntity({ entity: target });
 
     addEntityWithScripts(api, sceneId, orbiterId, [{
@@ -74,7 +75,7 @@ describe('Built-in Script: Orbit Camera', () => {
     runFrames(api, 30, 0.016);
     const view = scene.entity(orbiterId).view();
     if (view.ok) {
-      const pos = view.value.transform.localPosition;
+      const pos = view.value.transform!.localPosition;
       const dist = Math.sqrt(pos.x * pos.x + pos.y * pos.y);
       expect(dist).toBeCloseTo(6, 0);
     }
@@ -87,9 +88,9 @@ describe('Built-in Script: Orbit Camera', () => {
     const targetId = createEntityId('target');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(orbiterId) });
-    const target = createEntity(targetId);
-    target.transform.localPosition = { x: 0, y: 0, z: 0 };
+    scene.addEntity({ entity: createSpatialEntity(orbiterId) });
+    const target = createSpatialEntity(targetId);
+    getTransform3d(target)!.localPosition = { x: 0, y: 0, z: 0 };
     scene.addEntity({ entity: target });
 
     addEntityWithScripts(api, sceneId, orbiterId, [{
@@ -108,7 +109,7 @@ describe('Built-in Script: Orbit Camera', () => {
     runFrames(api, 30, 0.016);
     const view = scene.entity(orbiterId).view();
     if (view.ok) {
-      const pos = view.value.transform.localPosition;
+      const pos = view.value.transform!.localPosition;
       const dist = Math.sqrt(pos.y * pos.y + pos.z * pos.z);
       expect(dist).toBeCloseTo(6, 0);
     }
@@ -121,8 +122,8 @@ describe('Built-in Script: Orbit Camera', () => {
     const targetId = createEntityId('target');
 
     const scene = createScene(api, sceneId);
-    scene.addEntity({ entity: createEntity(orbiterId) });
-    scene.addEntity({ entity: createEntity(targetId) });
+    scene.addEntity({ entity: createSpatialEntity(orbiterId) });
+    scene.addEntity({ entity: createSpatialEntity(targetId) });
 
     addEntityWithScripts(api, sceneId, orbiterId, [{
       scriptId: 'builtin://orbit_camera.lua',

@@ -1,6 +1,6 @@
 import type { EntityState, ResourceRef, MeshGeometryFileData } from '@duckengine/core-v2';
 import type { ColliderComponent, RigidBodyComponent, TrimeshColliderComponent } from '@duckengine/core-v2';
-import { getComponent, ensureClean, createComponent } from '@duckengine/core-v2';
+import { getComponent, ensureClean, createComponent, getTransform3d } from '@duckengine/core-v2';
 import type { World, Collider, ColliderDesc } from '@dimforge/rapier3d-compat';
 import { getColliderComponent, getLocalPoseRelativeTo } from '../domain';
 import type { RapierModule } from './rapier';
@@ -154,8 +154,11 @@ export function createRapierColliders(options?: CreateRapierCollidersOptions): R
       bodyOwner = entity;
     }
     if (!body || !bodyOwner) return;
-    ensureClean(entity.transform);
-    ensureClean(bodyOwner.transform);
+    const entityState = getTransform3d(entity);
+    const ownerState = getTransform3d(bodyOwner);
+    if (!entityState || !ownerState) return;
+    ensureClean(entityState);
+    ensureClean(ownerState);
     const local = getLocalPoseRelativeTo(bodyOwner, entity);
     const { desc, localCenterShift } = createColliderDesc(R, col, local.scale, getMeshData);
     callOpt(desc, 'setTranslation', local.pos.x + localCenterShift.x, local.pos.y + localCenterShift.y, local.pos.z + localCenterShift.z);

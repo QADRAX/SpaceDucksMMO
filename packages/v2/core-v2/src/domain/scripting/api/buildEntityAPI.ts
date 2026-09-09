@@ -5,6 +5,7 @@ import { buildScriptsAPI } from './buildScriptsAPI';
 import { buildTransformAPI } from './buildTransformAPI';
 import type { EntityAPI, ScriptAPIBuildContext } from './types';
 import type { EntityId } from '../../ids';
+import { getTransform3d } from '../../entities/transform3dAccess';
 
 function defaultDestroyEntity(scene: SceneState, entityId: EntityId): boolean {
   return scene.entities.delete(entityId);
@@ -36,13 +37,9 @@ export function buildEntityAPI(
     },
 
     get transform() {
-      return buildTransformAPI(
-        entity.transform,
-        entity,
-        scene,
-        isSelf,
-        resolveEntityAPI,
-      );
+      // Null when missing or disabled (same contract as getTransform3d / EntityView).
+      if (!getTransform3d(entity)) return null;
+      return buildTransformAPI(entity, scene, isSelf, resolveEntityAPI);
     },
 
     get components() {
@@ -79,11 +76,5 @@ export function buildEntityRefAPI(
   if (!entity) {
     return null;
   }
-
-  return buildEntityAPI(
-    entity,
-    scene,
-    isSelf,
-    context,
-  );
+  return buildEntityAPI(entity, scene, isSelf, context);
 }

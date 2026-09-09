@@ -1,67 +1,75 @@
 ---@meta
 -- ═══════════════════════════════════════════════════════════════════════
 -- DuckEngine Lua API v2 — Transform
--- Transform component for position, rotation, and scale manipulation.
+-- Facade over ECS component `transform3d` (not a separate entity field).
+-- Soft null-logic: missing or disabled pose → has()=false, getters nil, setters false.
 -- SOURCE OF TRUTH: transformBridge.ts (createScopedBridge injects entityId).
 -- ═══════════════════════════════════════════════════════════════════════
 
----Transform component for spatial manipulation.
----All getters return a table `{x, y, z}` which behaves like a Vec3V2.
----All setters support either a Vec3V2 table or three numbers (x, y, z).
+---Pose facade for spatial manipulation (active transform3d only).
+---Access via `self.Transform`, `self.entity.components.transform`, or
+---`self.entity.components.transform3d` (alias).
 ---@class TransformV2
 local TransformV2 = {}
 
----Get the WORLD position of the entity.
----@return Vec3V2
+---True when this entity has an active (present + enabled) transform3d.
+---@return boolean
+function TransformV2.has() end
+
+---Get the WORLD position of the entity, or nil if no active pose.
+---@return Vec3V2|nil
 function TransformV2.getPosition() end
 
----Set the WORLD position of the entity.
+---Set the WORLD position. Returns false if no active pose.
 ---@param x Vec3V2|number The new position vector, or X coordinate.
 ---@param y number|nil Y coordinate (if x is a number).
 ---@param z number|nil Z coordinate (if x is a number).
+---@return boolean
 function TransformV2.setPosition(x, y, z) end
 
----Get the WORLD rotation (Euler YXZ in radians).
----@return Vec3V2
+---Get the WORLD rotation (Euler YXZ in radians), or nil if no active pose.
+---@return Vec3V2|nil
 function TransformV2.getRotation() end
 
----Set the WORLD rotation (Euler YXZ in radians).
+---Set the WORLD rotation (Euler YXZ in radians). Returns false if no active pose.
 ---@param x Vec3V2|number The new rotation vector, or X coordinate.
 ---@param y number|nil Y coordinate (if x is a number).
 ---@param z number|nil Z coordinate (if x is a number).
+---@return boolean
 function TransformV2.setRotation(x, y, z) end
 
----Get the WORLD scale.
----@return Vec3V2
+---Get the WORLD scale, or nil if no active pose.
+---@return Vec3V2|nil
 function TransformV2.getScale() end
 
----Set the WORLD scale.
+---Set the WORLD scale. Returns false if no active pose.
 ---@param x Vec3V2|number The new scale vector, or X coordinate.
 ---@param y number|nil Y coordinate (if x is a number).
 ---@param z number|nil Z coordinate (if x is a number).
+---@return boolean
 function TransformV2.setScale(x, y, z) end
 
----Get the LOCAL position of the entity.
----@return Vec3V2
+---Get the LOCAL position, or nil if no active pose.
+---@return Vec3V2|nil
 function TransformV2.getLocalPosition() end
 
----Get the LOCAL rotation (Euler YXZ in radians).
----@return Vec3V2
+---Get the LOCAL rotation (Euler YXZ in radians), or nil if no active pose.
+---@return Vec3V2|nil
 function TransformV2.getLocalRotation() end
 
----Get the LOCAL scale.
----@return Vec3V2
+---Get the LOCAL scale, or nil if no active pose.
+---@return Vec3V2|nil
 function TransformV2.getLocalScale() end
 
----Make this transform look at a target world position.
+---Make this transform look at a target world position. Returns false if no active pose.
 ---@param target Vec3V2 World position to look at.
+---@return boolean
 function TransformV2.lookAt(target) end
 
----Get the normalized forward direction (-Z rotated by world rotation).
----@return Vec3V2
+---Get the normalized forward direction (-Z), or nil if no active pose.
+---@return Vec3V2|nil
 function TransformV2.getForward() end
 
----Get the normalized right direction (+X rotated by world rotation).
----@return Vec3V2
+---Get the normalized right direction (+X), or nil if no active pose.
+---@return Vec3V2|nil
 function TransformV2.getRight() end
-

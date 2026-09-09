@@ -67,10 +67,13 @@ function FollowEntity:update(dt)
     local desiredY = targetPos.y + (offset.y or offset[2] or 0)
     local desiredZ = targetPos.z + (offset.z or offset[3] or 0)
 
-    local cur = self.entity.components.transform.getPosition()
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+    local cur = transform.getPosition()
+    if not cur then return end
     local t = math.min(1, speed * dt)
 
-    self.entity.components.transform.setPosition(
+    transform.setPosition(
         math.ext.lerp(cur.x, desiredX, t),
         math.ext.lerp(cur.y, desiredY, t),
         math.ext.lerp(cur.z, desiredZ, t)

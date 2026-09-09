@@ -19,11 +19,14 @@ local LookAtPoint = {
 }
 
 function LookAtPoint:update(_dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local targetPoint = self.properties.targetPoint
     if not targetPoint then return end
 
     local target = math.vec3.new(targetPoint.x, targetPoint.y, targetPoint.z)
-    self.entity.components.transform.lookAt(target)
+    transform.lookAt(target)
 end
 
 return LookAtPoint

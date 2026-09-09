@@ -28,13 +28,18 @@ local Bounce = {
 }
 
 function Bounce:init()
-    local pos = self.entity.components.transform.getLocalPosition()
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+    local pos = transform.getLocalPosition()
     self.state = {
         origin = pos
     }
 end
 
 function Bounce:update(_dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local props  = self.properties
     local origin = self.state.origin
     if not origin then return end
@@ -51,7 +56,7 @@ function Bounce:update(_dt)
     else
         pos.y = pos.y + offset
     end
-    self.entity.components.transform.setPosition(pos)
+    transform.setPosition(pos)
 end
 
 return Bounce

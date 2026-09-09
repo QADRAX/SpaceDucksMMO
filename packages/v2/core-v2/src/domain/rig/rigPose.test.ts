@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 import { createEntityId } from '../ids';
-import { createEntity, addChild, addComponent } from '../entities/entity';
+import { createEntity, createSpatialEntity, addChild, addComponent } from '../entities/entity';
 import { createComponent } from '../components/factory';
 import {
   collectJointEntitiesInRigSubtree,
@@ -94,7 +94,7 @@ describe('rigPose', () => {
 
   it('computeSkinMatricesColumnMajor yields identity for identity pose and IBM', () => {
     const rig = createEntity(createEntityId('rig'));
-    const bone = createEntity(createEntityId('bone'));
+    const bone = createSpatialEntity(createEntityId('bone'));
     addChild(rig, bone);
     addComponent(bone, createComponent('joint', { jointIndex: 0 }));
 

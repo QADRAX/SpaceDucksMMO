@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from '@jest/globals';
 import { setupIntegrationTest, createSceneId, createEntityId } from '../setup';
 import type { TestContext } from '../setup';
 import { createComponent, getComponentMetadata } from '../../../domain/components/factory';
-import { createEntity, addChild } from '../../../domain/entities/entity';
+import { createEntity, createSpatialEntity, addChild } from '../../../domain/entities/entity';
 import type { CreatableComponentType } from '../../../domain/components/types/factory';
 import type { EntityId } from '../../../domain/ids';
 
@@ -19,8 +19,10 @@ import { LIGHT_SPECS } from '../../../domain/components/constants/rendering/ligh
 import { EFFECT_SPECS } from '../../../domain/components/constants/rendering/effects';
 import { ENVIRONMENT_SPECS } from '../../../domain/components/constants/rendering/environment';
 import { PHYSICS_SPECS } from '../../../domain/components/constants/physics/physicsSpecs';
+import { TRANSFORM_SPECS } from '../../../domain/components/constants/transform';
 
 const ALL_SPECS = {
+    ...TRANSFORM_SPECS,
     ...IDENTITY_SPECS,
     ...GEOMETRY_SPECS,
     ...MATERIAL_SPECS,
@@ -94,7 +96,7 @@ describe('Integration: Entity > addComponent (Bulk)', () => {
                     const parentId = createEntityId(`p_${targetId}`);
                     let parent = ctx.engine.scenes.get(MAIN_SCENE)?.entities.get(parentId);
                     if (!parent) {
-                        ctx.api.scene(MAIN_SCENE).addEntity({ entity: createEntity(parentId) });
+                        ctx.api.scene(MAIN_SCENE).addEntity({ entity: createSpatialEntity(parentId) });
                         const updatedParent = ctx.engine.scenes.get(MAIN_SCENE)!.entities.get(parentId)!;
                         const child = ctx.engine.scenes.get(MAIN_SCENE)!.entities.get(targetId)!;
                         addChild(updatedParent, child);

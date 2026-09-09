@@ -40,11 +40,13 @@ import type {
   TrimeshColliderComponent,
 } from './physics';
 import type { NameComponent, ScriptComponent } from './gameplay';
+import type { Transform3dComponent, Transform3dCreateOverride } from './transform';
 /** Component types that can be created through the generic factory. */
 export type CreatableComponentType = Exclude<ComponentType, 'metadata'>;
 
 /** Strongly-typed component result by type discriminator. */
 export interface ComponentByType {
+  transform3d: Transform3dComponent;
   name: NameComponent;
   boxGeometry: BoxGeometryComponent;
   sphereGeometry: SphereGeometryComponent;
@@ -89,9 +91,9 @@ export interface ComponentByType {
 type NonCreatableKeys = 'type' | 'metadata' | 'enabled';
 
 /** Override payload accepted when creating a component of a specific type. */
-export type ComponentCreateOverride<T extends CreatableComponentType> = Partial<
-  Omit<ComponentByType[T], NonCreatableKeys>
->;
+export type ComponentCreateOverride<T extends CreatableComponentType> = T extends 'transform3d'
+  ? Transform3dCreateOverride
+  : Partial<Omit<ComponentByType[T], NonCreatableKeys>>;
 
 /** Override payload map accepted by the generic component factory. */
 export type ComponentCreateParams = {

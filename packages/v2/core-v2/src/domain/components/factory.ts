@@ -16,6 +16,11 @@ import { ENVIRONMENT_SPECS } from './constants/rendering/environment';
 import { PHYSICS_SPECS } from './constants/physics/physicsSpecs';
 import { IDENTITY_SPECS } from './constants/gameplay/identity';
 import { SCRIPTING_SPECS } from './constants/gameplay/scripting';
+import {
+  TRANSFORM_SPECS,
+  createTransform3dComponent,
+  type Transform3dCreateOverride,
+} from './constants/transform';
 
 /** Central registry of all component specs (metadata + defaults). */
 const COMPONENT_SPECS: {
@@ -24,6 +29,7 @@ const COMPONENT_SPECS: {
     defaults: Record<string, unknown>;
   };
 } = {
+  ...TRANSFORM_SPECS,
   ...IDENTITY_SPECS,
   ...GEOMETRY_SPECS,
   ...MATERIAL_SPECS,
@@ -48,6 +54,11 @@ export function createComponent<T extends CreatableComponentType>(
   type: T,
   overrides?: ComponentCreateParams[T],
 ): ComponentByType[T] {
+  if (type === 'transform3d') {
+    return createTransform3dComponent(
+      overrides as Transform3dCreateOverride | undefined,
+    ) as ComponentByType[T];
+  }
   const spec = COMPONENT_SPECS[type];
   return {
     type,

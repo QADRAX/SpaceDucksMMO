@@ -24,6 +24,9 @@ local LookAtEntity = {
 }
 
 function LookAtEntity:update(_dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local target = self.references.targetEntityId
     if not target or not target.components then return end
 
@@ -36,7 +39,7 @@ function LookAtEntity:update(_dt)
         tpRaw.y + (offset.y or 0),
         tpRaw.z + (offset.z or 0)
     )
-    self.entity.components.transform.lookAt(targetPos)
+    transform.lookAt(targetPos)
 end
 
 return LookAtEntity

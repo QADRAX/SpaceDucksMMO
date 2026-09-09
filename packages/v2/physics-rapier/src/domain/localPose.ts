@@ -5,6 +5,7 @@ import {
   quatFromEulerYXZ,
   quatMul,
   quatNormalize,
+  getTransform3d,
 } from '@duckengine/core-v2';
 
 export interface LocalPose {
@@ -39,10 +40,12 @@ export function getLocalPoseRelativeTo(
   let rot: LocalPose['rot'] = { x: 0, y: 0, z: 0, w: 1 };
   let scale = { x: 1, y: 1, z: 1 };
   for (const node of path.reverse()) {
-    ensureClean(node.transform);
-    const lp = node.transform.localPosition;
-    const lq = quatNormalize(quatFromEulerYXZ(node.transform.localRotation));
-    const ls = node.transform.localScale;
+    const nodeState = getTransform3d(node);
+    if (!nodeState) continue;
+    ensureClean(nodeState);
+    const lp = nodeState.localPosition;
+    const lq = quatNormalize(quatFromEulerYXZ(nodeState.localRotation));
+    const ls = nodeState.localScale;
     const rotated = applyQuatToVec(lp, rot);
     pos = {
       x: pos.x + rotated.x * scale.x,

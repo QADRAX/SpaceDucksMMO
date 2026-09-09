@@ -28,11 +28,11 @@ describe('Built-in Script: Rotate Continuous', () => {
 
     const view0 = scene.entity(entityId).view();
     if (view0.ok) {
-      const rot0 = view0.value.transform.localRotation.y;
+      const rot0 = view0.value.transform!.localRotation.y;
       runFrames(api, 30, 0.016);
       const view1 = scene.entity(entityId).view();
       if (view1.ok) {
-        const rot1 = view1.value.transform.localRotation.y;
+        const rot1 = view1.value.transform!.localRotation.y;
         expect(rot1).not.toBe(rot0);
       }
     }
@@ -57,11 +57,11 @@ describe('Built-in Script: Rotate Continuous', () => {
 
     const view0 = scene.entity(entityId).view();
     if (view0.ok) {
-      const rot0 = view0.value.transform.localRotation.x;
+      const rot0 = view0.value.transform!.localRotation.x;
       runFrames(api, 30, 0.016);
       const view1 = scene.entity(entityId).view();
       if (view1.ok) {
-        const rot1 = view1.value.transform.localRotation.x;
+        const rot1 = view1.value.transform!.localRotation.x;
         expect(rot1).not.toBe(rot0);
       }
     }
@@ -86,11 +86,11 @@ describe('Built-in Script: Rotate Continuous', () => {
 
     const view0 = scene.entity(entityId).view();
     if (view0.ok) {
-      const rot0 = view0.value.transform.localRotation.z;
+      const rot0 = view0.value.transform!.localRotation.z;
       runFrames(api, 30, 0.016);
       const view1 = scene.entity(entityId).view();
       if (view1.ok) {
-        const rot1 = view1.value.transform.localRotation.z;
+        const rot1 = view1.value.transform!.localRotation.z;
         expect(rot1).not.toBe(rot0);
       }
     }
@@ -115,11 +115,11 @@ describe('Built-in Script: Rotate Continuous', () => {
 
     const view0 = scene.entity(entityId).view();
     if (view0.ok) {
-      const rot0 = { ...view0.value.transform.localRotation };
+      const rot0 = { ...view0.value.transform!.localRotation };
       runFrames(api, 30, 0.016);
       const view1 = scene.entity(entityId).view();
       if (view1.ok) {
-        const rot1 = view1.value.transform.localRotation;
+        const rot1 = view1.value.transform!.localRotation;
         expect(rot1.x).not.toBe(rot0.x);
         expect(rot1.y).not.toBe(rot0.y);
         expect(rot1.z).not.toBe(rot0.z);

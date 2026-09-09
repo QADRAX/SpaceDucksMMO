@@ -2,6 +2,14 @@ export * from './types';
 export {
   createTransform,
   ensureClean,
+  getPosition,
+  getLocalPosition,
+  getRotation,
+  getAngle,
+  getLocalRotation,
+  getLocalAngle,
+  getScale,
+  getLocalScale,
   setPosition,
   setRotation,
   setRotationFromQuaternion,
@@ -39,6 +47,7 @@ export { cloneEntitySubtree } from './cloneEntity';
 
 export {
   createEntity,
+  createSpatialEntity,
   addComponent,
   removeComponent,
   getComponent,
@@ -57,5 +66,13 @@ export {
   getChild,
   getChildren,
 } from './entity';
+
+export {
+  hasTransform3d,
+  getTransform3d,
+  requireTransform3d,
+  findNearestAncestorTransform3d,
+  reconcileTransform3dParent,
+} from './transform3dAccess';
 
 export { type EntityView, createEntityView } from './entityView';

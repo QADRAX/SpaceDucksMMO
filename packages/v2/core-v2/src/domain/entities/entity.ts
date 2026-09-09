@@ -5,15 +5,16 @@ import { ok, err } from '../utils';
 import type { EntityState } from './types';
 import type { ComponentBase } from '../components';
 import { createEntityObservers } from './observers';
-import { createTransform, setTransformParent } from './transform';
 import { validateAddComponent, validateRemoveComponent } from './validation';
 import type { EntityId } from '../ids';
+import { reconcileTransform3dParent } from './transform3dAccess';
+import { createComponent } from '../components/factory';
+import type { Transform3dCreateOverride } from '../components/types/transform';
 
-/** Creates a new entity state with a fresh transform and empty component map. */
+/** Creates a new entity state with an empty component map (no transform). */
 export function createEntity(id: EntityId, displayName?: string): EntityState {
   return {
     id,
-    transform: createTransform(),
     components: new Map(),
     componentTypes: new Set(),
     observers: createEntityObservers(),
@@ -25,6 +26,19 @@ export function createEntity(id: EntityId, displayName?: string): EntityState {
   };
 }
 
+/**
+ * Creates an entity with a transform3d component (spatial helper for tests/callers).
+ */
+export function createSpatialEntity(
+  id: EntityId,
+  displayName?: string,
+  transformOverrides?: Transform3dCreateOverride,
+): EntityState {
+  const entity = createEntity(id, displayName);
+  addComponent(entity, createComponent('transform3d', transformOverrides));
+  return entity;
+}
+
 /** Adds a component after validation. Returns a Result to avoid throwing. */
 export function addComponent(entity: EntityState, comp: ComponentBase): Result<void> {
   const v = validateAddComponent(entity, comp);
@@ -33,6 +47,10 @@ export function addComponent(entity: EntityState, comp: ComponentBase): Result<v
   entity.components.set(comp.type, comp);
   entity.componentTypes.add(comp.type);
   entity.observers.fireComponentAdded(entity.id, comp);
+
+  if (comp.type === 'transform3d') {
+    reconcileTransform3dParent(entity);
+  }
   return ok(undefined);
 }
 
@@ -47,6 +65,13 @@ export function removeComponent(entity: EntityState, type: ComponentType): Resul
   entity.components.delete(type);
   entity.componentTypes.delete(type);
   entity.observers.fireComponentRemoved(entity.id, comp);
+
+  if (type === 'transform3d') {
+    // Children may need a new pose ancestor after this node loses transform3d.
+    for (const child of entity.children) {
+      reconcileTransform3dParent(child);
+    }
+  }
   return ok(undefined);
 }
 
@@ -138,7 +163,7 @@ export function getEnabledDebugs(entity: EntityState): DebugKind[] {
   return out;
 }
 
-/** Adds a child entity, setting up parent refs and transform parenting. */
+/** Adds a child entity, setting up parent refs and reconciling pose parenting. */
 export function addChild(parent: EntityState, child: EntityState): void {
   if (child.parent === parent) return;
   if (child.parent) {
@@ -146,17 +171,17 @@ export function addChild(parent: EntityState, child: EntityState): void {
   }
   child.parent = parent;
   parent.children.push(child);
-  setTransformParent(child.transform, parent.transform);
+  reconcileTransform3dParent(child);
 }
 
-/** Removes a child by id, clearing parent refs and transform parenting. */
+/** Removes a child by id, clearing parent refs and reconciling pose parenting. */
 export function removeChildById(parent: EntityState, childId: EntityId): void {
   const idx = parent.children.findIndex((c) => c.id === childId);
   if (idx < 0) return;
   const child = parent.children[idx];
   parent.children.splice(idx, 1);
   child.parent = undefined;
-  setTransformParent(child.transform, undefined);
+  reconcileTransform3dParent(child);
 }
 
 /** Finds a direct child by id. */

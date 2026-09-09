@@ -2,7 +2,8 @@ import { createEngine } from '../../domain/engine';
 import { addSceneToEngine } from '../engine/addSceneToEngine';
 import { setupEngine } from '../engine/setupEngine';
 import { createSceneId, createEntityId, createPrefabId } from '../../domain/ids';
-import { createEntity } from '../../domain/entities';
+import {createSpatialEntity,
+  getTransform3d} from '../../domain/entities';
 import { addPrefab } from './addPrefab';
 import { instantiatePrefab } from './instantiatePrefab';
 
@@ -29,7 +30,7 @@ describe('instantiatePrefab', () => {
 
   it('instantiates prefab and adds entity to scene', () => {
     const scene = getScene();
-    const template = createEntity(createEntityId('bullet-template'), 'Bullet');
+    const template = createSpatialEntity(createEntityId('bullet-template'), 'Bullet');
     addPrefab.execute(scene, { prefabId: createPrefabId('bullet'), entity: template });
 
     const result = instantiatePrefab.execute(scene, {
@@ -43,16 +44,16 @@ describe('instantiatePrefab', () => {
       expect(scene.entities.has(entityId)).toBe(true);
       const entity = scene.entities.get(entityId)!;
       expect(entity.displayName).toBe('Bullet');
-      expect(entity.transform.localPosition.x).toBe(1);
-      expect(entity.transform.localPosition.y).toBe(2);
-      expect(entity.transform.localPosition.z).toBe(3);
+      expect(getTransform3d(entity)!.localPosition.x).toBe(1);
+      expect(getTransform3d(entity)!.localPosition.y).toBe(2);
+      expect(getTransform3d(entity)!.localPosition.z).toBe(3);
       expect(entity.id).not.toBe(createEntityId('bullet-template'));
     }
   });
 
   it('applies rotation when provided', () => {
     const scene = getScene();
-    const template = createEntity(createEntityId('t'));
+    const template = createSpatialEntity(createEntityId('t'));
     addPrefab.execute(scene, { prefabId: createPrefabId('p'), entity: template });
 
     const result = instantiatePrefab.execute(scene, {
@@ -63,7 +64,7 @@ describe('instantiatePrefab', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       const entity = scene.entities.get(result.value)!;
-      expect(entity.transform.localRotation.y).toBeCloseTo(Math.PI / 2);
+      expect(getTransform3d(entity)!.localRotation.y).toBeCloseTo(Math.PI / 2);
     }
   });
 });

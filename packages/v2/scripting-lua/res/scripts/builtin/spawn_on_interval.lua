@@ -50,7 +50,10 @@ function SpawnOnInterval:update(dt)
     local prefabId = props.prefab
     if not prefabId or prefabId == "" then return end
 
-    local posRaw = self.entity.components.transform.getPosition()
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+    local posRaw = transform.getPosition()
+    if not posRaw then return end
     local offset = props.offset or { x = 0, y = 0, z = 0 }
     local spawnPos = {
         x = posRaw.x + (offset.x or offset[1] or 0),

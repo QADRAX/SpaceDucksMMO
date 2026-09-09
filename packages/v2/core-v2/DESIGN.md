@@ -2,6 +2,11 @@
 
 This document describes how the engine models components, subsystems, and centralized resources. It complements `ARCHITECTURE.md` by focusing on design decisions and intended usage.
 
+> **Pose:** Entities do **not** carry a baked transform. Optional component `transform3d` holds 3D pose.
+> See [`docs/v2-optional-transform3d.md`](../../../docs/v2-optional-transform3d.md).
+> Use `createSpatialEntity` / `createComponent('transform3d')` when a pose is needed.
+> `ambientLight`, `gravity`, and `skybox` intentionally omit pose.
+
 ---
 
 ## 1. Component Model

@@ -93,6 +93,80 @@
         "components": {
           "type": "object",
           "properties": {
+            "transform3d": {
+              "oneOf": [
+                {
+                  "type": "string",
+                  "description": "Resource key shorthand"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "position": {
+                      "description": "Position",
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ]
+                    },
+                    "rotation": {
+                      "description": "Rotation",
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ]
+                    },
+                    "scale": {
+                      "description": "Scale",
+                      "type": "object",
+                      "properties": {
+                        "x": {
+                          "type": "number"
+                        },
+                        "y": {
+                          "type": "number"
+                        },
+                        "z": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "x",
+                        "y",
+                        "z"
+                      ]
+                    }
+                  },
+                  "additionalProperties": true
+                }
+              ]
+            },
             "name": {
               "oneOf": [
                 {

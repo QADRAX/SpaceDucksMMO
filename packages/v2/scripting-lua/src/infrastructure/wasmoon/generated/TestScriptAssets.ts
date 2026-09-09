@@ -316,7 +316,16 @@ return {
 return {
     ---@param self MinimalTransformScript
     init = function(self)
-        local pos = self.entity.components.transform.getLocalPosition()
+        local transform = self.entity.components.transform
+        if not transform.has() then
+            self.properties.initCalled = false
+            return
+        end
+        local pos = transform.getLocalPosition()
+        if not pos then
+            self.properties.initCalled = false
+            return
+        end
         self.properties.startX = pos.x
         self.properties.startY = pos.y
         self.properties.startZ = pos.z
@@ -339,7 +348,11 @@ return {
 return {
     ---@param self MinimalTransformGlobalScript
     init = function(self)
-        local pos = self.Transform and self.Transform.getLocalPosition()
+        if not self.Transform or not self.Transform.has() then
+            self.properties.initCalled = false
+            return
+        end
+        local pos = self.Transform.getLocalPosition()
         if pos then
             self.properties.startX = pos.x
             self.properties.startY = pos.y

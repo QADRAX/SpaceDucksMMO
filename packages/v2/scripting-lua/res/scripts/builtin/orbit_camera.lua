@@ -35,6 +35,9 @@ function OrbitCamera:init()
 end
 
 function OrbitCamera:update(dt)
+    local transform = self.entity.components.transform
+    if not transform.has() then return end
+
     local target = self.references.targetEntityId
     if not target or not target.components then return end
 
@@ -66,7 +69,7 @@ function OrbitCamera:update(dt)
         offsetZ = math.sin(a) * orbitDistance
     end
 
-    self.entity.components.transform.setPosition(
+    transform.setPosition(
         tpRaw.x + offsetX,
         tpRaw.y + offsetY,
         tpRaw.z + offsetZ

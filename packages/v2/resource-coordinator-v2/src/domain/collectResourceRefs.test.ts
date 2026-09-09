@@ -1,6 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
 import {
-  createEntity,
+  createSpatialEntity,
   createComponent,
   addComponent,
   addChild,
@@ -20,7 +20,7 @@ import {
 
 describe('collectResourceRefs', () => {
   it('collects mesh ref from customGeometry', () => {
-    const entity = createEntity(createEntityId('e1'));
+    const entity = createSpatialEntity(createEntityId('e1'));
     const meshRef = createResourceRef(createResourceKey('test-mesh'), 'mesh');
     addComponent(entity, createComponent('customGeometry', { mesh: meshRef }));
 
@@ -35,7 +35,7 @@ describe('collectResourceRefs', () => {
   });
 
   it('collects mesh ref from trimeshCollider', () => {
-    const entity = createEntity(createEntityId('e1'));
+    const entity = createSpatialEntity(createEntityId('e1'));
     addComponent(entity, createComponent('rigidBody', {}));
     const meshRef = createResourceRef(createResourceKey('collider-mesh'), 'mesh');
     addComponent(entity, createComponent('trimeshCollider', { mesh: meshRef }));
@@ -46,7 +46,7 @@ describe('collectResourceRefs', () => {
   });
 
   it('collects texture refs from standardMaterial', () => {
-    const entity = createEntity(createEntityId('e1'));
+    const entity = createSpatialEntity(createEntityId('e1'));
     addComponent(entity, createComponent('boxGeometry', { width: 1, height: 1, depth: 1 }));
     const albedoRef = createResourceRef(createResourceKey('albedo-tex'), 'texture');
     addComponent(entity, createComponent('standardMaterial', { albedo: albedoRef }));
@@ -57,7 +57,7 @@ describe('collectResourceRefs', () => {
   });
 
   it('collects skybox ref from skybox component', () => {
-    const entity = createEntity(createEntityId('e1'));
+    const entity = createSpatialEntity(createEntityId('e1'));
     const skyboxRef = createResourceRef(createResourceKey('space-sky'), 'skybox');
     addComponent(entity, createComponent('skybox', { skybox: skyboxRef }));
 
@@ -67,7 +67,7 @@ describe('collectResourceRefs', () => {
   });
 
   it('collects script refs from script component, skips builtin and test', () => {
-    const entity = createEntity(createEntityId('e1'));
+    const entity = createSpatialEntity(createEntityId('e1'));
     addComponent(entity, createComponent('script', {
       scripts: [
         { scriptId: 'builtin://move', enabled: true, properties: {} },
@@ -83,7 +83,7 @@ describe('collectResourceRefs', () => {
   });
 
   it('returns empty refs for entity with no resource components', () => {
-    const entity = createEntity(createEntityId('e1'));
+    const entity = createSpatialEntity(createEntityId('e1'));
     addComponent(entity, createComponent('name', { value: 'Foo' }));
     addComponent(entity, createComponent('boxGeometry', { width: 1, height: 1, depth: 1 }));
 
@@ -96,8 +96,8 @@ describe('collectResourceRefs', () => {
   });
 
   it('collectRefsFromSubtree aggregates refs from entity and children', () => {
-    const parent = createEntity(createEntityId('p1'));
-    const child = createEntity(createEntityId('c1'));
+    const parent = createSpatialEntity(createEntityId('p1'));
+    const child = createSpatialEntity(createEntityId('c1'));
     addChild(parent, child);
 
     const meshRef = createResourceRef(createResourceKey('parent-mesh'), 'mesh');
@@ -132,13 +132,13 @@ describe('collectResourceRefs', () => {
       scenePortDefinitions: new Map(),
     };
 
-    const e1 = createEntity(createEntityId('e1'));
+    const e1 = createSpatialEntity(createEntityId('e1'));
     addComponent(e1, createComponent('customGeometry', {
       mesh: createResourceRef(createResourceKey('entity-mesh'), 'mesh'),
     }));
     scene.entities.set(e1.id, e1);
 
-    const prefabEntity = createEntity(createEntityId('prefab-root'));
+    const prefabEntity = createSpatialEntity(createEntityId('prefab-root'));
     addComponent(prefabEntity, createComponent('script', {
       scripts: [{ scriptId: 'prefab/script', enabled: true, properties: {} }],
     }));
@@ -153,7 +153,7 @@ describe('collectResourceRefs', () => {
 
   it('collectRefsFromPrefabs collects only from prefab entities', () => {
     const sceneId = createSceneId('main');
-    const prefabEntity = createEntity(createEntityId('prefab-e1'));
+    const prefabEntity = createSpatialEntity(createEntityId('prefab-e1'));
     addComponent(prefabEntity, createComponent('skybox', {
       skybox: createResourceRef(createResourceKey('prefab-sky'), 'skybox'),
     }));
@@ -199,7 +199,7 @@ describe('collectResourceRefs', () => {
       scenePorts: new Map(),
       scenePortDefinitions: new Map(),
     };
-    const eA = createEntity(createEntityId('ea'));
+    const eA = createSpatialEntity(createEntityId('ea'));
     addComponent(eA, createComponent('customGeometry', {
       mesh: createResourceRef(createResourceKey('scene-a-mesh'), 'mesh'),
     }));
@@ -221,7 +221,7 @@ describe('collectResourceRefs', () => {
       scenePorts: new Map(),
       scenePortDefinitions: new Map(),
     };
-    const eB = createEntity(createEntityId('eb'));
+    const eB = createSpatialEntity(createEntityId('eb'));
     addComponent(eB, createComponent('customGeometry', {
       mesh: createResourceRef(createResourceKey('scene-b-mesh'), 'mesh'),
     }));
@@ -234,7 +234,7 @@ describe('collectResourceRefs', () => {
   });
 
   it('collects animation clip refs from animator (skin uses rig entities, not a skeleton asset)', () => {
-    const entity = createEntity(createEntityId('rig'));
+    const entity = createSpatialEntity(createEntityId('rig'));
     const clip = createResourceRef(createResourceKey('walk'), 'animationClip');
     addComponent(entity, createComponent('customGeometry', {
       mesh: createResourceRef(createResourceKey('body'), 'mesh'),

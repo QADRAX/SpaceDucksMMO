@@ -30,7 +30,7 @@ describe('Built-in Script: Move To Point', () => {
         // Verify initial state
         const view0 = scene.entity(moverId).view();
         if (view0.ok) {
-            expect(view0.value.transform.localPosition.x).toBe(0);
+            expect(view0.value.transform!.localPosition.x).toBe(0);
         } else {
             throw new Error('Failed to get entity view');
         }
@@ -39,14 +39,14 @@ describe('Built-in Script: Move To Point', () => {
         api.update({ dt: 0.5 });
         const view1 = scene.entity(moverId).view();
         if (view1.ok) {
-            expect(view1.value.transform.localPosition.x).toBeCloseTo(5);
+            expect(view1.value.transform!.localPosition.x).toBeCloseTo(5);
         }
 
         // Complete movement
         api.update({ dt: 0.5 });
         const view2 = scene.entity(moverId).view();
         if (view2.ok) {
-            expect(view2.value.transform.localPosition.x).toBeCloseTo(10);
+            expect(view2.value.transform!.localPosition.x).toBeCloseTo(10);
         }
     });
 
@@ -72,7 +72,7 @@ describe('Built-in Script: Move To Point', () => {
         api.update({ dt: 0.5 });
         const view1 = scene.entity(moverId).view();
         if (view1.ok) {
-            expect(view1.value.transform.localPosition.x).toBe(0);
+            expect(view1.value.transform!.localPosition.x).toBe(0);
         }
 
         // 1.0s total (starting movement now)
@@ -82,7 +82,7 @@ describe('Built-in Script: Move To Point', () => {
         api.update({ dt: 0.5 });
         const view2 = scene.entity(moverId).view();
         if (view2.ok) {
-            expect(view2.value.transform.localPosition.x).toBeCloseTo(5);
+            expect(view2.value.transform!.localPosition.x).toBeCloseTo(5);
         }
     });
 
@@ -129,7 +129,7 @@ describe('Built-in Script: Move To Point', () => {
         api.update({ dt: 0.5 });
         const view = scene.entity(moverId).view();
         if (view.ok) {
-            expect(view.value.transform.localPosition.x).toBeCloseTo(12.5);
+            expect(view.value.transform!.localPosition.x).toBeCloseTo(12.5);
         }
     });
 
@@ -153,8 +153,8 @@ describe('Built-in Script: Move To Point', () => {
         api.update({ dt: 0.5 });
         const view = scene.entity(moverId).view();
         if (view.ok) {
-            expect(view.value.transform.localPosition.x).toBeGreaterThan(0);
-            expect(view.value.transform.localPosition.x).toBeLessThanOrEqual(10);
+            expect(view.value.transform!.localPosition.x).toBeGreaterThan(0);
+            expect(view.value.transform!.localPosition.x).toBeLessThanOrEqual(10);
         }
     });
 });

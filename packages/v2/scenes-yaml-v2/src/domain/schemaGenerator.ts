@@ -15,12 +15,14 @@ import {
   ENVIRONMENT_SPECS,
   PHYSICS_SPECS,
   SCRIPTING_SPECS,
+  TRANSFORM_SPECS,
   getComponentMetadata,
 } from '@duckengine/core-v2';
 import type { CreatableComponentType } from '@duckengine/core-v2';
 type JSONSchema = Record<string, unknown>;
 
 const ALL_SPECS: Record<string, unknown> = {
+  ...TRANSFORM_SPECS,
   ...IDENTITY_SPECS,
   ...GEOMETRY_SPECS,
   ...MATERIAL_SPECS,

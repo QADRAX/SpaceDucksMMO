@@ -1,5 +1,6 @@
 import { describe, it, expect } from '@jest/globals';
-import { createEntity, createEntityId, createSceneId } from '@duckengine/core-v2';
+import {createSpatialEntity, createEntityId, createSceneId,
+  getTransform3d} from '@duckengine/core-v2';
 import { getScriptProperties } from '../testing/testUtils';
 import {
   createScene,
@@ -18,13 +19,13 @@ describe('Built-in Script: Waypoint Path', () => {
         const wp2Id = createEntityId('wp2');
 
         const scene = createScene(api, sceneId);
-        const wp1 = createEntity(wp1Id);
-        wp1.transform.localPosition = { x: 10, y: 0, z: 0 };
+        const wp1 = createSpatialEntity(wp1Id);
+        getTransform3d(wp1)!.localPosition = { x: 10, y: 0, z: 0 };
         scene.addEntity({ entity: wp1 });
-        const wp2 = createEntity(wp2Id);
-        wp2.transform.localPosition = { x: 20, y: 10, z: 0 };
+        const wp2 = createSpatialEntity(wp2Id);
+        getTransform3d(wp2)!.localPosition = { x: 20, y: 10, z: 0 };
         scene.addEntity({ entity: wp2 });
-        scene.addEntity({ entity: createEntity(moverId) });
+        scene.addEntity({ entity: createSpatialEntity(moverId) });
 
         addEntityWithScripts(api, sceneId, moverId, [
             {
@@ -51,7 +52,7 @@ describe('Built-in Script: Waypoint Path', () => {
 
         runFrames(api, 70, 0.016);
         const view1 = scene.entity(moverId).view();
-        if (view1.ok) expect(view1.value.transform.localPosition.x).toBeCloseTo(10, 0);
+        if (view1.ok) expect(view1.value.transform!.localPosition.x).toBeCloseTo(10, 0);
 
         // Verify advance to WP2 target
         const props2 = getScriptProperties(scene.entity(moverId).component('script').snapshot(), 1);
@@ -62,8 +63,8 @@ describe('Built-in Script: Waypoint Path', () => {
         // Final arrival at WP2
         const view2 = scene.entity(moverId).view();
         if (view2.ok) {
-            expect(view2.value.transform.localPosition.x).toBeCloseTo(20);
-            expect(view2.value.transform.localPosition.y).toBeCloseTo(10);
+            expect(view2.value.transform!.localPosition.x).toBeCloseTo(20);
+            expect(view2.value.transform!.localPosition.y).toBeCloseTo(10);
         }
     });
 
@@ -74,10 +75,10 @@ describe('Built-in Script: Waypoint Path', () => {
         const wpId = createEntityId('wp1');
 
         const scene = createScene(api, sceneId);
-        const wp = createEntity(wpId);
-        wp.transform.localPosition = { x: 10, y: 0, z: 0 };
+        const wp = createSpatialEntity(wpId);
+        getTransform3d(wp)!.localPosition = { x: 10, y: 0, z: 0 };
         scene.addEntity({ entity: wp });
-        scene.addEntity({ entity: createEntity(moverId) });
+        scene.addEntity({ entity: createSpatialEntity(moverId) });
 
         addEntityWithScripts(api, sceneId, moverId, [
             {
@@ -112,7 +113,7 @@ describe('Built-in Script: Waypoint Path', () => {
         const moverId = createEntityId('mover');
 
         const scene = createScene(api, sceneId);
-        scene.addEntity({ entity: createEntity(moverId) });
+        scene.addEntity({ entity: createSpatialEntity(moverId) });
 
         addEntityWithScripts(api, sceneId, moverId, [
             {

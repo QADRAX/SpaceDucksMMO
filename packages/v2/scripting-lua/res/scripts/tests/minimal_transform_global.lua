@@ -13,7 +13,11 @@
 return {
     ---@param self MinimalTransformGlobalScript
     init = function(self)
-        local pos = self.Transform and self.Transform.getLocalPosition()
+        if not self.Transform or not self.Transform.has() then
+            self.properties.initCalled = false
+            return
+        end
+        local pos = self.Transform.getLocalPosition()
         if pos then
             self.properties.startX = pos.x
             self.properties.startY = pos.y

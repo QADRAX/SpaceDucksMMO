@@ -31,10 +31,11 @@ local MoveToPoint = {
 }
 
 function MoveToPoint:init()
+    local transform = self.entity.components.transform
     self.state = {
-        startPos = self.entity.components.transform.getLocalPosition(),
+        startPos = transform.has() and transform.getLocalPosition() or nil,
         elapsed  = 0,
-        active   = true
+        active   = transform.has()
     }
 end
 
@@ -44,7 +45,12 @@ end
 --- @param value any New value
 function MoveToPoint:onPropertyChanged(_dt, key, value)
     if key == "targetPoint" then
-        self.state.startPos = self.entity.components.transform.getLocalPosition()
+        local transform = self.entity.components.transform
+        if not transform.has() then
+            self.state.active = false
+            return
+        end
+        self.state.startPos = transform.getLocalPosition()
         self.state.elapsed  = 0
         self.state.active   = true
     end
@@ -52,11 +58,18 @@ end
 
 function MoveToPoint:update(dt)
     if not self.state.active then return end
+    local transform = self.entity.components.transform
+    if not transform.has() then
+        self.state.active = false
+        return
+    end
 
     local props   = self.properties
     local target  = props.targetPoint
     if not target then return end
     local state   = self.state
+    local start   = state.startPos
+    if not start then return end
     local secs    = dt
     state.elapsed = state.elapsed + secs
 
@@ -71,13 +84,11 @@ function MoveToPoint:update(dt)
 
     local easedFn = math.ext.easing[props.easing] or math.ext.easing.linear
     local easedT  = easedFn(t)
-    local start   = state.startPos
 
-    -- Interpolate
     local nx      = math.ext.lerp(start.x, target.x, easedT)
     local ny      = math.ext.lerp(start.y, target.y, easedT)
     local nz      = math.ext.lerp(start.z, target.z, easedT)
-    self.entity.components.transform.setPosition(math.vec3.new(nx, ny, nz))
+    transform.setPosition(math.vec3.new(nx, ny, nz))
 end
 
 return MoveToPoint

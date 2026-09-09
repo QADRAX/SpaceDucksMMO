@@ -17,10 +17,12 @@ import {
   ENVIRONMENT_SPECS,
   PHYSICS_SPECS,
   SCRIPTING_SPECS,
+  TRANSFORM_SPECS,
   RESOURCE_KINDS,
 } from '@duckengine/core-v2';
 
 const ALL_SPECS: Record<string, unknown> = {
+  ...TRANSFORM_SPECS,
   ...IDENTITY_SPECS,
   ...GEOMETRY_SPECS,
   ...MATERIAL_SPECS,

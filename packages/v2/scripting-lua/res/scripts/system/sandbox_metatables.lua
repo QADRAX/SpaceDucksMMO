@@ -43,10 +43,13 @@ end
 
 __EntityComponentsMT = {
   __index = function(t, k)
-    -- Normalize the key to match injected TypeScript bridge names (e.g. 'transform' -> 'Transform')
+    -- Normalize keys to injected TypeScript bridge names.
+    -- ECS type is transform3d; Lua also accepts the pose facade alias `transform`.
     local bridgeName = k:gsub("^%l", string.upper)
     if k == "script" then
-      bridgeName = "Script" 
+      bridgeName = "Script"
+    elseif k == "transform" or k == "transform3d" then
+      bridgeName = "Transform"
     end
 
     local slotKey = rawget(t, '__slotKey')

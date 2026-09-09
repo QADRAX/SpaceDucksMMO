@@ -27,11 +27,11 @@ describe('Built-in Script: First Person Move', () => {
 
     const view0 = scene.entity(entityId).view();
     if (view0.ok) {
-      const x0 = view0.value.transform.localPosition.x;
+      const x0 = view0.value.transform!.localPosition.x;
       runFrames(api, 30, 0.016);
       const view1 = scene.entity(entityId).view();
       if (view1.ok) {
-        const x1 = view1.value.transform.localPosition.x;
+        const x1 = view1.value.transform!.localPosition.x;
         expect(x1).not.toBe(x0);
       }
     }
@@ -55,11 +55,11 @@ describe('Built-in Script: First Person Move', () => {
 
     const view0 = scene.entity(entityId).view();
     if (view0.ok) {
-      const y0 = view0.value.transform.localPosition.y;
+      const y0 = view0.value.transform!.localPosition.y;
       runFrames(api, 30, 0.016);
       const view1 = scene.entity(entityId).view();
       if (view1.ok) {
-        const y1 = view1.value.transform.localPosition.y;
+        const y1 = view1.value.transform!.localPosition.y;
         expect(y1).not.toBe(y0);
       }
     }
@@ -84,11 +84,11 @@ describe('Built-in Script: First Person Move', () => {
 
     const view0 = scene.entity(entityId).view();
     if (view0.ok) {
-      const z0 = view0.value.transform.localPosition.z;
+      const z0 = view0.value.transform!.localPosition.z;
       runFrames(api, 15, 0.016);
       const view1 = scene.entity(entityId).view();
       if (view1.ok) {
-        const z1 = view1.value.transform.localPosition.z;
+        const z1 = view1.value.transform!.localPosition.z;
         expect(Math.abs(z1 - z0)).toBeGreaterThan(0.5);
       }
     }

@@ -10,6 +10,7 @@ import {
   quatInvert,
   quatMul,
   applyQuatToVec,
+  getTransform3d,
 } from '@duckengine/core-v2';
 import type { World, RigidBody } from '@dimforge/rapier3d-compat';
 import { getLocalPoseRelativeTo } from '../domain';
@@ -54,12 +55,14 @@ export function createRapierBodies(): RapierBodiesHandle {
     rb: RigidBodyComponent
   ): void {
     if (bodyByEntity.has(entity.id)) return;
+    const state = getTransform3d(entity);
+    if (!state) return;
     const parent = entity.parent;
     if (parent) {
       const parentRb = getComponent<RigidBodyComponent>(parent, 'rigidBody');
       if (parentRb) ensureRigidBody(R, world, parent, parentRb);
     }
-    ensureClean(entity.transform);
+    ensureClean(state);
     const desc =
       rb.bodyType === 'static'
         ? R.RigidBodyDesc.fixed()
@@ -67,9 +70,9 @@ export function createRapierBodies(): RapierBodiesHandle {
           ? R.RigidBodyDesc.kinematicPositionBased()
           : R.RigidBodyDesc.dynamic();
 
-    const wp = entity.transform.worldPosition;
+    const wp = state.worldPosition;
     desc.setTranslation(wp.x, wp.y, wp.z);
-    const wr = entity.transform.worldRotation;
+    const wr = state.worldRotation;
     const q = quatNormalize(quatFromEulerYXZ(wr));
     callOpt(desc, 'setRotation', q);
     if (rb.linearDamping !== undefined) desc.setLinearDamping(rb.linearDamping);
@@ -140,9 +143,9 @@ export function createRapierBodies(): RapierBodiesHandle {
       if (!ent) continue;
       const rb = getComponent<RigidBodyComponent>(ent, 'rigidBody');
       if (!rb || rb.bodyType !== 'kinematic') continue;
-      ensureClean(ent.transform);
-      const wp = ent.transform.worldPosition;
-      const wr = ent.transform.worldRotation;
+      ensureClean(getTransform3d(ent)!);
+      const wp = getTransform3d(ent)!.worldPosition;
+      const wr = getTransform3d(ent)!.worldRotation;
       callReq(body, 'setNextKinematicTranslation', 'setNextKinematicTranslation', {
         x: wp.x,
         y: wp.y,
@@ -159,9 +162,9 @@ export function createRapierBodies(): RapierBodiesHandle {
       if (!ent) continue;
       const rb = getComponent<RigidBodyComponent>(ent, 'rigidBody');
       if (!rb || rb.bodyType !== 'static') continue;
-      ensureClean(ent.transform);
-      const wp = ent.transform.worldPosition;
-      const wr = ent.transform.worldRotation;
+      ensureClean(getTransform3d(ent)!);
+      const wp = getTransform3d(ent)!.worldPosition;
+      const wr = getTransform3d(ent)!.worldRotation;
       callOpt(body, 'setTranslation', { x: wp.x, y: wp.y, z: wp.z }, true);
       const q = quatNormalize(quatFromEulerYXZ(wr));
       callOpt(body, 'setRotation', q, true);
@@ -183,10 +186,10 @@ export function createRapierBodies(): RapierBodiesHandle {
     const parent = ent.parent;
     let localX: number, localY: number, localZ: number;
     if (parent) {
-      ensureClean(parent.transform);
-      const pw = parent.transform.worldPosition;
-      const pr = parent.transform.worldRotation;
-      const ps = parent.transform.worldScale;
+      ensureClean(getTransform3d(parent)!);
+      const pw = getTransform3d(parent)!.worldPosition;
+      const pr = getTransform3d(parent)!.worldRotation;
+      const ps = getTransform3d(parent)!.worldScale;
       const delta = {
         x: (worldPos.x - pw.x) / (ps.x || 1),
         y: (worldPos.y - pw.y) / (ps.y || 1),
@@ -202,7 +205,7 @@ export function createRapierBodies(): RapierBodiesHandle {
       localY = worldPos.y;
       localZ = worldPos.z;
     }
-    setPosition(ent.transform, localX, localY, localZ);
+    setPosition(getTransform3d(ent)!, localX, localY, localZ);
   }
 
   function writeBackDynamicBodiesToEcs(getEntity: (id: string) => EntityState | null): void {
@@ -216,10 +219,10 @@ export function createRapierBodies(): RapierBodiesHandle {
       const parent = ent.parent;
       let localX: number, localY: number, localZ: number;
       if (parent) {
-        ensureClean(parent.transform);
-        const pw = parent.transform.worldPosition;
-        const pr = parent.transform.worldRotation;
-        const ps = parent.transform.worldScale;
+        ensureClean(getTransform3d(parent)!);
+        const pw = getTransform3d(parent)!.worldPosition;
+        const pr = getTransform3d(parent)!.worldRotation;
+        const ps = getTransform3d(parent)!.worldScale;
         const delta = {
           x: (worldPos.x - pw.x) / (ps.x || 1),
           y: (worldPos.y - pw.y) / (ps.y || 1),
@@ -235,7 +238,7 @@ export function createRapierBodies(): RapierBodiesHandle {
         localY = worldPos.y;
         localZ = worldPos.z;
       }
-      setPosition(ent.transform, localX, localY, localZ);
+      setPosition(getTransform3d(ent)!, localX, localY, localZ);
       const r =
         typeof (body as { rotation?: () => { x: number; y: number; z: number; w: number } })
           .rotation === 'function'
@@ -244,9 +247,9 @@ export function createRapierBodies(): RapierBodiesHandle {
       if (r) {
         const worldQuat = quatNormalize(r);
         const localQuat = parent
-          ? quatNormalize(quatMul(quatInvert(quatNormalize(quatFromEulerYXZ(parent.transform.worldRotation))), worldQuat))
+          ? quatNormalize(quatMul(quatInvert(quatNormalize(quatFromEulerYXZ(getTransform3d(parent)!.worldRotation))), worldQuat))
           : worldQuat;
-        setRotationFromQuaternion(ent.transform, localQuat);
+        setRotationFromQuaternion(getTransform3d(ent)!, localQuat);
       }
     }
   }

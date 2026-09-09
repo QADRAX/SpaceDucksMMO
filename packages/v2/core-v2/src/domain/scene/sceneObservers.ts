@@ -1,14 +1,43 @@
 import { emitSceneChange, findEntityWithComponent } from '.';
 import type { SceneState } from '.';
-import { addComponent, onTransformChange, removeComponent, removeTransformChange } from '..';
+import { addComponent, removeComponent } from '..';
 import type { ComponentChangeListener, ComponentListener, ComponentType, EntityState } from '..';
 import { validateHierarchyInSubtree } from '../entities';
+import {
+  getTransform3d,
+  reconcileTransform3dParent,
+} from '../entities/transform3dAccess';
+import { onTransformChange, removeTransformChange } from '../entities/transform';
+import type { TransformState } from '../entities/types';
+
 /**
  * Attaches entity-level observers that forward events to the scene.
  * Returns a cleanup function that detaches all observers.
  */
 export function attachEntityObservers(scene: SceneState, entity: EntityState): () => void {
   let handling = false;
+  let attachedState: TransformState | undefined;
+  let transformCb: (() => void) | undefined;
+
+  const detachTransformListener = () => {
+    if (attachedState && transformCb) {
+      removeTransformChange(attachedState, transformCb);
+    }
+    attachedState = undefined;
+    transformCb = undefined;
+  };
+
+  const attachTransformListener = () => {
+    const state = getTransform3d(entity);
+    if (state === attachedState) return;
+    detachTransformListener();
+    if (!state) return;
+    transformCb = () => {
+      emitSceneChange(scene, { kind: 'transform-changed', entityId: entity.id });
+    };
+    attachedState = state;
+    onTransformChange(state, transformCb);
+  };
 
   const componentListener: ComponentListener = (event) => {
     if (handling) return;
@@ -31,6 +60,10 @@ export function attachEntityObservers(scene: SceneState, entity: EntityState): (
             return;
           }
         }
+        if (event.component.type === 'transform3d') {
+          reconcileTransform3dParent(entity);
+          attachTransformListener();
+        }
       } else if (event.action === 'removed') {
         const errors = validateHierarchyInSubtree(entity);
         if (errors.length > 0) {
@@ -48,6 +81,12 @@ export function attachEntityObservers(scene: SceneState, entity: EntityState): (
           });
           return;
         }
+        if (event.component.type === 'transform3d') {
+          detachTransformListener();
+          for (const child of entity.children) {
+            reconcileTransform3dParent(child);
+          }
+        }
       }
       emitSceneChange(scene, {
         kind: 'component-changed',
@@ -63,17 +102,13 @@ export function attachEntityObservers(scene: SceneState, entity: EntityState): (
     emitSceneChange(scene, { kind: 'component-changed', entityId, componentType: type });
   };
 
-  const transformCb = () => {
-    emitSceneChange(scene, { kind: 'transform-changed', entityId: entity.id });
-  };
-
   entity.observers.addComponentListener(componentListener);
   entity.observers.addChangeListener(changeListener);
-  onTransformChange(entity.transform, transformCb);
+  attachTransformListener();
 
   return () => {
     entity.observers.removeComponentListener(componentListener);
     entity.observers.removeChangeListener(changeListener);
-    removeTransformChange(entity.transform, transformCb);
+    detachTransformListener();
   };
 }

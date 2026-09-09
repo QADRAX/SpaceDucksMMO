@@ -12,7 +12,7 @@
 ---@field entity EntityWrapperV2 Wrapper for the entity owning this script.
 ---@field references table<string, EntityWrapperV2 | EntityWrapperV2[] | any> Resolved references from schema properties.
 ---@field schema table Schema definition for the script properties.
----@field Transform TransformV2? Entity transform. Per-entity.
+---@field Transform TransformV2? Pose facade over transform3d. Soft: has()/nil getters when inactive.
 ---@field Scene SceneV2? Scene access. Per-entity.
 ---@field Script ScriptsV2? Entity script component. Per-entity.
 ---@field Component ComponentV2? Generic component field access. Per-entity.

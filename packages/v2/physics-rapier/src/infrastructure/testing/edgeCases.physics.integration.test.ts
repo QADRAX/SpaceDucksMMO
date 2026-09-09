@@ -2,7 +2,7 @@
  * More complex scenarios / edge cases for the physics integration.
  * Engine + physics only, no scripting.
  */
-import { createSceneId, createEntityId, createComponent, createEntity, addChild } from '@duckengine/core-v2';
+import { createSceneId, createEntityId, createComponent, createSpatialEntity, addChild } from '@duckengine/core-v2';
 import { setupPhysicsIntegrationTest } from './setup';
 import {
   addSceneWithEntity,
@@ -109,11 +109,11 @@ describe('Physics integration edge cases', () => {
     setEntityPosition(engine, sceneId, floorId, 0, 0, 0);
 
     // Two rigid bodies A and B and one collider child under A
-    const a = createEntity(aId);
-    const col = createEntity(colId);
+    const a = createSpatialEntity(aId);
+    const col = createSpatialEntity(colId);
     addChild(a, col);
     api.scene(sceneId).addEntity({ entity: a });
-    api.scene(sceneId).addEntity({ entity: createEntity(bId) });
+    api.scene(sceneId).addEntity({ entity: createSpatialEntity(bId) });
 
     setEntityPosition(engine, sceneId, aId, -2, 2, 0);
     setEntityPosition(engine, sceneId, bId, 2, 2, 0);
@@ -431,9 +431,9 @@ describe('Physics integration edge cases', () => {
     addSceneWithEntity(api, sceneId, floorId);
     addEntityWithStaticFloor(api, sceneId, floorId, { x: 5, y: 0.5, z: 5 });
 
-    const root = createEntity(rootId);
-    const child = createEntity(childId);
-    const grandchild = createEntity(grandchildId);
+    const root = createSpatialEntity(rootId);
+    const child = createSpatialEntity(childId);
+    const grandchild = createSpatialEntity(grandchildId);
     addChild(root, child);
     addChild(child, grandchild);
     api.scene(sceneId).addEntity({ entity: root });
