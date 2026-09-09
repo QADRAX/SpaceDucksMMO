@@ -21,7 +21,7 @@ import { createResourceCoordinatorSubsystem } from '@duckengine/resource-coordin
 import { createAnimationSubsystem } from '@duckengine/animation-runtime-v2';
 import { createPhysicsSubsystem } from '@duckengine/physics-rapier-v2';
 import { createUISubsystem } from '@duckengine/ui-base-v2';
-import { createDefaultWebUIPorts } from '@duckengine/ui-dom-v2';
+import { createDefaultWebUIPorts } from '@duckengine/ui-preact-v2';
 import { createRenderingSubsystem } from '@duckengine/rendering-three-v2';
 import { createScriptingSubsystem } from '@duckengine/scripting-lua';
 import type { EngineSubsystem, SceneSubsystemFactory } from '@duckengine/core-v2';

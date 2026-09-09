@@ -6,12 +6,9 @@ import { reconcileUiRoots } from '../../application/reconcileUiRoots';
 import { unmountAllUiRoots } from '../../application/unmountAllUiRoots';
 
 /**
- * Scene subsystem: projects ECS UI roots (`transform2d` + `uiView`|`uiSpa`) onto
- * host surfaces via {@link UISurfaceHostPort}, {@link UIViewRuntimePort}, and
- * {@link UISpaRuntimePort}.
- *
- * Events and `lateUpdate` share {@link reconcileUiRoots}; teardown uses
- * {@link unmountAllUiRoots}.
+ * Shared scene UI subsystem: projects ECS roots (`transform2d` + `uiView`|`uiCustom`)
+ * onto surfaces, then **delegates** to {@link UIViewRuntimePort} (Duck) or
+ * {@link UICustomRuntimePort} (custom).
  */
 export function createUISubsystem(options?: CreateUISubsystemStateOptions) {
   return createSceneSubsystem<UISubsystemState>({

@@ -26,7 +26,7 @@
     { "path": "../scenes-yaml-v2" },
     { "path": "../scripting-lua" },
     { "path": "../ui-base-v2" },
-    { "path": "../ui-dom-v2" }
+    { "path": "../ui-preact-v2" }
   ],
   "include": ["src/**/*"],
   "exclude": ["dist", "node_modules"]

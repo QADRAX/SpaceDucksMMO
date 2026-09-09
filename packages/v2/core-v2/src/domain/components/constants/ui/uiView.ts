@@ -11,7 +11,7 @@ export const UI_VIEW_SPEC: ComponentSpec<UiViewComponent> = {
     icon: 'Layout',
     unique: true,
     requires: ['transform2d'],
-    conflicts: ['uiSpa'],
+    conflicts: ['uiCustom'],
     inspector: {
       fields: [
         {

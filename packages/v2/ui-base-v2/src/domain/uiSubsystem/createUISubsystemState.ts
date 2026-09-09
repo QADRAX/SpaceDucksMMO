@@ -1,6 +1,6 @@
 import type { SceneSubsystemFactoryContext } from '@duckengine/core-v2';
 import {
-  UISpaRuntimePortDef,
+  UICustomRuntimePortDef,
   UISurfaceHostPortDef,
   UIViewRuntimePortDef,
 } from '@duckengine/core-v2';
@@ -12,7 +12,7 @@ export interface CreateUISubsystemStateOptions {
 }
 
 /**
- * Creates UI subsystem state, resolving host-agnostic UI ports from the registry.
+ * Creates shared UI subsystem state, resolving host-agnostic UI ports from the registry.
  */
 export function createUISubsystemState(
   ctx: SceneSubsystemFactoryContext,
@@ -22,7 +22,7 @@ export function createUISubsystemState(
     sceneId: ctx.scene.id,
     surfaceHost: ctx.ports.get(UISurfaceHostPortDef),
     viewRuntime: ctx.ports.get(UIViewRuntimePortDef),
-    spaRuntime: ctx.ports.get(UISpaRuntimePortDef),
+    customRuntime: ctx.ports.get(UICustomRuntimePortDef),
     cameraHasTag: options?.cameraHasTag,
     mounted: new Set(),
   };

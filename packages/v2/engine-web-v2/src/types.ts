@@ -1,6 +1,6 @@
 import type { DuckEngineAPI } from '@duckengine/core-v2';
 import type { LogStack } from '@duckengine/diagnostic-v2';
-import type { DomUISurfaceHost } from '@duckengine/ui-dom-v2';
+import type { DomUISurfaceHost } from '@duckengine/ui-preact-v2';
 
 /**
  * Web client API for the DuckEngine.

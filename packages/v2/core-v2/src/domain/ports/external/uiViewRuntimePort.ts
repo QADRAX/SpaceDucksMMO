@@ -3,6 +3,18 @@ import type { UiNode } from '../../components/types/ui';
 import type { ResourceRef } from '../../resources';
 import type { UIRootLayout, UISurfaceHandle } from '../../ui';
 
+/**
+ * Duck UI event emitted from the view runtime toward the engine / scripts.
+ */
+export interface UIViewEvent {
+  readonly entityId: EntityId;
+  readonly viewportId: ViewportId;
+  /** Node id when the control has one. */
+  readonly targetId?: string;
+  readonly eventName: string;
+  readonly payload?: unknown;
+}
+
 /** Parameters to mount a Duck UI document on a surface. */
 export interface UIViewMountParams {
   readonly entityId: EntityId;
@@ -13,6 +25,8 @@ export interface UIViewMountParams {
   /** Inline tree or resource ref from `uiView.document`. */
   readonly document: UiNode | ResourceRef<'uiDocument'> | null;
   readonly bindings: Readonly<Record<string, unknown>>;
+  /** Optional sink for kit events (button click, etc.). */
+  readonly onEvent?: (event: UIViewEvent) => void;
 }
 
 /** Parameters to update an already-mounted Duck UI root. */

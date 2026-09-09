@@ -43,15 +43,16 @@ export type {
   UIViewRuntimePort,
   UIViewMountParams,
   UIViewUpdateParams,
+  UIViewEvent,
 } from './uiViewRuntimePort';
 
-export { UISpaRuntimePortDef, UI_SPA_RUNTIME_PORT_ID } from './uiSpaRuntimePortDef';
+export { UICustomRuntimePortDef, UI_CUSTOM_RUNTIME_PORT_ID } from './uiCustomRuntimePortDef';
 export type {
-  UISpaRuntimePort,
-  UISpaMountParams,
-  UISpaUpdateParams,
-  SpaMountContext,
-} from './uiSpaRuntimePort';
+  UICustomRuntimePort,
+  UICustomMountParams,
+  UICustomUpdateParams,
+  CustomUiMountContext,
+} from './uiCustomRuntimePort';
 
 export { ViewportRectProviderPortDef } from './viewportRectProviderPortDef';
 export type { ViewportRectProviderPort } from './viewportRectProviderPort';

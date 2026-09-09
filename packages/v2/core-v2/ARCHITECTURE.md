@@ -6,7 +6,7 @@ This document describes the actual architecture of the DuckEngine core using Kru
 
 ## Role of core-v2
 
-core-v2 is the **engine kernel**: it owns the ECS (entities, components, transforms), scene lifecycle, subsystem topology, and port registry. External packages (scripting-lua, rendering, physics, ui) depend on it; core-v2 never depends on them. Consumers use `createDuckEngineAPI(engine)` to get a typed, fluent API surface. Screen UI is specified in `docs/v2-ui-system-contract.md` (ECS roots + host ports; implemented in `ui-base-v2` / `ui-dom-v2`).
+core-v2 is the **engine kernel**: it owns the ECS (entities, components, transforms), scene lifecycle, subsystem topology, and port registry. External packages (scripting-lua, rendering, physics, ui) depend on it; core-v2 never depends on them. Consumers use `createDuckEngineAPI(engine)` to get a typed, fluent API surface. Screen UI is specified in `docs/v2-ui-system-contract.md` (ECS roots + host ports; implemented in `ui-base-v2` / `ui-preact-v2`).
 
 ---
 
@@ -437,4 +437,4 @@ flowchart TB
 
 **Entity observers** — Each entity has an `EntityObservers` hub. When a component is added/removed/changed or the transform changes, observers fire. `attachEntityObservers` wires these to `emitSceneChange`, so subsystems react to ECS mutations without polling.
 
-**UI** — Legacy `scene.uiSlots` were removed. Screen UI follows `docs/v2-ui-system-contract.md` (ECS `transform2d` + `uiView` / `uiSpa`, host-agnostic ports in `ui-base-v2`, default kit in `ui-dom-v2`).
+**UI** — Legacy `scene.uiSlots` were removed. Screen UI follows `docs/v2-ui-system-contract.md` (ECS `transform2d` + `uiView` / `uiCustom`, shared projection in `ui-base-v2`, Preact host in `ui-preact-v2`).

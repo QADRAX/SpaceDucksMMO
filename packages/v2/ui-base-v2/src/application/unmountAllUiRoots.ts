@@ -12,7 +12,7 @@ export const unmountAllUiRoots = defineSubsystemUseCase<UISubsystemState, unknow
     for (const key of [...state.mounted]) {
       const [entityId, viewportId] = key.split('::') as [EntityId, ViewportId];
       void state.viewRuntime?.unmount(entityId, viewportId);
-      void state.spaRuntime?.unmount(entityId, viewportId);
+      void state.customRuntime?.unmount(entityId, viewportId);
     }
     state.mounted.clear();
   },

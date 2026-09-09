@@ -3,15 +3,15 @@ import type { ResourceRef } from '../../../resources';
 import type { UiTarget } from '../../../ui/uiTarget';
 
 /**
- * Custom SPA UI content: resource reference + per-instance props.
+ * Custom UI content: resource reference + per-instance props map.
  * Parallel to {@link ScriptComponent} (asset + instance data).
  * Mutually exclusive with {@link UiViewComponent} (phase 1).
  * Requires presence of `transform2d`.
  */
-export interface UiSpaComponent extends ComponentBase<'uiSpa', UiSpaComponent> {
-  /** Reference to a `spa` resource. */
+export interface UiCustomComponent extends ComponentBase<'uiCustom', UiCustomComponent> {
+  /** Reference to a `spa` resource (custom UI entry module). */
   spa: ResourceRef<'spa'> | null;
-  /** Instance props from scene YAML / Lua (`UI.setProps`). */
+  /** Generic instance props (YAML + Lua `UI.setProps`) injected into the custom UI. */
   props: Record<string, unknown>;
   /** Viewport filter (§3.6). Empty = all enabled viewports of the scene. */
   uiTarget: UiTarget;

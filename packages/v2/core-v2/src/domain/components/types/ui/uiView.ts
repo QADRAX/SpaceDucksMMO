@@ -19,7 +19,7 @@ export interface UiNode {
 
 /**
  * Duck UI content component: document (inline tree or resource) + bindings.
- * Mutually exclusive with {@link UiSpaComponent} (phase 1).
+ * Mutually exclusive with {@link UiCustomComponent} (phase 1).
  * Requires presence of `transform2d`.
  */
 export interface UiViewComponent extends ComponentBase<'uiView', UiViewComponent> {

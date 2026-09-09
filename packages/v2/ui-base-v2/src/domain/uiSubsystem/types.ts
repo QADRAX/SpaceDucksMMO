@@ -1,7 +1,7 @@
 import type {
   EntityId,
   SceneId,
-  UISpaRuntimePort,
+  UICustomRuntimePort,
   UISurfaceHostPort,
   UIViewRuntimePort,
   ViewportId,
@@ -16,13 +16,14 @@ export function uiMountKey(entityId: EntityId, viewportId: ViewportId): UIMountK
 }
 
 /**
- * Mutable state for the UI projection subsystem.
+ * Mutable state for the shared UI projection subsystem.
+ * Resolves surfaces/targets and **delegates** paint to Duck (`viewRuntime`) or custom (`customRuntime`).
  */
 export interface UISubsystemState {
   readonly sceneId: SceneId;
   readonly surfaceHost: UISurfaceHostPort | undefined;
   readonly viewRuntime: UIViewRuntimePort | undefined;
-  readonly spaRuntime: UISpaRuntimePort | undefined;
+  readonly customRuntime: UICustomRuntimePort | undefined;
   /**
    * Optional tag lookup for `uiTarget.cameraTags`.
    * When omitted, cameraTags filters never match.

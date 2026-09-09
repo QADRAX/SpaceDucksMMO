@@ -28,8 +28,8 @@ import type { ResourceLoader } from '@duckengine/resource-coordinator-v2';
 import { createResourceCoordinatorSubsystem } from '@duckengine/resource-coordinator-v2';
 import { createAnimationSubsystem } from '@duckengine/animation-runtime-v2';
 import { createUISubsystem } from '@duckengine/ui-base-v2';
-import { createDefaultWebUIPorts } from '@duckengine/ui-dom-v2';
-import type { DomUISurfaceHost } from '@duckengine/ui-dom-v2';
+import { createDefaultWebUIPorts } from '@duckengine/ui-preact-v2';
+import type { DomUISurfaceHost } from '@duckengine/ui-preact-v2';
 import { createPhysicsSubsystem } from '@duckengine/physics-rapier-v2';
 import {
   createRenderingSubsystem,

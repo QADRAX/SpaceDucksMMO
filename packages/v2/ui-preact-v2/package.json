@@ -1,5 +1,5 @@
 {
-  "name": "@duckengine/ui-dom-v2",
+  "name": "@duckengine/ui-preact-v2",
   "version": "0.1.0",
   "private": false,
   "main": "dist/index.js",
@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@duckengine/core-v2": "^0.1.0"
+    "@duckengine/core-v2": "^0.1.0",
+    "preact": "^10.26.4"
   },
   "devDependencies": {
     "typescript": "^5.5.0"

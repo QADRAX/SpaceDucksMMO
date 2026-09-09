@@ -16,7 +16,7 @@ export type ComponentType =
     | 'transform3d'
     | 'transform2d'
     | 'uiView'
-    | 'uiSpa'
+    | 'uiCustom'
     | 'name'
     | 'boxGeometry'
     | 'sphereGeometry'

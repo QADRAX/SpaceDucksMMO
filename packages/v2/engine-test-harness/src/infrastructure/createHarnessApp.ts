@@ -16,7 +16,7 @@ import {
 } from '@duckengine/core-v2';
 import type { DuckEngineAPI, ViewportId, ViewportRectProviderPort } from '@duckengine/core-v2';
 import type { LogStack } from '@duckengine/diagnostic-v2';
-import type { DomUISurfaceHost } from '@duckengine/ui-dom-v2';
+import type { DomUISurfaceHost } from '@duckengine/ui-preact-v2';
 import { loadSceneFromYaml, parseAndValidateSceneYaml } from '@duckengine/scenes-yaml-v2';
 import type { PerformanceReportStorage } from './performanceReportStorage';
 

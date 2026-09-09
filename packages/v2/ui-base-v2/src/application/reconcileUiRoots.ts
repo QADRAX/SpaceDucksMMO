@@ -1,4 +1,10 @@
-import type { EntityId, SceneState, UiSpaComponent, UiViewComponent, ViewportId } from '@duckengine/core-v2';
+import type {
+  EntityId,
+  SceneState,
+  UiCustomComponent,
+  UiViewComponent,
+  ViewportId,
+} from '@duckengine/core-v2';
 import {
   defineSubsystemUseCase,
   getTransform2d,
@@ -14,10 +20,8 @@ export interface ReconcileUiRootsParams {
 }
 
 /**
- * Reconciles UI root mounts for the scene against current viewports and components.
+ * Shared UI projection: resolve targets/surfaces, then **delegate** to Duck or custom runtimes.
  * Mounts missing targets, updates existing ones, unmounts stale pairs.
- *
- * Composable on scene events and `lateUpdate` — only requires `{ scene }`.
  */
 export const reconcileUiRoots = defineSubsystemUseCase<
   UISubsystemState,
@@ -43,12 +47,12 @@ export const reconcileUiRoots = defineSubsystemUseCase<
       if (!transform) continue;
 
       const view = entity.components.get('uiView') as UiViewComponent | undefined;
-      const spa = entity.components.get('uiSpa') as UiSpaComponent | undefined;
-      const content = view?.enabled !== false ? view : undefined;
-      const spaContent = !content && spa?.enabled !== false ? spa : undefined;
-      if (!content && !spaContent) continue;
+      const custom = entity.components.get('uiCustom') as UiCustomComponent | undefined;
+      const duckContent = view?.enabled !== false ? view : undefined;
+      const customContent = !duckContent && custom?.enabled !== false ? custom : undefined;
+      if (!duckContent && !customContent) continue;
 
-      const target = content?.uiTarget ?? spaContent?.uiTarget ?? {};
+      const target = duckContent?.uiTarget ?? customContent?.uiTarget ?? {};
       const viewportIds = resolveUiTargetViewports({
         sceneId: scene.id,
         target,
@@ -65,14 +69,14 @@ export const reconcileUiRoots = defineSubsystemUseCase<
         const key = uiMountKey(entity.id, viewportId);
         desired.add(key);
 
-        if (content && state.viewRuntime) {
+        if (duckContent && state.viewRuntime) {
           if (state.mounted.has(key)) {
             void state.viewRuntime.update({
               entityId: entity.id,
               viewportId,
               layout,
-              document: content.document,
-              bindings: content.bindings,
+              document: duckContent.document,
+              bindings: duckContent.bindings,
             });
           } else {
             void state.viewRuntime.mount({
@@ -81,32 +85,32 @@ export const reconcileUiRoots = defineSubsystemUseCase<
               viewportId,
               surface,
               layout,
-              document: content.document,
-              bindings: content.bindings,
+              document: duckContent.document,
+              bindings: duckContent.bindings,
             });
             state.mounted.add(key);
           }
-        } else if (spaContent?.spa && state.spaRuntime) {
+        } else if (customContent?.spa && state.customRuntime) {
           if (state.mounted.has(key)) {
-            void state.spaRuntime.update({
+            void state.customRuntime.update({
               entityId: entity.id,
               viewportId,
               layout,
-              props: spaContent.props,
+              props: customContent.props,
             });
           } else {
-            void state.spaRuntime.mount({
+            void state.customRuntime.mount({
               entityId: entity.id,
               sceneId: scene.id,
               viewportId,
               surface,
               layout,
-              spa: spaContent.spa,
+              spa: customContent.spa,
               context: {
                 entityId: entity.id,
                 sceneId: scene.id,
                 viewportId,
-                props: { ...spaContent.props },
+                props: { ...customContent.props },
                 onProps: () => () => undefined,
                 emit: () => undefined,
               },
@@ -121,7 +125,7 @@ export const reconcileUiRoots = defineSubsystemUseCase<
       if (desired.has(key)) continue;
       const [entityId, viewportId] = key.split('::') as [EntityId, ViewportId];
       void state.viewRuntime?.unmount(entityId, viewportId);
-      void state.spaRuntime?.unmount(entityId, viewportId);
+      void state.customRuntime?.unmount(entityId, viewportId);
       state.mounted.delete(key);
     }
   },

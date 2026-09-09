@@ -1,7 +1,7 @@
 import type { EntityId, ViewportId } from '../ids';
 
 /**
- * Viewport filter for UI roots (`uiView` / `uiSpa`).
+ * Viewport filter for UI roots (`uiView` / `uiCustom`).
  * Empty / default → all enabled viewports of the entity's scene.
  *
  * @see docs/v2-ui-system-contract.md §3.6

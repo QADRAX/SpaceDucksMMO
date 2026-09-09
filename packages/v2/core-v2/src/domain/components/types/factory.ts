@@ -44,7 +44,7 @@ import type { Transform3dComponent, Transform3dCreateOverride } from './transfor
 import type {
   Transform2dComponent,
   Transform2dCreateOverride,
-  UiSpaComponent,
+  UiCustomComponent,
   UiViewComponent,
 } from './ui';
 /** Component types that can be created through the generic factory. */
@@ -55,7 +55,7 @@ export interface ComponentByType {
   transform3d: Transform3dComponent;
   transform2d: Transform2dComponent;
   uiView: UiViewComponent;
-  uiSpa: UiSpaComponent;
+  uiCustom: UiCustomComponent;
   name: NameComponent;
   boxGeometry: BoxGeometryComponent;
   sphereGeometry: SphereGeometryComponent;

@@ -27,14 +27,14 @@ describe('optional transform2d', () => {
     expect(getTransform2d(e)).toBeUndefined();
   });
 
-  it('uiView requires transform2d and conflicts with uiSpa', () => {
+  it('uiView requires transform2d and conflicts with uiCustom', () => {
     const e = createEntity(createEntityId('panel'));
     const withoutPose = addComponent(e, createComponent('uiView'));
     expect(withoutPose.ok).toBe(false);
 
     addComponent(e, createComponent('transform2d'));
     expect(addComponent(e, createComponent('uiView')).ok).toBe(true);
-    expect(addComponent(e, createComponent('uiSpa')).ok).toBe(false);
+    expect(addComponent(e, createComponent('uiCustom')).ok).toBe(false);
   });
 
   it('reconciles transform2d parent across hierarchy', () => {

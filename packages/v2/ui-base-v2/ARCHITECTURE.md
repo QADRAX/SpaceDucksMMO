@@ -13,6 +13,6 @@ Host-agnostic UI projection for Duck Engine v2. Implements the runtime side of
 
 ## Non-goals
 
-- DOM/CSS paint or overlay hosts — see `@duckengine/ui-dom-v2`
+- DOM/Preact paint — see `@duckengine/ui-preact-v2`
 - SPA loaders / React — separate host packages later
 - Composition-root wiring — bind base subsystem + host ports in engine-web / harness

@@ -7,7 +7,8 @@ import type {
   UiNode,
 } from '@duckengine/core-v2';
 import { isResourceRef } from '@duckengine/core-v2';
-import { applyUiRootLayout, renderUiNodeTree } from './renderUiNodeTree';
+import { h, render } from 'preact';
+import { applyUiRootLayout, DuckDocument } from './duckDocument';
 
 type MountKey = `${EntityId}::${ViewportId}`;
 
@@ -27,12 +28,32 @@ function resolveDocument(document: UIViewMountParams['document']): UiNode | null
 }
 
 /**
- * Minimal DOM Duck UI runtime (default kit: column/row/panel/text/button/progress).
+ * Duck UI view runtime backed by Preact (default kit).
  */
-export function createDomUIViewRuntime(): UIViewRuntimePort {
+export function createPreactUIViewRuntime(): UIViewRuntimePort {
   const roots = new Map<MountKey, HTMLElement>();
   const lastDoc = new Map<MountKey, UiNode | null>();
   const lastBindings = new Map<MountKey, Readonly<Record<string, unknown>>>();
+  const lastOnEvent = new Map<MountKey, UIViewMountParams['onEvent']>();
+
+  const paint = (key: MountKey, root: HTMLElement) => {
+    const doc = lastDoc.get(key) ?? null;
+    const bindings = lastBindings.get(key) ?? {};
+    const onEvent = lastOnEvent.get(key);
+    render(
+      h(DuckDocument, {
+        node: doc,
+        bindings,
+        onEvent: onEvent
+          ? (e) => {
+              const [entityId, viewportId] = key.split('::') as [EntityId, ViewportId];
+              onEvent({ entityId, viewportId, ...e });
+            }
+          : undefined,
+      }),
+      root,
+    );
+  };
 
   return {
     mount(params: UIViewMountParams) {
@@ -51,8 +72,9 @@ export function createDomUIViewRuntime(): UIViewRuntimePort {
       const doc = resolveDocument(params.document);
       lastDoc.set(key, doc);
       lastBindings.set(key, params.bindings);
+      lastOnEvent.set(key, params.onEvent);
       applyUiRootLayout(root, params.layout);
-      renderUiNodeTree(root, doc, params.bindings);
+      paint(key, root);
     },
 
     update(params: UIViewUpdateParams) {
@@ -62,16 +84,15 @@ export function createDomUIViewRuntime(): UIViewRuntimePort {
 
       if (params.layout) applyUiRootLayout(root, params.layout);
 
-      const doc =
-        params.document !== undefined
-          ? resolveDocument(params.document)
-          : (lastDoc.get(key) ?? null);
-      const bindings = params.bindings ?? lastBindings.get(key) ?? {};
-      if (params.document !== undefined) lastDoc.set(key, doc);
-      if (params.bindings !== undefined) lastBindings.set(key, bindings);
+      if (params.document !== undefined) {
+        lastDoc.set(key, resolveDocument(params.document));
+      }
+      if (params.bindings !== undefined) {
+        lastBindings.set(key, params.bindings);
+      }
 
-      if (params.document !== undefined || params.bindings !== undefined) {
-        renderUiNodeTree(root, doc, bindings);
+      if (params.document !== undefined || params.bindings !== undefined || params.layout) {
+        paint(key, root);
       }
     },
 
@@ -79,10 +100,12 @@ export function createDomUIViewRuntime(): UIViewRuntimePort {
       const key = mountKey(entityId, viewportId);
       const root = roots.get(key);
       if (!root) return;
+      render(null, root);
       root.remove();
       roots.delete(key);
       lastDoc.delete(key);
       lastBindings.delete(key);
+      lastOnEvent.delete(key);
     },
   };
 }

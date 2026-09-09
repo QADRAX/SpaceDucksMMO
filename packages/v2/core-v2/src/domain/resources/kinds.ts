@@ -22,7 +22,7 @@ export type ResourceKind =
     // ── Scripting ────────────────────────────────────────────────
     | 'script'       // Used by ScriptComponent
     // ── UI ───────────────────────────────────────────────────────
-    | 'spa'          // Used by UiSpaComponent
+    | 'spa'          // Used by UiCustomComponent (custom UI entry)
     | 'uiDocument'   // Used by UiViewComponent (optional resource document)
     // ── Standalone asset (referenced by materials per slot) ───────
     | 'texture';

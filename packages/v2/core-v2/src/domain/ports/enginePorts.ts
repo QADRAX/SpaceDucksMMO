@@ -3,7 +3,7 @@ import type { DiagnosticPort } from './external/diagnosticPort';
 import type { PerformanceProfilingPort } from './external/performanceProfilingPort';
 import type { UISurfaceHostPort } from './external/uiSurfaceHostPort';
 import type { UIViewRuntimePort } from './external/uiViewRuntimePort';
-import type { UISpaRuntimePort } from './external/uiSpaRuntimePort';
+import type { UICustomRuntimePort } from './external/uiCustomRuntimePort';
 import type { SceneEventBusProviderPort } from './internal/sceneEventBusProviderPort';
 
 /**
@@ -39,7 +39,7 @@ export interface EnginePorts {
   readonly uiViewRuntime?: PortBinding<UIViewRuntimePort>;
 
   /**
-   * Custom SPA UI runtime (optional until a UI host is wired).
+   * Custom UI runtime (optional until a UI host is wired).
    */
-  readonly uiSpaRuntime?: PortBinding<UISpaRuntimePort>;
+  readonly uiCustomRuntime?: PortBinding<UICustomRuntimePort>;
 }

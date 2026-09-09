@@ -11,7 +11,7 @@ import {
   createCanvasId,
   UISurfaceHostPortDef,
   UIViewRuntimePortDef,
-  UISpaRuntimePortDef,
+  UICustomRuntimePortDef,
 } from '@duckengine/core-v2';
 import { reconcileUiRoots } from './reconcileUiRoots';
 import { createUISubsystemState } from '../domain/uiSubsystem/createUISubsystemState';
@@ -61,7 +61,7 @@ describe('reconcileUiRoots', () => {
     const portMap = new Map<string, unknown>([
       [UISurfaceHostPortDef.id, surfaceHost],
       [UIViewRuntimePortDef.id, viewRuntime],
-      [UISpaRuntimePortDef.id, undefined],
+      [UICustomRuntimePortDef.id, undefined],
     ]);
 
     const state = createUISubsystemState({

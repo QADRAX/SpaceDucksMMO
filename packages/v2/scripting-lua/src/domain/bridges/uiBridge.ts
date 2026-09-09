@@ -2,7 +2,7 @@ import type {
   EntityId,
   SceneState,
   ScriptSchema,
-  UiSpaComponent,
+  UiCustomComponent,
   UiTarget,
   UiViewComponent,
   ViewportId,
@@ -20,26 +20,26 @@ function getUiView(scene: SceneState, id: EntityId): UiViewComponent | undefined
   return getComponent<UiViewComponent>(e, 'uiView');
 }
 
-function getUiSpa(scene: SceneState, id: EntityId): UiSpaComponent | undefined {
+function getUiCustom(scene: SceneState, id: EntityId): UiCustomComponent | undefined {
   const e = scene.entities.get(id);
   if (!e) return undefined;
-  return getComponent<UiSpaComponent>(e, 'uiSpa');
+  return getComponent<UiCustomComponent>(e, 'uiCustom');
 }
 
 function contentComponent(
   scene: SceneState,
   id: EntityId,
-): UiViewComponent | UiSpaComponent | undefined {
-  return getUiView(scene, id) ?? getUiSpa(scene, id);
+): UiViewComponent | UiCustomComponent | undefined {
+  return getUiView(scene, id) ?? getUiCustom(scene, id);
 }
 
-function fireUiChanged(scene: SceneState, id: EntityId, type: 'uiView' | 'uiSpa'): void {
+function fireUiChanged(scene: SceneState, id: EntityId, type: 'uiView' | 'uiCustom'): void {
   const e = scene.entities.get(id);
   e?.observers.fireComponentChanged(id, type);
 }
 
 /**
- * UI bridge — operates on `uiView` or `uiSpa` (props/bindings + uiTarget).
+ * UI bridge — operates on `uiView` or `uiCustom` (bindings/props + uiTarget).
  * Soft null-logic when content missing or transform2d inactive for paint checks.
  */
 export const uiBridge: BridgeDeclaration = {
@@ -58,10 +58,10 @@ export const uiBridge: BridgeDeclaration = {
           fireUiChanged(scene, id, 'uiView');
           return true;
         }
-        const spa = getUiSpa(scene, id);
-        if (spa) {
-          spa.enabled = !!enabled;
-          fireUiChanged(scene, id, 'uiSpa');
+        const custom = getUiCustom(scene, id);
+        if (custom) {
+          custom.enabled = !!enabled;
+          fireUiChanged(scene, id, 'uiCustom');
           return true;
         }
         return false;
@@ -70,8 +70,8 @@ export const uiBridge: BridgeDeclaration = {
       getProp(id: EntityId, key: string): unknown {
         const view = getUiView(scene, id);
         if (view) return view.bindings[key];
-        const spa = getUiSpa(scene, id);
-        return spa?.props[key];
+        const custom = getUiCustom(scene, id);
+        return custom?.props[key];
       },
 
       setProp(id: EntityId, key: string, value: unknown): boolean {
@@ -81,10 +81,10 @@ export const uiBridge: BridgeDeclaration = {
           fireUiChanged(scene, id, 'uiView');
           return true;
         }
-        const spa = getUiSpa(scene, id);
-        if (spa) {
-          spa.props[key] = value;
-          fireUiChanged(scene, id, 'uiSpa');
+        const custom = getUiCustom(scene, id);
+        if (custom) {
+          custom.props[key] = value;
+          fireUiChanged(scene, id, 'uiCustom');
           return true;
         }
         return false;
@@ -97,10 +97,10 @@ export const uiBridge: BridgeDeclaration = {
           fireUiChanged(scene, id, 'uiView');
           return true;
         }
-        const spa = getUiSpa(scene, id);
-        if (spa) {
-          Object.assign(spa.props, props);
-          fireUiChanged(scene, id, 'uiSpa');
+        const custom = getUiCustom(scene, id);
+        if (custom) {
+          Object.assign(custom.props, props);
+          fireUiChanged(scene, id, 'uiCustom');
           return true;
         }
         return false;
@@ -117,10 +117,10 @@ export const uiBridge: BridgeDeclaration = {
           fireUiChanged(scene, id, 'uiView');
           return true;
         }
-        const spa = getUiSpa(scene, id);
-        if (spa) {
-          spa.uiTarget = { ...target };
-          fireUiChanged(scene, id, 'uiSpa');
+        const custom = getUiCustom(scene, id);
+        if (custom) {
+          custom.uiTarget = { ...target };
+          fireUiChanged(scene, id, 'uiCustom');
           return true;
         }
         return false;
@@ -133,10 +133,10 @@ export const uiBridge: BridgeDeclaration = {
           fireUiChanged(scene, id, 'uiView');
           return true;
         }
-        const spa = getUiSpa(scene, id);
-        if (spa) {
-          spa.uiTarget = {};
-          fireUiChanged(scene, id, 'uiSpa');
+        const custom = getUiCustom(scene, id);
+        if (custom) {
+          custom.uiTarget = {};
+          fireUiChanged(scene, id, 'uiCustom');
           return true;
         }
         return false;

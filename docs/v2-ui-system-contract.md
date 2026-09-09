@@ -14,15 +14,15 @@ Screen-space UI for Duck Engine: ECS hosts **UI roots**; visual trees live **und
 
 - **G1** — Paint UI on chosen viewport surface(s) of a scene (multi-viewport / split-screen via `uiTarget`).
 - **G2** — First-party **Duck UI** (`uiView`) configurable from scene YAML/prefabs.
-- **G3** — **Custom SPA** as a first-class **resource** + component (`uiSpa`), with instance `props` in the scene contract and Lua.
+- **G3** — **Custom SPA** as a first-class **resource** + component (`uiCustom`), with instance `props` in the scene contract and Lua.
 - **G4** — One Lua/JS **UI** surface that operates both Duck UI and custom SPA.
-- **G5** — Engine ships a **default UI kit** (`ui-base-v2` + `ui-dom-v2`); composition roots wire it by default; ports remain replaceable.
-- **G6** — Host-agnostic ports: web today; non-HTML hosts later without changing ECS contracts.
+- **G5** — Engine ships **shared UI projection** (`ui-base-v2`) + **Preact Duck default** (`ui-preact-v2`); custom UIs register via `createPreactCustomUI`; ports remain replaceable.
+- **G6** — Host-agnostic ports: Preact/web today; other hosts later without changing ECS contracts.
 
 ### Non-goals
 
 - 2D gameplay world, 2D physics, or 2D rigid bodies (`transform2d` is **screen UI only**; “2D games” use fake-2D in 3D + `transform3d`).
-- React/DOM/CSS inside `core-v2` domain or application.
+- React/Preact/DOM inside `core-v2` or `ui-base-v2` domain/application (vendors only in host packages such as `ui-preact-v2`).
 - One ECS entity per button/label (visual hierarchy is **not** the entity tree).
 - Class inheritance of UI “components” in the ECS sense.
 
@@ -33,12 +33,12 @@ Screen-space UI for Duck Engine: ECS hosts **UI roots**; visual trees live **und
 | Tree | Owns | Lifetime |
 |------|------|----------|
 | **Entity hierarchy (ECS)** | Scene graph, scripts, prefabs, coarse UI **roots** / layers | Scene |
-| **View hierarchy (UI document)** | Layout boxes, builtins, controls inside a root | Owned by `uiView` (or by the SPA runtime under `uiSpa`) |
+| **View hierarchy (UI document)** | Layout boxes, builtins, controls inside a root | Owned by `uiView` (or by the SPA runtime under `uiCustom`) |
 
 **Rule:** Entity children are for **other roots / layers / tools**, not for every widget. Widgets and layout boxes live in the view tree (Duck) or inside the SPA.
 
 ```
-Entity "hud"           transform2d + uiView | uiSpa  (+ script?)
+Entity "hud"           transform2d + uiView | uiCustom  (+ script?)
   └─ (no entity children required)
        view tree / SPA internal tree  →  layout + paint via UI ports
 ```
@@ -62,7 +62,7 @@ YAML sugar (optional, same idea as `transform:` → `transform3d`): top-level `t
 
 ### 3.2 `uiView` — default Duck UI
 
-- Unique per entity (phase 1: mutually exclusive with `uiSpa` on the same entity; see §3.4).
+- Unique per entity (phase 1: mutually exclusive with `uiCustom` on the same entity; see §3.4).
 - Holds the **Duck UI document** (view tree) and data bindings.
 
 Conceptual shape:
@@ -81,7 +81,7 @@ uiView {
 - `bindings` / node props: serializable only (numbers, strings, bools, plain tables/arrays). No functions in scene data.
 - Requires **presence** of `transform2d` (structurally). Runtime uses active `getTransform2d`; if pose disabled, view does not paint.
 
-### 3.3 `uiSpa` — custom SPA (resource-backed)
+### 3.3 `uiCustom` — custom SPA (resource-backed)
 
 - Unique per entity (phase 1: XOR with `uiView`).
 - Parallel to `script`: **resource reference + per-instance props**.
@@ -89,7 +89,7 @@ uiView {
 Conceptual shape:
 
 ```text
-uiSpa {
+uiCustom {
   enabled
   spa: ResourceRef<'spa'>     // asset key/kind/version
   props: Record<string, unknown>   // instance config — YAML + Lua
@@ -105,7 +105,7 @@ uiSpa {
 
 | Rule | Phase 1 |
 |------|---------|
-| `uiView` + `uiSpa` on same entity | **Invalid** (one content backend per root) |
+| `uiView` + `uiCustom` on same entity | **Invalid** (one content backend per root) |
 | Neither content component | Valid: layout-only / folder root with `transform2d` only (groups child **entity** roots) |
 | `script` + UI content | Allowed: scripts drive `UI.*` |
 
@@ -118,7 +118,7 @@ Later phases may allow composition (e.g. Duck chrome + SPA body); out of scope f
 
 ### 3.6 Multi-viewport target (`uiTarget`)
 
-“Where does this UI paint?” is answered by a **generic viewport filter**, shared by `uiView` and `uiSpa`. There is **no** `mode: 'all' | 'primary' | 'viewport'` enum.
+“Where does this UI paint?” is answered by a **generic viewport filter**, shared by `uiView` and `uiCustom`. There is **no** `mode: 'all' | 'primary' | 'viewport'` enum.
 
 In Duck, a **screen** for UI purposes is a **viewport** (`sceneId` + `cameraEntityId` + `canvasId` + rect). Multi-screen / split-screen / editor+game = multiple viewports (possibly multiple canvases).
 
@@ -133,7 +133,7 @@ UiTarget {
 ```
 
 - Default / omitted / `{}` → **all enabled viewports** of the UI root’s scene.
-- Same field name and semantics on `uiView` and `uiSpa`.
+- Same field name and semantics on `uiView` and `uiCustom`.
 - `transform2d` stays layout-only (rect in the surface where the root is mounted); it does **not** store the target.
 
 #### Resolution algorithm
@@ -190,7 +190,7 @@ Exact file slots / persistence schemas are **implementation**; the contract only
 
 ### 4.3 Default kit vs resources
 
-- Duck UI **node types** (`column`, `text`, `button`, …) are provided by the **`ui-dom-v2` default kit**, not as `ResourceKind`s.
+- Duck UI **node types** (`column`, `text`, `button`, …) are provided by the **`ui-preact-v2` default kit**, not as `ResourceKind`s.
 - Custom game UIs that need a full app surface use **`spa` resources**.
 - Games may still ship reusable `uiDocument` resources for shared Duck layouts.
 
@@ -203,12 +203,14 @@ Painting never lives in core domain rules. Core / `ui-base-v2` **projects** UI r
 ### 5.1 Separation
 
 ```
-core-v2          → ECS: transform2d, uiView, uiSpa, ids, events, projection inputs
-ui-base-v2       → reconcile + createUISubsystem (host-agnostic)
-ui-dom-v2        → DOM surface host + Duck kit runtime + createDefaultWebUIPorts
-Host adapter     → Web DOM | Canvas | Native | Test double
-Composition root → engine-web-v2 / harness: bind base + DOM ports (overridable)
+core-v2          → ECS: transform2d, uiView, uiCustom, ports, projection inputs
+ui-base-v2       → shared subsystem: resolve target/surface, then delegate
+ui-preact-v2     → Preact Duck runtime + createPreactCustomUI + surface host
+Composition root → bind base + preact ports (overridable)
 ```
+
+**Shared + delegate:** one scene subsystem owns viewport matching and mount lifecycle;
+Duck (`UIViewRuntimePort`) and custom (`UICustomRuntimePort`) are separate runtimes, not two scene subsystems.
 
 ### 5.2 Surface ports (conceptual contracts)
 
@@ -226,17 +228,17 @@ Names are indicative; implementations must preserve **roles**, not necessarily f
 - Mount / update / unmount a **Duck UI document** for an entity root into a surface region (rect from `transform2d`).
 - Applies layout for the view tree; paints default kit controls.
 - Receives **bindings/prop patches** and reports **UI events** (node id + event name + payload) back into the engine event path.
-- Default implementation: shipped in `ui-dom-v2` for web; replaceable for other hosts (immediate-mode canvas kit, etc.).
+- Default implementation: shipped in `ui-preact-v2` for web; replaceable for other hosts (immediate-mode canvas kit, etc.).
 
-#### C. `UISpaRuntimePort` (custom SPA backend)
+#### C. `UICustomRuntimePort` (custom UI backend)
 
 - Given a **resolved `spa` resource** + **instance props** + **layout rect** + **entity id**, mount/update/unmount the custom app on the surface.
 - **Host adapter contract** (what the SPA author programs against), conceptual:
 
 ```text
-SpaMountContext {
+CustomUiMountContext {
   entityId
-  props                          // initial snapshot from uiSpa.props
+  props                          // initial snapshot from uiCustom.props
   onProps(listener)              // engine/Lua changed props
   emit(eventName, payload)       // SPA → scripts / bus
   // optional: requestClose, locale, theme tokens — later
@@ -253,7 +255,7 @@ SpaMountContext {
 
 #### D. Projection / subsystem
 
-- Watches scene UI roots (active `transform2d` + enabled `uiView`|`uiSpa`).
+- Watches scene UI roots (active `transform2d` + enabled `uiView`|`uiCustom`).
 - Resolves **target viewports** via `uiTarget` (§3.6); mounts once per matching viewport surface.
 - Computes root rect in that surface’s space; calls the appropriate runtime port with `viewportId`.
 - On filter/viewport/disable/remove/teardown changes → mount, update, or unmount as needed.
@@ -263,8 +265,8 @@ SpaMountContext {
 
 | Level | Behavior |
 |-------|----------|
-| Default (`engine-web-v2`) | `ui-dom-v2` kit + web `UIViewRuntimePort` + overlay host |
-| Extend | Register/override Duck **node types** inside the kit (product API of `ui-dom-v2`) |
+| Default (`engine-web-v2`) | `ui-preact-v2` kit + web `UIViewRuntimePort` + overlay host |
+| Extend | Register/override Duck **node types** inside the kit (product API of `ui-preact-v2`) |
 | Replace | Bind alternate port implementations at setup (canvas UI, native, mocks) |
 | Headless / tests | No-op or recording ports |
 
@@ -298,7 +300,8 @@ UiNode {
 
 ### 6.3 Default kit (`duck.*` / built-in `type`s)
 
-- Shipped by `ui-dom-v2`: at least layout primitives + text, panel, image, button, progress (exact catalog can grow).
+- Shipped by `ui-preact-v2` (Preact kit): layout primitives + text, panel, image, button, progress.
+- Easy custom formula: `createPreactCustomUI([{ entry: 'spas/…', component: MyApp }])`.
 - Theme/tokens: configurable at kit/runtime level (host may map tokens to CSS variables **or** to non-CSS paint params).
 - Custom node types: kit extension API — still Duck UI, not new ECS components.
 
@@ -311,18 +314,18 @@ UiNode {
 
 ## 7. Scripting contract (unified `UI` API)
 
-Works for **both** `uiView` and `uiSpa` on the entity (soft null-logic if missing/disabled content or inactive `transform2d`).
+Works for **both** `uiView` and `uiCustom` on the entity (soft null-logic if missing/disabled content or inactive `transform2d`).
 
-| Concern | API (conceptual) | `uiView` | `uiSpa` |
+| Concern | API (conceptual) | `uiView` | `uiCustom` |
 |---------|------------------|----------|---------|
-| Presence | `UI.has()` | has enabled `uiView` | has enabled `uiSpa` |
-| Instance data | `getProp` / `setProp` / `setProps` | `bindings` (+ documented aliases) | `uiSpa.props` |
+| Presence | `UI.has()` | has enabled `uiView` | has enabled `uiCustom` |
+| Instance data | `getProp` / `setProp` / `setProps` | `bindings` (+ documented aliases) | `uiCustom.props` |
 | Tree paths | `get(path)` / `set(path, value)` | node props/bindings by `id` path | optional no-op / err if unsupported |
 | Events in | `on(eventName, cb)` | node events (`id.event` or filtered) | SPA `emit` names |
 | Events out | `emit(eventName, payload)` | toward view runtime | toward SPA `onProps`/custom channel as defined by adapter |
-| Viewport target | `getTarget` / `setTarget` / `clearTarget` | `uiView.uiTarget` | `uiSpa.uiTarget` |
+| Viewport target | `getTarget` / `setTarget` / `clearTarget` | `uiView.uiTarget` | `uiCustom.uiTarget` |
 | Target test | `targetsViewport(viewportId)` | resolves §3.6 filter | same |
-| Enable content | `setEnabled` / via `Component` | `uiView.enabled` | `uiSpa.enabled` |
+| Enable content | `setEnabled` / via `Component` | `uiView.enabled` | `uiCustom.enabled` |
 | Screen box | `Transform2D.*` | same | same |
 
 **Target API (conceptual Lua):**
@@ -339,7 +342,7 @@ local paints = self.UI.targetsViewport('vp-main')
 
 **Rules:**
 
-- Scene YAML may set initial `uiSpa.props` / `uiView.bindings` / `uiTarget`; Lua mutates at runtime; adapter/runtime must observe updates (including retarget → remount on newly matched viewports).
+- Scene YAML may set initial `uiCustom.props` / `uiView.bindings` / `uiTarget`; Lua mutates at runtime; adapter/runtime must observe updates (including retarget → remount on newly matched viewports).
 - Payloads and props remain **JSON-serializable**.
 - `Transform` / `transform3d` stay unrelated; UI entities typically expose `transform === null` in 3D APIs.
 
@@ -391,7 +394,7 @@ local paints = self.UI.targetsViewport('vp-main')
 - id: inventory
   components:
     transform2d: { position: [0.7, 0.1], size: [0.28, 0.6], zIndex: 10 }
-    uiSpa:
+    uiCustom:
       uiTarget:
         viewportIds: [vp-main]
       spa: { key: ui/inventory, kind: spa }
@@ -406,10 +409,10 @@ local paints = self.UI.targetsViewport('vp-main')
 
 | Package | Responsibility |
 |---------|----------------|
-| `core-v2` | Types/components `transform2d`, `uiView`, `uiSpa`; resource kinds; projection inputs; host-agnostic port **interfaces**; no vendor UI |
-| `ui-base-v2` | Host-agnostic reconcile + `createUISubsystem` + test doubles |
-| `ui-dom-v2` | DOM surface host, Duck kit runtime, `createDefaultWebUIPorts` |
-| `engine-web-v2` / harness | Wire `ui-base-v2` + `ui-dom-v2`; allow port/kit overrides |
+| `core-v2` | Types/components `transform2d`, `uiView`, `uiCustom`; resource kinds; projection inputs; host-agnostic port **interfaces**; no vendor UI |
+| `ui-base-v2` | Shared projection + delegate (`createUISubsystem`) |
+| `ui-preact-v2` | Preact Duck kit, `createPreactCustomUI`, surface host, `createDefaultWebUIPorts` |
+| `engine-web-v2` / harness | Wire `ui-base-v2` + `ui-preact-v2`; allow port/kit overrides |
 | `scripting-lua` | `Transform2D` + `UI` bridges |
 | Game / tools | Author `spa` / `uiDocument` resources; optional kit node extensions |
 
@@ -420,10 +423,10 @@ local paints = self.UI.targetsViewport('vp-main')
 | Question | Answer in this contract |
 |----------|-------------------------|
 | Where is layout hierarchy? | Under `uiView` document (or inside SPA), **not** per-widget entities |
-| How does engine ship UI? | Default kit in `ui-dom-v2` + reconcile in `ui-base-v2`, wired by composition roots |
-| How are SPAs configured? | `ResourceKind: 'spa'` + `uiSpa.props` in scene + Lua `UI.setProps` |
+| How does engine ship UI? | Default kit in `ui-preact-v2` + reconcile in `ui-base-v2`, wired by composition roots |
+| How are SPAs configured? | `ResourceKind: 'spa'` + `uiCustom.props` in scene + Lua `UI.setProps` |
 | Which screen paints the UI? | `uiTarget` filter (§3.6): empty = all scene viewports; else `viewportIds` / `cameraIds` / `cameraTags` |
-| What does infra implement? | `UISurfaceHostPort` + `UIViewRuntimePort` + `UISpaRuntimePort` (roles) |
+| What does infra implement? | `UISurfaceHostPort` + `UIViewRuntimePort` + `UICustomRuntimePort` (roles) |
 | HTML required? | **No** at contract level; web adapters use DOM; other hosts reimplement ports |
 | 2D games? | Fake-2D with `transform3d`; not `transform2d` |
 | Legacy slots? | Removed; ECS UI roots only |
@@ -436,7 +439,7 @@ local paints = self.UI.targetsViewport('vp-main')
 - Persistence schemas for `spa` / `uiDocument` zip slots.
 - Prefab variants for UI documents.
 - Full accessibility / focus navigation spec.
-- Allowing `uiView` + `uiSpa` on one entity.
+- Allowing `uiView` + `uiCustom` on one entity.
 - First-class entity tags ECS module (needed for durable `cameraTags`; today may use scripting tag hooks).
 - Optional `exclude` filters / `viewportTags` on viewport state.
 - Editor integration for view-tree vs entity hierarchy UX.

@@ -1,6 +1,6 @@
 /**
  * @duckengine/ui-base-v2
- * Host-agnostic UI projection: ECS roots → UI ports.
+ * Shared UI projection: ECS roots → surfaces, then delegate to Duck / custom runtimes.
  */
 export { createUISubsystem } from './infrastructure/composition/createUISubsystem';
 export type { UISubsystemState, UIMountKey } from './domain/uiSubsystem/types';
@@ -18,6 +18,6 @@ export {
   type RecordingUIViewCall,
 } from './infrastructure/adapters/recordingUIViewRuntime';
 export {
-  createRecordingUISpaRuntime,
-  type RecordingUISpaCall,
-} from './infrastructure/adapters/recordingUISpaRuntime';
+  createRecordingUICustomRuntime,
+  type RecordingUICustomCall,
+} from './infrastructure/adapters/recordingUICustomRuntime';

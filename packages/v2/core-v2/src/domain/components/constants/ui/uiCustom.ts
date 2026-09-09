@@ -1,12 +1,12 @@
 import type { ComponentSpec } from '../../types/core';
-import type { UiSpaComponent } from '../../types/ui';
+import type { UiCustomComponent } from '../../types/ui';
 
-/** Custom SPA UI component spec. */
-export const UI_SPA_SPEC: ComponentSpec<UiSpaComponent> = {
+/** Custom UI component spec (resource-backed SPA / app). */
+export const UI_CUSTOM_SPEC: ComponentSpec<UiCustomComponent> = {
   metadata: {
-    type: 'uiSpa',
-    label: 'UI SPA',
-    description: 'Custom SPA resource mounted in the entity transform2d root box.',
+    type: 'uiCustom',
+    label: 'UI Custom',
+    description: 'Custom UI resource mounted in the entity transform2d root box.',
     category: 'UI',
     icon: 'AppWindow',
     unique: true,
@@ -18,13 +18,13 @@ export const UI_SPA_SPEC: ComponentSpec<UiSpaComponent> = {
           key: 'spa',
           label: 'SPA',
           type: 'resource',
-          description: 'ResourceRef to a spa asset.',
+          description: 'ResourceRef to a spa (custom UI entry) asset.',
         },
         {
           key: 'props',
           label: 'Props',
           type: 'object',
-          description: 'Instance props (YAML + Lua UI.setProps).',
+          description: 'Generic key→value props injected into the custom UI (YAML + Lua).',
         },
         {
           key: 'uiTarget',

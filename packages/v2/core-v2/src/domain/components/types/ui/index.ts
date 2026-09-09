@@ -4,4 +4,4 @@ export type {
   Vec2Like,
 } from './transform2d';
 export type { UiNode, UiViewComponent } from './uiView';
-export type { UiSpaComponent } from './uiSpa';
+export type { UiCustomComponent } from './uiCustom';

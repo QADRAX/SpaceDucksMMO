@@ -57,4 +57,4 @@ EntityState = id + hierarchy (parent/children) + components + presentation/debug
 
 ## Follow-ups (out of scope)
 
-- Screen UI: `transform2d` + `uiView` / `uiSpa` — see `docs/v2-ui-system-contract.md` (legacy `scene.uiSlots` removed).
+- Screen UI: `transform2d` + `uiView` / `uiCustom` — see `docs/v2-ui-system-contract.md` (legacy `scene.uiSlots` removed).

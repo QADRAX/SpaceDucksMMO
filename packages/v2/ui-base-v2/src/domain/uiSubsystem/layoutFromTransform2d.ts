@@ -22,8 +22,9 @@ export function layoutFromTransform2d(t: Transform2dComponent): UIRootLayout {
  */
 export function isActiveUiContentRoot(entity: EntityState): boolean {
   const hasView = entity.components.get('uiView')?.enabled !== false && entity.components.has('uiView');
-  const hasSpa = entity.components.get('uiSpa')?.enabled !== false && entity.components.has('uiSpa');
+  const hasCustom =
+    entity.components.get('uiCustom')?.enabled !== false && entity.components.has('uiCustom');
   const t = entity.components.get('transform2d');
   const poseActive = !!t && t.enabled !== false;
-  return poseActive && (hasView || hasSpa);
+  return poseActive && (hasView || hasCustom);
 }
